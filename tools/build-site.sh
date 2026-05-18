@@ -52,3 +52,81 @@ if [ "$COPY_ASSETS" = "1" ]; then
   rm -rf "$REPO_ROOT/_site/assets"
   cp -r "$REPO_ROOT/assets" "$REPO_ROOT/_site/assets"
 fi
+
+# Emit a landing page at _site/index.html so the root URL of the
+# deployed site (e.g. https://<user>.github.io/<repo>/) shows a real
+# page rather than a 404. Groups lectures by module, reads titles
+# from each .md file's frontmatter.
+emit_index() {
+  local out="$REPO_ROOT/_site/index.html"
+  {
+    cat <<HEAD
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Functional Programming with OCaml — NPTEL</title>
+  <link rel="stylesheet" href="${ASSET_ROOT}/assets/css/chapter.css">
+  <style>
+    .landing { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    .landing h1 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 1.8rem; }
+    .landing .module { border-top: 1px solid var(--rule); padding-top: 1rem; margin-top: 1.4rem; }
+    .landing .module h2 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 1.15rem; margin: 0 0 0.4rem; }
+    .landing .module-no { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    .landing ul { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+    .landing li { margin: 0.25rem 0; }
+    .landing li a { color: var(--accent); text-decoration: none; }
+    .landing li a:hover { text-decoration: underline; }
+    .landing .lec-no { display: inline-block; min-width: 2.4em; color: var(--muted); font-size: 0.9em; font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body class="mode-chapter">
+  <article class="landing">
+    <h1>Functional Programming with OCaml</h1>
+    <p>A 12-week NPTEL course. Pick a lecture below, or start at
+    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.</p>
+HEAD
+
+    # Walk modules in order, then lectures in order. modules.txt
+    # holds "<Mnn>: <title>" lines.
+    local modules_file="$REPO_ROOT/lectures/modules.txt"
+    while IFS= read -r line; do
+      line="${line%$'\r'}"
+      case "$line" in
+        ''|'#'*) continue ;;
+      esac
+      local mnum mtitle
+      mnum="${line%%:*}"
+      mtitle="${line#*: }"
+      printf '    <section class="module">\n'
+      printf '      <div class="module-no">%s</div>\n' "$mnum"
+      printf '      <h2>%s</h2>\n' "$mtitle"
+      printf '      <ul>\n'
+      for src in "$REPO_ROOT"/lectures/"$mnum"-L*-*.md; do
+        [ -f "$src" ] || continue
+        local base ltitle
+        base=$(basename "$src" .md)
+        # Pull the [title:] line out of the YAML frontmatter. Strip
+        # the [title: ] prefix and surrounding quotes; keep any colons
+        # that appear later in the title text.
+        ltitle=$(awk '/^title:/ { sub(/^title: */, ""); sub(/^"/, ""); sub(/"$/, ""); print; exit }' "$src")
+        # Lecture number from filename: M01-L<NN>-...
+        local lnum
+        lnum=$(printf '%s' "$base" | sed -E 's/^M[0-9]+-L([0-9]+)-.*/\1/')
+        printf '        <li><span class="lec-no">L%s</span> <a href="%s.html">%s</a></li>\n' \
+          "$lnum" "$base" "$ltitle"
+      done
+      printf '      </ul>\n'
+      printf '    </section>\n'
+    done < "$modules_file"
+
+    cat <<FOOT
+  </article>
+</body>
+</html>
+FOOT
+  } > "$out"
+  printf 'built _site/index.html\n'
+}
+emit_index

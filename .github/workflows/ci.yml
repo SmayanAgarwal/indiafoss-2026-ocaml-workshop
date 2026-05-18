@@ -24,10 +24,10 @@ jobs:
           dune-cache: true
 
       - name: Install OCaml deps
-        run: opam install . --deps-only --with-test -y || opam install -y cmarkit fpath alcotest
+        run: opam install -y cmarkit fpath alcotest
 
       - name: Build
-        run: opam exec -- dune build tools/nptel-build
+        run: opam exec -- dune build tools/nptel-build/bin/main.exe
 
       - name: Run unit + integration tests
         run: opam exec -- dune runtest
