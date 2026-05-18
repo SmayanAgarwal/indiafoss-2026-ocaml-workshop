@@ -45,4 +45,11 @@
   M07-L04-module-basics.md
   M07-L05-signatures.md
   M07-L06-functors.md
-  M07-L07-tutorial.md))
+  M07-L07-tutorial.md
+  M08-L01-sequencing.md
+  M08-L02-option-monad.md
+  M08-L03-result-monad.md
+  M08-L04-state-monad.md
+  M08-L05-gadts-basics.md
+  M08-L06-gadts-use-cases.md
+  M08-L07-tutorial.md))
