@@ -26,4 +26,10 @@
   M04-L03-variants.md
   M04-L04-recursive-types.md
   M04-L05-option-and-aliases.md
-  M04-L06-tutorial.md))
+  M04-L06-tutorial.md
+  M05-L01-basic-patterns.md
+  M05-L02-nested-and-or-patterns.md
+  M05-L03-guards.md
+  M05-L04-exhaustiveness.md
+  M05-L05-records-variants.md
+  M05-L06-tutorial.md))
