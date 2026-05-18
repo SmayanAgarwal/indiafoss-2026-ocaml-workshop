@@ -18,7 +18,7 @@ BIN="$REPO_ROOT/_build/default/tools/nptel-build/bin/main.exe"
 ASSET_ROOT="${ASSET_ROOT:-}"
 COPY_ASSETS="${COPY_ASSETS:-0}"
 
-(cd "$REPO_ROOT" && opam exec --switch=5.4.0 -- dune build tools/nptel-build/bin/main.exe >/dev/null)
+(cd "$REPO_ROOT" && opam exec -- dune build tools/nptel-build/bin/main.exe >/dev/null)
 
 if [ $# -eq 0 ]; then
   # Lecture files follow the M<nn>-L<nn>-slug.md convention. Other .md

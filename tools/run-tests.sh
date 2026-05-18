@@ -17,7 +17,7 @@ green() { printf '\033[32m%s\033[0m\n' "$*"; }
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
 
 bold '[1/3] dune runtest (unit + integration)'
-opam exec --switch=5.4.0 -- dune runtest
+opam exec -- dune runtest
 
 bold '[2/3] build site'
 tools/build-site.sh
