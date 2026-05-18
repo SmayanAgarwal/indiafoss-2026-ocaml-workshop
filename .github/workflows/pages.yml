@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # We don't need vendor/x-ocaml at deploy time -- the prebuilt
+          # JS bundles are committed under assets/x-ocaml/.
+          submodules: false
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.4.0
+          dune-cache: true
+
+      - name: Install OCaml deps
+        run: opam install -y cmarkit fpath alcotest
+
+      - name: Build nptel-build
+        run: opam exec -- dune build tools/nptel-build/bin/main.exe
+
+      - name: Render site
+        env:
+          # GitHub Pages serves project repos at
+          # https://<user>.github.io/<repo>/, so absolute asset paths
+          # need the repo basename prefixed.
+          ASSET_ROOT: /${{ github.event.repository.name }}
+          COPY_ASSETS: '1'
+        run: tools/build-site.sh
+
+      - name: Run unit + integration tests (sanity)
+        run: opam exec -- dune runtest
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

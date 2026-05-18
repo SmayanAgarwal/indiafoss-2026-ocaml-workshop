@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# We do not build x-ocaml (vendored under vendor/x-ocaml) in CI: the
+# js_of_ocaml link step is multi-minute and produces 80MB artifacts.
+# We only test the OCaml side of the toolchain (nptel-build) and the
+# .md -> HTML pipeline against the integration fixture.
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.4.0
+          dune-cache: true
+
+      - name: Install OCaml deps
+        run: opam install . --deps-only --with-test -y || opam install -y cmarkit fpath alcotest
+
+      - name: Build
+        run: opam exec -- dune build tools/nptel-build
+
+      - name: Run unit + integration tests
+        run: opam exec -- dune runtest

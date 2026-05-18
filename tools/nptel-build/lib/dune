@@ -1,0 +1,3 @@
+(library
+ (name nptel_build)
+ (libraries cmarkit fpath))

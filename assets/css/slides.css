@@ -1,0 +1,75 @@
+/* Slide-mode overrides. The reveal.js wrapper takes over the viewport
+   when body.mode-slides is set. We adjust a few defaults so x-ocaml
+   cells render comfortably inside slides. */
+
+body.mode-slides {
+  background: #ffffff;
+}
+
+/* The sidebar + prev/next are .chapter-only; CSS hides them in slide
+   mode just like other chapter-only content. */
+body.mode-slides .chapter-only { display: none !important; }
+
+body.mode-slides .reveal {
+  display: block;
+  position: fixed;
+  inset: 0;
+}
+
+body.mode-slides .reveal .slides section.slide,
+body.mode-slides .reveal .slides section[data-slide] {
+  text-align: left;
+  font-size: 1.6rem;
+  line-height: 1.35;
+  padding: 1rem 2rem;
+  border-left: none;
+  background: transparent;
+}
+
+/* Override reveal.js's stock theme upper-casing of headings -- titles
+   like "Slide 1 -- Hello" render as "SLIDE 1 -- HELLO" otherwise. */
+body.mode-slides .reveal .slides section h1,
+body.mode-slides .reveal .slides section h2,
+body.mode-slides .reveal .slides section h3,
+body.mode-slides .reveal .slides section h4,
+body.mode-slides .reveal .slides section h5,
+body.mode-slides .reveal .slides section h6 {
+  text-transform: none;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  margin-top: 0;
+}
+body.mode-slides .reveal .slides section h1,
+body.mode-slides .reveal .slides section h2 {
+  font-size: 2.2rem;
+}
+body.mode-slides .reveal .slides section h3 {
+  font-size: 1.6rem;
+}
+
+body.mode-slides x-ocaml {
+  font-size: 0.9rem;
+  margin: 0.6rem 0;
+}
+
+/* Header bar shrinks in slide mode to free vertical space. */
+body.mode-slides .page-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  background: transparent;
+  border-bottom: none;
+  padding: 0.4rem 1rem;
+}
+body.mode-slides .lecture-meta,
+body.mode-slides .lecture-title {
+  opacity: 0.6;
+}
+
+/* Fragments use reveal.js's native behavior. */
+.reveal .fragment {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+.reveal .fragment.visible {
+  opacity: 1;
+}

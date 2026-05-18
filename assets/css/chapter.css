@@ -1,0 +1,312 @@
+/* Chapter (long-form) view styles. Loaded in both modes; CSS toggles
+   hide/show via body.mode-chapter / body.mode-slides classes. */
+
+:root {
+  --fg: #1c1c1c;
+  --muted: #5a5a5a;
+  --accent: #2e5f6a;
+  --bg: #ffffff;
+  --rule: #e3e3e3;
+  --code-bg: #f7f7f5;
+  --width: 720px;
+}
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Charter", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+:root {
+  --sidebar-width: 260px;
+}
+
+/* Toggle visibility by mode. */
+body.mode-chapter .reveal { display: none; }
+body.mode-slides  .chapter { display: none; }
+body.mode-slides  .lecture-meta-footer { display: none; }
+
+.page-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule);
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  z-index: 10;
+}
+.lecture-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lecture-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+}
+.mode-toggle,
+.cell-controls button {
+  border: 1px solid var(--rule);
+  background: transparent;
+  padding: 0.35rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--accent);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 0.85rem;
+}
+.mode-toggle:hover,
+.cell-controls button:hover { background: var(--code-bg); }
+.cell-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+body.mode-chapter .when-slides  { display: none; }
+body.mode-slides  .when-chapter { display: none; }
+
+.chapter {
+  max-width: var(--width);
+  margin: 2rem auto;
+  padding: 0 1rem 4rem;
+}
+
+/* ---- GitBook-style sidebar ---- */
+
+.sidebar {
+  position: fixed;
+  top: 3.4rem;
+  bottom: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  overflow-y: auto;
+  border-right: 1px solid var(--rule);
+  background: #fcfcfb;
+  padding: 1rem 0.75rem 2rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  z-index: 5;
+}
+.sidebar-title {
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 0.5rem 0.4rem;
+}
+.sidebar-nav details {
+  margin: 0.2rem 0;
+}
+.sidebar-nav summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  color: var(--fg);
+  font-weight: 600;
+}
+.sidebar-nav summary::marker,
+.sidebar-nav summary::-webkit-details-marker {
+  display: none;
+}
+.sidebar-nav summary::before {
+  content: "▸";
+  font-size: 0.7em;
+  margin-right: 0.5em;
+  color: var(--muted);
+}
+.sidebar-nav details[open] > summary::before {
+  content: "▾";
+}
+.sidebar-nav summary:hover { background: var(--code-bg); }
+.sidebar-nav .week-no {
+  display: inline-block;
+  font-size: 0.78em;
+  color: var(--muted);
+  margin-right: 0.3em;
+}
+.sidebar-lectures {
+  list-style: none;
+  padding: 0;
+  margin: 0.2rem 0 0.4rem 1.4rem;
+}
+.sidebar-lectures li a {
+  display: block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  text-decoration: none;
+  color: var(--fg);
+  font-weight: 400;
+}
+.sidebar-lectures li a:hover { background: var(--code-bg); }
+.sidebar-lectures li.current > a {
+  background: #e8f0e6;
+  color: var(--accent);
+  font-weight: 600;
+}
+.sidebar-lectures .lec-no {
+  display: inline-block;
+  width: 2.4em;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+/* Collapse: shift the article right when the sidebar is visible. */
+@media (min-width: 900px) {
+  body.mode-chapter:not(.sidebar-hidden) .chapter,
+  body.mode-chapter:not(.sidebar-hidden) .prev-next {
+    margin-left: calc(var(--sidebar-width) + 1rem);
+    margin-right: 1rem;
+  }
+}
+body.sidebar-hidden .sidebar { display: none; }
+
+/* The toggle lives in the header bar; hide it in slide mode. */
+.sidebar-collapse {
+  border: 1px solid var(--rule);
+  background: transparent;
+  padding: 0.35rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--accent);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 0.95rem;
+  margin-right: 0.6rem;
+}
+.sidebar-collapse:hover { background: var(--code-bg); }
+
+/* ---- Prev / Next ---- */
+
+.prev-next {
+  display: flex;
+  gap: 1rem;
+  max-width: var(--width);
+  margin: 2rem auto 4rem;
+  padding: 0 1rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+.prev-next a,
+.prev-next .disabled {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--fg);
+  background: #fafafa;
+}
+.prev-next a:hover { background: var(--code-bg); }
+.prev-next .next { text-align: right; }
+.prev-next .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.prev-next .sub { font-weight: 600; margin-top: 0.15rem; }
+.prev-next .disabled { visibility: hidden; }
+
+/* On narrow screens, sidebar is hidden by default. The user can open
+   it via the header button (toggles .sidebar-hidden on body). */
+@media (max-width: 899px) {
+  body.mode-chapter:not(.sidebar-hidden) .sidebar {
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.2);
+  }
+}
+
+.chapter h1, .chapter h2, .chapter h3 {
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  line-height: 1.25;
+  margin-top: 2.2rem;
+}
+.chapter h2 { font-size: 1.4rem; }
+.chapter h3 { font-size: 1.15rem; color: var(--accent); }
+
+.chapter p { margin: 0.9rem 0; }
+.chapter pre, .chapter code { font-family: "JetBrains Mono", "Fira Code", Menlo, ui-monospace, monospace; }
+.chapter pre { background: var(--code-bg); padding: 0.8rem 1rem; border-radius: 4px; overflow-x: auto; }
+.chapter code { background: var(--code-bg); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.9em; }
+.chapter pre code { background: transparent; padding: 0; }
+
+/* Slide sections inline in chapter mode: render as soft callouts. */
+.chapter section.slide {
+  border-left: 3px solid var(--accent);
+  padding: 0.4rem 1rem 0.4rem 1rem;
+  margin: 1.4rem 0;
+  background: #fafafa;
+}
+.chapter section.slide.subslide {
+  border-left-color: #8aa9ad;
+  margin-left: 1.2rem;
+}
+.chapter span.fragment {
+  /* In chapter mode fragments are visible inline. */
+  display: inline;
+}
+
+/* Speaker notes are slide-mode only. */
+.chapter aside.notes,
+body.mode-chapter aside.notes {
+  display: none;
+}
+
+.lecture-meta-footer {
+  max-width: var(--width);
+  margin: 3rem auto 2rem;
+  padding: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.meta-line { margin: 0.3rem 0; }
+.meta-label { font-weight: 600; color: var(--fg); margin-right: 0.4rem; }
+.lecture-meta-footer ul { margin: 0.3rem 0 0 1.5rem; padding: 0; }
+
+/* x-ocaml cells fit the chapter width and look like code. */
+x-ocaml {
+  display: block;
+  margin: 1rem 0;
+  font-size: 0.92em;
+}
+
+/* Per-cell reset button: floats up against the right edge of the cell
+   block, just above the in-shadow Run button. */
+.reset-cell {
+  display: block;
+  float: right;
+  margin: 0 0 -1.7rem 0;
+  position: relative;
+  z-index: 2;
+  right: 3.6rem;
+  top: 0.15rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  line-height: 1.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.reset-cell:hover { background: var(--code-bg); }
+/* Flag cells with persisted edits: the reset button gets a coloured ring. */
+.reset-cell.dirty {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #fff8e1;
+}
