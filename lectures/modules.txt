@@ -1,0 +1,13 @@
+# One line per module: <Mnn>: <title>. Matches PLAN.md.
+M01: Intro to functional programming
+M02: Expressions
+M03: Functions
+M04: Data types
+M05: Pattern matching
+M06: Higher-order programming
+M07: Side effects and modular programming
+M08: Monads and GADTs
+M09: Runtime, GC, undefined behaviour
+M10: Memory safety and the C FFI
+M11: Unikernel OS
+M12: Concurrency and capability-based security

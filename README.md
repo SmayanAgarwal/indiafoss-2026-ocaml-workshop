@@ -10,18 +10,18 @@ Course launches on SWAYAM/NPTEL in **July 2026**.
 
 ## Status
 
-Toolchain complete; lectures for Week 1 (L1-L3) drafted. See
-[`PLAN.md`](PLAN.md) for the week-by-week mapping from the source
+Toolchain complete; lectures for Module 1 (L1-L3) drafted. See
+[`PLAN.md`](PLAN.md) for the module-by-module mapping from the source
 CS3100 lectures to the new 20-30 min NPTEL videos.
 
 ## What's in here
 
 ```
 lectures/
-  W01-L01-course-intro.md      Markdown source for each NPTEL lecture
-  W01-L02-why-fp.md            (one .md = one ~25 min video = one webpage)
-  W01-L03-ocaml-tour.md
-  weeks.txt                    Week titles for the sidebar
+  M01-L01-course-intro.md      Markdown source for each NPTEL lecture
+  M01-L02-why-fp.md            (one .md = one ~25 min video = one webpage)
+  M01-L03-ocaml-tour.md
+  modules.txt                  Module titles for the sidebar
 
 tools/
   nptel-build/                 OCaml binary: .md -> HTML (cmarkit + frontmatter
@@ -52,7 +52,7 @@ _references/_video/            Transcripts of the CS3100 lectures (.md only;
 
 ## Authoring a lecture
 
-Each lecture is one markdown file `lectures/W<nn>-L<nn>-<slug>.md` with
+Each lecture is one markdown file `lectures/M<nn>-L<nn>-<slug>.md` with
 a YAML frontmatter block (title, week, lecture_no, concepts, keywords,
 activity_question, reading). The body is CommonMark plus:
 
@@ -61,7 +61,7 @@ activity_question, reading). The body is CommonMark plus:
 - `:::notes ... :::` blocks are speaker notes
 - `:::fragment ... :::` blocks are progressive reveals inside a slide
 
-See [`W01-L01-course-intro.md`](lectures/W01-L01-course-intro.md) for
+See [`M01-L01-course-intro.md`](lectures/M01-L01-course-intro.md) for
 a worked example.
 
 ## Build & preview locally

@@ -1,14 +1,14 @@
 # NPTEL course plan: 3100 → NPTEL lecture mapping
 
 Working document, iterate as needed. **NPTEL lecture** = one ~25 min on-camera
-video = one webpage under `lectures/weekNN-<topic>/LNN-<slug>.md`. **3100
+video = one webpage under `lectures/M<NN>-L<NN>-<slug>.md`. **3100
 lecture** = source video on the [CS3100 playlist](https://www.youtube.com/playlist?list=PLt0HgEXFOHdkE-NTs87s7QjwYwqeihb-D),
 transcripts under `_references/_video/`.
 
 NPTEL constraints (binding):
 - Each video 20-30 min (hard cap 30)
-- ~2.5-3 hrs of video per week
-- Week = 5-7 videos + ~30-min tutorial that walks through assignment-style problems
+- ~2.5-3 hrs of video per module (one calendar week)
+- Module = 5-7 videos + ~30-min tutorial that walks through assignment-style problems
 - Activity-question and reading list per video
 - License CC-BY-NC-SA -- redraw any reused imagery
 
@@ -16,7 +16,7 @@ NPTEL constraints (binding):
 
 ---
 
-## Week 1 — Intro to Functional Programming
+## Module 1 — Intro to Functional Programming
 
 | #  | NPTEL lecture                                  | 3100 source                  | x-ocaml cells |
 | -- | ---------------------------------------------- | ---------------------------- | ------------- |
@@ -32,7 +32,7 @@ small programs) and replace the setup mechanics.
 
 ---
 
-## Week 2 — Expressions
+## Module 2 — Expressions
 
 3100 Lec 02 covers expressions + functions; it's split across two NPTEL weeks.
 
@@ -47,7 +47,7 @@ small programs) and replace the setup mechanics.
 
 ---
 
-## Week 3 — Functions
+## Module 3 — Functions
 
 3100 Lec 02 tail + Lec 04 + Lec 05.
 
@@ -62,7 +62,7 @@ small programs) and replace the setup mechanics.
 
 ---
 
-## Week 4 — Data types
+## Module 4 — Data types
 
 3100 Lec 06 + 07.
 
@@ -77,7 +77,7 @@ small programs) and replace the setup mechanics.
 
 ---
 
-## Week 5 — Pattern matching
+## Module 5 — Pattern matching
 
 3100 Lec 07 tail + 08.
 
@@ -92,7 +92,7 @@ small programs) and replace the setup mechanics.
 
 ---
 
-## Week 6 — Higher-order programming
+## Module 6 — Higher-order programming
 
 3100 Lec 10 tail + 11.
 
@@ -107,7 +107,7 @@ small programs) and replace the setup mechanics.
 
 ---
 
-## Week 7 — Side-effects, Modules
+## Module 7 — Side-effects, Modules
 
 3100 Lec 09 (Exceptions) + Lec 20-23 (side effects & modules).
 
@@ -123,7 +123,7 @@ small programs) and replace the setup mechanics.
 
 ---
 
-## Week 8 — Monads, GADTs
+## Module 8 — Monads, GADTs
 
 3100 Lec 27-33. 3100 Lec 24-26 (streams) is not in the NPTEL syllabus; treat
 it as optional supplementary material if a week feels light.
@@ -145,7 +145,7 @@ students.
 
 ---
 
-## Week 9 — Secure programming: Runtime, GC, UB, Buffer overflow
+## Module 9 — Secure programming: Runtime, GC, UB, Buffer overflow
 
 **No 3100 source.** New material drawing on the instructor's Multicore-OCaml
 expertise.
@@ -161,7 +161,7 @@ expertise.
 
 ---
 
-## Week 10 — Memory Safety, Interfacing with C
+## Module 10 — Memory Safety, Interfacing with C
 
 **No 3100 source.** New material.
 
@@ -176,7 +176,7 @@ expertise.
 
 ---
 
-## Week 11 — Unikernel OS
+## Module 11 — Unikernel OS
 
 **No 3100 source.** New material; in-browser execution is not realistic for
 unikernels, so this week leans on screencast demos of MirageOS.
@@ -192,7 +192,7 @@ unikernels, so this week leans on screencast demos of MirageOS.
 
 ---
 
-## Week 12 — Concurrency, capabilities, DRF
+## Module 12 — Concurrency, capabilities, DRF
 
 **No 3100 source.** OxCaml capsules + Eio. Likely needs cherry-picking from
 the user's OxCaml branch and `kc-toplevel-extend` js_of_ocaml fork to ship

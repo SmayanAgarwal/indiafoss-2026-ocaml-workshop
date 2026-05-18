@@ -21,9 +21,9 @@ COPY_ASSETS="${COPY_ASSETS:-0}"
 (cd "$REPO_ROOT" && opam exec --switch=5.4.0 -- dune build tools/nptel-build/bin/main.exe >/dev/null)
 
 if [ $# -eq 0 ]; then
-  # Lecture files follow the W<nn>-L<nn>-slug.md convention. Other .md
+  # Lecture files follow the M<nn>-L<nn>-slug.md convention. Other .md
   # files under lectures/ (e.g. drafts, READMEs) are skipped.
-  mapfile -d '' files < <(find "$REPO_ROOT/lectures" -name 'W*-L*-*.md' -print0 2>/dev/null)
+  mapfile -d '' files < <(find "$REPO_ROOT/lectures" -name 'M*-L*-*.md' -print0 2>/dev/null)
 else
   files=("$@")
 fi

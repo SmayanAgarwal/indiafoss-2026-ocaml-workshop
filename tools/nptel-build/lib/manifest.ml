@@ -21,7 +21,7 @@ type t = {
 }
 
 let parse_filename name =
-  (* Expects [W<nn>-L<nn>-<rest>.md]. Returns (week, lecture, slug)
+  (* Expects [M<nn>-L<nn>-<rest>.md]. Returns (module_no, lecture, slug)
      or [None] if the filename doesn't match. *)
   let strip_ext s =
     if Filename.check_suffix s ".md" then
@@ -30,7 +30,7 @@ let parse_filename name =
   in
   let s = strip_ext (Filename.basename name) in
   try
-    Scanf.sscanf s "W%d-L%d-" (fun w l ->
+    Scanf.sscanf s "M%d-L%d-" (fun w l ->
       Some (w, l, s))
   with Scanf.Scan_failure _ | End_of_file -> None
 
@@ -63,10 +63,10 @@ let read_title path =
   let fm, _ = Frontmatter.parse raw in
   fm.title
 
-(* Read week titles from [<dir>/weeks.txt]. Format: "[Wnn]: title".
+(* Read module titles from [<dir>/modules.txt]. Format: "[Mnn]: title".
    Lines beginning with '#' are comments. *)
 let read_week_titles dir =
-  let path = Filename.concat dir "weeks.txt" in
+  let path = Filename.concat dir "modules.txt" in
   if not (Sys.file_exists path) then []
   else begin
     let ic = open_in path in
@@ -83,7 +83,7 @@ let read_week_titles dir =
       if s = "" || (String.length s > 0 && s.[0] = '#') then None
       else
         try
-          Scanf.sscanf s "W%d: %[^\n]" (fun n title ->
+          Scanf.sscanf s "M%d: %[^\n]" (fun n title ->
             Some (n, String.trim title))
         with _ -> None) !lines
     |> List.filter_map Fun.id
@@ -95,7 +95,7 @@ let build ~lectures_dir ~current_slug =
   let title_for_week n =
     match List.assoc_opt n week_titles with
     | Some t -> t
-    | None -> Printf.sprintf "Week %02d" n
+    | None -> Printf.sprintf "Module %02d" n
   in
   let entries =
     List.map

@@ -36,7 +36,7 @@ let head ~asset_root ~(fm : Frontmatter.t) =
 let header_bar ~(fm : Frontmatter.t) =
   let lecture_id =
     match fm.lecture_no, fm.week with
-    | Some l, Some w -> Printf.sprintf "Week %d &middot; Lecture %d" w l
+    | Some l, Some w -> Printf.sprintf "Module %d &middot; Lecture %d" w l
     | _ -> ""
   in
   let title = if fm.title = "" then "(untitled)" else Parse.html_escape fm.title in
@@ -371,7 +371,7 @@ let render_sidebar ~(manifest : Manifest.t option) =
             (Printf.sprintf "    <details class=\"sidebar-week\"%s>\n" opened);
           Buffer.add_string buf
             (Printf.sprintf
-               "      <summary><span class=\"week-no\">W%02d</span> %s</summary>\n"
+               "      <summary><span class=\"week-no\">M%02d</span> %s</summary>\n"
                w.week_no (Parse.html_escape w.week_title));
           Buffer.add_string buf "      <ul class=\"sidebar-lectures\">\n";
           List.iter
@@ -406,7 +406,7 @@ let render_prev_next ~(manifest : Manifest.t option) =
              (Printf.sprintf
                 "  <a class=\"prev\" href=\"%s.html\">&larr; <span \
                  class=\"label\">Previous</span> <span \
-                 class=\"sub\">W%02d L%02d &middot; %s</span></a>\n"
+                 class=\"sub\">M%02d L%02d &middot; %s</span></a>\n"
                 e.slug e.week e.lecture (Parse.html_escape e.title))
        | None -> Buffer.add_string buf "  <span class=\"prev disabled\"></span>\n");
       (match next with
