@@ -32,4 +32,10 @@
   M05-L03-guards.md
   M05-L04-exhaustiveness.md
   M05-L05-records-variants.md
-  M05-L06-tutorial.md))
+  M05-L06-tutorial.md
+  M06-L01-functions-revisited.md
+  M06-L02-map.md
+  M06-L03-filter.md
+  M06-L04-fold.md
+  M06-L05-pipelines.md
+  M06-L06-tutorial.md))
