@@ -42,7 +42,7 @@ where one might do.
 
 ## In OCaml, `if` is an expression
 
-```ocaml
+```ocaml skip
 let abs_val = if x < 0 then -x else x
 ```
 
@@ -90,7 +90,7 @@ the whole expression is `int`.
 
 ## The branches must agree
 
-```ocaml
+```ocaml skip
 let _ = if true then 13 else 13.4
 ```
 
@@ -268,7 +268,7 @@ two different functions, picked at runtime.
 Why does OCaml reject the following? Be precise about which rule is
 violated.
 
-```ocaml
+```ocaml skip
 let label x =
   if x > 0 then "positive"
   else 0

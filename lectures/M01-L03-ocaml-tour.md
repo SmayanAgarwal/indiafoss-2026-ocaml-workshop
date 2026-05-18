@@ -75,7 +75,7 @@ OCaml's float operators are **distinct** from the integer ones:
 
 Mixing them is a *type error*, caught at compile time:
 
-```ocaml
+```ocaml skip
 1 + 2.0
 ```
 

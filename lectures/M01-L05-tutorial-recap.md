@@ -163,7 +163,7 @@ just composition.
 
 Type errors are noisy at first. Let's deliberately write one.
 
-```ocaml
+```ocaml skip
 let bad c = c + 273.15
 ```
 
@@ -193,7 +193,7 @@ In this case "because of integer `+`". Fix: use `+.`.
 Write a function `bmi` that takes a mass in kilograms and a height in
 metres, and returns the body mass index (mass divided by height squared).
 
-```ocaml
+```ocaml skip
 (* fill in *)
 let bmi mass height = ???
 ```

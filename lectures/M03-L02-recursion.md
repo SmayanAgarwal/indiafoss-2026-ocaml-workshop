@@ -182,7 +182,7 @@ by some measure, than the current argument?*
 
 ## What if the input is negative?
 
-```ocaml
+```ocaml skip
 let rec factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)

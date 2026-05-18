@@ -254,13 +254,13 @@ giving it a name.
 
 ## Type signatures: `->` is right-associative
 
-```ocaml
+```ocaml skip
 val add : int -> int -> int
 ```
 
 Reads as `int -> (int -> int)`. The arrows associate right.
 
-```ocaml
+```ocaml skip
 val apply_twice : ('a -> 'a) -> 'a -> 'a
 ```
 

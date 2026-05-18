@@ -108,7 +108,7 @@ compilers, configuration loaders. Whenever data has multiple
 
 What if we forget a case?
 
-```ocaml
+```ocaml skip
 let area s =
   match s with
   | Circle r -> 3.14159 *. r *. r
@@ -139,7 +139,7 @@ Module 7 when we discuss dune configuration.
 
 Now suppose we want to add `Triangle`:
 
-```ocaml
+```ocaml skip
 type shape =
   | Circle of float
   | Square of float

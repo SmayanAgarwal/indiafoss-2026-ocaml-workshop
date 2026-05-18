@@ -159,7 +159,7 @@ trailing `.` is part of the operator name.
 
 Mixing types is a compile-time error:
 
-```ocaml
+```ocaml skip
 let _ = 1 + 2.0
 ```
 

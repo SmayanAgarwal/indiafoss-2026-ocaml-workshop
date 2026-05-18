@@ -100,7 +100,7 @@ You can't write `(Some 7) + 1`. That would mean adding an `int
 option` to an `int`, which is a type error. You must unwrap it
 first:
 
-```ocaml
+```ocaml skip
 match find_age "alice" with
 | None -> 0
 | Some n -> n + 1
@@ -153,7 +153,7 @@ let increment_age name =
 
 A standard helper makes this cleaner:
 
-```ocaml
+```ocaml skip
 let increment_age name =
   Option.map (fun n -> n + 1) (lookup_age name)
 ```
@@ -272,7 +272,7 @@ each.
 
 A common idiom for handling it is:
 
-```ocaml
+```ocaml skip
 match safe_div 100 b with
 | None -> 0  (* or: raise, or: log, or: ask the user *)
 | Some q -> q

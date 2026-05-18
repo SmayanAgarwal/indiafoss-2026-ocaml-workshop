@@ -104,7 +104,7 @@ Short-circuit evaluation matters because the right-hand side can
 contain expressions that would crash, raise, or take a long time. You
 rely on this pattern when guarding access:
 
-```ocaml
+```ocaml skip
 let _ = n <> 0 && (1.0 /. float_of_int n) > 0.0
 ```
 
@@ -203,7 +203,7 @@ like `*`). So `10 mod 3 * 2` is `(10 mod 3) * 2 = 2`, not `10 mod (3 * 2)`.
 
 ## Pitfall 1: `+` instead of `+.`
 
-```ocaml
+```ocaml skip
 let area r = 3.14159 * r * r
 ```
 
@@ -222,7 +222,7 @@ Fix: `3.14159 *. r *. r`. The operator drives the type.
 
 ## Pitfall 2: implicit conversion that isn't there
 
-```ocaml
+```ocaml skip
 let _ = "value: " ^ 5
 ```
 
@@ -250,7 +250,7 @@ let _ = Printf.sprintf "value: %d" 5
 
 ## Pitfall 3: subtraction syntax
 
-```ocaml
+```ocaml skip
 let _ = abs -5
 ```
 
@@ -272,14 +272,14 @@ Same problem with `-.` for floats. When in doubt, parenthesize.
 
 ## Pitfall 4: comparison chains aren't a thing
 
-```ocaml
+```ocaml skip
 let _ = 0 < x < 10
 ```
 
 This parses as `(0 < x) < 10`, which compares a `bool` to an `int`
 and is a type error. Write it as:
 
-```ocaml
+```ocaml skip
 let _ = 0 < x && x < 10
 ```
 

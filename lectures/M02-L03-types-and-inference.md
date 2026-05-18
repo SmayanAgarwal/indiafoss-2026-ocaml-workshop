@@ -91,7 +91,7 @@ choice.
 
 ## A static error
 
-```ocaml
+```ocaml skip
 let _ = 23 = 45.0
 ```
 

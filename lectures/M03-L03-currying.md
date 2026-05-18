@@ -126,7 +126,7 @@ order most useful for partial application.
 For instance, `List.map` takes the *function* first and the *list*
 second:
 
-```ocaml
+```ocaml skip
 val List.map : ('a -> 'b) -> 'a list -> 'b list
 ```
 
@@ -188,13 +188,13 @@ Same idea as `add 5`, just one more layer of nesting.
 
 When you have
 
-```ocaml
+```ocaml skip
 let f x = g x
 ```
 
 you can drop the `x`:
 
-```ocaml
+```ocaml skip
 let f = g
 ```
 

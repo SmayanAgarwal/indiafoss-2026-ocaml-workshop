@@ -232,7 +232,7 @@ Write `is_even` and `is_odd` using mutual recursion, with the only
 arithmetic being "subtract 1 and compare to 0" (no `mod`, no `&&
 even logic`):
 
-```ocaml
+```ocaml skip
 let rec is_even n = ???
 and is_odd n = ???
 ```

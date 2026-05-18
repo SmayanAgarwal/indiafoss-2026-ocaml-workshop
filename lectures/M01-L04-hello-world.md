@@ -133,7 +133,7 @@ A useful habit: even in the toplevel, prefer `let () = ...` for
 side-effecting calls. It documents intent and catches accidents like
 this:
 
-```ocaml
+```ocaml skip
 let () = 42
 ```
 

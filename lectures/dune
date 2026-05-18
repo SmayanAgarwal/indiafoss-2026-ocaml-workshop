@@ -1,0 +1,29 @@
+; Validate the OCaml code in every lecture by running it under
+; ocaml-mdx. Each `ocaml` fenced block in a .md file is compiled
+; and (where applicable) evaluated.
+
+(mdx
+ (files
+  M01-L01-course-intro.md
+  M01-L02-why-fp.md
+  M01-L03-ocaml-tour.md
+  M01-L04-hello-world.md
+  M01-L05-tutorial-recap.md
+  M02-L01-literals.md
+  M02-L02-let-bindings.md
+  M02-L03-types-and-inference.md
+  M02-L04-operators.md
+  M02-L05-if-expressions.md
+  M02-L06-tutorial.md
+  M03-L01-functions-as-values.md
+  M03-L02-recursion.md
+  M03-L03-currying.md
+  M03-L04-tail-recursion.md
+  M03-L05-local-and-mutual.md
+  M03-L06-tutorial.md
+  M04-L01-tuples.md
+  M04-L02-records.md
+  M04-L03-variants.md
+  M04-L04-recursive-types.md
+  M04-L05-option-and-aliases.md
+  M04-L06-tutorial.md))

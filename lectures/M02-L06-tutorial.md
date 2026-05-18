@@ -163,7 +163,7 @@ read the message, fix, repeat. Three errors you'll meet a lot:
 
 ## Type error 1: int / float confusion
 
-```ocaml
+```ocaml skip
 let bad r = 3.14 * r * r
 ```
 
@@ -183,7 +183,7 @@ expected an `int`. Fix: switch to `*.`.
 
 ## Type error 2: missing conversion
 
-```ocaml
+```ocaml skip
 let bad x = "value: " ^ x
 let _ = bad 5
 ```
@@ -196,7 +196,7 @@ Error: This expression has type int but an expression was expected
 The function `bad` was inferred as `string -> string` (because of
 `^`), so passing an `int` is rejected. Convert with `string_of_int`:
 
-```ocaml
+```ocaml skip
 let _ = bad (string_of_int 5)
 ```
 
@@ -206,7 +206,7 @@ let _ = bad (string_of_int 5)
 
 ## Type error 3: mismatched if branches
 
-```ocaml
+```ocaml skip
 let bad x =
   if x > 0 then "positive"
   else 0
