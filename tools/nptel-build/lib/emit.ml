@@ -308,9 +308,6 @@ let runtime_script ~asset_root =
       localStorage.setItem(SIDEBAR_KEY, hidden ? '1' : '0');
     }
     document.querySelector('.sidebar-collapse')?.addEventListener('click', toggleSidebar);
-    // The button inside the sidebar (rendered by [render_sidebar]) does
-    // the same thing.
-    document.querySelector('.sidebar-toggle')?.addEventListener('click', toggleSidebar);
 
     function syncMode() {
       const slide = isSlideMode();
@@ -353,9 +350,6 @@ let render_sidebar ~(manifest : Manifest.t option) =
   | Some m ->
       let buf = Buffer.create 2048 in
       Buffer.add_string buf "<aside class=\"sidebar chapter-only\">\n";
-      Buffer.add_string buf
-        "  <button class=\"sidebar-toggle\" type=\"button\" \
-         aria-label=\"Toggle navigation\">&#9776;</button>\n";
       Buffer.add_string buf
         "  <nav class=\"sidebar-nav\" aria-label=\"Course outline\">\n";
       Buffer.add_string buf
