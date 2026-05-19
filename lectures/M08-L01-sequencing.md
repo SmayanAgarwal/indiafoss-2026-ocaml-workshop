@@ -14,20 +14,63 @@ reading:
 
 # Sequencing computations
 
-This module is about a pattern that shows up everywhere once you
-look: *sequencing computations that might fail*. The shapes we
-already have (`option`, `result`, exceptions) all express
-"something might go wrong"; what we don't have yet is a clean way
-to *chain* such computations without the code becoming a pyramid.
+Module 8 is about a pattern that shows up everywhere in OCaml code,
+once you learn to look for it: *sequencing computations that might
+fail*. We already have the shapes for "something may go wrong":
+`option` from Module 4, `result` from Module 4 as well, and exceptions
+from Module 7. What we do not yet have is a tidy way to *chain* such
+computations. Without one, code grows into a *pyramid of doom* of
+nested `match` statements where the actual logic is buried inside
+six levels of indentation.
 
-This lecture sets up the problem. The next four show different
-solutions.
+This lecture sets up the problem and motivates the solution. The
+next three lectures (option monad, result monad, state monad) study
+the solution in detail. After that we turn to a different but
+related advanced feature, generalized algebraic data types, or GADTs,
+in lectures five and six. The Module 8 tutorial in lecture seven
+combines both.
+
+The word *monad* sounds scarier than it is. The mathematical
+machinery behind it lives in [category theory](https://en.wikipedia.org/wiki/Category_theory),
+which is a beautiful subject but not what we are doing today.
+For programming purposes, a monad is a small *design pattern*: a
+type, plus two operations (`return` and `bind`), that lets you
+sequence computations of a particular shape without writing the
+plumbing by hand. By the end of this module you will recognise that
+pattern in several different guises.
+
+## A motivating problem
+
+Suppose you are writing a small piece of code that parses a number
+out of a string, doubles it, checks that it fits in some bound, and
+prints it. Each of the four steps might fail. We will use `option`
+to model the possible failure: `Some x` for success carrying a
+value, `None` for failure.
+
+```ocaml
+let parse_int s = int_of_string_opt s
+let twice x = Some (x * 2)
+let small x = if x < 100 then Some x else None
+let print_num x = print_endline (string_of_int x); Some ()
+```
+
+`parse_int` uses the standard-library `int_of_string_opt`, which
+returns `None` if the string is not a valid integer. The other
+three return `Some` of something, with one of them, `small`, choosing
+`None` when the input is out of range. Each function has the same
+*shape* in its return type: an `'a option`.
+
+Now we want to wire them together: parse, then double, then check,
+then print. At each step, if the previous step said `None`, we want
+the whole pipeline to give up and produce `None` itself; if it said
+`Some x`, we want to feed `x` to the next step.
+
+The naive translation, written with nested pattern matching, looks
+like this:
 
 :::slide
 
 ## The pyramid of doom
-
-Suppose four steps, each returning an `option`:
 
 ```ocaml
 let parse_int s = int_of_string_opt s
@@ -51,19 +94,59 @@ let _ = demo "frog"
 let _ = demo "100"
 ```
 
-- The third call prints nothing: `100 * 2 = 200` is rejected by `small`.
-- Notice the *shape*: four steps, four `match`es, four `None -> None` clauses.
-- The actual logic is buried in the right-hand sides.
+- Four steps, four `match`es, four `None -> None` clauses.
+- The interesting logic is buried four levels deep.
+- The `None -> None` arms are pure noise: they say nothing about the program.
 
 :::
+
+Run those three calls in your head. `demo "5"` parses to `5`,
+doubles to `10`, passes the `< 100` check, prints `10`, returns
+`Some ()`. `demo "frog"` fails at the first step: `parse_int "frog"`
+is `None`, so `demo "frog"` is `None`. `demo "100"` parses to `100`,
+doubles to `200`, fails the `< 100` check, returns `None` without
+printing.
+
+The pyramid shape is visible: each `match` indents one more level
+to the right. With four steps it is already uncomfortable; with
+seven or eight (a real parser, say) the line lengths run off the
+right side of the editor. Worse, the *interesting* code (what each
+step does after a successful previous step) is on the inside; the
+*boring* code (`None -> None` four times) is on the outside. The
+ratio of signal to noise is bad.
+
+A bigger problem hides under the noise: the pattern of repetition.
+Every step has *exactly the same shape*: "if the previous step is
+`None`, return `None`; otherwise, unwrap and continue." We write
+it once, then twice, then four times, and it gets longer in linear
+proportion to the number of steps. This is a clear signal to look
+for an abstraction.
+
+## Capturing the pattern in a helper
+
+Pick the repetition out as a function. The function takes an
+`option` and a function that says "what to do if we have a value",
+and produces the next `option`:
+
+```ocaml
+let bind opt f =
+  match opt with
+  | None -> None
+  | Some x -> f x
+```
+
+Two arguments, three lines. Its type, inferred by OCaml, is
+`'a option -> ('a -> 'b option) -> 'b option`. Read it slowly: it
+takes an `'a option`, plus a function from `'a` to `'b option`, and
+gives back a `'b option`. The first argument is the previous step's
+result; the second is what to do next; the result is the
+combined-and-possibly-short-circuited new step.
+
+With `bind` in hand we can rewrite `demo` without the pyramid:
 
 :::slide
 
 ## What we want
-
-- Each step's pattern is the same.
-- "If previous was `None`, give up; otherwise, unwrap, run the next step."
-- A helper would let us write it once:
 
 ```ocaml
 let bind opt f =
@@ -85,17 +168,45 @@ let demo s =
 let _ = demo "5"
 ```
 
-- Each step is one line: `bind (this) (fun x -> rest)`.
-- The "what to do if `None`" logic is captured once, in `bind`.
+- Each step is one line: `bind <previous> (fun x -> <next step>)`.
+- The "what to do if `None`" logic is captured once, inside `bind`.
+- The pyramid is flattened to a vertical sequence.
 
 :::
+
+The structure is now linear in the number of steps. There is one
+`bind` per step. The shape of each line tells the same story: "feed
+the previous option into `bind`; if it had a value, name it (`x`,
+`y`, `z`), and continue."
+
+It still has noise. Each line opens an extra parenthesis (which
+piles up on the last line), and `bind ... (fun x -> ...)` is
+heavier than just `let x = ... in ...`. We are halfway to a good
+abstraction but not all the way there. OCaml has one more piece of
+sugar that closes the gap.
+
+## A preview of `let*`
+
+OCaml has a feature called *let-operators* (introduced in OCaml
+4.08) that lets you define your own binding constructs that look
+like `let`. We will study them properly in the next lecture; for
+now, the punchline. We can define an operator named `( let* )` to
+be exactly our `bind`:
+
+```ocaml
+let ( let* ) opt f =
+  match opt with
+  | None -> None
+  | Some x -> f x
+```
+
+Once that is in scope, OCaml lets us write `let* x = e in rest`,
+and it desugars to `( let* ) e (fun x -> rest)`, which is `bind e
+(fun x -> rest)`. The whole pipeline becomes:
 
 :::slide
 
 ## `let*` syntax (preview)
-
-- The nested `bind` is still slightly heavy.
-- OCaml has a sugar for it (`let*`) that we'll cover in Lecture 2:
 
 ```ocaml
 let ( let* ) opt f =
@@ -117,54 +228,146 @@ let demo s =
 let _ = demo "5"
 ```
 
-- Reads almost like ordinary `let ... in ...` sequencing.
-- Behind the scenes it's exactly the nested `bind`s from before.
-- This is what people mean by "an option monad".
-- The *shape* is: (`return : 'a -> 'a option`) + (`bind : 'a option -> ('a -> 'b option) -> 'b option`).
-- Anything with that shape is a monad.
+- Each step is a `let* name = expression in ...`.
+- Looks almost identical to ordinary `let name = expression in ...`.
+- Hidden: if any step gives `None`, the rest is skipped.
+- This is what is meant by *the option monad*.
 
 :::
 
-The word "monad" sounds intimidating. The reality is a small
-two-function pattern: `return` (lift a value into the shape) and
-`bind` (use a value inside the shape to produce the next stage).
-That's it. We'll see it for `option`, `result`, state, and others.
+`demo "5"` evaluates to `Some ()` and prints `10`. `demo "frog"`
+evaluates to `None` and prints nothing. `demo "100"` evaluates to
+`None` and prints nothing.
+
+Compare the three forms. The nested-`match` form is fifteen lines
+of code, deeply indented. The explicit-`bind` form is four lines,
+all parenthesised. The `let*` form is four lines, no parentheses,
+and reads top to bottom like a sequence of ordinary `let` bindings.
+The compiled code is identical for all three: `let*` is purely
+syntactic sugar that elaborates back to `bind`.
+
+What makes this *a monad* is the shape: a type (`option`) and two
+operations (`return`, sometimes called `pure`, which is `fun x ->
+Some x`; and `bind`, which is what we wrote above). Anything that
+fits that shape is a candidate for the same `let*` notation, with
+the same intuition: "give the value a name; if there is no value,
+short-circuit."
+
+## Why this matters
+
+The pattern is so common that you should learn to spot it. Once
+you do, you will see it in every corner of a real OCaml codebase:
 
 :::slide
 
 ## Why this matters
 
-- In Module 4 we said `option` is OCaml's answer to null.
-- Trade-off: option-flavoured code requires lots of `match` statements.
-- The pyramid of doom is exactly that trade-off in practice.
-- Monad-shaped helpers make the trade-off cheap: type-safety of `option` **and** top-to-bottom readable code.
-- Same pattern lifts to other shapes (`result`, `Lwt`/`Async` promises, parsers, state); same notation.
+- Module 4: `option` is OCaml's answer to null pointers.
+- Cost: option-flavoured code requires many `match` statements.
+- The pyramid is that cost in practice.
+- Monad-shaped helpers: type safety of `option` **and** linear code.
+- Same pattern lifts to other shapes (`result`, promises, parsers, state).
+- One notation (`let*`), one intuition, many concrete monads.
 
 :::
 
+The trade-off when we introduced `option` was: "you get explicit
+control over the case where there is no value, at the cost of more
+pattern matching." The pyramid of doom is exactly that cost,
+showing up in real code. The monad pattern lets us keep the safety
+of `option` while paying almost no syntactic cost: code reads top
+to bottom, names introduced with `let*` are bound for the rest of
+the block, and the short-circuit-on-failure plumbing is invisible.
+
+The same pattern lifts to other shapes, and that is the second
+reason it is worth learning. The next three lectures show three
+different monads:
+
 :::slide
 
-## Three monads we'll cover this module
+## Three monads we will cover
 
-- **Option monad** (Lecture 2): `'a option`. Sequence "maybe a
-  value" steps.
-- **Result monad** (Lecture 3): `('a, 'e) result`. Like option, but
-  the failure case carries info.
-- **State monad** (Lecture 4): `state -> 'a * state`. Threads a
-  hidden state through a chain of computations.
-- Lectures 5-6 cover **GADTs**: a more advanced type-system feature.
-- Loosely connected to monads (used together for "typed embedded DSLs").
+- **Option monad** (Lecture 2): `'a option`. "Maybe a value."
+- **Result monad** (Lecture 3): `('a, 'e) result`. "Either a value or an error with information."
+- **State monad** (Lecture 4): `state -> ('a * state)`. "A computation that threads state."
+- Lectures 5-6: GADTs, a separate type-system feature.
+- Lecture 7: tutorial, combining GADTs with the monad pattern.
 
+:::
+
+After that we turn to a different topic, GADTs. Monads are about
+sequencing computations; GADTs are about giving variants more
+precise types. They are unrelated in mechanics but commonly used
+together in [embedded domain-specific languages](https://en.wikipedia.org/wiki/Domain-specific_language),
+where you build a small typed language inside OCaml. The tutorial
+in lecture seven combines them.
+
+## Where else does this come up?
+
+A short list, before we move on. Each of the following has the
+same `'a t` + `return` + `bind` shape, with `t` being something
+different in each case:
+
+- `'a option`: maybe a value (this module's lecture 2).
+- `('a, 'e) result`: a value or an error message (lecture 3).
+- `'a list`: zero, one, or many values; `bind` is "flat-map across
+  all of them" (the *list monad*; sometimes used for non-determinism).
+- `state -> 'a * state`: a value computed against a piece of
+  ambient state (lecture 4).
+- `'a Lwt.t` or `'a Eio.Promise.t`: a value that will become
+  available after I/O completes (concurrent programming; we will
+  see [Eio](https://github.com/ocaml-multicore/eio) in Module 12).
+- `'a parser`: a parser that reads bytes and either returns an
+  `'a` plus the remaining input or signals failure (parser
+  combinators; not in this course but a common application).
+
+If you build a habit of asking "is this shape a monad?" when you
+write any kind of "computation that may not produce a plain value",
+you will notice the pattern far more often than you would expect.
+
+## A quick check
+
+Two small comprehension checks before the activity.
+
+:::quiz mcq
+In the pyramid-of-doom version of `demo`, how many times does the
+text `None -> None` appear in the source?
+
+- [ ] One.
+- [ ] Two.
+- [x] Three.
+- [ ] Four.
+
+**Why:** there is one `match` per step (four steps), but the *last*
+step's match does not need a `None -> None` arm because its only
+caller is the surrounding `Some _ ->` branch, and the value of the
+whole expression is just the result of `print_num z`. We had three
+intermediate `match`es, each contributing one `None -> None` arm.
+The pyramid grows linearly with the number of intermediate steps.
+:::
+
+:::quiz mcq
+What is the type of the helper `bind` we defined?
+
+- [ ] `'a option -> 'a option -> 'a option`
+- [x] `'a option -> ('a -> 'b option) -> 'b option`
+- [ ] `'a -> ('a -> 'b option) -> 'b option`
+- [ ] `'a option -> ('a -> 'b) -> 'b option`
+
+**Why:** `bind` takes an option (the previous step's result), a
+function that turns the unwrapped value into the next option, and
+returns that next option. The two type variables `'a` and `'b` are
+independent because the value type can change from step to step
+(parse a string to an int, then double the int, etc.).
 :::
 
 :::slide
 
 ## Activity
 
-Take the nested `match ... with | None -> None | Some x -> ...`
-pattern and write `bind : 'a option -> ('a -> 'b option) -> 'b option`.
-
-Use it to chain three optional steps in a flat pipeline.
+Write `bind : 'a option -> ('a -> 'b option) -> 'b option`. Use it
+to chain three optional steps in a flat pipeline. Watch the shape:
+each step is one line.
 
 :::
 
@@ -192,22 +395,81 @@ let _ = pipeline "frog"
 let _ = pipeline "-3"
 ```
 
-`Some 10`, `None`, `None`.
-
-- `bind` captures the "if `None`, abort; otherwise, unwrap and pass on" logic.
+- `Some 10`, `None`, `None`.
 - Three steps, three `bind`s, no nested `match`.
 
 :::
 
+A code-quiz to consolidate:
+
+:::quiz code
+Define `bind_opt : 'a option -> ('a -> 'b option) -> 'b option`
+that captures the "short-circuit on `None`, otherwise unwrap and
+continue" pattern.
+
+```ocaml
+let bind_opt opt f =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let safe_div a b = if b = 0 then None else Some (a / b)
+let () =
+  check (bind_opt (Some 10) (fun x -> Some (x + 1)) = Some 11) "step";
+  check (bind_opt None (fun x -> Some (x + 1)) = None) "short-circuit";
+  check (bind_opt (Some 10) (fun x -> safe_div x 0) = None) "step gives None";
+  check (bind_opt (Some 10) (fun x -> safe_div x 2) = Some 5) "step gives Some";
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution: `let bind_opt opt f = match opt with | None ->
+None | Some x -> f x`. This is exactly the helper we built up over
+the lecture. We will give it a sugared name (`let*`) in the next
+lecture and start using it as our default vocabulary for
+option-flavoured sequencing.
+
+## A pitfall to flag now
+
+It is tempting, once you understand `bind`, to reach for it
+everywhere, even when the computation only has one or two optional
+steps. Resist that. For two steps, the nested `match` is just
+fine: shorter, no helper to import, and equally clear:
+
+```ocaml
+let _ =
+  match int_of_string_opt "42" with
+  | None -> "could not parse"
+  | Some n -> "got " ^ string_of_int n
+```
+
+The pyramid only becomes a problem with three or more sequential
+optional steps. We will come back to the threshold question in the
+next lecture; for now the rule of thumb is: if you find yourself
+typing your second `None ->` arm of the day, consider whether
+`let*` would shorten the code.
+
+## What is next
+
 :::slide
 
-## What's next
+## What is next
 
-Lecture 2: the **option monad** in detail, including the `let*`
-sugar that makes monadic code look like ordinary `let`-sequenced
-code.
+Lecture 2: the **option monad** in detail.
+
+- The `let*` syntax-sugar for option-flavoured sequencing.
+- The stdlib's `Option.bind` and `Option.map`.
+- A real example: parsing a pair of integers.
 
 :::
+
+The next lecture defines `let*` formally as a let-operator, points
+at the standard library's `Option.bind` and `Option.map` (the same
+functions, just shipped in the stdlib), and walks through a
+realistic example: parsing `"(3, 4)"` into the pair `(3, 4)`.
+After that, lecture three swaps `option` for `result`: same shape,
+richer failure information.
 
 ## Reading
 

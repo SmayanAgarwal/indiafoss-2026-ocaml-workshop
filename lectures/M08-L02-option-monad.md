@@ -14,9 +14,24 @@ reading:
 
 # The option monad
 
-The option monad is the workhorse for "this may fail without a
-specific reason". This lecture defines it, shows the `let*` sugar
-that makes it pleasant to use, and walks through a real example.
+In the previous lecture we built up a helper `bind` for sequencing
+optional computations, and previewed the `let*` syntactic sugar
+that lets such code read top to bottom. This lecture turns that
+preview into a working tool: we define `let*` formally as a
+*let-operator*, look at the standard library's `Option.bind` and
+`Option.map`, walk through a realistic example, and discuss when
+the monad is the right hammer.
+
+The option monad is the workhorse for "this step may fail, and we
+do not need to say why". A parser that may or may not match. A
+lookup that may or may not find a key. An arithmetic step that may
+or may not produce a sensible answer. Use `option` when the
+*identity* of the failure is the whole story; use `result` (next
+lecture) when callers want a message or an error code.
+
+## Definition
+
+A monad is a type plus two operations. Concretely for `option`:
 
 :::slide
 
@@ -35,19 +50,45 @@ end
 
 Two functions:
 
-- `return : 'a -> 'a option` (sometimes called `pure`). Lift a
-  value into the option world.
-- `bind : 'a option -> ('a -> 'b option) -> 'b option`. Pass an
-  option-shaped value through a function that returns another
-  option-shaped value.
+- `return : 'a -> 'a option`. Lift a plain value into the option world.
+- `bind : 'a option -> ('a -> 'b option) -> 'b option`. Sequence two optional steps.
 
 And one operator alias:
 
-- `let*` is just `bind`.
-- The OCaml syntax sugar `let* x = e in rest` desugars to `( let* ) e (fun x -> rest)`.
-- Which is `bind e (fun x -> rest)`.
+- `let*` is just `bind` under a syntactic-sugar name.
+- `let* x = e in rest` desugars to `( let* ) e (fun x -> rest)`.
 
 :::
+
+`return` is sometimes called `pure` (the [Haskell](https://www.haskell.org/)
+spelling). It is the trivial way to put a plain value into the
+option world: wrap it in `Some`. The reason it has a name at all
+(rather than just writing `Some x` everywhere) is that it is part
+of the monad *interface*: anything that wants to claim to be a
+monad has to provide `return`, and the rest of the code can pretend
+not to know which monad it is using. We will not lean on this
+abstraction in OCaml as heavily as Haskell does, but it is worth
+the name.
+
+`bind` is exactly the helper we wrote in the previous lecture:
+"unwrap an option; if `None`, short-circuit; if `Some x`, pass `x`
+to a continuation." Its type, `'a option -> ('a -> 'b option) -> 'b
+option`, is worth memorising. Read it as: "given an option *now*
+and a function that produces an option *later*, give me back an
+option."
+
+The line `let ( let* ) = bind` is where the magic happens. The
+identifier `( let* )` is a *let-operator*, an OCaml feature
+introduced in version 4.08. Any identifier of the form `let X`
+(or `and X`) where `X` starts with a punctuation character can be
+bound to a function. Once it is in scope, the compiler treats
+`let X p = e in body` as syntactic sugar for `( let X ) e (fun p ->
+body)`. That single rule is the whole feature.
+
+## Using `let*`
+
+Here is the pyramid from the previous lecture, rewritten with
+`let*`:
 
 :::slide
 
@@ -73,21 +114,34 @@ let _ = demo "frog"
 let _ = demo "200"
 ```
 
-`Some 10`, `None`, `None`.
-
-- Read it top to bottom.
-- Each `let* y = expr in` says: compute `expr`; if `None`, the whole thing is `None`.
-- Otherwise, bind `y` to the unwrapped value and continue.
-- Looks like ordinary `let ... in ...` sequencing.
-- The monad operator hides the failure-propagation plumbing.
+- Results: `Some 10`, `None`, `None`.
+- Each `let* y = expr in` says: compute `expr`; if `None`, short-circuit.
+- Otherwise bind `y` and continue.
+- Reads like ordinary `let ... in ...` sequencing.
 
 :::
+
+The visual difference between this and a non-monadic `let` is the
+asterisk: `let* x = e in rest`, not `let x = e in rest`. That is
+the only syntactic mark of the monadic version. The semantic
+difference, of course, is large: this version short-circuits on
+`None`, the plain one cannot, because the plain one only works
+when `e` is a plain `'a`, not an `'a option`.
+
+A reader of monadic code learns to read `let*` as the keyword for
+"this might fail, and if it does, give up." Each `let*` line
+introduces a name that holds the *successful* result; the
+short-circuit on failure is implicit. The whole function reads
+top to bottom with no nested matches.
+
+## `Option.bind` and `Option.map`
+
+The standard library ships these functions, so you do not have to
+write them yourself in real code:
 
 :::slide
 
 ## `Option.bind` and `Option.map`
-
-The standard library ships these:
 
 ```ocaml
 let _ = Option.bind (Some 5) (fun x -> if x > 0 then Some (x * 2) else None)
@@ -98,11 +152,43 @@ let _ = Option.map (fun x -> x * 2) (Some 5)
 `Some 10`, `None`, `Some 10`.
 
 - `Option.bind` is exactly the `bind` we defined.
-- `Option.map` is weaker: applies a *pure* function inside the option, without giving it the chance to fail.
-- Next step might fail (returns option): use `bind`.
-- Next step always produces a plain value: use `map`.
+- `Option.map` is weaker: applies a *pure* function inside the option.
+- The continuation cannot fail; it just produces a plain value.
+- Use `bind` when the next step itself returns an option.
+- Use `map` when the next step is a pure transformation.
 
 :::
+
+The two functions differ in the type of the continuation. `bind`
+takes an `'a -> 'b option`: the continuation can decide to fail.
+`map` takes an `'a -> 'b`: the continuation must produce a plain
+value. So:
+
+- Next step might fail (returns `'a option`): use `bind`.
+- Next step always succeeds (returns `'a`): use `map`.
+
+In monad-speak, `map` is the *functor* operation and `bind` is the
+strictly stronger monad operation. `map` could be defined in terms
+of `bind`: `let map f opt = bind opt (fun x -> Some (f x))`. We
+keep both because using `map` when you mean `map` is a small
+clarity win for the reader.
+
+To set up an analogous `let+` operator for map-only chains (no
+new failure introduced), people often write:
+
+```ocaml
+let ( let+ ) x f = Option.map f x
+```
+
+Note the flipped argument order: `Option.map` takes the function
+first and the option second, while the let-operator convention is
+the reverse. We will see this `let+` again in a moment.
+
+## A realistic example: parsing a pair
+
+A short parser to make the abstraction concrete. We want to read
+strings like `"(3, 4)"` and produce the pair `(3, 4)`, or `None`
+if the string does not match the shape:
 
 :::slide
 
@@ -130,22 +216,40 @@ let _ = parse_pair "(3, x)"
 let _ = parse_pair "frog"
 ```
 
-`Some (3, 4)`, `None`, `None`.
-
+- `Some (3, 4)`, `None`, `None`.
 - The two `int_of_string_opt` calls can each fail.
-- We use `let*` to unwrap each one or short-circuit.
-- After both succeed, we package into `Some (x, y)`.
-- Without `let*`, this would be two nested `match` statements with `None` arms.
+- `let*` short-circuits on the first failure.
+- The final `Some (x, y)` packages both successes.
 
 :::
 
+Without `let*`, the inner block would be two nested `match`es with
+explicit `None ->` arms. With `let*`, the two `int_of_string_opt`
+calls read linearly. If either fails, the whole `parse_pair`
+returns `None`. If both succeed, we package the pair.
+
+Notice the structure: there are two distinct *kinds* of failure
+checking in this function. The outer checks (length, parentheses,
+single comma) use ordinary `if` and `match`, because they are
+local sanity checks where the value flowing through is not an
+option. The inner checks (the two integer parses) use `let*`,
+because each one *returns* an option and we need to short-circuit
+on `None`. Monadic sequencing is for the case where each step has
+the same shape; use ordinary control flow for the other cases.
+
+## Combining `let*` and `let+`
+
+When the last step of a chain is a pure transformation, the
+parser-favourite combo is `let*` for the optional steps and
+`let+` for the final transform:
+
 :::slide
 
-## Combining `map` and `bind`
+## Combining `let*` and `let+`
 
 ```ocaml
 let ( let* ) = Option.bind
-let ( let+ ) x f = Option.map f x  (* arg order flipped from Option.map *)
+let ( let+ ) x f = Option.map f x
 
 let demo s =
   let* x = int_of_string_opt s in
@@ -157,20 +261,77 @@ let _ = demo "5"
 
 `Some 11`.
 
-- `let* x = parse_int s in` unwraps `x` from the parse.
-- `let+ y = ... in y + 1` does both an unwrap and the final transformation.
-- The final `+ 1` doesn't fail; `let+` is for that.
-- `let+` is a useful complement to `let*` when the last step is a pure transformation.
-- Not in `Option` by default; you alias it where you want it.
+- `let* x = parse in ...`: unwraps `x`, may short-circuit.
+- `let+ y = ... in y + 1`: unwraps `y`, applies the pure transform.
+- The `+ 1` cannot fail; `let+` is for that case.
+- Saves us writing `Some (y + 1)` at the end of a `let*` chain.
 
 :::
+
+The intuition: `let*` is for "the next step might fail too" and
+`let+` is for "the next step cannot fail; just apply this pure
+function". With both in scope, a chain of three optional steps and
+one pure final step reads:
+
+```
+let* a = step1 ... in
+let* b = step2 a ... in
+let* c = step3 b ... in
+let+ d = step4 c ... in
+final d
+```
+
+This is the same number of lines as the all-`let*` version, but
+the reader sees at a glance that step 4 has a different character:
+the `+` says "no more failure introduced from here."
+
+You do not strictly need `let+`. You can always replace `let+ y =
+... in body` with `let* y = ... in return body`. The `let+` form
+is slightly shorter and slightly clearer when you have it. Some
+codebases use it heavily; others stick to `let*` alone.
+
+## A note on let-operators per monad
+
+`let*` is not a fixed operator name in the language. It is a
+regular binding you define for whatever monad you are working with.
+Each monad has its own `let*`:
+
+:::slide
+
+## A note on `let*` per-monad
+
+- `let*` is **not** a fixed operator: it's a regular binding.
+- Each monad defines its own.
+- `let open Opt in` brings option-flavoured `let*` into scope.
+- For result-flavoured code (next lecture), you redefine `let*`.
+- The compiler does not know which monad you are in; you choose by `open`.
+- Languages with built-in `do`-notation (Haskell) avoid this per-monad redefinition.
+- OCaml trades a bit of elegance for clarity: the type of `let*` is always visible.
+
+:::
+
+The trade-off is: in Haskell, the `do`-notation is one keyword that
+adapts to whichever monad your function is annotated with. In
+OCaml, you pick the right `let*` by opening the right module or
+defining the right operator. The OCaml version is a little more
+typing, but it is also a little less magical: the type of `let*`
+is right there in front of you, and you cannot accidentally
+confuse one monad's bind with another.
+
+In practice, codebases that lean heavily on monads define a small
+module per monad, with `bind`, `( let* )`, optionally `( let+ )`,
+and any monad-specific helpers. You `let open M in` at the top of
+the function that needs `M`'s flavour of bind, and the rest of the
+function uses `let*` without saying which monad it means.
+
+## When *not* to use a monad
+
+A monad is overkill for a single optional step. The plain `match`
+is shorter and equally clear:
 
 :::slide
 
 ## When *not* to use a monad
-
-If your function does *one* optional thing and returns immediately,
-`match` is fine:
 
 ```ocaml
 let _ =
@@ -182,22 +343,82 @@ let _ =
 `int = 0`. Two cases, one `match`, three lines. No monad needed.
 
 - Reach for `let*` when you have **three or more** sequential optional steps.
-- Where the failure handling is "give up, return `None`".
-- Before three, the `match` is shorter and equally clear.
+- Below three, the `match` is shorter and equally clear.
+- Above three, the pyramid wins, and `let*` saves you.
 
 :::
 
-:::slide
+The rough threshold is three steps. Below that, a plain `match`
+fits on screen and is just as readable. At three or above, the
+pyramid bites and `let*` becomes the right tool. There is nothing
+magic about three; it is a rule of thumb. If you find yourself
+indenting past column 50 to handle a third level of `None`, switch
+to `let*`.
 
-## A note on `let*` per-monad
+A second case for *not* using a monad: when you want to *collect*
+failures rather than short-circuit on the first one. The option
+monad gives you the first-`None`-wins behaviour. If you want "try
+all the parses and tell me everything that failed", that is the
+*applicative* (or *validation*) shape, which is a sibling pattern.
+We will not study it in detail in this course; the next lecture
+will mention it again when we get to `result`.
 
-- `let*` is *not* a fixed operator: it's a regular binding you define.
-- Each monad has its own `let*`.
-- `let open Opt in` makes `let*` option-flavoured; switching to result, you redefine `let*` for that.
-- The compiler doesn't know which monad you're in; you choose by `open`-ing the right module or aliasing.
-- Languages with built-in `do`-notation (Haskell) avoid this per-monad redefinition.
-- OCaml's mechanism is more explicit: trades elegance for clarity.
+## The monad laws (a teaser)
 
+A *lawful* monad is one whose `return` and `bind` satisfy three
+equations:
+
+- **Left identity**: `bind (return x) f` is the same as `f x`.
+- **Right identity**: `bind m return` is the same as `m`.
+- **Associativity**: `bind (bind m f) g` is the same as `bind m
+  (fun x -> bind (f x) g)`.
+
+These say, roughly: `return` is a do-nothing wrapper; `bind` is a
+"plug things together" operation that does not care about parenthesisation.
+The option-monad definitions above satisfy all three; you can check
+them on paper. Most monads you will meet do; the laws are the
+"good behaviour" contract that lets you reason about monadic code
+without worrying about hidden non-obvious effects.
+
+We will not enforce or test the laws in this course. They are
+worth knowing about (they are why category theorists like monads),
+but day-to-day OCaml usage rarely turns on them.
+
+## A quick check
+
+:::quiz mcq
+You have a chain `let* x = e1 in let* y = e2 in let* z = e3 in Some
+(x, y, z)`, where `e1` evaluates to `Some 1`, `e2` evaluates to
+`None`, and `e3` is some expression you do not have to evaluate.
+What does the whole expression evaluate to, and how many times is
+`e3` evaluated?
+
+- [ ] `Some (1, ?, ?)`, evaluated once.
+- [x] `None`, evaluated zero times.
+- [ ] `Some (1, _, _)`, evaluated zero times.
+- [ ] An exception is raised.
+
+**Why:** the option monad short-circuits on the first `None`.
+Once `e2` is `None`, the surrounding `let*` returns `None` without
+evaluating its continuation, so `e3` is never run. This is the
+useful efficiency property: failure is detected as soon as it
+happens, and downstream code is skipped.
+:::
+
+:::quiz mcq
+When should you reach for `let+` instead of `let*`?
+
+- [x] When the right-hand side cannot itself fail; only a pure transformation is happening.
+- [ ] When the right-hand side might fail; you want short-circuit semantics.
+- [ ] When you want to collect multiple failures rather than the first.
+- [ ] Never; `let*` covers all cases.
+
+**Why:** `let* x = e in rest` expects `e : 'a option`. `let+ x = e
+in body` also expects `e : 'a option`, but the *body* is treated
+as a pure transformation: it produces a plain `'b`, and `let+`
+wraps it back in `Some`. So `let+` is the right choice when the
+*continuation* cannot fail (no further options being unwrapped),
+even though `e` itself may.
 :::
 
 :::slide
@@ -241,20 +462,66 @@ let _ = pipeline "200"
 `Some 10`, `None`, `None`.
 
 - Three steps, three `let*`s.
-- The same logic as the nested `match` version, but flat.
+- Same logic as the nested `match`, but flat.
 
 :::
+
+A small code quiz:
+
+:::quiz code
+Write `lookup_chain : (string * int) list -> string -> string ->
+int option` that looks up two keys in an association list, adds
+their values if both are present, and returns `Some (sum)` or
+`None`. Use `let*`.
+
+```ocaml
+let lookup_chain table k1 k2 =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let table = [("a", 1); ("b", 2); ("c", 3)]
+let () =
+  check (lookup_chain table "a" "b" = Some 3) "both present";
+  check (lookup_chain table "a" "z" = None) "second missing";
+  check (lookup_chain table "z" "b" = None) "first missing";
+  check (lookup_chain table "z" "y" = None) "both missing";
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution:
+
+```
+let ( let* ) = Option.bind
+let lookup_chain table k1 k2 =
+  let* v1 = List.assoc_opt k1 table in
+  let* v2 = List.assoc_opt k2 table in
+  Some (v1 + v2)
+```
+
+Two optional lookups, one `let*` each, a pure final wrap with
+`Some`. If either lookup fails, the chain short-circuits.
+
+## What is next
 
 :::slide
 
-## What's next
+## What is next
 
-Lecture 3: **the result monad**.
+Lecture 3: the **result monad**.
 
-- Like option, but the failure case carries information (error message, error code).
-- Same `let*` pattern; richer information.
+- Like `option`, but the failure case carries information.
+- The error type is a parameter: a `string`, a variant, anything you like.
+- Same `let*` notation, different module.
 
 :::
+
+`option` is fine when "no value here" is all you need to know.
+The next lecture moves to `result`, where the failure case carries
+a payload (an error message, a code, a variant). Same monad shape,
+richer information. After that, the state monad in lecture four.
 
 ## Reading
 
