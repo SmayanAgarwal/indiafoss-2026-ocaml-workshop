@@ -170,10 +170,10 @@ left-associative; without them, OCaml would try to apply
 `original`, which is not what you wanted.
 
 This call-of-call pattern is fine for two functions but gets ugly
-fast. In Module 6 we will see the pipeline operator `|>` that lets
-you write `original |> kelvin_of_celsius |> celsius_of_kelvin`,
-which reads left-to-right like a Unix pipe. For now, parentheses
-will do.
+fast. In [Module 6](M06-L05-pipelines.html#the-pipeline-operator)
+we will see the pipeline operator `|>` that lets you write
+`original |> kelvin_of_celsius |> celsius_of_kelvin`, which reads
+left-to-right like a Unix pipe. For now, parentheses will do.
 
 ## A float precision aside
 
@@ -338,8 +338,9 @@ just composition.
 
 This is the rhythm of functional programming. Small, focused
 functions, each doing one well-named thing, composed into larger
-behaviours. Module 6 will give us tools to make this composition
-explicit; for now, just notice the pattern.
+behaviours. [Module 6](M06-L05-pipelines.html#function-composition)
+will give us tools to make this composition explicit; for now, just
+notice the pattern.
 
 ## Reading a type error
 
@@ -540,14 +541,18 @@ float`.
 
 ## What's next
 
-Module 2 picks up where this lecture ends. Lecture 1 of Module 2
-will go deep on literals (we touched them lightly here), Lecture 2
-on `let` bindings (we have used them but not explored shadowing
-and scope rules in depth), Lectures 3-4 on type inference and
-operators, Lecture 5 on `if`/`then`/`else` as an expression (the
-first really new concept), and Lecture 6 is the tutorial for
-Module 2. The pace picks up but the shape (lectures plus a
-tutorial) is what every week looks like.
+Module 2 picks up where this lecture ends.
+[Lecture 1 of Module 2](M02-L01-literals.html) will go deep on
+literals (we touched them lightly here),
+[Lecture 2](M02-L02-let-bindings.html) on `let` bindings (we have
+used them but not explored shadowing and scope rules in depth),
+[Lectures 3](M02-L03-types-and-inference.html)-[4](M02-L04-operators.html)
+on type inference and operators,
+[Lecture 5](M02-L05-if-expressions.html) on `if`/`then`/`else` as
+an expression (the first really new concept), and
+[Lecture 6](M02-L06-tutorial.html) is the tutorial for Module 2.
+The pace picks up but the shape (lectures plus a tutorial) is what
+every week looks like.
 
 ## Reading
 

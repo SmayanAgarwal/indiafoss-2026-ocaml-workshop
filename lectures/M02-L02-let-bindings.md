@@ -14,14 +14,15 @@ reading:
 
 # `let` bindings and shadowing
 
-The previous lecture introduced literals: the smallest building
-blocks of a program. This lecture introduces the next layer up:
-*names*. Names let you build programs that are more than expressions
-written in a single line. Naming a value lets you compute it once
-and use it many times; naming an intermediate result lets you break
-a long calculation into readable steps. Almost every line of OCaml
-contains at least one `let` binding, and getting comfortable with
-them is the precondition for everything else.
+The [previous lecture](M02-L01-literals.html) introduced literals:
+the smallest building blocks of a program. This lecture introduces
+the next layer up: *names*. Names let you build programs that are
+more than expressions written in a single line. Naming a value lets
+you compute it once and use it many times; naming an intermediate
+result lets you break a long calculation into readable steps.
+Almost every line of OCaml contains at least one `let` binding, and
+getting comfortable with them is the precondition for everything
+else.
 
 The OCaml `let` has two related forms with slightly different
 purposes. We will introduce both and then look at the property that
@@ -41,7 +42,8 @@ different *scope*: how far through the program the name is visible.
 The **top-level `let`** introduces a name visible to everything
 that follows it in the file (or in the toplevel session). A
 program is a sequence of top-level `let` bindings, evaluated in
-order; we saw this in M01-L04.
+order; we saw this in
+[M01-L04](M01-L04-hello-world.html#a-program-is-a-sequence-of-let-bindings).
 
 ```ocaml
 let pi = 3.14159
@@ -163,10 +165,10 @@ the shadowing section.
 If you have written C or Python, this distinction can feel
 philosophical at first. "I bound `x` to 1 and then I bound it to
 2. So what?" The "so what" is that any code that captured the old
-`x` (say, a function that takes `x` as a closure value, which we
-will see in Module 3) keeps seeing `x = 1`. The old binding is
-*alive*; the new binding just hides it for any code written after
-the new binding.
+`x` (say, a function that takes `x` as a [closure](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment)
+value, which we will see in Module 3) keeps seeing `x = 1`. The
+old binding is *alive*; the new binding just hides it for any code
+written after the new binding.
 
 ## Shadowing
 
@@ -219,8 +221,9 @@ recent one being the one you reach when you type `x`.
 ## Why shadowing differs from mutation: closures see the old value
 
 The clearest demonstration that shadowing is not mutation comes
-from closures, which we will study in Module 3 but can already use
-in a simple example.
+from [closures](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment),
+which we will study in Module 3 but can already use in a simple
+example.
 
 ```ocaml
 let x = 1
@@ -261,9 +264,10 @@ returns what `x` meant when `f` was defined.
 
 This is the property of *closures*: a function body, at the moment
 of definition, captures the bindings that were in scope. We will
-see closures in much more detail in Module 3. The key fact for
-this lecture: the *value* gets captured, not "the current meaning
-of the name."
+see closures in much more detail in
+[Module 3](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment).
+The key fact for this lecture: the *value* gets captured, not "the
+current meaning of the name."
 
 In a language where `let` actually mutates a cell, the same code
 would produce different behaviour. Some languages do work that
@@ -465,7 +469,7 @@ A related convention: a name starting with `_` (like `_unused`)
 tells the compiler "I am binding this, but I might not use it; do
 not warn me." This is useful in pattern matching when you want to
 *name* something for documentation but never reference it. We will
-see this in Module 5.
+see this in [Module 5](M05-L01-basic-patterns.html#versus-a-variable-name).
 
 ## Activity
 
@@ -534,7 +538,8 @@ reachable refers to the old `x` and frees it. This is one of the
 reasons GC and immutability fit so well together: GC makes
 immutability cheap, and immutability makes GC's job easier
 (no in-place updates means no need for write barriers in the
-common case). We will see the full GC story in Module 9.
+common case). We will see the full GC story in the secure-systems
+half of the course (Module 9).
 
 ## A small code challenge
 
@@ -575,10 +580,12 @@ mutation. Each `let x = ... in` is a brand new binding.
 ## What's next
 
 We have looked at how `let` bindings work and shadowing in detail.
-Next lecture (M02-L03) covers OCaml's type system in more depth:
-type inference, type unification, the type annotations you can
-write when you want to. After that, lectures on operators and
-on `if`/`then`/`else` complete Module 2. Then Module 3 starts on
+The [next lecture](M02-L03-types-and-inference.html) covers OCaml's
+type system in more depth: type inference, type unification, the
+type annotations you can write when you want to. After that,
+lectures on [operators](M02-L04-operators.html) and on
+[`if`/`then`/`else`](M02-L05-if-expressions.html) complete Module
+2. Then [Module 3](M03-L01-functions-as-values.html) starts on
 functions.
 
 :::slide

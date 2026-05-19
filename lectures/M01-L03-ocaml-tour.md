@@ -16,15 +16,16 @@ reading:
 
 # A tour of OCaml
 
-The previous two lectures argued for functional programming in general
-and for OCaml in particular. This lecture is different: it is the
-quick whirlwind tour. By the end you will have seen, in working form,
-the basic building blocks of an OCaml program: literals, arithmetic,
-booleans, strings, `let` bindings, functions, and the type inference
-that holds the whole thing together. You will not have mastered any
-of these; Module 2 onwards goes deep on each. The goal here is to
-get the shape into your head, so the rest of the course has a frame
-to hang on.
+The [previous](M01-L01-course-intro.html) [two](M01-L02-why-fp.html)
+lectures argued for functional programming in general and for OCaml
+in particular. This lecture is different: it is the quick whirlwind
+tour. By the end you will have seen, in working form, the basic
+building blocks of an OCaml program: literals, arithmetic, booleans,
+strings, `let` bindings, functions, and the type inference that
+holds the whole thing together. You will not have mastered any of
+these; [Module 2](M02-L01-literals.html) onwards goes deep on each.
+The goal here is to get the shape into your head, so the rest of
+the course has a frame to hang on.
 
 Every cell on this page is runnable. The first cell takes a few
 seconds to spin up the in-browser OCaml runtime; after that, each
@@ -136,10 +137,11 @@ truncates:
 OCaml's `int` is a *machine integer*: on a 64-bit machine it is 63
 bits wide (not 64). The missing bit is used by the runtime to
 distinguish `int` values from pointers, which is part of how the
-garbage collector stays fast. We will see the full story in Module
-9 of the secure-systems half; for now, just know that the range is
-about ±4.6 × 10^18, which is plenty for almost any practical
-computation. If you need bigger, the `zarith` library gives you
+garbage collector stays fast. We will see the full story in the
+secure-systems half of the course (Module 9); for now, just know
+that the range is about ±4.6 × 10^18, which is plenty for almost
+any practical computation. If you need bigger, the
+[`zarith`](https://github.com/ocaml/Zarith) library gives you
 arbitrary precision.
 
 ## Floats
@@ -245,7 +247,9 @@ There is also `==`, which is *physical* equality (pointer
 comparison). It exists for advanced uses we will see later; the
 short version is: do not use `==` in your code unless you are sure
 you specifically want pointer comparison. The companion negation is
-`<>` for structural inequality and `!=` for physical inequality.
+`<>` for structural inequality and `!=` for physical inequality. We
+revisit this distinction in the [operators lecture](M02-L04-operators.html#comparison-and-equality)
+of Module 2.
 
 ```ocaml
 true && (false || true)
@@ -279,7 +283,7 @@ The `=` versus `==` distinction is the single most common source of
 confusion for students arriving from Java or JavaScript. Repeat
 after me: in OCaml, the everyday equality operator is `=`, with one
 equals sign. The other one is for advanced cases. We will return to
-this in Module 2.
+this in the [operators lecture](M02-L04-operators.html#comparison-and-equality).
 
 ## Strings
 
@@ -325,12 +329,14 @@ String.length "OCaml"
 A practical note on Unicode: OCaml's `string` is byte-oriented, not
 codepoint-oriented. `String.length "café"` (where `é` is the UTF-8
 two-byte sequence) returns `5`, not `4`. For Unicode-aware string
-processing, you reach for an external library like `uutf` for
-parsing, `uucp` for character properties, or `Camomile` for older
-codebases. Most string code you write will not need any of these;
-plain `String` is fine for concatenating, slicing, and searching
-bytes. We will revisit this when we cover the standard library in
-Module 7.
+processing, you reach for an external library like
+[`uutf`](https://erratique.ch/software/uutf) for parsing,
+[`uucp`](https://erratique.ch/software/uucp) for character
+properties, or [`Camomile`](https://github.com/yoriyuki/Camomile)
+for older codebases. Most string code you write will not need any
+of these; plain `String` is fine for concatenating, slicing, and
+searching bytes. We will revisit this when we cover modules in
+[Module 7](M07-L04-module-basics.html).
 
 ## Let bindings
 
@@ -394,7 +400,8 @@ reassign. You are introducing a name for a value, and that name
 refers to that value, period. There is no `pi = 3.14160` later to
 "update" it. If you wanted to refer to a different number, you
 introduce a new name. This is one of the cultural shifts from
-imperative programming; we discussed it in M01-L02.
+imperative programming; we discussed it in
+[the previous lecture](M01-L02-why-fp.html#immutability-in-practice).
 
 **Bindings are not addresses.** In C, `int pi = 3` allocates a slot
 in memory and stores 3 there; later, `pi = 4` writes 4 to that
@@ -454,8 +461,8 @@ them. At the top level (in the toplevel or at the start of a file),
 from that point onward. Inside an expression, `let name = value in
 expr` introduces a *local* binding that is in scope only inside
 `expr`. They are different things: the first is a declaration, the
-second is an expression. Module 2 spends a full lecture on this
-distinction.
+second is an expression.
+[Module 2 spends a full lecture on this distinction](M02-L02-let-bindings.html).
 
 ## Shadowing
 
@@ -519,7 +526,7 @@ The toplevel reports `val add : int -> int -> int = <fun>`. This is
 the type of `add`: it takes two `int`s and returns an `int`. The
 notation `int -> int -> int` is read right-associatively: it is
 "function from `int` to (function from `int` to `int`)". We will
-unpack this thoroughly in Module 3 when we cover currying.
+unpack this thoroughly in [Module 3 when we cover currying](M03-L03-currying.html).
 
 How did OCaml know that `x` and `y` are `int`? It saw the `+`
 operator. `+` requires both arguments to be `int`, so the
@@ -607,8 +614,9 @@ let triple : int -> int = fun x -> x + x + x
 ```
 
 Same idea, a different syntax: a top-level type annotation on the
-whole function. The `fun x -> ...` syntax is OCaml's lambda; we will
-come back to it in Module 3.
+whole function. The `fun x -> ...` syntax is OCaml's
+[lambda](M03-L01-functions-as-values.html#anonymous-functions-in-expressions);
+we will come back to it in Module 3.
 
 :::slide
 
@@ -632,7 +640,8 @@ let triple : int -> int = fun x -> x + x + x
 
 The OCaml community convention is to leave type annotations off
 local helpers and put them on top-level functions in a module's
-public interface (its `.mli` file, which we will cover in Module 7).
+public interface (its `.mli` file, which we will cover in
+[Module 7](M07-L05-signatures.html#signatures-in-mli-files)).
 Annotations on public APIs are documentation: they tell the reader
 what the function expects without forcing the reader to read its
 body. Annotations on private code clutter without paying their way,
@@ -781,13 +790,13 @@ look at is which operator forced which type.
 
 ## What's next
 
-Module 1 ends here. We have spent three lectures laying out the
-course, motivating functional programming, and getting a feel for
-OCaml's surface syntax. Starting next week, Module 2 zooms in on
-expressions: how `let` bindings work in depth, how type inference
-handles more complex cases, how `if`/`then`/`else` is an
-expression (not a statement), and how all of these compose into
-real, if small, programs.
+Module 1 has two more lectures: a [hello-world walkthrough](M01-L04-hello-world.html)
+and the [Module 1 tutorial](M01-L05-tutorial-recap.html). After
+those, [Module 2](M02-L01-literals.html) zooms in on expressions:
+how `let` bindings work in depth, how type inference handles more
+complex cases, how `if`/`then`/`else` is an expression (not a
+statement), and how all of these compose into real, if small,
+programs.
 
 :::slide
 

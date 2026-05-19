@@ -486,7 +486,8 @@ can run them on different cores, in different threads, on different
 machines, and the program's meaning is preserved. Concurrent
 programs in functional languages typically do not need locks,
 mutexes, or atomics, because there is no shared mutable state to
-protect. We will see this in Module 12 of the secure-systems half.
+protect. We will see this in the secure-systems half of the course
+(Module 12).
 
 **Refactoring at scale.** The [Jane Street](https://www.janestreet.com)
 codebase is millions of lines of OCaml, written over twenty years
@@ -504,13 +505,13 @@ about whether some other test left state behind. In imperative
 languages with hidden state, test order matters and "flaky tests"
 are a real category of bug. In FP they are essentially impossible.
 
-**Domain modelling.** Algebraic data types (variants and records,
-which we will see in Module 4) let you describe the *shape* of your
-domain so precisely that the compiler can check, statically, that
-no part of your code can construct a value that does not make
-sense. "Make illegal states unrepresentable" is a slogan you will
-hear repeated in the OCaml community; it captures a real and
-remarkable property.
+**Domain modelling.** Algebraic data types ([variants](M04-L03-variants.html)
+and [records](M04-L02-records.html), which we will see in Module 4)
+let you describe the *shape* of your domain so precisely that the
+compiler can check, statically, that no part of your code can
+construct a value that does not make sense. "Make illegal states
+unrepresentable" is a slogan you will hear repeated in the OCaml
+community; it captures a real and remarkable property.
 
 ## Where functional programming does not shine (be honest)
 
@@ -535,18 +536,20 @@ tables, union-find with path compression, cache-aware matrix
 multiplication: these have purely-functional counterparts, but the
 mutating version is sometimes substantially faster because it does
 not allocate. OCaml lets you use mutation when you need it; you
-just have to opt in (with the `ref` type, or with mutable record
-fields, which we will see in Module 7).
+just have to opt in (with the [`ref` type](M07-L01-references.html),
+or with [mutable record fields](M07-L02-arrays-and-mutation.html),
+which we will see in Module 7).
 
 **Imperative APIs.** The world is full of stateful interfaces.
 Files have to be opened and closed. Databases have transactions.
 Networks have sockets. Your program has to interact with these
 things, which means your program has to have some effectful code in
 it somewhere. Functional purists go to elaborate lengths to "wrap"
-these effects (monads, in Haskell); OCaml takes a more pragmatic
-view, lets you do I/O directly, and only asks that you keep the
-effectful parts of your program small and identifiable. Module 7
-covers this discipline.
+these effects ([monads](M08-L01-sequencing.html), in Haskell); OCaml
+takes a more pragmatic view, lets you do I/O directly, and only asks
+that you keep the effectful parts of your program small and
+identifiable. [Module 7](M07-L01-references.html) covers this
+discipline.
 
 **Your intuition will fight you.** If you arrive in this course
 having written C or Python for years, your first OCaml programs
@@ -554,10 +557,11 @@ will look weird to you. You will reach for a `for` loop and have
 to remind yourself it is not the right tool. You will want to
 "just modify this list" and have to think about how to express the
 same operation by returning a new list. This is normal. The
-discomfort lasts a few weeks and then fades. After Module 4 or so,
-the recursive, expression-oriented style starts feeling like the
-natural way to write code, and reaching back for a mutable
-variable feels like the unusual move.
+discomfort lasts a few weeks and then fades. After
+[Module 4](M04-L01-tuples.html) or so, the recursive,
+expression-oriented style starts feeling like the natural way to
+write code, and reaching back for a mutable variable feels like the
+unusual move.
 
 ## Why OCaml in particular
 
@@ -682,12 +686,16 @@ difference; therefore `f` is not pure.
 
 We have argued for functional programming in the abstract. The rest
 of the course is the concrete part: how do you actually write
-programs in this style? Module 2 starts with the simplest
-expressions and bindings; Module 3 gets to functions; Module 4
-introduces algebraic data types and Module 5 pattern matching,
-which together are how you do most of your data modelling; Module 6
-puts higher-order functions to work. By the end of Module 8 you
-will have all the basic FP tools.
+programs in this style? [Module 2](M02-L01-literals.html) starts
+with the simplest expressions and bindings;
+[Module 3](M03-L01-functions-as-values.html) gets to functions;
+[Module 4](M04-L01-tuples.html) introduces algebraic data types and
+[Module 5](M05-L01-basic-patterns.html) pattern matching, which
+together are how you do most of your data modelling;
+[Module 6](M06-L01-functions-revisited.html) puts higher-order
+functions to work. By the end of
+[Module 8](M08-L01-sequencing.html) you will have all the basic FP
+tools.
 
 The second half of the course (Modules 9-12) is where we use those
 tools to talk about the things imperative languages traditionally
@@ -706,12 +714,12 @@ them.
 
 :::
 
-The next lecture (M01-L03) is a quick tour of OCaml: numbers,
-booleans, strings, basic `let` bindings, type inference, the
-toplevel workflow. It is the most cell-heavy lecture in the
-course, because the lecture *is* the tour. Open the page, click
-Run on every cell, and you will end the lecture knowing the basic
-shape of OCaml programs.
+The [next lecture](M01-L03-ocaml-tour.html) is a quick tour of
+OCaml: numbers, booleans, strings, basic `let` bindings, type
+inference, the toplevel workflow. It is the most cell-heavy lecture
+in the course, because the lecture *is* the tour. Open the page,
+click Run on every cell, and you will end the lecture knowing the
+basic shape of OCaml programs.
 
 ## Reading
 

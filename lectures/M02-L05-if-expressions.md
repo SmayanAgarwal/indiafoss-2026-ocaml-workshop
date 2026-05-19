@@ -289,8 +289,9 @@ the compiler is checking.
 
 You do not have to read these rules to use OCaml. They are useful
 notation when we need to be precise about *exactly* what the type
-checker does. Module 4 (data types) and Module 5 (pattern
-matching) introduce more constructs with their own rules.
+checker does. [Module 4](M04-L01-tuples.html) (data types) and
+[Module 5](M05-L01-basic-patterns.html) (pattern matching)
+introduce more constructs with their own rules.
 
 ## A typical use: multi-way branching
 
@@ -338,9 +339,10 @@ each `else if` is just the `if`-expression that the previous
 `else` returns.
 
 For multi-way branching on a *value's structure* (rather than on
-threshold comparisons), the better tool is *pattern matching*
-(Module 5). Use `if` chains when you have threshold comparisons or
-boolean predicates; use `match` when you are unpacking a value.
+threshold comparisons), the better tool is
+[*pattern matching*](M05-L01-basic-patterns.html) (Module 5). Use
+`if` chains when you have threshold comparisons or boolean
+predicates; use `match` when you are unpacking a value.
 
 ## `if` without `else`
 
@@ -582,12 +584,17 @@ Error: This expression has type int but an expression was expected
 
 ## What's next
 
-Module 2 ends with the tutorial (M02-L06), where we work through
-several small problems end to end, combining literals, `let`,
-types, operators, and `if`. After that, Module 3 starts on
-functions in depth: anonymous functions, recursion, currying,
-partial application, tail recursion. The constructs introduced in
-Module 3 are the workhorses of every OCaml program you will write.
+Module 2 ends with the [tutorial](M02-L06-tutorial.html) (M02-L06),
+where we work through several small problems end to end, combining
+literals, `let`, types, operators, and `if`. After that,
+[Module 3](M03-L01-functions-as-values.html) starts on functions in
+depth: [anonymous functions](M03-L01-functions-as-values.html#anonymous-functions-in-expressions),
+[recursion](M03-L02-recursion.html),
+[currying](M03-L03-currying.html),
+[partial application](M03-L03-currying.html#partial-application-the-payoff),
+[tail recursion](M03-L04-tail-recursion.html). The constructs
+introduced in Module 3 are the workhorses of every OCaml program
+you will write.
 
 :::slide
 

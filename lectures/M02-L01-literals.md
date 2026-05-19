@@ -98,8 +98,9 @@ You will not see this tagging in your code: it happens entirely at
 the runtime level. The only place it surfaces for the programmer
 is the slightly narrower `int` range. If you really need a true
 64-bit integer, the standard library has a separate `Int64` module;
-for arbitrary-precision integers, there is the `Zarith` library.
-For the first half of this course we will not need either.
+for arbitrary-precision integers, there is the
+[`Zarith`](https://github.com/ocaml/Zarith) library. For the first
+half of this course we will not need either.
 
 OCaml lets you write integer literals in four bases. The default is
 decimal, but a `0x` prefix denotes hexadecimal, `0o` denotes octal,
@@ -338,11 +339,14 @@ binary floating point; neither can `0.2`. So `0.1 +. 0.2` does
 not give `0.3`; it gives `0.30000000000000004`. This is not
 a bug in OCaml; it is a fundamental property of IEEE 754, and
 the same anomaly appears in Python, Java, JavaScript, and
-essentially every mainstream language. If you have not yet
-encountered the basics of floating-point representation, the
-classic short guide is *What Every Computer Scientist Should
-Know About Floating-Point Arithmetic*; we will not need it
-again in this course, but it is worth knowing it exists.
+essentially every mainstream language. We saw the same example in
+[the Module 1 tutorial's float-precision aside](M01-L05-tutorial-recap.html#a-float-precision-aside).
+If you have not yet encountered the basics of floating-point
+representation, the classic short guide is
+[*What Every Computer Scientist Should Know About Floating-Point
+Arithmetic*](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html);
+we will not need it again in this course, but it is worth knowing
+it exists.
 
 ## Booleans
 
@@ -528,9 +532,9 @@ string, use `String.make 1 c`; to extract a `char` from a string,
 use `String.get` as above or the `.[i]` syntax.
 
 Out-of-bounds access raises an exception, `Invalid_argument`. We
-will see how to handle exceptions properly in Module 7; for now,
-just know that `String.get s i` for an `i` outside `0 .. length - 1`
-is a runtime error.
+will see how to [handle exceptions](M07-L03-exceptions.html)
+properly in Module 7; for now, just know that `String.get s i` for
+an `i` outside `0 .. length - 1` is a runtime error.
 
 ## Conversions between types
 
@@ -589,16 +593,18 @@ write a single type. Second, the body is a chain of nested
 expression*. This is the same point we made earlier about OCaml
 being expression-based: even something that looks like a multi-way
 branch is a value-producing expression you can pass to a function
-or bind to a name. Third, every comparison is against the same
-type: `c < 0.0`, where `c` is `float` and `0.0` is `float`, never
-mixing `int` and `float`.
+or bind to a name. We give `if` its own dedicated lecture later in
+this module ([M02-L05](M02-L05-if-expressions.html)). Third, every
+comparison is against the same type: `c < 0.0`, where `c` is
+`float` and `0.0` is `float`, never mixing `int` and `float`.
 
 A C programmer reading this might object that the `if`s could be
 rewritten as a `switch`. In OCaml, the equivalent of `switch` is
-`match`, which we will see in Module 5 (it is the central tool of
-the language). But `match` is overkill for a chain of *threshold
-comparisons* like this one; the right tool here is a nested `if`,
-the same as in any other language.
+[`match`](M05-L01-basic-patterns.html), which we will see in
+Module 5 (it is the central tool of the language). But `match` is
+overkill for a chain of *threshold comparisons* like this one; the
+right tool here is a nested `if`, the same as in any other
+language.
 
 ## Common pitfalls
 
@@ -624,9 +630,9 @@ This is a habit you have to drill out from day one.
 not produce a `float`; it produces an `int` named `pi` with value
 3. Then later, when you write `2.0 *. pi`, the compiler complains
 about a type mismatch and you wonder why. Always write floating
-constants with at least a trailing `.`: `let pi = 3.14159`,
-not `let pi = 3.14159`. (Better still: use `Float.pi` from the
-standard library.)
+constants with at least a trailing `.`: `let pi = 3.14`,
+not `let pi = 3`. (Better still: use `Float.pi` from the standard
+library.)
 
 **Pitfall 4: assuming string-on-string `=` is expensive.** It is
 linear in the length of the shorter string, the same as `strcmp`
@@ -695,10 +701,10 @@ operator that takes mixed types in OCaml.
 
 Once you have literals, the immediate next question is: how do I
 give them names? Repeatedly writing `3.14159` in code is not a
-sustainable plan. The next lecture covers `let` bindings, which
-let you name a value and reuse it. They will also let us write
-local definitions inside an expression, the first step toward
-structuring real programs.
+sustainable plan. The [next lecture](M02-L02-let-bindings.html)
+covers `let` bindings, which let you name a value and reuse it.
+They will also let us write local definitions inside an expression,
+the first step toward structuring real programs.
 
 ## Reading
 

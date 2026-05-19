@@ -15,7 +15,10 @@ reading:
 # Operators, precedence, and common pitfalls
 
 You already know most of OCaml's operators from school arithmetic
-and from previous lectures. This lecture is the comprehensive
+and from previous lectures (the
+[tour](M01-L03-ocaml-tour.html#integers) introduced `+`, `*`, `/`,
+`mod`; the [literals lecture](M02-L01-literals.html#float-arithmetic-uses-different-operators)
+contrasted `+` and `+.`). This lecture is the comprehensive
 reference. It lays out the full set, says which bind tighter than
 which, and walks through the small set of mistakes that beginners
 reliably make in their first week. There is nothing deep here, but
@@ -146,9 +149,10 @@ A historical note. Many languages took the unfortunate path of
 using `==` as everyday equality and `=` as assignment (C inherited
 this from B; Java, JavaScript, Python all followed). OCaml goes
 the other way: `=` is equality, and assignment uses `<-` (for
-mutable fields, which we will see in Module 7). The OCaml choice
-matches mathematical notation, but takes adjusting to if you came
-from a C-family language.
+[mutable fields](M07-L02-arrays-and-mutation.html#mutable-record-fields),
+which we will see in Module 7). The OCaml choice matches
+mathematical notation, but takes adjusting to if you came from a
+C-family language.
 
 All five comparison operators (`<`, `<=`, `>`, `>=`, `=`) are
 *polymorphic*: they have type `'a -> 'a -> bool`, where `'a` can
@@ -339,7 +343,8 @@ The "no parentheses on function call" rule takes adjusting to if
 you came from C-family languages. The reason OCaml does this is
 that it makes *partial application* (supplying some but not all
 arguments and getting back a function) a natural reading. We will
-see partial application in Module 3.
+see [partial application](M03-L03-currying.html#partial-application-the-payoff)
+in Module 3.
 
 ## Operator precedence
 
@@ -640,17 +645,18 @@ let () =
 :::
 
 One sample solution: `if x < lo then lo else if x > hi then hi
-else x`. We will see `if`-expressions in detail in the next
-lecture.
+else x`. We will see `if`-expressions in detail in the
+[next lecture](M02-L05-if-expressions.html).
 
 ## What's next
 
-Next lecture: `if`/`then`/`else` as an expression. The big
-conceptual shift is that `if` returns a value in OCaml: it is not
-a statement that controls execution flow, but an expression that
-evaluates to one of two values. The downstream consequence is that
-you can use `if` anywhere an expression can go: as a function
-argument, as the right-hand side of a `let`, inside another `if`.
+[Next lecture](M02-L05-if-expressions.html): `if`/`then`/`else` as
+an expression. The big conceptual shift is that `if` returns a
+value in OCaml: it is not a statement that controls execution
+flow, but an expression that evaluates to one of two values. The
+downstream consequence is that you can use `if` anywhere an
+expression can go: as a function argument, as the right-hand side
+of a `let`, inside another `if`.
 
 :::slide
 

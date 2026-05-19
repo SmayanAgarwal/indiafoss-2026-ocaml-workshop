@@ -15,11 +15,14 @@ reading:
 # Tutorial for Module 2
 
 This is the tutorial video for Module 2. We will work through five
-small programs that exercise everything in the module: literals,
-`let` bindings, type inference, operators, and `if`-expressions.
-After the worked problems, we will dwell on the three type errors
-you will see most often in your first programs, and close with an
-activity for you to try.
+small programs that exercise everything in the module:
+[literals](M02-L01-literals.html), [`let` bindings](M02-L02-let-bindings.html),
+[type inference](M02-L03-types-and-inference.html),
+[operators](M02-L04-operators.html), and
+[`if`-expressions](M02-L05-if-expressions.html). After the worked
+problems, we will dwell on the three type errors you will see most
+often in your first programs, and close with an activity for you
+to try.
 
 The point of the tutorial is to *type code* and meet the type
 errors when they show up. Every cell is editable. Make
@@ -191,8 +194,9 @@ threshold), which is wasteful and clutters the code.
 The function `bmi_category` is built by composing two smaller
 functions, `bmi` and an if-chain. This is the rhythm of
 functional programming: small, focused functions, combined into
-larger behaviours. Module 6 will give us tools to make this
-composition explicit; here it is just `let` + function call.
+larger behaviours. [Module 6](M06-L05-pipelines.html#function-composition)
+will give us tools to make this composition explicit; here it is
+just `let` + function call.
 
 ## Problem 4: clamp
 
@@ -241,7 +245,8 @@ right argument order; this one mirrors the conceptual reading
 ("clamp into the range lo..hi, the value x"). Another defensible
 order is `x lo hi`; both are fine, just be consistent.
 
-The parenthesisation `(-3)` is the unary-minus pitfall from M02-L04
+The parenthesisation `(-3)` is the unary-minus pitfall from
+[M02-L04](M02-L04-operators.html#pitfall-3-subtraction-looks-like-unary-minus)
 (without parens it would parse as subtraction). Worth remembering.
 
 ## Problem 5: tying it together
@@ -296,11 +301,13 @@ caller didn't notice that you returned `0.0`, they might
 incorporate it into a subsequent computation and silently produce
 nonsense. The alternatives are:
 
-- **Raise an exception** (we cover exceptions in Module 7) so the
-  caller has to handle the case explicitly.
-- **Return an `option` or `result` type** (Module 4) that encodes
-  "this might be a valid number, or it might be 'no answer'".
-  Forces the caller to check.
+- **[Raise an exception](M07-L03-exceptions.html)** (we cover
+  exceptions in Module 7) so the caller has to handle the case
+  explicitly.
+- **Return an [`option`](M04-L05-option-and-aliases.html#the-option-type)
+  or [`result`](M04-L05-option-and-aliases.html#the-result-type)
+  type** (Module 4) that encodes "this might be a valid number, or
+  it might be 'no answer'". Forces the caller to check.
 
 For a tutorial example, the sentinel is fine. In production code,
 either of the two alternatives is usually better. Mention this
@@ -522,7 +529,8 @@ the formula gives the right answer. The three-branch version
 
 This is a general theme: *cleverness* and *clarity* are different
 virtues, and clarity usually wins. We will see this again with
-recursion versus higher-order functions (Module 6).
+recursion versus [higher-order functions](M06-L01-functions-revisited.html)
+(Module 6).
 
 ## What you should be able to do now
 
@@ -549,12 +557,13 @@ After Module 2 you can:
 :::
 
 If any of these still feel shaky, the right move is to go back to
-the relevant lecture and re-attempt the quizzes. Module 3 will
-assume Module 2 is solid: we will start treating functions as
-values you can pass around, store, and return from other
-functions. That's where OCaml starts to feel like a genuinely
-different language from C or Python, and you'll want the
-expression-level mechanics from Module 2 to be automatic.
+the relevant lecture and re-attempt the quizzes.
+[Module 3](M03-L01-functions-as-values.html) will assume Module 2
+is solid: we will start treating functions as values you can pass
+around, store, and return from other functions. That's where OCaml
+starts to feel like a genuinely different language from C or
+Python, and you'll want the expression-level mechanics from Module
+2 to be automatic.
 
 ## Reading
 

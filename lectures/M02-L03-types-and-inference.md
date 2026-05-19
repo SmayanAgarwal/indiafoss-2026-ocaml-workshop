@@ -28,10 +28,11 @@ OCaml lands on the *more static* end of this spectrum: many of the
 errors a Python or JavaScript program would discover at runtime, an
 OCaml program rejects at compile time. The mechanism that makes this
 work without forcing you to write types everywhere is *type
-inference*, which gives you the safety of a strong type system
-without the syntactic burden of annotations. This lecture covers
-both: the static-vs-dynamic distinction first, then inference in
-detail.
+inference*, which we glimpsed in the [tour](M01-L03-ocaml-tour.html#type-inference)
+and now develop in depth. Inference gives you the safety of a strong
+type system without the syntactic burden of annotations. This
+lecture covers both: the static-vs-dynamic distinction first, then
+inference in detail.
 
 By the end you should be able to look at any OCaml function you have
 written and predict, without running it, what type the compiler will
@@ -560,10 +561,10 @@ Use annotations when:
   to suspect functions narrows where the error gets reported. The
   compiler now blames *that* function instead of some caller.
 
-Module signatures (`.mli` files, Module 7) are entirely
-annotations: they list the types of a module's exports, and the
-compiler enforces them against the module's implementation. We
-will see this in detail later.
+[Module signatures](M07-L05-signatures.html) (`.mli` files, Module
+7) are entirely annotations: they list the types of a module's
+exports, and the compiler enforces them against the module's
+implementation. We will see this in detail later.
 
 For ordinary local helpers, leave annotations off. They clutter.
 
@@ -677,12 +678,13 @@ two `int` arguments but the inner expression `y *. 2.0` is
 ## What's next
 
 We have now seen enough OCaml that the rhythm of writing functions
-and reading inferred types should feel manageable. The next lecture
-(M02-L04) goes through the operators in detail: precedence, the
-ones that catch beginners out, and the small set of operators you
-will use 95% of the time. After that, M02-L05 covers
-`if`/`then`/`else` as an expression (a small but real shift from
-imperative languages), and M02-L06 is the tutorial.
+and reading inferred types should feel manageable. The
+[next lecture](M02-L04-operators.html) goes through the operators
+in detail: precedence, the ones that catch beginners out, and the
+small set of operators you will use 95% of the time. After that,
+[M02-L05](M02-L05-if-expressions.html) covers `if`/`then`/`else` as
+an expression (a small but real shift from imperative languages),
+and [M02-L06](M02-L06-tutorial.html) is the tutorial.
 
 :::slide
 

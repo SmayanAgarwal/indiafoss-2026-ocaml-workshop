@@ -16,14 +16,15 @@ reading:
 
 # Your first OCaml program
 
-In the previous lecture we toured the values and expressions of
-OCaml: numbers, booleans, strings, `let` bindings, type inference.
-We have not yet written anything that *runs* in the sense of "does
-something visible to the world." This short lecture closes that gap.
-We will write the canonical first program in any language, talk
-about what makes it work in OCaml specifically, and introduce two
-concepts you will use in every program from here on: the `unit`
-type and the sequencing operator `;`.
+In the [previous lecture](M01-L03-ocaml-tour.html) we toured the
+values and expressions of OCaml: numbers, booleans, strings, `let`
+bindings, type inference. We have not yet written anything that
+*runs* in the sense of "does something visible to the world." This
+short lecture closes that gap. We will write the canonical first
+program in any language, talk about what makes it work in OCaml
+specifically, and introduce two concepts you will use in every
+program from here on: the `unit` type and the sequencing operator
+`;`.
 
 The lecture is short because the material is simple. The reason it
 deserves its own lecture is that OCaml's "hello world" looks slightly
@@ -175,9 +176,10 @@ value carries no information.
 The phrase "no useful value" is doing a lot of work. `unit` is the
 *absence* of information, but it is the absence-as-a-value, not the
 absence-as-a-type-system-feature. This distinction will matter again
-when we get to `Option` (Module 4), which is the way OCaml handles
-"this function might or might not return a useful value." `Option`
-is *not* the same as `unit`; the two answer different questions.
+when we get to [`Option`](M04-L05-option-and-aliases.html) (Module 4),
+which is the way OCaml handles "this function might or might not
+return a useful value." `Option` is *not* the same as `unit`; the
+two answer different questions.
 
 :::quiz mcq
 Which of these expressions has type `unit`?
@@ -254,11 +256,12 @@ bindings are evaluated.
 This is more like Python or a Bash script in that respect: a file
 of statements that run top-to-bottom. The difference from Python is
 that every "statement" in OCaml is really a `let` binding (or
-sometimes a `module` declaration, which we will see in Module 7).
-There are no bare statements; every line of code is binding
-something to a name. Even `let () = print_endline "x"` is "binding
-the value `()` to the pattern `()` (i.e. type-checking it as unit)
-while evaluating the right-hand side for its effect."
+sometimes a `module` declaration, which we will see in
+[Module 7](M07-L04-module-basics.html)). There are no bare
+statements; every line of code is binding something to a name. Even
+`let () = print_endline "x"` is "binding the value `()` to the
+pattern `()` (i.e. type-checking it as unit) while evaluating the
+right-hand side for its effect."
 
 ## Worked example with names
 
@@ -554,19 +557,21 @@ This is what an OCaml program is, in the simplest form: a file of
 `let` bindings, evaluated top to bottom, where some bindings have
 side effects. There is no `main()`. There is no entry point. The
 file is the program; its bindings are the steps. Later, when we
-introduce modules (Module 7), we will see how to organise larger
-programs into structured units, but the basic shape stays the
-same.
+introduce [modules](M07-L04-module-basics.html) (Module 7), we will
+see how to organise larger programs into structured units, but the
+basic shape stays the same.
 
 ## What's next
 
-We have covered the surface mechanics of writing a program. Next
-week (Module 2) we slow down and look at the type system: what
-`int`, `float`, `string`, `bool` really are, how type inference
-works, how `if`/`then`/`else` is an *expression* (not a statement),
-and how all of these compose into more interesting programs. By
-the end of Module 2 you will be writing real (if small) functions
-in OCaml comfortably.
+We have covered the surface mechanics of writing a program. The
+[next lecture](M01-L05-tutorial-recap.html) is Module 1's tutorial:
+worked temperature-conversion problems end to end. After that, next
+week ([Module 2](M02-L01-literals.html)) we slow down and look at
+the type system: what `int`, `float`, `string`, `bool` really are,
+how type inference works, how `if`/`then`/`else` is an *expression*
+(not a statement), and how all of these compose into more
+interesting programs. By the end of Module 2 you will be writing
+real (if small) functions in OCaml comfortably.
 
 :::slide
 

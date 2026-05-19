@@ -20,8 +20,8 @@ Welcome to **Functional Programming with OCaml**. This first lecture
 is short and almost entirely logistical: what we will cover over the
 twelve weeks, who the course is aimed at, how it is graded, and how
 you will run OCaml code directly in your browser without installing
-anything. The next lecture (M01-L02) is where the actual technical
-content begins.
+anything. The [next lecture](M01-L02-why-fp.html) is where the actual
+technical content begins.
 
 I want to spend this opening session on framing rather than on syntax,
 because the choices a course makes about what to teach are themselves
@@ -147,8 +147,9 @@ every function is pure (returns a value, has no side effects), you
 can substitute equals for equals: replace any expression with its
 value, replace any call with its body. This sounds like a small thing
 and is in fact one of the more profound differences between FP and
-imperative programming. We will spend Module 1 Lecture 2 setting up
-why this matters, and the rest of the course exercising it.
+imperative programming. We will spend [the next lecture](M01-L02-why-fp.html#equational-reasoning)
+setting up why this matters, and the rest of the course exercising
+it.
 
 **You will understand the safety story.** OCaml is one of a small
 number of mainstream languages where memory safety is provided by
@@ -351,17 +352,18 @@ There is no loop in this code. There is no mutable counter, no
 itself on a smaller input. The function `range` does the same. This
 is how you express iteration in OCaml.
 
-The line `| p :: rest -> ...` is *pattern matching*: it says "if the
-input list has a first element `p` followed by some rest, do the
-following." If you have written `switch` in C or Java, pattern
-matching is like that but on the *structure* of values, not just on
-their tags.
+The line `| p :: rest -> ...` is [*pattern matching*](M05-L01-basic-patterns.html):
+it says "if the input list has a first element `p` followed by some
+rest, do the following." If you have written `switch` in C or Java,
+pattern matching is like that but on the *structure* of values, not
+just on their tags.
 
 The expression `fun n -> n mod p <> 0` is an *anonymous function*: a
 function with no name, defined inline. We pass it as an argument to
-`List.filter`. Passing functions around like this is normal in OCaml
-and central to what makes the language compact. We will spend
-Module 6 on this idea alone.
+[`List.filter`](M06-L03-filter.html). Passing functions around like
+this is normal in OCaml and central to what makes the language
+compact. We will spend [Module 6](M06-L01-functions-revisited.html)
+on this idea alone.
 
 The point of showing you this in lecture one is not to teach the
 syntax. It's to set the bar: in twelve weeks, you will look at this
@@ -480,10 +482,11 @@ fits on one screen.
 We will not survey every feature of OCaml. The language has many
 corners: objects and classes (rarely used in modern code), camlp4
 syntax extensions (deprecated), polymorphic variants (mostly
-specialised), first-class modules (advanced), GADTs (we touch them
-briefly), effect handlers (a Module 12 topic in the secure-systems
-half). I have picked the subset that will be most useful to you in
-the largest number of future situations.
+specialised), first-class modules (advanced),
+[GADTs](M08-L05-gadts-basics.html) (we touch them briefly), effect
+handlers (a Module 12 topic in the secure-systems half). I have
+picked the subset that will be most useful to you in the largest
+number of future situations.
 
 We will not do pure type theory. This is a programming course, not
 a programming-languages-theory course. I will use type-theoretic
@@ -519,11 +522,12 @@ teaches the material; the final exam tests that you learned.
 
 ## What's next
 
-Next video: **why functional programming?** The case for FP given
-that you can already write programs in imperative languages. We will
-start by looking at a one-instruction programming language (yes,
-really) and noticing what makes it hard to read, then look at how
-functional programming makes programs easier to read instead.
+Next video: [**why functional programming?**](M01-L02-why-fp.html)
+The case for FP given that you can already write programs in
+imperative languages. We will start by looking at a one-instruction
+programming language (yes, really) and noticing what makes it hard
+to read, then look at how functional programming makes programs
+easier to read instead.
 
 :::slide
 
