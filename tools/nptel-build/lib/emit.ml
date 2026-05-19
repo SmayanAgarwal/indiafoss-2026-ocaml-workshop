@@ -203,8 +203,10 @@ let runtime_script ~asset_root =
       return Array.from(lines).map(l => l.textContent).join('\n');
     }
     function dirtyButton(cell) {
-      return cell.previousElementSibling?.classList?.contains('reset-cell')
-        ? cell.previousElementSibling
+      // Reset button sits inside the [.cell-wrap] that wraps the cell.
+      const wrap = cell.parentElement;
+      return wrap?.classList?.contains('cell-wrap')
+        ? wrap.querySelector('.reset-cell')
         : null;
     }
     function persistCell(cell) {
@@ -261,19 +263,24 @@ let runtime_script ~asset_root =
       for (const c of allCells()) resetCell(c);
     }
 
-    // Inject a per-cell reset button as a light-DOM sibling. We cannot
-    // touch the Run button (it lives in the shadow root) so the reset
-    // sits next to the cell.
+    // Wrap each cell in a [.cell-wrap] div and add the reset (↺)
+    // button inside that wrapper. The wrapper has position:relative;
+    // the reset button has position:absolute at top-right, just left
+    // of the Run button (which lives in the cell's shadow DOM).
     function injectResetButtons() {
       for (const cell of allCells()) {
-        if (cell.previousElementSibling?.classList?.contains('reset-cell')) continue;
+        if (cell.parentElement?.classList?.contains('cell-wrap')) continue;
+        const wrap = document.createElement('div');
+        wrap.className = 'cell-wrap';
+        cell.parentNode.insertBefore(wrap, cell);
+        wrap.appendChild(cell);
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'reset-cell';
         btn.title = 'Reset this cell to its source';
-        btn.textContent = '↺';  // anticlockwise open circle arrow
+        btn.textContent = '↺';
         btn.addEventListener('click', () => resetCell(cell));
-        cell.parentNode.insertBefore(btn, cell);
+        wrap.appendChild(btn);
       }
     }
     injectResetButtons();
