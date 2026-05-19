@@ -351,7 +351,28 @@ let runtime_script ~asset_root =
       if (slide) {
         moveSlidesIntoReveal();
         if (!reveal) {
-          reveal = new Reveal({ embedded: false, hash: false, history: false });
+          reveal = new Reveal({
+            embedded: false, hash: false, history: false,
+            // Without this, arrow keys while typing in an x-ocaml cell
+            // also navigate slides. Shadow DOM hides the inner
+            // contenteditable from document.activeElement (which sees
+            // only the host <x-ocaml>), so reveal.js's built-in
+            // "ignore inputs" check misses it.
+            keyboardCondition: (_e) => {
+              const ae = document.activeElement;
+              if (ae && ae.tagName === 'X-OCAML') return false;
+              // Walk into nested shadow roots in case future cells
+              // are wrapped in other custom elements.
+              let inner = ae && ae.shadowRoot && ae.shadowRoot.activeElement;
+              while (inner && inner.shadowRoot && inner.shadowRoot.activeElement) {
+                inner = inner.shadowRoot.activeElement;
+              }
+              if (inner && (inner.isContentEditable
+                            || inner.tagName === 'TEXTAREA'
+                            || inner.tagName === 'INPUT')) return false;
+              return true;
+            },
+          });
           reveal.initialize().then(() => {
             // Restore last-viewed slide indices for this page from
             // sessionStorage so a refresh keeps your place.
