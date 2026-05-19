@@ -294,12 +294,13 @@ x-ocaml {
   margin: 0;
 }
 .reset-cell {
-  /* Sits at the cell's top-LEFT, in line with the line-number gutter.
-     Keeps it visually associated with the cell but out of the way of
-     the shadow-DOM Run button on the right. */
+  /* Sits at the cell's top-RIGHT, immediately to the left of the
+     shadow-DOM Run button (which is ~61px wide and flush against
+     the cell's right edge). The wrapper has position:relative so
+     this absolute placement follows the cell in both modes. */
   position: absolute;
-  top: 0.3rem;
-  left: 0.4rem;
+  top: 0.2rem;
+  right: 4.5rem;
   z-index: 2;
   width: 1.7rem;
   height: 1.7rem;
