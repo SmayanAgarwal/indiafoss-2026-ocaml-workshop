@@ -85,6 +85,17 @@ body.mode-slides x-ocaml {
   margin: 0.6rem 0;
 }
 
+/* The .cell-wrap is a block-level div around each cell. In slide
+   mode reveal.js gives the section a fixed canvas width and the
+   cell otherwise stretches to fill it, which puts the Run button
+   far to the right of the prose. Constraining the wrapper width
+   keeps the cell aligned with bullet text and headings. */
+body.mode-slides .cell-wrap {
+  max-width: 85%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* Images in slide mode: size to fit comfortably without pushing
    following content off the slide. We cap both width and height so
    a tall diagram does not run into the lower bullets, and a wide
