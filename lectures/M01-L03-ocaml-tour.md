@@ -69,10 +69,12 @@ name, has type `int`, and is equal to `3`".
 :::
 
 In a desktop install of OCaml, you would start the toplevel from
-the shell by running `ocaml` (the basic one) or `utop` (a
-nicer-to-use version with editing and syntax highlighting). On this
-website, the toplevel runs entirely in your browser; there is no
-server, no installation, no account. Everything stays on your
+the shell by running `ocaml` (the basic one) or
+[`utop`](https://github.com/ocaml-community/utop) (a nicer-to-use
+version with editing and syntax highlighting). On this website,
+the toplevel runs entirely in your browser via
+[x-ocaml](https://github.com/art-w/x-ocaml); there is no server,
+no installation, no account. Everything stays on your
 machine. The same OCaml runtime that ships with the language is
 compiled to JavaScript and runs locally; the only network call is
 the initial download of that runtime.

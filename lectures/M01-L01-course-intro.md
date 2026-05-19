@@ -132,13 +132,14 @@ By the end:
 Three skills you will leave with, in increasing order of generality:
 
 **You will write idiomatic OCaml.** Not just OCaml that compiles, but
-OCaml that an experienced reviewer at Jane Street or Tarides would
-glance at and nod. Idiomatic means *the natural way* to express an
-idea in this language: when to reach for a record instead of a tuple,
-when a variant beats a class hierarchy, when pattern matching is
-clearer than `if`, when a fold is clearer than a loop. Each of these
-choices feels arbitrary at first and obvious in retrospect; the
-course is largely about getting you to the second state.
+OCaml that an experienced reviewer at [Jane Street](https://www.janestreet.com)
+or [Tarides](https://tarides.com) would glance at and nod. Idiomatic
+means *the natural way* to express an idea in this language: when to
+reach for a record instead of a tuple, when a variant beats a class
+hierarchy, when pattern matching is clearer than `if`, when a fold is
+clearer than a loop. Each of these choices feels arbitrary at first
+and obvious in retrospect; the course is largely about getting you
+to the second state.
 
 **You will reason equationally about your code.** This is shorthand
 for a habit of mind that functional programming makes possible. When
@@ -180,13 +181,16 @@ Rust is the closest sibling to OCaml in this respect, and a lot of
 Rust's design is directly inherited from ML (the family OCaml
 belongs to).
 
-Second, OCaml is *practical*. It is used in production at Tarides
-(where I work), Jane Street (whose internal systems are millions of
-lines of OCaml), Bloomberg (financial infrastructure), Facebook (the
-Hack and Flow type checkers for PHP and JavaScript respectively, both
-written in OCaml), Docker (their virtualization toolkit), Mozilla
-(the SpiderMonkey JavaScript engine has OCaml in its build), the
-Coq theorem prover, the Tezos blockchain, and across academia.
+Second, OCaml is *practical*. It is used in production at
+[Tarides](https://tarides.com) (where I work),
+[Jane Street](https://www.janestreet.com) (whose internal systems
+are millions of lines of OCaml), [Bloomberg](https://www.bloomberg.com/company/values/tech-at-bloomberg/)
+(financial infrastructure), Facebook (the [Hack](https://hacklang.org)
+and [Flow](https://flow.org) type checkers for PHP and JavaScript
+respectively, both written in OCaml),
+[Docker](https://www.docker.com) (their virtualization toolkit),
+the [Rocq theorem prover](https://rocq-prover.org) (formerly Coq),
+the [Tezos blockchain](https://tezos.com), and across academia.
 "Practical" here means: people use it to ship things that other
 people depend on. This is not a research curiosity.
 
@@ -477,11 +481,12 @@ We will not do pure type theory. This is a programming course, not
 a programming-languages-theory course. I will use type-theoretic
 language ("polymorphism", "parametricity", "soundness") where it
 helps explain something, and I will not when it does not. If you
-want the type-theory companion text, Pierce's *Types and Programming
-Languages* is the standard reference; if you want the OCaml-flavoured
-version, the *Cornell CS3110 textbook* and *Real World OCaml* (both
-free, both linked above) are excellent and complement this course
-well.
+want the type-theory companion text, [Pierce's *Types and Programming
+Languages*](https://www.cis.upenn.edu/~bcpierce/tapl/) is the
+standard reference; if you want the OCaml-flavoured version, the
+[Cornell CS3110 textbook](https://cs3110.github.io/textbook/) and
+[*Real World OCaml*](https://dev.realworldocaml.org/) (both free,
+both linked above) are excellent and complement this course well.
 
 ## A quick checkpoint
 

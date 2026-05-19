@@ -486,8 +486,9 @@ programs in functional languages typically do not need locks,
 mutexes, or atomics, because there is no shared mutable state to
 protect. We will see this in Module 12 of the secure-systems half.
 
-**Refactoring at scale.** The Jane Street codebase is millions of
-lines of OCaml, written over twenty years by hundreds of engineers.
+**Refactoring at scale.** The [Jane Street](https://www.janestreet.com)
+codebase is millions of lines of OCaml, written over twenty years
+by hundreds of engineers.
 That kind of codebase only stays maintainable if the language has
 your back when you rewrite things. Functional code refactors well
 because of equational reasoning: pulling an expression out into a
@@ -559,9 +560,11 @@ variable feels like the unusual move.
 ## Why OCaml in particular
 
 There are several functional languages we could have chosen for this
-course. Haskell is the famously-pure one; F# is Microsoft's
-.NET-friendly variant; Scheme is the elegant Lisp dialect; Scala is
-the JVM-friendly mainstream compromise; Rust is the systems
+course. [Haskell](https://www.haskell.org) is the famously-pure
+one; [F#](https://fsharp.org) is Microsoft's .NET-friendly variant;
+[Scheme](https://www.scheme.org) is the elegant Lisp dialect;
+[Scala](https://www.scala-lang.org) is the JVM-friendly mainstream
+compromise; [Rust](https://www.rust-lang.org) is the systems
 language that inherited many ML ideas. So why OCaml?
 
 :::slide
@@ -595,12 +598,14 @@ The second half of this course tackles secure systems software:
 the OCaml runtime, the garbage collector, memory safety, the C
 FFI, unikernel operating systems, concurrency, capability-based
 security. Of all the functional languages, OCaml is the one where
-this material is *natural*. It is the language MirageOS (a
-unikernel OS) is written in. It is the language the Tezos
-blockchain runtime is written in. It is the language that the user
-of this course (me) and a substantial part of the OCaml team at
-Tarides use to do this kind of work day-to-day. We get to teach
-both halves of the course in the same language.
+this material is *natural*. It is the language
+[MirageOS](https://mirage.io) (a unikernel OS) is written in.
+It is the language the [Tezos blockchain](https://tezos.com)
+runtime is written in. It is the language that the user of this
+course (me) and a substantial part of the OCaml team at
+[Tarides](https://tarides.com) use to do this kind of work
+day-to-day. We get to teach both halves of the course in the same
+language.
 
 ## Activity
 

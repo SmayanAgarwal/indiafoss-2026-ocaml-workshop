@@ -304,9 +304,9 @@ worth the savings. For programs intended to last more than a week
 The reason the static type system is bearable in OCaml is *type
 inference*: the compiler works out what types your expressions have
 without you having to write them down. OCaml's inference is based
-on the Hindley-Milner algorithm (developed by Roger Hindley in
-combinatory logic and rediscovered by Robin Milner for ML in the
-1970s). The intuition is straightforward, even if the algorithm
+on the [Hindley-Milner algorithm](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system)
+(developed by Roger Hindley in combinatory logic and rediscovered
+by Robin Milner for ML in the 1970s). The intuition is straightforward, even if the algorithm
 itself has some clever parts:
 
 1. Every expression has some type. Initially the compiler treats
