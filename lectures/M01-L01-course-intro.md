@@ -289,6 +289,14 @@ source if you have edited it. Your edits are saved in your browser's
 local storage, so if you close the tab and come back, your code is
 still there. This is meant to be a notebook, not a one-shot demo.
 
+A useful feature you might not discover by yourself: hover the
+mouse over an expression in any cell and the editor shows its
+inferred type as a tooltip. This is the same information the
+toplevel prints as `val name : type = value` after a Run, but you
+get it inline without running anything. When you are reading
+unfamiliar code, the hover is the fastest way to find out what a
+particular sub-expression has type.
+
 Below the cell, look for inline quizzes (which I will show you in
 later lectures). They come in two flavours: multiple-choice questions
 with explanations, and code-completion challenges where you fill in

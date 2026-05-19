@@ -233,6 +233,29 @@ body.sidebar-hidden .sidebar { display: none; }
 .chapter h2 { font-size: 1.4rem; }
 .chapter h3 { font-size: 1.15rem; color: var(--accent); }
 
+/* Heading permalinks. The [¶] anchor sits to the right of the
+   heading, fades in on hover. Click to update the URL hash so the
+   reader can copy a link to the specific section. */
+.chapter h2,
+.chapter h3,
+.chapter h4 { position: relative; }
+.chapter .permalink {
+  display: inline-block;
+  margin-left: 0.4rem;
+  color: var(--muted);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+  font-size: 0.85em;
+  font-weight: 400;
+  vertical-align: 0.05em;
+}
+.chapter h2:hover .permalink,
+.chapter h3:hover .permalink,
+.chapter h4:hover .permalink,
+.chapter .permalink:focus { opacity: 1; }
+.chapter .permalink:hover { color: var(--accent); }
+
 .chapter p { margin: 0.9rem 0; }
 .chapter pre, .chapter code { font-family: "JetBrains Mono", "Fira Code", Menlo, ui-monospace, monospace; }
 .chapter pre { background: var(--code-bg); padding: 0.8rem 1rem; border-radius: 4px; overflow-x: auto; }

@@ -433,7 +433,9 @@ admission that the language defaults are wrong.
 Let's make this concrete with a quiz before moving on.
 
 :::quiz mcq
-Look at this OCaml code:
+Predict the answer before pressing Run on the cell above (the
+cell starts with its output cleared so the answer is not visible
+on the page). Look at this OCaml code:
 
 ```ocaml
 let xs = [1; 2; 3]

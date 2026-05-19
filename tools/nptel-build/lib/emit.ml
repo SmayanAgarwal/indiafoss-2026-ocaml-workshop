@@ -392,6 +392,12 @@ let runtime_script ~asset_root =
       }
       restorePersistedCells();
       for (const c of allCells()) watchCellForEdits(c);
+      // Start every load with all cell outputs cleared. The teaching
+      // setup: a freshly-loaded page shows source only, and the
+      // reader has to press Run to see what each cell prints. This
+      // prevents inline-quiz cells from accidentally revealing
+      // their own answers via stale output from a previous session.
+      clearAll();
       // Code quizzes can now find the test cell's shadow Run button.
       setupCodeQuizzes();
     }
@@ -594,6 +600,49 @@ let runtime_script ~asset_root =
         }
       } catch (_) {}
     }
+
+    // ---------- Heading permalinks ----------
+    // Each h2/h3/h4 inside the chapter body gets a slug-id and a
+    // hover-visible "permalink" anchor, so readers can deep-link
+    // to a section. Slugs are derived from heading text in the
+    // standard lowercase-dashed convention.
+    function slugify(s) {
+      return (s || '').toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 80);
+    }
+    function setupHeadingAnchors() {
+      const seen = Object.create(null);
+      const headings = document.querySelectorAll(
+        '.chapter h2, .chapter h3, .chapter h4');
+      for (const h of headings) {
+        // Strip any existing permalink we may have already added,
+        // so it doesn't end up in the slug source.
+        const old = h.querySelector('.permalink');
+        if (old) old.remove();
+        let id = h.id || slugify(h.textContent);
+        if (!id) continue;
+        // Collision suffix if two headings hash to the same slug.
+        if (seen[id]) {
+          let i = 2;
+          while (seen[id + '-' + i]) i++;
+          id = id + '-' + i;
+        }
+        seen[id] = true;
+        h.id = id;
+        const a = document.createElement('a');
+        a.className = 'permalink';
+        a.href = '#' + id;
+        a.textContent = '¶';
+        a.setAttribute('aria-label', 'Permalink to ' + h.textContent.trim());
+        a.setAttribute('title', 'Copy link to this section');
+        h.appendChild(a);
+      }
+    }
+    setupHeadingAnchors();
 
     function setupMcqQuizzes() {
       document.querySelectorAll('.quiz-mcq').forEach(setupMcqQuiz);
