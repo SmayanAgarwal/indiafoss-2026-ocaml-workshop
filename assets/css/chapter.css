@@ -36,7 +36,11 @@ body.mode-slides  .lecture-meta-footer { display: none; }
   border-bottom: 1px solid var(--rule);
   padding: 0.6rem 1rem;
   display: flex;
-  align-items: baseline;
+  /* Vertically centre items by box, not by text baseline. The ⌂
+     glyph in the home link extends well below the normal text
+     baseline; baseline alignment lets the button box hang below
+     the header rule and get visually clipped. */
+  align-items: center;
   /* Uniform spacing between all header items: the same 0.4rem used
      by the inner cell-controls. The lecture-title has [flex: 1] so
      it absorbs the wide gap between the left cluster (sidebar

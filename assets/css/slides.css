@@ -85,6 +85,17 @@ body.mode-slides x-ocaml {
   margin: 0.6rem 0;
 }
 
+/* Plain (non-x-ocaml) code blocks. reveal.js's default theme
+   shrinks <pre>/<code> to ~13px, which is unreadable against
+   1.35rem bullet text. Bump it back up so verbatim code reads
+   at roughly the same size as the rest of the slide content. */
+body.mode-slides .reveal .slides section pre,
+body.mode-slides .reveal .slides section pre code,
+body.mode-slides .reveal .slides section code {
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
 /* The .cell-wrap is a block-level div around each cell. In slide
    mode reveal.js gives the section a fixed canvas width and the
    cell otherwise stretches to fill it, which puts the Run button
