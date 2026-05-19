@@ -51,18 +51,51 @@ Nothing more.
 
 ## What you'll learn
 
-```
-┌────────────── 8 weeks: functional programming in OCaml ──────────────┐  ┌── 4 weeks: secure systems ──┐
-│ W1  Intro     │ W3  Functions     │ W5  Pattern match │ W7  Side fx, │  │ W9   Runtime, GC, UB         │
-│ W2  Express'n │ W4  Data types    │ W6  Higher-order  │     modules  │  │ W10  Memory safety, C FFI    │
-│               │                   │                   │ W8  Monads,  │  │ W11  Unikernel OS            │
-│               │                   │                   │     GADTs    │  │ W12  Concurrency, capability │
-└──────────────────────────────────────────────────────────────────────┘  └──────────────────────────────┘
-```
+<svg viewBox="0 0 960 220" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="12-module course roadmap"
+     style="max-width: 100%; height: auto; display: block; margin: 0 auto;">
+  <style>
+    .nptel-roadmap text { font-family: ui-sans-serif, system-ui, sans-serif; }
+    .nptel-roadmap .grp-label { font-size: 13px; fill: #444; font-weight: 600; }
+    .nptel-roadmap .week-no   { font-size: 14px; font-weight: 700; }
+    .nptel-roadmap .topic     { font-size: 11px; }
+    .nptel-roadmap .fp rect   { fill: #e8f0e6; stroke: #3a6c52; }
+    .nptel-roadmap .sec rect  { fill: #fbeed2; stroke: #b97a18; }
+    .nptel-roadmap .fp text   { fill: #2a4a3c; }
+    .nptel-roadmap .sec text  { fill: #6f4711; }
+    .nptel-roadmap .bracket   { stroke: #777; fill: none; stroke-width: 1.2; }
+  </style>
+  <g class="nptel-roadmap">
+    <path class="bracket" d="M 30 60 L 30 50 L 622 50 L 622 60" />
+    <text class="grp-label" x="326" y="42" text-anchor="middle">8 modules: functional programming in OCaml</text>
+    <path class="bracket" d="M 638 60 L 638 50 L 930 50 L 930 60" />
+    <text class="grp-label" x="784" y="42" text-anchor="middle">4 modules: secure systems</text>
 
-By the end you will write idiomatic OCaml, reason equationally about
-your code, and understand how OCaml's design choices buy you safety in
-domains where C and C++ traditionally fail.
+    <g class="fp">
+      <g transform="translate(30,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M1</text><text class="topic" x="35" y="42" text-anchor="middle">Intro</text></g>
+      <g transform="translate(106,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M2</text><text class="topic" x="35" y="42" text-anchor="middle">Expressions</text></g>
+      <g transform="translate(182,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M3</text><text class="topic" x="35" y="42" text-anchor="middle">Functions</text></g>
+      <g transform="translate(258,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M4</text><text class="topic" x="35" y="42" text-anchor="middle">Data types</text></g>
+      <g transform="translate(334,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M5</text><text class="topic" x="35" y="42" text-anchor="middle">Pattern match</text></g>
+      <g transform="translate(410,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M6</text><text class="topic" x="35" y="42" text-anchor="middle">Higher-order</text></g>
+      <g transform="translate(486,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M7</text><text class="topic" x="35" y="40" text-anchor="middle">Side effects,</text><text class="topic" x="35" y="54" text-anchor="middle">modules</text></g>
+      <g transform="translate(562,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M8</text><text class="topic" x="35" y="40" text-anchor="middle">Monads,</text><text class="topic" x="35" y="54" text-anchor="middle">GADTs</text></g>
+    </g>
+    <g class="sec">
+      <g transform="translate(638,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M9</text><text class="topic" x="35" y="40" text-anchor="middle">Runtime,</text><text class="topic" x="35" y="54" text-anchor="middle">GC, UB</text></g>
+      <g transform="translate(714,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M10</text><text class="topic" x="35" y="40" text-anchor="middle">Memory</text><text class="topic" x="35" y="54" text-anchor="middle">safety, C FFI</text></g>
+      <g transform="translate(790,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M11</text><text class="topic" x="35" y="40" text-anchor="middle">Unikernel</text><text class="topic" x="35" y="54" text-anchor="middle">OS</text></g>
+      <g transform="translate(866,70)"><rect width="70" height="65" rx="4"/><text class="week-no" x="35" y="22" text-anchor="middle">M12</text><text class="topic" x="35" y="40" text-anchor="middle">Concurrency,</text><text class="topic" x="35" y="54" text-anchor="middle">capabilities</text></g>
+    </g>
+  </g>
+</svg>
+
+By the end:
+
+- You write **idiomatic OCaml**.
+- You **reason equationally** about your code.
+- You understand how OCaml's design choices buy you safety where
+  C and C++ traditionally fail.
 
 :::
 
@@ -84,15 +117,15 @@ domains where C and C++ traditionally fail.
 
 ## Run code right in this page
 
-Every lecture has runnable OCaml cells. Click **Run** and the code
-evaluates; the result appears below it.
+- Every lecture has **runnable OCaml cells.**
+- Click **Run** — output appears inline.
+- Edit any cell, Run again.
+- Nothing to install.
 
 ```ocaml
 let greeting who = "hello, " ^ who
 let () = print_endline (greeting "NPTEL")
 ```
-
-Edit the cell. Run again. Try things. Nothing to install.
 
 :::
 
@@ -178,9 +211,8 @@ If you want either of the first two, the Cornell CS3110 textbook and
 
 ## What's next
 
-In the next video we ask **why functional programming**: what makes it
-worth your time at all, given that you can already write programs in
-the languages you know.
+- Next video: **why functional programming?**
+- The case for it, given that you can already write programs.
 
 :::
 

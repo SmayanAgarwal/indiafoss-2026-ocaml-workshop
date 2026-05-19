@@ -19,11 +19,24 @@ body.mode-slides .reveal {
 body.mode-slides .reveal .slides section.slide,
 body.mode-slides .reveal .slides section[data-slide] {
   text-align: left;
-  font-size: 1.6rem;
-  line-height: 1.35;
+  font-size: 1.35rem;
+  line-height: 1.55;
   padding: 1rem 2rem;
   border-left: none;
   background: transparent;
+}
+
+/* Bullet lists in slide mode: looser spacing, no decorative wall of text. */
+body.mode-slides .reveal .slides section ul,
+body.mode-slides .reveal .slides section ol {
+  margin: 0.4rem 0 0.6rem 1.2rem;
+  padding: 0;
+}
+body.mode-slides .reveal .slides section li {
+  margin: 0.55rem 0;
+}
+body.mode-slides .reveal .slides section p {
+  margin: 0.6rem 0;
 }
 
 /* Override reveal.js's stock theme upper-casing of headings -- titles
