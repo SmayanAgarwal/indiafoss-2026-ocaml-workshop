@@ -38,7 +38,10 @@ body.mode-slides  .lecture-meta-footer { display: none; }
   display: flex;
   align-items: baseline;
   gap: 1.2rem;
-  z-index: 10;
+  /* Sits above x-ocaml's shadow-DOM Run button (z-index 999), so
+     a cell scrolling under the sticky header is hidden by it
+     instead of painting its Run over the banner. */
+  z-index: 1000;
 }
 .lecture-meta {
   color: var(--muted);
