@@ -17,12 +17,12 @@ reading:
 # Records
 
 A record is a bundle, like a tuple, but with each component
-identified by *name* instead of position. The last lecture argued
-that tuples are the right tool for two or three values whose
-positions are self-evident: a 2D point, a key-value entry, a
-quotient-remainder pair. The moment you want more than that, or
-the positions stop telling their own story, you reach for a
-record.
+identified by *name* instead of position. The
+[last lecture](M04-L01-tuples.html) argued that tuples are the
+right tool for two or three values whose positions are
+self-evident: a 2D point, a key-value entry, a quotient-remainder
+pair. The moment you want more than that, or the positions stop
+telling their own story, you reach for a record.
 
 A record in OCaml plays the same role that a `struct` plays in C
 or a class with only data members plays in Java. The syntax is
@@ -286,10 +286,11 @@ field and pass that new version forward. The old version is still
 valid; nothing observable about it has changed.
 
 This buys you the same property we discussed for shadowing in
-M02-L02: *equational reasoning*. The value `p` is what it is
-forever. Nothing later in the program can have changed `p.y`
-underneath you. Once you have a record, you can reason about it
-without worrying that some other code path mutated it.
+[M02-L02](M02-L02-let-bindings.html#immutability-the-bit-you-have-to-internalise):
+*equational reasoning*. The value `p` is what it is forever.
+Nothing later in the program can have changed `p.y` underneath
+you. Once you have a record, you can reason about it without
+worrying that some other code path mutated it.
 
 For records with many fields, the `with` syntax is essential.
 Writing out a 19-field literal to change one value would be silly;
@@ -440,9 +441,10 @@ and the ambiguity is resolved.
 
 A consequence to be aware of: if you have two record types in the
 same scope with overlapping field names, dot-access expressions
-become ambiguous in the same way. We will see in Module 7 how
-modules let you put each record type in its own namespace, which
-sidesteps the problem entirely.
+become ambiguous in the same way. We will see in
+[Module 7](M07-L04-module-basics.html) how modules let you put
+each record type in its own namespace, which sidesteps the
+problem entirely.
 
 ## Mutable record fields
 
@@ -485,16 +487,18 @@ let _ = c.n
 :::
 
 Mutability is a separate Pandora's box that we open carefully in
-Module 7. For now, the rule is: *prefer immutable records, by
-default*. Use `mutable` only when you specifically need the
-in-place update semantics (typically for a counter, a cache, or a
-piece of long-lived state that conceptually has identity).
+[Module 7](M07-L01-references.html). For now, the rule is:
+*prefer immutable records, by default*. Use `mutable` only when
+you specifically need the in-place update semantics (typically for
+a counter, a cache, or a piece of long-lived state that
+conceptually has identity).
 
 The default-immutable choice is deliberate. Immutable records
 support equational reasoning, can be shared across threads without
-locks (a property we will lean on heavily in Module 6 and beyond),
-and avoid an entire class of bugs where one piece of code modifies
-a value another piece is still depending on. The cost is one extra
+locks (a property we will lean on heavily in
+[Module 6](M06-L01-functions-revisited.html) and beyond), and
+avoid an entire class of bugs where one piece of code modifies a
+value another piece is still depending on. The cost is one extra
 allocation per "update"; OCaml's garbage collector is well-tuned
 for the resulting allocation pattern.
 
@@ -612,11 +616,12 @@ OCaml.
 :::
 
 Tuples and records are both *product types*: a value of one has a
-*piece of each* of several types. The next lecture introduces the
-dual notion, *sum types*: a value that is *one of* several
-alternatives. Once you have both products and sums, you have the
-full algebra of *algebraic data types*, and you can model
-essentially any data shape you encounter.
+*piece of each* of several types. The
+[next lecture](M04-L03-variants.html) introduces the dual notion,
+*sum types*: a value that is *one of* several alternatives. Once
+you have both products and sums, you have the full algebra of
+*algebraic data types*, and you can model essentially any data
+shape you encounter.
 
 ## Reading
 

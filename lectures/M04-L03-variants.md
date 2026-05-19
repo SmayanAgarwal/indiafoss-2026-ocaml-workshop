@@ -18,14 +18,15 @@ reading:
 
 # Variants (sum types)
 
-Tuples and records express *and*: a 2D point has an `x` *and* a
-`y`; a person has a name *and* an age *and* an email. Variants
-express *or*: a `shape` is a circle *or* a square *or* a rectangle;
-the result of parsing is a success *or* a failure; a value in an
-arithmetic expression is a number *or* a sum *or* a product. Almost
-every interesting data type you will design in OCaml is a
-combination of these two: variants for the "kinds," records (or
-tuples) for the data inside each kind.
+[Tuples](M04-L01-tuples.html) and
+[records](M04-L02-records.html) express *and*: a 2D point has an
+`x` *and* a `y`; a person has a name *and* an age *and* an email.
+Variants express *or*: a `shape` is a circle *or* a square *or* a
+rectangle; the result of parsing is a success *or* a failure; a
+value in an arithmetic expression is a number *or* a sum *or* a
+product. Almost every interesting data type you will design in
+OCaml is a combination of these two: variants for the "kinds,"
+records (or tuples) for the data inside each kind.
 
 The name *variant* refers to the fact that a value of a variant
 type *varies* between several possibilities. The names *sum type*
@@ -218,8 +219,9 @@ If you have written `switch` in C or `case` in Pascal, this should
 look familiar in structure. Two things make `match` more powerful
 than either:
 
-1. **Exhaustiveness checking.** The compiler tracks the variant
-   declaration and warns if you forget a case.
+1. **[Exhaustiveness checking](M05-L04-exhaustiveness.html).** The
+   compiler tracks the variant declaration and warns if you forget
+   a case.
 2. **Destructuring.** You bind the payload data in the pattern,
    not in a separate statement. This eliminates a class of "I
    forgot to extract the field" bugs.
@@ -291,8 +293,10 @@ want to promote this warning to an *error*: a partial match is a
 latent crash, and the compiler is offering to find them for you.
 The dune build option for this is `(flags (:standard -strict-sequence
 -strict-formats -w +8))`, but you do not need to know that
-syntax now. Module 7's lecture on side effects revisits dune
-configuration; for now, just know the option exists.
+syntax now. The
+[exhaustiveness lecture in Module 5](M05-L04-exhaustiveness.html#treating-warnings-as-errors)
+covers turning the warning into an error; for now, just know the
+option exists.
 
 The catch-all wildcard pattern `_` matches anything, and the
 compiler will accept it as covering all remaining cases:
@@ -381,7 +385,8 @@ The lesson, as Real World OCaml puts it: *catch-all cases lead to
 buggy code*. Reach for explicit constructor patterns by default;
 use `_` only when "anything else" is genuinely the meaning, and
 the meaning is stable in the face of future additions to the
-variant.
+variant. We come back to this trade-off in
+[M05-L04](M05-L04-exhaustiveness.html#when-to-use-a-wildcard-catch-all-on-variants).
 
 ## Adding a case: refactor with the compiler
 
@@ -536,8 +541,8 @@ type 'a list = [] | (::) of 'a * 'a list
 which takes a pair of an element and a smaller list. Every list
 pattern you have written: `[] -> ...` or `x :: rest -> ...`, is a
 variant pattern. The reason `list` is a *recursive* variant (the
-type refers to itself inside `::`) is the topic of the next
-lecture.
+type refers to itself inside `::`) is the topic of the
+[next lecture](M04-L04-recursive-types.html).
 
 The `option` type:
 
@@ -546,7 +551,8 @@ type 'a option = None | Some of 'a
 ```
 
 `None` is "no value"; `Some x` wraps a value. We will give `option`
-its own treatment in M04-L05.
+its own treatment in
+[M04-L05](M04-L05-option-and-aliases.html#the-option-type).
 
 :::slide
 
@@ -604,8 +610,8 @@ let t : int tree =
 The type `'a tree` is a binary tree carrying values of type `'a`
 at each internal node. `int tree` is a tree of integers, `string
 tree` is a tree of strings, and so on. We will see trees again in
-the next lecture (they are the canonical example of a *recursive*
-variant).
+the [next lecture](M04-L04-recursive-types.html#a-binary-tree)
+(they are the canonical example of a *recursive* variant).
 
 :::slide
 
@@ -644,7 +650,9 @@ and rules out the rest by construction. Compare:
   build a "Listening with bytes_sent" value.
 
 This is the design principle Module 4 was put together to teach.
-You will see it again in Module 7 when we discuss API design.
+You will see it again in
+[Module 7](M07-L05-signatures.html#why-hide-internals) when we
+discuss API design.
 
 ## A small check
 
@@ -745,7 +753,7 @@ The `function` keyword introduces an anonymous function that
 immediately pattern matches on its (single, implicit) argument. It
 is equivalent to `fun x -> match x with ...` but shorter. We will
 see more of `function` (and pattern matching more generally) in
-Module 5.
+[Module 5](M05-L01-basic-patterns.html#function-shorthand).
 
 ## What's next
 
@@ -761,9 +769,10 @@ is what makes algebraic data types *powerful*, not just *labelled*.
 :::
 
 We have seen variants with *fixed* payloads: a `Circle` always
-carries one float. The next lecture lets a constructor's payload
-include a value of *the type being defined*. That is the doorway
-to lists, trees, and arbitrary tree-shaped data.
+carries one float. The
+[next lecture](M04-L04-recursive-types.html) lets a constructor's
+payload include a value of *the type being defined*. That is the
+doorway to lists, trees, and arbitrary tree-shaped data.
 
 ## Reading
 

@@ -18,18 +18,22 @@ This tutorial works through six small problems: Fibonacci (naive
 and linear-time), GCD by Euclid, a list indexing function, a
 tail-recursive sum, list reversal, and a digit-counting function.
 None are individually hard; the point is to consolidate the
-techniques from Module 3 (recursion, tail calls and accumulators,
-local helpers) and to make explicit the choice between *naive
-recursive* and *tail-recursive* implementations.
+techniques from Module 3
+([recursion](M03-L02-recursion.html),
+[tail calls and accumulators](M03-L04-tail-recursion.html),
+[local helpers](M03-L05-local-and-mutual.html)) and to make
+explicit the choice between *naive recursive* and *tail-recursive*
+implementations.
 
 The general rule of thumb: write the naive recursive form first.
-It is almost always the clearest expression of the algorithm and it
-is what you should reach for in a sketch or a small script. If the
-function will be called on large inputs (long lists, large numbers,
-in hot paths), convert to tail-recursive form using the accumulator
-pattern from M03-L04. Most code never needs the conversion;
-practitioners get a feel for which functions are likely to be
-called on big data and rewrite those preemptively.
+It is almost always the clearest expression of the algorithm and
+it is what you should reach for in a sketch or a small script. If
+the function will be called on large inputs (long lists, large
+numbers, in hot paths), convert to tail-recursive form using the
+[accumulator pattern](M03-L04-tail-recursion.html#the-accumulator-pattern)
+from M03-L04. Most code never needs the conversion; practitioners
+get a feel for which functions are likely to be called on big data
+and rewrite those preemptively.
 
 ## Problem 1: Fibonacci, naively
 
@@ -142,8 +146,9 @@ fast. It works for any recurrence that depends on the last *k*
 values: keep a window of those values as the accumulator. Many
 common sequences (Lucas numbers, Padovan numbers, etc.) yield to
 the same shape. The general technique of caching intermediate
-results is called *memoisation*; we will see it more thoroughly when
-we get to mutable state in Module 7.
+results is called *memoisation*; we will see it more thoroughly
+when we get to mutable state in
+[Module 7](M07-L01-references.html).
 
 This `fib` is also tail-recursive (the recursive `go` call is the
 last thing in the else-branch), so it runs in constant stack space.
@@ -265,13 +270,15 @@ doesn't make sense and there's no reasonable return value." A
 cleaner alternative is to return `'a option`: `Some x` if the index
 is valid, `None` if not. The option-returning variant is what
 `List.nth_opt` in the standard library does. We will see `option`
-properly in Module 4. For this tutorial, `failwith` is fine.
+properly in [M04-L05](M04-L05-option-and-aliases.html). For this
+tutorial, `failwith` is fine.
 
 ## Problem 4: a tail-recursive `sum` for lists
 
-We saw this in passing in M03-L04. Worth showing alone, because
-`sum` is the simplest list-fold and a useful reference for the
-shape:
+We saw this in passing in
+[M03-L04](M03-L04-tail-recursion.html#the-accumulator-pattern).
+Worth showing alone, because `sum` is the simplest list-fold and a
+useful reference for the shape:
 
 ```ocaml
 let sum xs =
@@ -315,8 +322,8 @@ Once you see this shape often enough, you notice that it generalises:
 result at the end.* The standard library function `List.fold_left`
 captures exactly this pattern, parameterised by the per-step
 operation. With `List.fold_left`, the same sum is one line:
-`List.fold_left (+) 0 xs`. We will see `fold_left` and its
-relatives in Module 6.
+`List.fold_left (+) 0 xs`. We will see
+[`fold_left`](M06-L04-fold.html) and its relatives in Module 6.
 
 ## Problem 5: reverse a list
 
@@ -533,7 +540,8 @@ The `option` return type is the right choice here because there is
 no sensible value of type `'a` to return for an empty list. We could
 have raised an exception with `failwith`, but `option` makes the
 empty case visible *in the type*, forcing callers to handle it. We
-will see `option` in detail in M04-L05.
+will see `option` in detail in
+[M04-L05](M04-L05-option-and-aliases.html#the-option-type).
 
 ## A small code challenge
 
@@ -563,8 +571,8 @@ The natural recursive shape: three cases. If `n <= 0`, return `[]`.
 If the list is empty, return `[]`. Otherwise, cons the head onto
 `take (n - 1) rest`. This version is *not* tail-recursive (the cons
 runs after the recursive call), which is fine for most uses; a
-tail-recursive version would accumulate-then-reverse like the `map`
-in M03-L04.
+tail-recursive version would accumulate-then-reverse like the
+[`map` in M03-L04](M03-L04-tail-recursion.html#when-clean-tail-recursion-is-hard).
 
 ## What you should be able to do now
 
@@ -606,10 +614,11 @@ By the end of Module 3 you can:
 - Use local helpers via `let rec go ... in ...` and write mutually
   recursive functions with `let rec ... and ... = ...`.
 
-Module 4 turns to *data types*: tuples, records, and variants (the
-algebraic data types that distinguish ML-family languages from
-mainstream OOP). Pattern matching, which we have previewed all
-through Module 3, takes centre stage in Module 5.
+[Module 4](M04-L01-tuples.html) turns to *data types*: tuples,
+records, and variants (the algebraic data types that distinguish
+ML-family languages from mainstream OOP). Pattern matching, which
+we have previewed all through Module 3, takes centre stage in
+[Module 5](M05-L01-basic-patterns.html).
 
 ## Reading
 

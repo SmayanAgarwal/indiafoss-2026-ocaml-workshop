@@ -25,23 +25,26 @@ complexity. This lecture covers the canonical recursive shapes,
 how OCaml encodes them, and how to walk them with recursive
 functions.
 
-We have already met recursion at the *function* level (M03-L02).
-This lecture connects it with recursion at the *type* level. The
-two go together: a recursive type asks for a recursive function to
-process it, and the structural shape of the recursion mirrors the
-shape of the type. Once you see the connection, writing functions
-on recursive data becomes almost mechanical.
+We have already met recursion at the *function* level
+([M03-L02](M03-L02-recursion.html)). This lecture connects it
+with recursion at the *type* level. The two go together: a
+recursive type asks for a recursive function to process it, and
+the structural shape of the recursion mirrors the shape of the
+type. Once you see the connection, writing functions on recursive
+data becomes almost mechanical.
 
-Module 5 will lean heavily on this: pattern matching on recursive
-variants is the everyday tool for processing structured data.
-Module 6 generalises with higher-order combinators like `map` and
-`fold`. The foundation, the *types themselves*, is what we
-introduce now.
+[Module 5](M05-L01-basic-patterns.html) will lean heavily on
+this: pattern matching on recursive variants is the everyday tool
+for processing structured data.
+[Module 6](M06-L02-map.html) generalises with higher-order
+combinators like `map` and [`fold`](M06-L04-fold.html). The
+foundation, the *types themselves*, is what we introduce now.
 
 ## Lists are a recursive variant
 
-You have been using lists since Module 3. We will now look at how
-they are *defined*. Conceptually:
+You have been using lists since
+[Module 3](M03-L02-recursion.html#recursion-on-lists). We will
+now look at how they are *defined*. Conceptually:
 
 ```
 type 'a list =
@@ -355,9 +358,10 @@ as for tuples: use `_` for components you do not use.
 ## Mutual recursion at the type level
 
 Two types can be mutually recursive (each referring to the other).
-The keyword is `and`, just like for mutual recursion of functions
-(M03-L05). A small example: a "rose tree" or "n-ary tree," where
-each node has a value and an arbitrary number of children:
+The keyword is `and`, just like for
+[mutual recursion of functions in M03-L05](M03-L05-local-and-mutual.html#mutual-recursion-two-functions-calling-each-other).
+A small example: a "rose tree" or "n-ary tree," where each node
+has a value and an arbitrary number of children:
 
 ```ocaml
 type 'a forest = 'a rose_tree list
@@ -388,9 +392,10 @@ and  'a rose_tree = Rose of 'a * 'a forest
 
 The same `and` keyword serves three purposes in OCaml: mutual
 recursion of `let` bindings, mutual recursion of `type` declarations,
-and (we will see in Module 7) mutual recursion of `module`
-declarations. The intuition is the same in each case: the names
-introduced together are all in scope for each other.
+and (we will see in [Module 7](M07-L04-module-basics.html)) mutual
+recursion of `module` declarations. The intuition is the same in
+each case: the names introduced together are all in scope for each
+other.
 
 ## Modelling arithmetic expressions
 
@@ -453,9 +458,12 @@ This pattern, *variants for the kinds, recursion for the nesting,
 pattern matching for the walks*, is what Module 4 has been
 building toward. Once you can write code like this fluently, you
 can model and process essentially any tree-structured data. The
-tutorial in M04-L06 builds a slightly larger example along the
-same lines (a JSON-like value type), and we will keep returning to
-this shape throughout the course.
+tutorial in [M04-L06](M04-L06-tutorial.html) builds a slightly
+larger example along the same lines (a JSON-like value type), and
+we will keep returning to this shape throughout the course. The
+[Module 5 tutorial](M05-L06-tutorial.html) revisits the
+arithmetic-expression example with the full pattern-matching
+toolkit.
 
 ## Structural induction
 
@@ -501,8 +509,8 @@ The practical implication: when you write a structural recursion,
 if you handle every constructor and you "trust" the recursive calls
 to do the right thing on smaller inputs, you are almost certainly
 correct. The compiler enforces the "every constructor handled"
-part (via exhaustiveness checking); structural induction enforces
-the "trust the recursive call" part.
+part (via [exhaustiveness checking](M05-L04-exhaustiveness.html));
+structural induction enforces the "trust the recursive call" part.
 
 ## A short check
 
@@ -620,9 +628,10 @@ value, maybe not"). After that, the Module 4 tutorial.
 :::
 
 We now have variants, records, tuples, and recursive variants. The
-next lecture adds two small but important pieces: type *abbreviations*
-(short names for existing types) and the `option` type (the
-standard idiom for "maybe a value"). Then the module tutorial puts
+[next lecture](M04-L05-option-and-aliases.html) adds two small but
+important pieces: type *abbreviations* (short names for existing
+types) and the `option` type (the standard idiom for "maybe a
+value"). Then the [module tutorial](M04-L06-tutorial.html) puts
 all of it together.
 
 ## Reading

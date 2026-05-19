@@ -14,12 +14,13 @@ reading:
 
 # Tail recursion and accumulators
 
-The naive `factorial` and `sum_to` we wrote in M03-L02 work fine for
-small inputs and crash with a stack overflow for big ones. The crash
-is not a bug in OCaml; it is a fundamental consequence of how
-function calls use memory. This lecture shows what is going wrong,
-introduces the technique that fixes it, and walks through the rewrite
-on several standard functions.
+The naive `factorial` and `sum_to` we wrote in
+[M03-L02](M03-L02-recursion.html#a-first-recursive-function) work
+fine for small inputs and crash with a stack overflow for big ones.
+The crash is not a bug in OCaml; it is a fundamental consequence
+of how function calls use memory. This lecture shows what is going
+wrong, introduces the technique that fixes it, and walks through
+the rewrite on several standard functions.
 
 The technique has two names. *Tail recursion* refers to the shape of
 the recursive function. *Tail-call optimisation* (often abbreviated
@@ -42,7 +43,8 @@ do it; only Java still refuses to.
 ## What a stack overflow looks like
 
 The simplest recursion that demonstrates the problem is summing the
-integers from `1` to `n`. We saw the naive version in M03-L02:
+integers from `1` to `n`. We saw the naive version in
+[M03-L02](M03-L02-recursion.html#recursion-on-numbers-summing):
 
 ```ocaml
 let rec sum_to n =
@@ -259,9 +261,11 @@ The structure has three parts worth naming:
   reversal it would be `[]`. In general, the initial accumulator is
   whatever the base case of the original function returned.
 
-This is the standard shape, and we will use it constantly. We saw it
-twice already (`length` and the tail-recursive `factorial` previewed
-in M03-L05); now we are giving it its proper name.
+This is the standard shape, and we will use it constantly. We
+will use it again in [M03-L05](M03-L05-local-and-mutual.html)
+(where the local-helper pattern gets its own treatment) and
+throughout [Module 6](M06-L04-fold.html), where `List.fold_left`
+packages exactly this pattern.
 
 ## Tracing through it
 
@@ -371,7 +375,8 @@ course; just know it exists.
 
 ## Length of a list, tail-recursive
 
-The same pattern applied to lists. The original (M03-L02) was:
+The same pattern applied to lists. The original (from
+[M03-L02](M03-L02-recursion.html#recursion-on-lists)) was:
 
 ```ocaml
 let rec length xs =
@@ -430,7 +435,8 @@ combination "take an argument, immediately pattern-match it." So
 `function | [] -> ... | _ :: rest -> ...` is exactly equivalent to
 `fun xs -> match xs with | [] -> ... | _ :: rest -> ...`. The
 `function` form is idiomatic when the last parameter is the one
-being matched. We will see it everywhere.
+being matched. We will see it everywhere; the proper coverage is
+in [M05-L01](M05-L01-basic-patterns.html#function-shorthand).
 
 ## When clean tail recursion is hard
 
@@ -673,11 +679,12 @@ Lecture 5: **local functions and mutual recursion**.
 :::
 
 We have used the `let rec go ... in` pattern three times in this
-lecture (in `sum_to`, `factorial`, `length`) without explaining what
-it does. The next lecture is about that pattern: *local* function
-definitions, scoped to inside another function. It also covers
-*mutual recursion*, two or more functions that call each other,
-which uses a related piece of syntax.
+lecture (in `sum_to`, `factorial`, `length`) without explaining
+what it does. The next lecture,
+[M03-L05](M03-L05-local-and-mutual.html), is about that pattern:
+*local* function definitions, scoped to inside another function.
+It also covers *mutual recursion*, two or more functions that call
+each other, which uses a related piece of syntax.
 
 ## Reading
 

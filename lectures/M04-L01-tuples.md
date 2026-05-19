@@ -30,8 +30,9 @@ This first lecture covers the simplest aggregate the language
 offers: the *tuple*. A tuple is a fixed-size bundle of values,
 possibly of different types, identified by *position*. The pair
 `(3, "hello")` is a tuple of arity two; the triple `(1, 2.0, true)`
-is a tuple of arity three. The next two lectures cover *records*
-(aggregates with named fields) and *variants* (a different kind of
+is a tuple of arity three. The next two lectures cover
+[*records*](M04-L02-records.html) (aggregates with named fields)
+and [*variants*](M04-L03-variants.html) (a different kind of
 aggregate: "one of several shapes" rather than "this and that").
 Together, tuples, records, and variants are the three building
 blocks of *every* data type you will design in OCaml.
@@ -90,10 +91,12 @@ The mathematical reason for the symbol is that *the set of values
 of type `int * bool` is the Cartesian product of the set of `int`s
 and the set of `bool`s*. Every pair is one `int` paired with one
 `bool`; the number of distinct pairs is `|int| * |bool|`. Hence the
-name *product type*, and hence the `*`. The next lecture covers
-records, which are also product types (just with named components
-instead of positional ones). The lecture after that covers variants,
-which are *sum types*: the dual notion.
+name *product type*, and hence the `*`. The
+[next lecture](M04-L02-records.html) covers records, which are
+also product types (just with named components instead of
+positional ones). The
+[lecture after that](M04-L03-variants.html) covers variants, which
+are *sum types*: the dual notion.
 
 ## Tuples have a fixed size as part of their type
 
@@ -206,7 +209,9 @@ single name to the left of `let =`. The thing to the left is called
 a *pattern*. For tuples, the pattern is `(x, y)` or `(x, y, z)`,
 with one name (or `_`) per component. OCaml matches the right-hand
 side against this pattern and binds each name to the corresponding
-component.
+component. Pattern matching is the subject of all of
+[Module 5](M05-L01-basic-patterns.html); for this module we use it
+informally as it appears.
 
 If the pattern's arity does not match the value's arity, the
 compiler complains *at compile time*, not at runtime. Writing `let
@@ -278,9 +283,10 @@ A subtle point: the *function* `distance` takes two arguments, each
 of which happens to be a pair. It is *not* a function of one
 argument that is a 4-tuple. The difference shows up in the type:
 `float * float -> float * float -> float` vs `float * float * float
-* float -> float`. We will see in M04-L06 and again in Module 6
-that the choice matters when partial application enters the
-picture.
+* float -> float`. We will see in
+[M04-L06](M04-L06-tutorial.html) and again in
+[Module 6](M06-L01-functions-revisited.html) that the choice
+matters when partial application enters the picture.
 
 ## Argument lists versus tuples: a common confusion
 
@@ -300,10 +306,12 @@ Both compute `7`, but the function signatures are different:
 - `add_curried : int -> int -> int`
 - `add_tupled  : int * int -> int`
 
-`add_curried` takes *two* arguments, applied one at a time (this is
-the curried form we saw in M03-L01 and will study in M03-L03). It
-can be partially applied: `add_curried 3` is a meaningful value of
-type `int -> int`.
+`add_curried` takes *two* arguments, applied one at a time (this
+is the curried form we saw in
+[M03-L01](M03-L01-functions-as-values.html#multiple-parameters)
+and studied in [M03-L03](M03-L03-currying.html)). It can be
+partially applied: `add_curried 3` is a meaningful value of type
+`int -> int`.
 
 `add_tupled` takes *one* argument, which happens to be a pair. It
 cannot be "partially applied to the first component"; the whole
@@ -342,10 +350,11 @@ twice, the cause is obvious.
 
 The idiomatic rule: use curried arguments (`f x y`) by default,
 because they allow partial application and read more naturally in
-the higher-order style we will lean on in Module 6. Use a tuple
-argument only when the two values *genuinely belong together as one
-unit* (a coordinate pair, a key-value entry) and never make sense
-in isolation.
+the higher-order style we will lean on in
+[Module 6](M06-L01-functions-revisited.html). Use a tuple argument
+only when the two values *genuinely belong together as one unit*
+(a coordinate pair, a key-value entry) and never make sense in
+isolation.
 
 ## Tuples are for heterogeneous data of known shape
 
@@ -381,8 +390,9 @@ enough that the position is self-documenting. But a "person" with
 a `first_name`, `last_name`, `age`, `phone`, `email`, `address` is
 *not* a 6-tuple, even though you could technically write it that
 way. Code that consumes such a tuple would start asking, "wait,
-was the email index 4 or 5?" and the bugs follow. Records are for
-that case; we will see them in the next lecture.
+was the email index 4 or 5?" and the bugs follow.
+[Records](M04-L02-records.html) are for that case; we will see
+them in the next lecture.
 
 ## Returning multiple values
 
@@ -495,19 +505,22 @@ let _ = lookup 2 pairs
 
 The pattern `(k, v) :: rest` is a *nested pattern*: it matches a
 non-empty list whose head is a pair, binding the head's two
-components and the tail in one go. Module 5 is largely about how
-patterns nest like this; for now, just notice that you can destructure
-several layers at once.
+components and the tail in one go.
+[Module 5](M05-L02-nested-and-or-patterns.html) is largely about
+how patterns nest like this; for now, just notice that you can
+destructure several layers at once.
 
 The standard library has a function with this exact shape:
-`List.assoc_opt`. We will reach for it in M04-L05, when we have
-introduced `option` properly.
+`List.assoc_opt`. We will reach for it in
+[M04-L05](M04-L05-option-and-aliases.html#chained-option-access),
+when we have introduced `option` properly.
 
 ## Tuples and higher-order functions
 
-A small preview of what is coming in Module 6. Suppose you want to
-build a table of squares for `1` through `5`. You can use
-`List.map` with an anonymous function that returns a pair:
+A small preview of what is coming in
+[Module 6](M06-L02-map.html). Suppose you want to build a table of
+squares for `1` through `5`. You can use `List.map` with an
+anonymous function that returns a pair:
 
 ```ocaml
 let nums = [1; 2; 3; 4; 5]

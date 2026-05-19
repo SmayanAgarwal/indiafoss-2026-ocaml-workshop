@@ -23,14 +23,17 @@ thing without getting dizzy.
 
 You have written `for` loops and `while` loops in C, Java, or Python.
 In OCaml you will write very few. The closest thing is a `for` loop,
-which exists in the language but is rarely used because mutable
-state is rarely the natural way to express a computation. Almost
-everything that would be a loop in C is a recursive function in
-OCaml. That sounds expensive (function calls? for a loop?), but
-recursion in OCaml is cheap, and the compiler is good at translating
-the natural recursive style into efficient code. We will see how
-later in M03-L04 (tail recursion). For now, the goal is to get
-comfortable writing recursive functions in the first place.
+which exists in the language (we cover it in
+[M07-L02](M07-L02-arrays-and-mutation.html#ocamls-for-and-while-loops))
+but is rarely used because mutable state is rarely the natural way
+to express a computation. Almost everything that would be a loop
+in C is a recursive function in OCaml. That sounds expensive
+(function calls? for a loop?), but recursion in OCaml is cheap,
+and the compiler is good at translating the natural recursive
+style into efficient code. We will see how later in
+[M03-L04](M03-L04-tail-recursion.html) (tail recursion). For now,
+the goal is to get comfortable writing recursive functions in the
+first place.
 
 ## A first recursive function
 
@@ -128,11 +131,12 @@ a plain `let factorial = ...`, the name `factorial` is *not yet in
 scope*. References to `factorial` inside the body mean the outer
 `factorial` (if any), not the one being defined.
 
-This is the same rule we used for shadowing in M02-L02: `let x = x
-+ 1` means "the new `x` is the old `x` plus one." If `let` brought
-the new name into scope eagerly, this would mean something
-different (an infinite loop trying to reference itself). The default
-for `let` is "right-hand side sees the outer scope."
+This is the same rule we used for shadowing in
+[M02-L02](M02-L02-let-bindings.html#shadowing): `let x = x + 1`
+means "the new `x` is the old `x` plus one." If `let` brought the
+new name into scope eagerly, this would mean something different
+(an infinite loop trying to reference itself). The default for
+`let` is "right-hand side sees the outer scope."
 
 `let rec` overrides this: it says "yes, the name *is* in scope
 inside the body too, because the function needs to call itself."
@@ -180,8 +184,8 @@ Read the cases:
 :::
 
 Result: `int = 4`. The function uses `match ... with`, which we
-will study in detail in Module 5. For now, read it as a multi-way
-branch on the *shape* of the input:
+will study in detail in [Module 5](M05-L01-basic-patterns.html).
+For now, read it as a multi-way branch on the *shape* of the input:
 
 - `[] -> 0`: if the list is empty, return 0.
 - `_ :: rest -> 1 + length rest`: if the list has a head element
@@ -196,8 +200,10 @@ This shape (one base case for the empty list, one recursive case
 that strips one element and recurs on the rest) is so common it
 has a name: *structural recursion on lists*. Most list functions
 in OCaml's standard library are written this way under the hood:
-`List.map`, `List.length`, `List.filter`, `List.fold_left`. We
-will revisit all of them in Module 6.
+[`List.map`](M06-L02-map.html), `List.length`,
+[`List.filter`](M06-L03-filter.html),
+[`List.fold_left`](M06-L04-fold.html). We will revisit all of
+them in Module 6.
 
 ## Recursion on numbers, counting down
 
@@ -246,7 +252,9 @@ group multiple statements into one expression. Here, "print, then
 recur" is the sequenced body. We need the bracketing because the
 sequencing `;` would otherwise be ambiguous with the `else`
 branch. `begin/end` is the more readable form in OCaml; plain
-parens work too.
+parens work too. (Side effects and sequencing get full treatment
+in [M08-L01](M08-L01-sequencing.html); for this lecture, just
+trust the brackets do what you would expect.)
 
 ## Recursion on numbers, summing
 
@@ -424,7 +432,8 @@ Two fixes:
    ```
 
    `invalid_arg` raises an exception (we will see exceptions in
-   Module 7). This rejects nonsense inputs with a runtime error.
+   [Module 7](M07-L03-exceptions.html)). This rejects nonsense
+   inputs with a runtime error.
 
 Which is better depends on your context. The strict version
 catches bugs early; the permissive version "just works." For a
@@ -558,8 +567,8 @@ subproblems from scratch. The number of function calls grows
 exponentially. `fib 40` already takes a noticeable second; `fib
 50` takes minutes. The classic fix is *memoisation* (caching
 already-computed results) or *iterative bottom-up computation*
-(building up from `fib 0` and `fib 1`); we will see the latter in
-the next lecture.
+(building up from `fib 0` and `fib 1`); we will see the latter
+in the [Module 3 tutorial](M03-L06-tutorial.html#why-is-naive-fibonacci-so-slow).
 
 ## A small code challenge
 
@@ -654,12 +663,14 @@ let rec count_down n =
 ## What's next
 
 We have introduced the basic shape of recursion. The next two
-lectures put recursion to better use. M03-L03 covers *currying*
-and *partial application*: making the "function returning function"
-pattern explicit and using it to write small reusable utilities.
-M03-L04 covers *tail recursion*: how to make recursive functions
-run in constant stack space, so you can recurse on lists of
-millions of elements without blowing the stack.
+lectures put recursion to better use.
+[M03-L03](M03-L03-currying.html) covers *currying* and *partial
+application*: making the "function returning function" pattern
+explicit and using it to write small reusable utilities.
+[M03-L04](M03-L04-tail-recursion.html) covers *tail recursion*:
+how to make recursive functions run in constant stack space, so
+you can recurse on lists of millions of elements without blowing
+the stack.
 
 :::slide
 

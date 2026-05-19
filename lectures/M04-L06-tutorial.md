@@ -16,12 +16,16 @@ reading:
 
 # Tutorial for Module 4
 
-The five preceding lectures introduced the pieces: tuples,
-records, variants, recursive variants, `option`, and type
-abbreviations. This tutorial puts them all together by walking
-through the design of a small algebraic data type, building a
-handful of operations on it, and showing the rhythm of writing
-data-driven OCaml code.
+The five preceding lectures introduced the pieces:
+[tuples](M04-L01-tuples.html), [records](M04-L02-records.html),
+[variants](M04-L03-variants.html),
+[recursive variants](M04-L04-recursive-types.html),
+[`option`](M04-L05-option-and-aliases.html), and
+[type abbreviations](M04-L05-option-and-aliases.html#type-abbreviations).
+This tutorial puts them all together by walking through the
+design of a small algebraic data type, building a handful of
+operations on it, and showing the rhythm of writing data-driven
+OCaml code.
 
 The example is a *JSON-like value type*: a single OCaml type that
 represents arbitrary JSON values (numbers, strings, booleans,
@@ -33,7 +37,8 @@ operations (`depth`, `lookup`, `pretty`), and then experience the
 
 If you have not yet written non-trivial recursive code on a
 recursive variant, this is the lecture to slow down on and try
-the examples in a top-level. Module 5 will rely heavily on the
+the examples in a top-level.
+[Module 5](M05-L01-basic-patterns.html) will rely heavily on the
 pattern matching idioms we use here.
 
 ## The type
@@ -108,7 +113,8 @@ of those fields (`"pets"`) is itself a `JArray` of `JString`s. The
 type lets all of these nest naturally; the constructors carry the
 structure.
 
-The "make illegal states unrepresentable" slogan from M04-L03
+The
+["make illegal states unrepresentable" slogan from M04-L03](M04-L03-variants.html#parameterised-variants)
 applies here. There is no way to build a `json` that has, say, a
 "key" without a "value": each object entry is a pair, and a pair
 must have both components. There is no way to use a value where a
@@ -190,14 +196,17 @@ _ -> 1` matches *any* of the four listed constructors and produces
 the same result. This is OCaml's way to say "all of these cases
 get the same treatment." The vertical bar inside a single clause
 plays the same role as `|` between top-level constructors in a type
-declaration. Module 5 covers or-patterns in detail.
+declaration.
+[M05-L02](M05-L02-nested-and-or-patterns.html#or-patterns-shared-right-hand-sides)
+covers or-patterns in detail.
 
 **`List.fold_left`.** This is a higher-order function we will see
-in Module 6; for now, read `List.fold_left max 0 xs` as "the
-maximum of `xs`, with `0` as the answer for the empty list." The
-combination `List.fold_left max 0 (List.map depth xs)` computes
-the maximum depth of `xs`, or `0` if `xs` is empty. If you have not
-seen `fold_left` yet, you can write this with explicit recursion
+in [Module 6](M06-L04-fold.html); for now, read
+`List.fold_left max 0 xs` as "the maximum of `xs`, with `0` as the
+answer for the empty list." The combination
+`List.fold_left max 0 (List.map depth xs)` computes the maximum
+depth of `xs`, or `0` if `xs` is empty. If you have not seen
+`fold_left` yet, you can write this with explicit recursion
 instead:
 
 ```ocaml
@@ -369,14 +378,18 @@ Two further pattern-matching idioms appear here:
 true -> "true"` and `JBool false -> "false"` pattern-match on the
 *payload* as well as the constructor. The pattern `JBool true`
 matches only `JBool true`, not `JBool false`. Patterns nest in this
-way; Module 5 covers nested patterns in detail.
+way;
+[M05-L02](M05-L02-nested-and-or-patterns.html#patterns-inside-constructors)
+covers nested patterns in detail.
 
 **Local functions.** Inside the `JObject` case, we define a local
 function `one` that converts a key-value pair to a string. This is
-the M03-L05 idiom of using `let` to give a name to a small helper
-that is only used here. The alternative is to inline an anonymous
-function: `List.map (fun (k, v) -> "\"" ^ k ^ "\": " ^ pretty v)
-fields`. Either form is fine.
+the
+[M03-L05 idiom](M03-L05-local-and-mutual.html#local-helpers-definitions-inside-let-in)
+of using `let` to give a name to a small helper that is only used
+here. The alternative is to inline an anonymous function:
+`List.map (fun (k, v) -> "\"" ^ k ^ "\": " ^ pretty v) fields`.
+Either form is fine.
 
 A real JSON printer would also handle escaping: a backslash in a
 string should be output as `\\`, a double quote as `\"`, etc. We
@@ -473,8 +486,8 @@ key` matches a non-empty list whose head pair has a key equal to
 `key`. The `when` clause is a runtime check that further filters
 the pattern. Without it, both the "match the first pair" and the
 "match any other pair" cases would have the same pattern shape,
-and OCaml would not be able to distinguish them. Module 5 will
-cover when-clauses in full.
+and OCaml would not be able to distinguish them.
+[M05-L03](M05-L03-guards.html) will cover when-clauses in full.
 
 The structure of `go` is:
 
@@ -618,12 +631,13 @@ type json =
 
 :::
 
-This is the experience M04-L03 promised: a "punch list" of every
-function that touched the variant, served up by the compiler. Each
-function that pattern-matched explicitly on `json` will now get a
-warning pointing at the missing `JFloat` case. You add the case
-to each, recompile, repeat. When the warnings stop, the refactor
-is complete.
+This is the experience
+[M04-L03 promised](M04-L03-variants.html#adding-a-case-refactor-with-the-compiler):
+a "punch list" of every function that touched the variant, served
+up by the compiler. Each function that pattern-matched explicitly
+on `json` will now get a warning pointing at the missing `JFloat`
+case. You add the case to each, recompile, repeat. When the
+warnings stop, the refactor is complete.
 
 The functions that did *not* use a wildcard catch-all get the
 warnings; the ones that did (like `lookup`'s `_ -> None`) silently
@@ -660,10 +674,11 @@ Module 5 zooms in on **pattern matching** itself:
 
 You now have the full vocabulary for modelling data in OCaml. The
 combination of records, variants, tuples, and recursion is enough
-to express essentially any data shape you encounter. Module 5
-sharpens the *consumption* side: pattern matching has more features
-than we have used in this module, and they are the everyday tools
-for writing concise code on these data types.
+to express essentially any data shape you encounter.
+[Module 5](M05-L01-basic-patterns.html) sharpens the
+*consumption* side: pattern matching has more features than we
+have used in this module, and they are the everyday tools for
+writing concise code on these data types.
 
 ## Reading
 

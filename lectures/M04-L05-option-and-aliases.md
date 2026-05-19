@@ -30,8 +30,9 @@ type system, and a closely related type, `result`, for "no value
 This lecture covers both, plus a small but separate feature:
 *type abbreviations*, which let you give a short name to a longer
 type for readability. Together, these three pieces wrap up Module
-4's introduction to OCaml's data-type vocabulary. The tutorial in
-the next lecture puts everything together.
+4's introduction to OCaml's data-type vocabulary. The
+[tutorial in the next lecture](M04-L06-tutorial.html) puts
+everything together.
 
 ## The `option` type
 
@@ -76,7 +77,9 @@ have to open the box and check which case you got.
 
 `option` is defined in the standard library; you do not need to
 declare it. `None` and `Some` are the constructors; both are in
-scope by default.
+scope by default. (Like `bool` and `list`, `option` is itself a
+[variant](M04-L03-variants.html#variants-you-have-already-used);
+we have been pattern-matching on these without naming the shape.)
 
 ## Why not `null`?
 
@@ -255,11 +258,12 @@ Contrast this with two other approaches:
    compute a `-1` and confuse it with the error code. The
    sentinel-vs-real-value ambiguity is the heart of why sentinels
    are fragile.
-2. *Throw an exception*. We will see exceptions in Module 7. They
-   work, but they introduce a *non-local* control flow that the
-   caller's type does not advertise. A caller can forget to catch
-   the exception (especially in code that crosses module
-   boundaries), and you get a runtime crash.
+2. *Throw an exception*. We will see exceptions in
+   [Module 7](M07-L03-exceptions.html). They work, but they
+   introduce a *non-local* control flow that the caller's type
+   does not advertise. A caller can forget to catch the exception
+   (especially in code that crosses module boundaries), and you
+   get a runtime crash.
 
 `option` is the type-driven middle ground: the function returns
 normally in both cases, but the type forces the caller to inspect
@@ -326,7 +330,8 @@ useful than `null`: you can *operate on the optional value as if
 it were present*, and the absence-of-value case is propagated for
 you. When the wrapping gets deeper (several option-returning
 calls in sequence), `Option.bind` chains them similarly. The
-monad-shaped APIs in Module 8 are this same pattern in fuller form.
+[monad-shaped APIs in Module 8](M08-L02-option-monad.html) are
+this same pattern in fuller form.
 
 Two other useful functions in `Stdlib.Option`:
 
@@ -398,12 +403,15 @@ The choice between `option` and `result` is about what the caller
 needs to know. If the only sensible response to failure is "use a
 default" or "give up," `option` is enough. If the caller might
 distinguish among kinds of failure ("user gave a bad input" vs
-"the disk is full"), `result` lets you carry that information.
+"the disk is full"), `result` lets you carry that information. The
+[`result` monad in M08-L03](M08-L03-result-monad.html) returns to
+this type with the `let*` sugar applied to error chains.
 
 The `try ... with` syntax catches the exception `Failure _`
 raised by `int_of_string`. We will cover exceptions properly in
-Module 7; for now, read `try Ok ... with Failure _ -> Error ...`
-as "do the thing; if it raises, convert to `Error`."
+[Module 7](M07-L03-exceptions.html); for now, read
+`try Ok ... with Failure _ -> Error ...` as "do the thing; if it
+raises, convert to `Error`."
 
 ## Type abbreviations
 
@@ -471,7 +479,8 @@ Abbreviations are *not* useful when you want type safety between
 two structurally-identical concepts. Because `ms` and `fps` above
 are the same type to the compiler, you can freely substitute one
 for the other; the type system will not warn you. For real type
-safety here, you need a record or a single-constructor variant
+safety here, you need a [record](M04-L02-records.html) or a
+[single-constructor variant](M04-L03-variants.html#constructors-with-payload)
 (the *newtype* idiom). The cost of a real wrapper is one
 allocation per value and one constructor name in every literal;
 the benefit is the compiler catching `add_durations 30 60` when
@@ -645,10 +654,11 @@ variants, recursion, `option`.
 
 :::
 
-We have collected the pieces. The next lecture, the module
-tutorial, builds something with them: a small algebraic data type
-for JSON-like values, a few operations on it, and the experience
-of writing OCaml's data-driven idioms end-to-end.
+We have collected the pieces. The
+[next lecture](M04-L06-tutorial.html), the module tutorial,
+builds something with them: a small algebraic data type for
+JSON-like values, a few operations on it, and the experience of
+writing OCaml's data-driven idioms end-to-end.
 
 ## Reading
 

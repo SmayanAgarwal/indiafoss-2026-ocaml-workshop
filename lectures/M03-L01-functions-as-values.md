@@ -38,10 +38,13 @@ treatment of functions; you may already know them. In OCaml this
 treatment is *the default*, not a bolt-on.
 
 Module 3 is built around this idea. This first lecture establishes
-that functions are values; the next four lectures (recursion,
-currying, tail recursion, local and mutual recursion) put the
-machinery to work. By the end of the module you will be writing
-functions that produce functions, returning functions from
+that functions are values; the next four lectures
+([recursion](M03-L02-recursion.html),
+[currying](M03-L03-currying.html),
+[tail recursion](M03-L04-tail-recursion.html),
+[local and mutual recursion](M03-L05-local-and-mutual.html))
+put the machinery to work. By the end of the module you will be
+writing functions that produce functions, returning functions from
 functions, and reasoning about function types without effort.
 
 ## Two ways to define a function
@@ -281,9 +284,10 @@ what other code does); `plus_ten` always adds 10. Each call to
 `make_adder` produces a fresh function value.
 
 This is our first *higher-order function*: a function that takes
-or returns other functions. We will devote all of Module 6 to
-higher-order functions; for this lecture, just notice that the
-machinery exists and works.
+or returns other functions. We will devote all of
+[Module 6](M06-L01-functions-revisited.html) to higher-order
+functions; for this lecture, just notice that the machinery exists
+and works.
 
 ## A function value remembers its environment
 
@@ -297,8 +301,9 @@ The answer is that the function value `plus_five` does not just
 hold "the function body"; it also holds a record of "what `n` was
 when this function was created." The value `n = 5` was *captured*
 by the function at the moment of its creation. Such a function-value-with-captured-environment
-is called a *closure*. We saw closures briefly in M02-L02 (the
-function captures the *value*, not the *name*).
+is called a *closure*. We saw closures briefly in
+[M02-L02](M02-L02-let-bindings.html#why-shadowing-differs-from-mutation-closures-see-the-old-value)
+(the function captures the *value*, not the *name*).
 
 :::slide
 
@@ -361,8 +366,9 @@ What does `f 1` return? `11`.
 
 Returns `11`. The closure captured `n = 10` when `f` was defined;
 the later `let n = 99` shadows the outer `n` but does not change
-the value `f` saw. This is the same point from M02-L02 (shadowing
-is not mutation), applied to function closures.
+the value `f` saw. This is the same point from
+[M02-L02](M02-L02-let-bindings.html#shadowing) (shadowing is not
+mutation), applied to function closures.
 
 In dynamically-scoped languages, `f` would look up `n` at call time
 and would return `100`. OCaml is statically scoped: the binding
@@ -446,10 +452,10 @@ let _ = List.map square nums
 :::
 
 `List.map` is the standard library function that applies a function
-to every element of a list. We will see `List.map` and its friends
-in detail in Module 6. For now, notice that the natural way to
-write "the function `x -> x * x`" right at the call site is the
-anonymous-function form `fun x -> x * x`.
+to every element of a list. We will see [`List.map`](M06-L02-map.html)
+and its friends in detail in Module 6. For now, notice that the
+natural way to write "the function `x -> x * x`" right at the call
+site is the anonymous-function form `fun x -> x * x`.
 
 Without anonymous functions, you would have to invent a name for
 this little computation:
@@ -571,7 +577,7 @@ let () =
 Reference solution: `let compose g f = fun x -> g (f x)`, or
 equivalently `let compose g f x = g (f x)`. Function composition is
 one of the most useful tools in functional programming; we will
-return to it in Module 6.
+return to it in [Module 6](M06-L05-pipelines.html#function-composition).
 
 ## Activity
 
@@ -617,13 +623,16 @@ The whole expression's result is `f`'s output type, which is `'a`.
 
 ## What's next
 
-We have established that functions are values. The next lecture
-(M03-L02) covers *recursion*: functions that call themselves. This
-is how OCaml expresses iteration; you do not write `for` loops in
-OCaml (well, you can, but you rarely will). After recursion, M03-L03
-covers currying in full, M03-L04 covers tail recursion and the
-accumulator pattern (the technique for making recursion fast), and
-M03-L05 covers local and mutual recursion. M03-L06 is the tutorial.
+We have established that functions are values. The next lecture,
+[M03-L02](M03-L02-recursion.html), covers *recursion*: functions
+that call themselves. This is how OCaml expresses iteration; you
+do not write `for` loops in OCaml (well, you can, but you rarely
+will). After recursion, [M03-L03](M03-L03-currying.html) covers
+currying in full,
+[M03-L04](M03-L04-tail-recursion.html) covers tail recursion and
+the accumulator pattern (the technique for making recursion fast),
+and [M03-L05](M03-L05-local-and-mutual.html) covers local and
+mutual recursion. [M03-L06](M03-L06-tutorial.html) is the tutorial.
 
 :::slide
 

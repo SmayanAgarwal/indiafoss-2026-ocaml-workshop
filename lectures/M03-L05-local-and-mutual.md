@@ -18,11 +18,13 @@ Two related topics in this lecture. The first is *local* function
 definitions: helpers defined inside another function with
 `let ... in`, scoped only to that outer function. The second is
 *mutual recursion*: two or more functions that call each other,
-glued together with the `and` keyword. Both are ordinary features of
-day-to-day OCaml; you have already seen the first in passing (every
-tail-recursive function in M03-L04 used a local helper), and the
-second turns up the moment you write a parser, a tree walker, or
-the classic `is_even` / `is_odd` example.
+glued together with the `and` keyword. Both are ordinary features
+of day-to-day OCaml; you have already seen the first in passing
+(every tail-recursive function in
+[M03-L04](M03-L04-tail-recursion.html#the-accumulator-pattern)
+used a local helper), and the second turns up the moment you
+write a parser, a tree walker, or the classic `is_even` /
+`is_odd` example.
 
 Neither topic is conceptually deep. The point of the lecture is to
 give you the conventions: when to make a helper local vs.
@@ -31,8 +33,9 @@ top-level, and what the `and` keyword does and why it has to exist.
 ## Local helpers: definitions inside `let ... in`
 
 We saw `let rec go ... in ...` in every tail-recursive rewrite in
-M03-L04. The keyword combination defines `go` only inside the body
-of the outer function:
+[M03-L04](M03-L04-tail-recursion.html#the-accumulator-pattern).
+The keyword combination defines `go` only inside the body of the
+outer function:
 
 ```ocaml
 let factorial n =
@@ -75,9 +78,9 @@ The encapsulation matters more than it might first appear. Once a
 name is part of a file's top-level scope, anyone reading the file
 sees it. It autocompletes. It shows up in error messages. It might
 get exported in an `.mli` (interface file), to be discussed in
-Module 7. If the helper is genuinely an implementation detail of
-one function, all of that is noise. Local definitions keep the
-top-level surface clean.
+[Module 7](M07-L05-signatures.html). If the helper is genuinely an
+implementation detail of one function, all of that is noise. Local
+definitions keep the top-level surface clean.
 
 The local helper pattern is core to readable OCaml. When you have a
 function that needs an accumulator, or a different argument order
@@ -143,8 +146,9 @@ languages, or `static` functions in C: by default, hide
 implementation details. Expose only the API. In OCaml the
 hiding-mechanism for functions inside another function is `let ...
 in`; the hiding-mechanism for functions inside a module is the
-`.mli` file (Module 7). Both exist for the same reason: smaller
-surface, fewer ways for callers to misuse the code.
+[`.mli` file](M07-L05-signatures.html#signatures-in-mli-files).
+Both exist for the same reason: smaller surface, fewer ways for
+callers to misuse the code.
 
 ## When to make a helper top-level
 
@@ -267,10 +271,11 @@ let rec is_odd  n = if n = 0 then false else is_even (n - 1)
 ```
 
 OCaml rejects the first line: `Unbound value is_odd`. The reason is
-the same one we saw for `let rec` vs. plain `let` in M03-L02: a
-`let rec` brings the name being defined into scope inside its own
-body, but not *other* names that have not been defined yet. When
-the compiler processes the first `let rec is_even`, the name
+the same one we saw for `let rec` vs. plain `let` in
+[M03-L02](M03-L02-recursion.html#why-let-rec-and-not-just-let):
+a `let rec` brings the name being defined into scope inside its
+own body, but not *other* names that have not been defined yet.
+When the compiler processes the first `let rec is_even`, the name
 `is_odd` does not exist yet, so the reference to `is_odd` in
 `is_even`'s body fails.
 
@@ -381,8 +386,9 @@ The same shape arises in:
   where they alternate). The data type itself is mutually recursive,
   and the functions that walk it are too.
 
-We will see all of these in Module 4 (recursive data types) and
-Module 5 (pattern matching).
+We will see all of these in
+[Module 4](M04-L04-recursive-types.html) (recursive data types)
+and [Module 5](M05-L01-basic-patterns.html) (pattern matching).
 
 ## Mutual recursion can be local too
 
@@ -507,10 +513,12 @@ Notes:
 
 One important property of this example: the recursive calls
 (`is_odd (n - 1)` inside `is_even`, and vice versa) are in tail
-position. Recall the rule from M03-L04: a call is in tail position
-if its result is the immediate result of the enclosing function. In
-both bodies, the recursive call to the *other* function is the last
-thing that happens; there is no further work.
+position. Recall the rule from
+[M03-L04](M03-L04-tail-recursion.html#what-is-a-tail-call): a
+call is in tail position if its result is the immediate result
+of the enclosing function. In both bodies, the recursive call to
+the *other* function is the last thing that happens; there is no
+further work.
 
 OCaml's tail-call optimisation handles tail calls *between* mutually
 recursive functions, not just self-calls. So `is_even 1_000_000`
@@ -583,13 +591,13 @@ Lecture 6: the **tutorial** for Module 3.
 
 :::
 
-The next lecture is the tutorial for Module 3. We will work through
-several classic small problems: Fibonacci (naive and fast), GCD by
-Euclid, list helpers (sum, reverse, nth, last), and a digit-counting
-function. The goal is to consolidate the techniques (recursion,
-accumulators, local helpers) on problems you have probably seen in
-some form before, and to discuss when each approach is the right
-choice.
+The next lecture, [M03-L06](M03-L06-tutorial.html), is the
+tutorial for Module 3. We will work through several classic small
+problems: Fibonacci (naive and fast), GCD by Euclid, list helpers
+(sum, reverse, nth, last), and a digit-counting function. The
+goal is to consolidate the techniques (recursion, accumulators,
+local helpers) on problems you have probably seen in some form
+before, and to discuss when each approach is the right choice.
 
 ## Reading
 

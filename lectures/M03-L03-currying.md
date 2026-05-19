@@ -55,10 +55,11 @@ The first reading is the everyday one: "a function that takes two
 ninety-nine percent of the time, and it is correct.
 
 The second reading takes the type signature literally. We saw in
-M03-L01 that `->` is right-associative, so `int -> int -> int`
-parses as `int -> (int -> int)`. Under that parse, `add` is a
-function that takes *one* `int` and returns *another function* of
-type `int -> int`. The "returned function" is the one that does the
+[M03-L01](M03-L01-functions-as-values.html#reading-function-types-is-right-associative)
+that `->` is right-associative, so `int -> int -> int` parses as
+`int -> (int -> int)`. Under that parse, `add` is a function that
+takes *one* `int` and returns *another function* of type
+`int -> int`. The "returned function" is the one that does the
 actual addition.
 
 Both readings are correct, and they describe the same function,
@@ -143,11 +144,13 @@ let _ = add5 3
 
 :::
 
-The picture is exactly the closure picture from M03-L01. When we
-apply `add` to `5`, the body `fun y -> x + y` becomes a value with
-`x` captured to `5`. That captured value lives inside the closure as
-long as the closure exists. Calls to `add5` reuse that captured `5`
-forever; each call supplies a new `y`, computes `5 + y`, and returns.
+The picture is exactly the closure picture from
+[M03-L01](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment).
+When we apply `add` to `5`, the body `fun y -> x + y` becomes a
+value with `x` captured to `5`. That captured value lives inside
+the closure as long as the closure exists. Calls to `add5` reuse
+that captured `5` forever; each call supplies a new `y`, computes
+`5 + y`, and returns.
 
 It is sometimes useful to read partial application as *specialisation*:
 `add5` is a *specialised* version of `add` with one knob (`x`)
@@ -463,8 +466,9 @@ probably be curried, or, better, a record with named fields (Module
 The standard library has `fst` and `snd` for projecting the
 components of a pair, and `(fun (a, b) -> ...)` patterns to
 destructure them. For larger tuples there is no built-in projection;
-you destructure with patterns. We will see all of this in detail when
-we get to product types in Module 4.
+you destructure with patterns. We will see all of this in detail
+when we get to product types in
+[Module 4](M04-L01-tuples.html).
 
 ## A quick check
 
@@ -589,14 +593,15 @@ Lecture 4: **tail recursion**.
 
 :::
 
-We have unpacked currying and partial application. The next lecture
-returns to recursion (M03-L02) with a sharper tool: *tail recursion*,
-the technique that lets recursive functions run in constant stack
-space. The naive `factorial` and `sum_to` from Lecture 2 overflow
-the stack on large inputs; the tail-recursive versions do not. The
-mechanism is small (an extra parameter), but the payoff is that
-you can recurse on inputs of any size without worrying about the
-stack.
+We have unpacked currying and partial application. The next
+lecture, [M03-L04](M03-L04-tail-recursion.html), returns to the
+recursion from [M03-L02](M03-L02-recursion.html) with a sharper
+tool: *tail recursion*, the technique that lets recursive
+functions run in constant stack space. The naive `factorial` and
+`sum_to` from Lecture 2 overflow the stack on large inputs; the
+tail-recursive versions do not. The mechanism is small (an extra
+parameter), but the payoff is that you can recurse on inputs of
+any size without worrying about the stack.
 
 ## Reading
 
