@@ -223,10 +223,24 @@ let runtime_script ~asset_root =
         btn?.classList.add('dirty');
       }
     }
-    const persistTimers = new WeakMap();
+    const persistTimers = new Map();
+    const pendingCells = new Set();
     function schedulePersist(cell) {
+      pendingCells.add(cell);
       clearTimeout(persistTimers.get(cell));
-      persistTimers.set(cell, setTimeout(() => persistCell(cell), 700));
+      persistTimers.set(cell, setTimeout(() => {
+        persistCell(cell);
+        pendingCells.delete(cell);
+        persistTimers.delete(cell);
+      }, 400));
+    }
+    function flushPendingPersists() {
+      for (const cell of pendingCells) {
+        clearTimeout(persistTimers.get(cell));
+        persistCell(cell);
+      }
+      pendingCells.clear();
+      persistTimers.clear();
     }
     function watchCellForEdits(cell) {
       // Use [input] events on the editor's contenteditable surface
@@ -236,8 +250,21 @@ let runtime_script ~asset_root =
       // and looping when x-ocaml re-renders the editor after persist.
       const ed = cell.shadowRoot?.querySelector('.cm-content');
       if (!ed) return;
-      ed.addEventListener('input', () => schedulePersist(cell));
+      ed.addEventListener('input', () => {
+        // Mark dirty immediately for instant visual feedback; the
+        // actual localStorage write is debounced.
+        dirtyButton(cell)?.classList.add('dirty');
+        schedulePersist(cell);
+      });
     }
+    // Flush any pending debounced writes when the page is being
+    // hidden or unloaded, so a quick Cmd+R after typing doesn't lose
+    // the edit. [pagehide] fires more reliably than [beforeunload]
+    // on mobile and bfcache transitions.
+    window.addEventListener('pagehide', flushPendingPersists);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushPendingPersists();
+    });
     function restorePersistedCells() {
       for (const cell of allCells()) {
         const saved = localStorage.getItem(storageKey(cellIndex(cell)));
@@ -325,7 +352,26 @@ let runtime_script ~asset_root =
         moveSlidesIntoReveal();
         if (!reveal) {
           reveal = new Reveal({ embedded: false, hash: false, history: false });
-          reveal.initialize();
+          reveal.initialize().then(() => {
+            // Restore last-viewed slide indices for this page from
+            // sessionStorage so a refresh keeps your place.
+            try {
+              const key = 'nptel-slide:' + location.pathname;
+              const saved = sessionStorage.getItem(key);
+              if (saved) {
+                const { h, v } = JSON.parse(saved);
+                if (typeof h === 'number') reveal.slide(h, v ?? 0);
+              }
+            } catch (_) {}
+            reveal.on('slidechanged', () => {
+              try {
+                const { h, v } = reveal.getIndices();
+                sessionStorage.setItem(
+                  'nptel-slide:' + location.pathname,
+                  JSON.stringify({ h, v }));
+              } catch (_) {}
+            });
+          });
           // expose for testing / diagnostics
           window.Reveal = reveal;
         } else {
