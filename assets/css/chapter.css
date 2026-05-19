@@ -325,3 +325,108 @@ x-ocaml {
   color: var(--accent);
   background: #fff8e1;
 }
+
+/* ---- Inline quizzes ---- */
+
+.quiz {
+  margin: 1.4rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: #fafaf7;
+}
+.quiz > p:first-child {
+  margin-top: 0;
+  font-weight: 600;
+}
+.quiz.answered.quiz-correct {
+  border-left-color: #3a7a3a;
+  background: #f3faf3;
+}
+.quiz.answered:not(.quiz-correct) {
+  border-left-color: #b35858;
+}
+
+/* MCQ */
+.quiz-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.6rem 0;
+  padding: 0;
+  border: 0;
+}
+.quiz-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #ffffff;
+}
+.quiz-choice:hover { background: var(--code-bg); }
+.quiz-choice input[type="radio"] {
+  margin-top: 0.35em;
+  cursor: pointer;
+}
+.quiz-choice-text { flex: 1; }
+.quiz-choice-text p { display: inline; margin: 0; }
+.quiz-mcq.answered .quiz-choice.correct {
+  background: #e8f4e6;
+  border-color: #6ea66c;
+}
+.quiz-mcq.answered .quiz-choice.wrong {
+  background: #f8e2e2;
+  border-color: #c98a8a;
+}
+.quiz-mcq:not(.answered) .quiz-explanation {
+  display: none;
+}
+.quiz-explanation {
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--rule);
+  font-size: 0.95em;
+}
+.quiz-explanation p:first-child { margin-top: 0; }
+.quiz-explanation p:last-child { margin-bottom: 0; }
+
+/* Code quiz */
+.quiz-code .quiz-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.4rem 0 0.2rem;
+}
+.quiz-check {
+  padding: 0.3rem 0.9rem;
+  border: 1px solid #6d6d6d;
+  background: #f5f5f5;
+  color: #2e5f6a;
+  font: 600 13px Arial, sans-serif;
+  cursor: pointer;
+}
+.quiz-check:hover { background: #ececec; }
+.quiz-show-tests {
+  padding: 0.2rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 13px ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+.quiz-show-tests:hover { color: var(--accent); }
+.quiz-status {
+  font: 0.92em ui-sans-serif, system-ui, sans-serif;
+}
+.quiz-status.running { color: var(--muted); }
+.quiz-status.pass    { color: #3a7a3a; font-weight: 600; }
+.quiz-status.fail    { color: #b35858; font-weight: 600; }
+
+/* Hide the test cell unless [show-tests] is toggled. Overrides the
+   [hidden] HTML attribute that parse.ml adds for [ocaml test] cells. */
+.quiz-code x-ocaml[data-quiz-test] { display: none !important; }
+.quiz-code.show-tests x-ocaml[data-quiz-test] { display: block !important; }

@@ -163,6 +163,61 @@ let parse_html_escape_in_cell () =
     (try ignore (Str.search_forward (Str.regexp_string "&lt;&amp;&gt;") html 0); true
      with Not_found -> false)
 
+let parse_ocaml_test_attr () =
+  let doc =
+    Cmarkit.Doc.of_string
+      "```ocaml test\nlet () = print_endline \"ok\"\n```\n"
+  in
+  let html = Cmarkit_html.of_doc ~safe:false (Parse.transform doc) in
+  check_bool "data-quiz-test marker present" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-test=\"true\"") html 0); true
+     with Not_found -> false);
+  check_bool "implicit hidden=true" true
+    (try ignore (Str.search_forward (Str.regexp_string "hidden=\"true\"") html 0); true
+     with Not_found -> false);
+  (* The test info-string flag must not leak into the rendered
+     element as a stand-alone attribute. The substring is sought
+     with a leading space; the dash in data-quiz-test then prevents
+     a false positive. *)
+  check_bool "test=true NOT emitted as own attribute" true
+    (try
+       ignore (Str.search_forward (Str.regexp_string " test=\"") html 0);
+       false
+     with Not_found -> true)
+
+(* ---- Quiz fenced divs ---------------------------------------------- *)
+
+let divs_quiz_mcq () =
+  let out = Divs.preprocess ":::quiz mcq\nq?\n- [x] yes\n- [ ] no\n:::\n" in
+  check_bool "quiz-mcq class opens" true
+    (try ignore (Str.search_forward (Str.regexp_string "<div class=\"quiz quiz-mcq\"") out 0); true
+     with Not_found -> false);
+  check_bool "auto-id q1" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q1\"") out 0); true
+     with Not_found -> false)
+
+let divs_quiz_code () =
+  let out = Divs.preprocess ":::quiz code\nprompt\n```ocaml\nlet x = 1\n```\n:::\n" in
+  check_bool "quiz-code class opens" true
+    (try ignore (Str.search_forward (Str.regexp_string "<div class=\"quiz quiz-code\"") out 0); true
+     with Not_found -> false);
+  check_bool "auto-id q1" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q1\"") out 0); true
+     with Not_found -> false)
+
+let divs_quiz_ids_sequential () =
+  (* Two quizzes in one document get q1 and q2 respectively. *)
+  let src =
+    ":::quiz mcq\n- [x] a\n:::\n\nprose\n\n:::quiz code\n```ocaml\nlet _ = 1\n```\n:::\n"
+  in
+  let out = Divs.preprocess src in
+  check_bool "first quiz is q1" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q1\"") out 0); true
+     with Not_found -> false);
+  check_bool "second quiz is q2" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q2\"") out 0); true
+     with Not_found -> false)
+
 (* ---- Run ----------------------------------------------------------- *)
 
 let () =
@@ -188,5 +243,12 @@ let () =
           Alcotest.test_case "attrs in info string" `Quick parse_ocaml_attrs;
           Alcotest.test_case "non-ocaml fence untouched" `Quick parse_non_ocaml_fence;
           Alcotest.test_case "html escape" `Quick parse_html_escape_in_cell;
+          Alcotest.test_case "ocaml test -> quiz test cell" `Quick parse_ocaml_test_attr;
+        ] );
+      ( "quizzes",
+        [
+          Alcotest.test_case "quiz mcq div" `Quick divs_quiz_mcq;
+          Alcotest.test_case "quiz code div" `Quick divs_quiz_code;
+          Alcotest.test_case "ids sequential" `Quick divs_quiz_ids_sequential;
         ] );
     ]

@@ -37,3 +37,7 @@ node_modules/
 # Reference textbooks: cloned/downloaded for source material, not vendored
 # into the repo. Re-clone or re-download if needed.
 _references/textbooks/
+
+# Reference papers (LaTeX sources, PDFs, supporting assets): consulted
+# during authoring, not part of the course content.
+_references/profiling_a_programming_language/

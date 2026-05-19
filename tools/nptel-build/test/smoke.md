@@ -47,3 +47,41 @@ let _ = 1 + 1
 ```
 
 :::
+
+## Quizzes
+
+A multiple-choice quiz with a correct and incorrect option:
+
+:::quiz mcq
+What is the value of `3 / 2` in OCaml?
+
+- [ ] `1.5`
+- [x] `1`
+- [ ] type error
+- [ ] `2`
+
+**Why:** Integer division truncates toward zero. Both operands are
+`int`, so the result is `int`, and `3 / 2 = 1`.
+:::
+
+A code fill-in quiz with a hidden test block:
+
+:::quiz code
+Write `double : int -> int` that doubles its input.
+
+```ocaml
+let double x =
+  failwith "not implemented"
+```
+
+```ocaml test
+(* x-ocaml in the browser does not provide [Assert_failure], so quiz
+   tests use [failwith]-based checks instead of OCaml's [assert]. *)
+let check b m = if not b then failwith m
+let () =
+  check (double 3 = 6)    "double 3";
+  check (double 0 = 0)    "double 0";
+  check (double (-2) = -4) "double -2";
+  print_endline "all tests passed"
+```
+:::

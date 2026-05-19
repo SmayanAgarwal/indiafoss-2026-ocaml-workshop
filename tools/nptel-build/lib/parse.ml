@@ -15,6 +15,10 @@
      autorun     - run automatically on cell mount
      hidden      - present in DOM but not visually rendered
      non-deterministic - tolerated for ocaml-mdx CI parity
+     test        - this is the hidden assertion cell of a code quiz.
+                   Rendered as [hidden] + [data-quiz-test="true"]; the
+                   quiz runtime finds it via the data attribute and
+                   wires it to the visible student cell's Check button.
 *)
 
 let lang_is_ocaml info =
@@ -53,8 +57,21 @@ let html_escape s =
   Buffer.contents b
 
 let render_x_ocaml ~code ~attrs =
+  (* If [test] is present, treat the cell as the hidden assertion cell
+     of a quiz: emit [hidden] + [data-quiz-test="true"], drop the
+     [test] attribute itself (it's not a real x-ocaml attribute). *)
+  let is_quiz_test = List.mem_assoc "test" attrs in
+  let attrs =
+    if is_quiz_test then
+      let attrs = List.remove_assoc "test" attrs in
+      (* [hidden] may already be present; that's fine, it's idempotent. *)
+      if List.mem_assoc "hidden" attrs then attrs
+      else ("hidden", "true") :: attrs
+    else attrs
+  in
   let buf = Buffer.create 256 in
   Buffer.add_string buf "<x-ocaml";
+  if is_quiz_test then Buffer.add_string buf " data-quiz-test=\"true\"";
   List.iter
     (fun (k, v) ->
       Buffer.add_char buf ' ';

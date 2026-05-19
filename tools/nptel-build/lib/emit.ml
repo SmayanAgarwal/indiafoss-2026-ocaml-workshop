@@ -363,6 +363,10 @@ let runtime_script ~asset_root =
     function injectResetButtons() {
       for (const cell of allCells()) {
         if (cell.parentElement?.classList?.contains('cell-wrap')) continue;
+        // Hidden quiz-test cells don't get a wrap+reset: there's no
+        // point resetting a fixed test, and the absolutely-positioned
+        // reset button would otherwise float beneath the quiz.
+        if (cell.hasAttribute('data-quiz-test')) continue;
         const wrap = document.createElement('div');
         wrap.className = 'cell-wrap';
         cell.parentNode.insertBefore(wrap, cell);
@@ -388,6 +392,8 @@ let runtime_script ~asset_root =
       }
       restorePersistedCells();
       for (const c of allCells()) watchCellForEdits(c);
+      // Code quizzes can now find the test cell's shadow Run button.
+      setupCodeQuizzes();
     }
     whenCellsReady();
 
@@ -395,6 +401,210 @@ let runtime_script ~asset_root =
     document.querySelector('.run-up-to-here')?.addEventListener('click', runUpToHere);
     document.querySelector('.clear-all')?.addEventListener('click', clearAll);
     document.querySelector('.reset-all')?.addEventListener('click', resetAll);
+
+    // ---------- Inline quizzes ----------
+    // Two kinds: [.quiz-mcq] and [.quiz-code]. Authored as
+    // [:::quiz mcq] / [:::quiz code] fenced divs; the build emits the
+    // wrapper [.quiz] div, CommonMark renders the body. The runtime
+    // here turns the rendered body into an interactive widget. State
+    // persists in localStorage under [nptel-quiz:<path>#<id>].
+    const QUIZ_PREFIX = 'nptel-quiz:' + location.pathname + '#';
+
+    // MCQ: GFM task lists give us [<li><input type="checkbox" [checked] disabled> ...]
+    // We strip the checkboxes, build radio inputs in their place, and
+    // reveal the explanation block (everything after the [<ul>]) on
+    // selection. Correctness is decided by which option carried the
+    // [checked] attribute in the source.
+    function setupMcqQuiz(quiz) {
+      const id = quiz.dataset.quizId;
+      const ul = quiz.querySelector('ul');
+      if (!ul) return;
+      const items = Array.from(ul.querySelectorAll(':scope > li'));
+      if (items.length === 0) return;
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = 'quiz-choices';
+      items.forEach((li, idx) => {
+        const cb = li.querySelector('input[type="checkbox"]');
+        const isCorrect = !!cb && cb.hasAttribute('checked');
+        cb?.remove();
+        const label = document.createElement('label');
+        label.className = 'quiz-choice';
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'quiz-' + id;
+        radio.value = String(idx);
+        if (isCorrect) radio.dataset.correct = 'true';
+        label.appendChild(radio);
+        const text = document.createElement('span');
+        text.className = 'quiz-choice-text';
+        text.innerHTML = li.innerHTML.trim();
+        label.appendChild(text);
+        fieldset.appendChild(label);
+      });
+      // Collect everything after the <ul> as the explanation.
+      const exp = document.createElement('div');
+      exp.className = 'quiz-explanation';
+      let n = ul.nextSibling;
+      while (n) {
+        const next = n.nextSibling;
+        exp.appendChild(n);
+        n = next;
+      }
+      ul.replaceWith(fieldset);
+      quiz.appendChild(exp);
+
+      function applySelection(idx) {
+        const radios = fieldset.querySelectorAll('input[type="radio"]');
+        if (idx == null || !radios[idx]) return false;
+        radios[idx].checked = true;
+        const isCorrect = radios[idx].dataset.correct === 'true';
+        fieldset.querySelectorAll('.quiz-choice').forEach((label, i) => {
+          const r = label.querySelector('input');
+          label.classList.toggle('selected', i === idx);
+          label.classList.toggle('correct', r.dataset.correct === 'true');
+          label.classList.toggle('wrong', i === idx && !isCorrect);
+        });
+        quiz.classList.add('answered');
+        quiz.classList.toggle('quiz-correct', isCorrect);
+        return isCorrect;
+      }
+      fieldset.addEventListener('change', e => {
+        if (e.target.type !== 'radio') return;
+        const idx = parseInt(e.target.value);
+        const isCorrect = applySelection(idx);
+        try {
+          localStorage.setItem(QUIZ_PREFIX + id,
+            JSON.stringify({ kind: 'mcq', selected: idx, correct: isCorrect }));
+        } catch (_) {}
+      });
+      // Restore prior attempt.
+      try {
+        const saved = localStorage.getItem(QUIZ_PREFIX + id);
+        if (saved) {
+          const { selected } = JSON.parse(saved);
+          applySelection(selected);
+        }
+      } catch (_) {}
+    }
+
+    // Code quiz: visible <x-ocaml> (student cell) + hidden
+    // <x-ocaml data-quiz-test> (assert block). We add a Check button
+    // and a "Show tests" disclosure. Check clicks the test cell's
+    // shadow Run button; x-ocaml's chaining runs the student cell
+    // first as a predecessor. We poll the test cell's shadow DOM
+    // for the success print or an exception.
+    function setupCodeQuiz(quiz) {
+      const id = quiz.dataset.quizId;
+      const cells = Array.from(quiz.querySelectorAll('x-ocaml'));
+      const testCell = cells.find(c => c.hasAttribute('data-quiz-test'));
+      const studentCell = cells.find(c => c !== testCell);
+      if (!studentCell || !testCell) return;
+      if (quiz.querySelector('.quiz-controls')) return;  // already set up
+
+      const controls = document.createElement('div');
+      controls.className = 'quiz-controls';
+      const checkBtn = document.createElement('button');
+      checkBtn.type = 'button';
+      checkBtn.className = 'quiz-check';
+      checkBtn.textContent = 'Check';
+      const showBtn = document.createElement('button');
+      showBtn.type = 'button';
+      showBtn.className = 'quiz-show-tests';
+      showBtn.textContent = '▸ Show tests';
+      const status = document.createElement('span');
+      status.className = 'quiz-status';
+      controls.append(checkBtn, showBtn, status);
+      // Place controls after the student cell's wrapper.
+      const wrap = studentCell.closest('.cell-wrap') || studentCell;
+      wrap.parentNode.insertBefore(controls, wrap.nextSibling);
+
+      function clickRun(cell) {
+        const btn = cell.shadowRoot?.querySelector('.run_btn button');
+        if (btn) btn.click();
+      }
+      function readState() {
+        // Look at x-ocaml's OUTPUT panes only, not the source. The
+        // editor's [.cm-content] contains the source text verbatim,
+        // which would trivially match "all tests passed" before the
+        // cell even ran. x-ocaml renders output into separate
+        // [.caml_stdout], [.caml_stderr], and [.caml_meta] elements.
+        const sr = testCell.shadowRoot;
+        if (!sr) return 'pending';
+        const out = Array.from(
+          sr.querySelectorAll('.caml_stdout, .caml_stderr, .caml_meta')
+        ).map(e => e.textContent || '').join('\n');
+        if (!out) return 'pending';
+        if (/Error|Exception|Failure|Assertion/i.test(out)) return 'fail';
+        if (/all tests pass/i.test(out)) return 'pass';
+        return 'pending';
+      }
+      function setShowTests(show) {
+        quiz.classList.toggle('show-tests', show);
+        showBtn.textContent = show ? '▾ Hide tests' : '▸ Show tests';
+      }
+      showBtn.addEventListener('click', () => {
+        setShowTests(!quiz.classList.contains('show-tests'));
+      });
+      checkBtn.addEventListener('click', () => {
+        status.textContent = 'Running…';
+        status.className = 'quiz-status running';
+        clickRun(testCell);
+        let tries = 0;
+        const tick = setInterval(() => {
+          tries++;
+          const s = readState();
+          if (s !== 'pending' || tries > 80) {
+            clearInterval(tick);
+            if (s === 'pass') {
+              status.textContent = '✓ All tests pass';
+              status.className = 'quiz-status pass';
+              quiz.classList.add('answered', 'quiz-correct');
+              try {
+                localStorage.setItem(QUIZ_PREFIX + id,
+                  JSON.stringify({ kind: 'code', passed: true }));
+              } catch (_) {}
+            } else if (s === 'fail') {
+              status.textContent = '✗ Some assertions failed';
+              status.className = 'quiz-status fail';
+              quiz.classList.remove('quiz-correct');
+              quiz.classList.add('answered');
+              // Auto-reveal tests so the student can see what failed.
+              setShowTests(true);
+              try {
+                localStorage.setItem(QUIZ_PREFIX + id,
+                  JSON.stringify({ kind: 'code', passed: false }));
+              } catch (_) {}
+            } else {
+              status.textContent = 'Timed out';
+              status.className = 'quiz-status fail';
+            }
+          }
+        }, 200);
+      });
+      // Restore prior result.
+      try {
+        const saved = localStorage.getItem(QUIZ_PREFIX + id);
+        if (saved) {
+          const { passed } = JSON.parse(saved);
+          if (passed) {
+            status.textContent = '✓ Passed previously';
+            status.className = 'quiz-status pass';
+            quiz.classList.add('answered', 'quiz-correct');
+          }
+        }
+      } catch (_) {}
+    }
+
+    function setupMcqQuizzes() {
+      document.querySelectorAll('.quiz-mcq').forEach(setupMcqQuiz);
+    }
+    function setupCodeQuizzes() {
+      document.querySelectorAll('.quiz-code').forEach(setupCodeQuiz);
+    }
+    setupMcqQuizzes();
+    // Code quizzes need the test cell's shadow Run button to exist;
+    // setupCodeQuizzes is therefore deferred until cells are ready
+    // (see [whenCellsReady] below).
 
     // Sidebar collapse, with persistence across pages.
     const SIDEBAR_KEY = 'nptel-sidebar-hidden';

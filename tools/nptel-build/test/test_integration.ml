@@ -27,7 +27,10 @@ let render path =
   let raw = read path in
   let fm, body = Frontmatter.parse raw in
   let preprocessed = Divs.preprocess body in
-  let doc = Cmarkit.Doc.of_string preprocessed in
+  (* [~strict:false] enables cmarkit extensions (tables, task lists,
+     etc.). Quiz MCQs rely on the task-list extension. Must match
+     [bin/main.ml]. *)
+  let doc = Cmarkit.Doc.of_string ~strict:false preprocessed in
   let doc' = Parse.transform doc in
   let html_body = Cmarkit_html.of_doc ~safe:false doc' in
   Emit.render ~asset_root:"" ~fm ~html_body ()
@@ -57,13 +60,13 @@ let metadata_in_footer () =
 
 (* ---- OCaml fences -> x-ocaml ---- *)
 
-let three_x_ocaml_cells () =
+let five_x_ocaml_cells () =
   let s = Lazy.force html in
-  (* Every emitted cell carries a data-source attribute and a closing
-     </x-ocaml>. Counting the closing tag avoids both the in-script
-     JS comment mentioning "<x-ocaml>" and any false positives in
-     stylesheet selectors. *)
-  check_int "three x-ocaml elements" 3 (count_sub s "</x-ocaml>")
+  (* Three cells from the slide-mode test (init + slide 1 + slide 2)
+     plus two from the code quiz (student + test). Counting the
+     closing tag avoids matching JS comments or selectors that
+     mention the tag name. *)
+  check_int "five x-ocaml elements" 5 (count_sub s "</x-ocaml>")
 
 let init_attribute_preserved () =
   check_bool "init=true preserved" true
@@ -72,7 +75,7 @@ let init_attribute_preserved () =
 let data_source_present () =
   check_bool "every cell has data-source" true
     (let s = Lazy.force html in
-     count_sub s "data-source=\"" = 3)
+     count_sub s "data-source=\"" = 5)
 
 (* ---- Slide structure ---- *)
 
@@ -112,6 +115,34 @@ let reveal_wrapper () =
   check_bool "empty .reveal .slides wrapper present" true
     (contains (Lazy.force html) "<div class=\"reveal\"")
 
+(* ---- Inline quizzes ---- *)
+
+let mcq_div_emitted () =
+  let s = Lazy.force html in
+  check_int "one quiz-mcq div" 1
+    (count_sub s "<div class=\"quiz quiz-mcq\"")
+
+let code_div_emitted () =
+  let s = Lazy.force html in
+  check_int "one quiz-code div" 1
+    (count_sub s "<div class=\"quiz quiz-code\"")
+
+let quiz_ids_sequential () =
+  let s = Lazy.force html in
+  check_bool "quiz id q1 present" true
+    (contains s "data-quiz-id=\"q1\"");
+  check_bool "quiz id q2 present" true
+    (contains s "data-quiz-id=\"q2\"")
+
+let test_cell_marked () =
+  let s = Lazy.force html in
+  check_bool "test cell has data-quiz-test" true
+    (contains s "data-quiz-test=\"true\"");
+  check_bool "test cell is hidden" true
+    (* The test cell must carry hidden=true (parse.ml adds it if the
+       author hasn't already). *)
+    (contains s "data-quiz-test=\"true\"" && contains s "hidden=\"true\"")
+
 let () =
   Alcotest.run "nptel-build-integration"
     [
@@ -123,9 +154,16 @@ let () =
         ] );
       ( "code blocks -> cells",
         [
-          Alcotest.test_case "3 x-ocaml cells" `Quick three_x_ocaml_cells;
+          Alcotest.test_case "5 x-ocaml cells" `Quick five_x_ocaml_cells;
           Alcotest.test_case "init attr preserved" `Quick init_attribute_preserved;
           Alcotest.test_case "data-source on every cell" `Quick data_source_present;
+        ] );
+      ( "inline quizzes",
+        [
+          Alcotest.test_case "MCQ div emitted" `Quick mcq_div_emitted;
+          Alcotest.test_case "code quiz div emitted" `Quick code_div_emitted;
+          Alcotest.test_case "quiz ids sequential" `Quick quiz_ids_sequential;
+          Alcotest.test_case "test cell marked" `Quick test_cell_marked;
         ] );
       ( "slide structure",
         [

@@ -10,6 +10,11 @@ body.mode-slides {
    mode just like other chapter-only content. */
 body.mode-slides .chapter-only { display: none !important; }
 
+/* Quizzes are reading-mode only: the recorded video does not pause
+   for them. They stay in the DOM (so localStorage state persists
+   across mode toggles) but are not displayed in slide mode. */
+body.mode-slides .quiz { display: none !important; }
+
 body.mode-slides .reveal {
   display: block;
   position: fixed;
