@@ -17,18 +17,24 @@ reading:
 Module 8 is about a pattern that shows up everywhere in OCaml code,
 once you learn to look for it: *sequencing computations that might
 fail*. We already have the shapes for "something may go wrong":
-`option` from Module 4, `result` from Module 4 as well, and exceptions
+[`option`](M04-L05-option-and-aliases.html#the-option-type) from
+Module 4, [`result`](M04-L05-option-and-aliases.html#the-result-type)
+from Module 4 as well, and [exceptions](M07-L03-exceptions.html)
 from Module 7. What we do not yet have is a tidy way to *chain* such
 computations. Without one, code grows into a *pyramid of doom* of
-nested `match` statements where the actual logic is buried inside
-six levels of indentation.
+nested [`match`](M05-L01-basic-patterns.html) statements where the
+actual logic is buried inside six levels of indentation.
 
 This lecture sets up the problem and motivates the solution. The
-next three lectures (option monad, result monad, state monad) study
-the solution in detail. After that we turn to a different but
-related advanced feature, generalized algebraic data types, or GADTs,
-in lectures five and six. The Module 8 tutorial in lecture seven
-combines both.
+next three lectures
+([option monad](M08-L02-option-monad.html),
+[result monad](M08-L03-result-monad.html),
+[state monad](M08-L04-state-monad.html))
+study the solution in detail. After that we turn to a different
+but related advanced feature, generalized algebraic data types, or
+GADTs, in lectures [five](M08-L05-gadts-basics.html) and
+[six](M08-L06-gadts-use-cases.html). The Module 8 tutorial in
+[lecture seven](M08-L07-tutorial.html) combines both.
 
 The word *monad* sounds scarier than it is. The mathematical
 machinery behind it lives in [category theory](https://en.wikipedia.org/wiki/Category_theory),
@@ -56,9 +62,10 @@ let print_num x = print_endline (string_of_int x); Some ()
 
 `parse_int` uses the standard-library `int_of_string_opt`, which
 returns `None` if the string is not a valid integer. The other
-three return `Some` of something, with one of them, `small`, choosing
-`None` when the input is out of range. Each function has the same
-*shape* in its return type: an `'a option`.
+three return `Some` of something, with one of them, `small`,
+choosing `None` when the input is out of range. Each function has
+the same *shape* in its return type: an
+[`'a option`](M04-L05-option-and-aliases.html#the-option-type).
 
 Now we want to wire them together: parse, then double, then check,
 then print. At each step, if the previous step said `None`, we want
@@ -313,10 +320,10 @@ different in each case:
 - `'a list`: zero, one, or many values; `bind` is "flat-map across
   all of them" (the *list monad*; sometimes used for non-determinism).
 - `state -> 'a * state`: a value computed against a piece of
-  ambient state (lecture 4).
+  ambient state ([lecture 4](M08-L04-state-monad.html)).
 - `'a Lwt.t` or `'a Eio.Promise.t`: a value that will become
-  available after I/O completes (concurrent programming; we will
-  see [Eio](https://github.com/ocaml-multicore/eio) in Module 12).
+  available after I/O completes (concurrent programming; covered
+  in the secure-systems half of the course, to be added).
 - `'a parser`: a parser that reads bytes and either returns an
   `'a` plus the remaining input or signals failure (parser
   combinators; not in this course but a common application).
@@ -464,12 +471,13 @@ Lecture 2: the **option monad** in detail.
 
 :::
 
-The next lecture defines `let*` formally as a let-operator, points
-at the standard library's `Option.bind` and `Option.map` (the same
-functions, just shipped in the stdlib), and walks through a
-realistic example: parsing `"(3, 4)"` into the pair `(3, 4)`.
-After that, lecture three swaps `option` for `result`: same shape,
-richer failure information.
+The [next lecture](M08-L02-option-monad.html) defines `let*`
+formally as a let-operator, points at the standard library's
+`Option.bind` and `Option.map` (the same functions, just shipped
+in the stdlib), and walks through a realistic example: parsing
+`"(3, 4)"` into the pair `(3, 4)`. After that,
+[lecture three](M08-L03-result-monad.html) swaps `option` for
+`result`: same shape, richer failure information.
 
 ## Reading
 

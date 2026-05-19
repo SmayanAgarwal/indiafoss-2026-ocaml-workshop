@@ -14,10 +14,11 @@ reading:
 
 # Function composition and pipelines
 
-We now have a small but powerful toolkit: `map`, `filter`, `fold`,
-and a habit of writing one-off functions with `fun x -> ...`. The
-natural next question is how to *chain* these together. A real
-program might "split text into words, then drop the short ones, then
+We now have a small but powerful toolkit: [`map`](M06-L02-map.html),
+[`filter`](M06-L03-filter.html), [`fold`](M06-L04-fold.html), and a
+habit of writing one-off functions with `fun x -> ...`. The natural
+next question is how to *chain* these together. A real program
+might "split text into words, then drop the short ones, then
 lowercase them, then count the distinct ones." That is four
 operations, and the obvious code is three or four nested function
 calls. Read it top-to-bottom and the logical flow goes the wrong
@@ -200,7 +201,9 @@ direction of data flow.
 A different way to chain functions: build a new function that
 *combines* two existing functions. If `f : 'b -> 'c` and `g : 'a ->
 'b`, the composition `fun x -> f (g x)` is a function `'a -> 'c`
-that runs `g`, then `f`.
+that runs `g`, then `f`. We previewed this in
+[Lecture 1](M06-L01-functions-revisited.html#function-composition);
+here we look at it more carefully.
 
 OCaml's standard library does not give this composition a built-in
 operator (some projects define `(>>)` or `(<<)`), so let us write it
@@ -578,10 +581,10 @@ let _ = f2 5
 ## What's next
 
 We have all the pieces. The next and final lecture in this module is
-the tutorial: a series of exercises that rebuild parts of `List`
-using only the higher-order toolkit from this module. The exercise
-is not just about practice; it is about seeing how versatile a tiny
-set of primitives is.
+the [tutorial](M06-L06-tutorial.html): a series of exercises that
+rebuild parts of `List` using only the higher-order toolkit from
+this module. The exercise is not just about practice; it is about
+seeing how versatile a tiny set of primitives is.
 
 :::slide
 

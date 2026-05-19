@@ -14,11 +14,11 @@ reading:
 
 # GADTs: use cases beyond toy interpreters
 
-The toy expression-AST from Lecture 5 is the standard "first
-example" of GADTs. It is useful for showing the mechanics, but it
-leaves a misleading impression: that GADTs are mostly for
-interpreters. They are not. This lecture shows four idioms you
-will see in real OCaml code where GADTs earn their keep.
+The [toy expression-AST from Lecture 5](M08-L05-gadts-basics.html#the-gadt-form)
+is the standard "first example" of GADTs. It is useful for showing
+the mechanics, but it leaves a misleading impression: that GADTs
+are mostly for interpreters. They are not. This lecture shows four
+idioms you will see in real OCaml code where GADTs earn their keep.
 
 The common thread across all four is *type witnesses*. Where an
 ordinary value carries data, a witness is a value whose runtime
@@ -29,10 +29,10 @@ witnesses naturally.
 ## Use 1: typed pretty-printers
 
 Suppose you want one function `show` that pretty-prints any value
-whose type you know at compile time. With ordinary variants you
-would write a separate `show_int`, `show_string`, `show_list`, and
-so on. With a GADT *witness* of OCaml types, you can have one
-`show`:
+whose type you know at compile time. With
+[ordinary variants](M04-L03-variants.html) you would write a
+separate `show_int`, `show_string`, `show_list`, and so on. With a
+GADT *witness* of OCaml types, you can have one `show`:
 
 :::slide
 
@@ -149,12 +149,13 @@ sequence; you could equally use a list-in-the-type structure with
 some other notation.
 
 Why would you want this? When you have a *fixed-shape but
-heterogeneous* collection, an ordinary list `'a list` cannot
-encode it (the elements must all share `'a`). Tuples work for
-small fixed shapes (`(int, string, bool)` for three) but do not
-generalise to "n elements with given types". Heterogeneous lists
-are the OCaml answer: a type-level encoding of "list with these
-exact element types".
+heterogeneous* collection, an ordinary [list](M04-L04-recursive-types.html)
+`'a list` cannot encode it (the elements must all share `'a`).
+[Tuples](M04-L01-tuples.html) work for small fixed shapes
+(`(int, string, bool)` for three) but do not generalise to
+"n elements with given types". Heterogeneous lists are the OCaml
+answer: a type-level encoding of "list with these exact element
+types".
 
 You see this in the implementation of typed printf (next use case),
 in some database libraries that map tuple types to column types,
@@ -251,7 +252,9 @@ yourself.
 
 ## When GADTs do not help
 
-For everyday OCaml code, GADTs are usually the wrong hammer:
+For everyday OCaml code, GADTs are usually the wrong hammer.
+[Records](M04-L02-records.html) and
+[variants](M04-L03-variants.html) cover most needs:
 
 :::slide
 
@@ -428,12 +431,14 @@ Lecture 7: the Module 8 **tutorial**.
 
 :::
 
-The tutorial in lecture 7 brings together the monad pattern from
-lectures 1-4 and the GADT pattern from lectures 5-6. We build a
-small expression language whose AST is a GADT (so ill-typed
-programs cannot be constructed), and an evaluator that returns
-`'a option` (so runtime failures like division-by-zero short-circuit
-cleanly).
+The [tutorial in lecture 7](M08-L07-tutorial.html) brings together
+the monad pattern from
+lectures [1](M08-L01-sequencing.html)-[4](M08-L04-state-monad.html)
+and the GADT pattern from
+lectures [5](M08-L05-gadts-basics.html)-[6](#). We build a small
+expression language whose AST is a GADT (so ill-typed programs
+cannot be constructed), and an evaluator that returns `'a option`
+(so runtime failures like division-by-zero short-circuit cleanly).
 
 ## Reading
 

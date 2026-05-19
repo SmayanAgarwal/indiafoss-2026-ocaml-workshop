@@ -14,11 +14,14 @@ reading:
 
 # The result monad
 
-`option` says "maybe a value, maybe not". `result` says "either a
-value, or an error". Both shapes carry a value on success; only
-`result` carries information on failure. The monadic plumbing is
-identical: same `bind`, same `let*`, same intuition. What changes
-is the type of failure.
+[`option`](M04-L05-option-and-aliases.html#the-option-type) says
+"maybe a value, maybe not".
+[`result`](M04-L05-option-and-aliases.html#the-result-type) says
+"either a value, or an error". Both shapes carry a value on success;
+only `result` carries information on failure. The monadic plumbing
+is identical: same [`bind`](M08-L02-option-monad.html#definition),
+same [`let*`](M08-L02-option-monad.html#using-let), same intuition.
+What changes is the type of failure.
 
 This lecture defines `result`, shows the standard library's
 `Result.bind`, walks through a parser that returns informative
@@ -99,10 +102,11 @@ let _ = demo "200"
 
 :::
 
-The structure of the code is identical to the option-monad version
-in the previous lecture. The `let*` operator means the same thing:
-"unwrap the success, or short-circuit with the failure." The only
-visible change is that the failure case has a name and a payload.
+The structure of the code is identical to the
+[option-monad version in the previous lecture](M08-L02-option-monad.html#using-let).
+The `let*` operator means the same thing: "unwrap the success, or
+short-circuit with the failure." The only visible change is that
+the failure case has a name and a payload.
 
 If you read the three result lines: `demo "5"` parses, doubles,
 checks under 100, returns `Ok 10`. `demo "frog"` fails at the
@@ -174,8 +178,9 @@ They let you mix the two monads at a boundary.
 ## A typed error type
 
 When several distinct things can go wrong, a `string` message
-loses information. Encoding the failure as a variant gives callers
-something to pattern-match on:
+loses information. Encoding the failure as a
+[variant](M04-L03-variants.html) gives callers something to
+[pattern-match](M05-L01-basic-patterns.html) on:
 
 :::slide
 
@@ -252,7 +257,8 @@ let _ = pipeline ()
 
 :::
 
-The behaviour matches the option monad's short-circuit-on-`None`:
+The behaviour matches the
+[option monad's short-circuit-on-`None`](M08-L02-option-monad.html#using-let):
 the first failure to fire is the one returned, and downstream
 steps are skipped. This is what you usually want from sequential
 code. Parsing step 2 only makes sense if step 1 succeeded; running
@@ -337,9 +343,9 @@ The argument for using `result` everywhere is uniformity: every
 function has the same shape, every caller knows what to do. The
 argument against is that the boilerplate piles up, especially at
 boundaries where you have to map between different error types
-(your module's errors versus the library's errors). Most real
-codebases compromise: `result` at the API boundary, simpler
-mechanisms internally.
+(your [module's](M07-L04-module-basics.html) errors versus the
+library's errors). Most real codebases compromise: `result` at the
+API boundary, simpler mechanisms internally.
 
 A second tactic, used in larger codebases: define a single
 top-level error type for the whole project, with one constructor
@@ -486,10 +492,11 @@ Lecture 4: the **state monad**.
 :::
 
 We have seen two monads with the same shape: `option` and
-`result`, both about possible failure. The next lecture moves to a
-different flavour entirely: the state monad, which threads a piece
-of "ambient" state through a chain of pure computations. Same
-`let*` syntax, very different intuition.
+`result`, both about possible failure. The
+[next lecture](M08-L04-state-monad.html) moves to a different
+flavour entirely: the state monad, which threads a piece of
+"ambient" state through a chain of pure computations. Same `let*`
+syntax, very different intuition.
 
 ## Reading
 

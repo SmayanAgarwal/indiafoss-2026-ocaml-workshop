@@ -18,11 +18,13 @@ This is the capstone for the OCaml half of the course. We are
 going to build a small expression language that combines almost
 everything we have seen in Module 8:
 
-- A GADT for the abstract syntax tree, so that ill-typed programs
-  cannot be constructed.
-- A pattern-matching evaluator that uses GADT type refinement to
-  return the right type for each constructor.
-- An optional-failure layer, in the option-monad style, that
+- A [GADT](M08-L05-gadts-basics.html) for the abstract syntax tree,
+  so that ill-typed programs cannot be constructed.
+- A [pattern-matching](M05-L01-basic-patterns.html) evaluator that
+  uses [GADT type refinement](M08-L05-gadts-basics.html#pattern-matching-with-type-refinement)
+  to return the right type for each constructor.
+- An optional-failure layer, in the
+  [option-monad style](M08-L02-option-monad.html), that
   short-circuits when evaluation has a runtime problem (such as
   division by zero).
 - Two pretty-printers and an extension exercise (adding `<`).
@@ -31,9 +33,11 @@ The exercise serves two purposes. First, it is a useful piece of
 code on its own: a typed mini-interpreter is the foundation of
 many production OCaml tools (configuration languages, query
 builders, embedded scripting). Second, it is a working example
-that ties together monads, GADTs, and pattern matching, the three
-big OCaml ideas from the back half of the functional-programming
-half of the course.
+that ties together [monads](M08-L01-sequencing.html),
+[GADTs](M08-L05-gadts-basics.html), and
+[pattern matching](M05-L01-basic-patterns.html), the three big
+OCaml ideas from the back half of the functional-programming half
+of the course.
 
 By the end of this lecture you should be able to read GADT-typed
 ASTs comfortably, write evaluators over them, and extend the
@@ -292,11 +296,12 @@ let _ = eval (If (Less (Int_lit 3, Int_lit 5), Int_lit 1, Int_lit 0))
 
 :::
 
-A useful detail: the exhaustiveness checker from Module 5 still
-works for GADTs. When you add `Less` to the type and forget to
-add it to `eval`, the compiler warns about a non-exhaustive match.
-This is one of the things you would lose if you encoded the AST
-as a polymorphic-variant-tagged dictionary (or similar dynamic
+A useful detail: the
+[exhaustiveness checker from Module 5](M05-L04-exhaustiveness.html)
+still works for GADTs. When you add `Less` to the type and forget
+to add it to `eval`, the compiler warns about a non-exhaustive
+match. This is one of the things you would lose if you encoded the
+AST as a polymorphic-variant-tagged dictionary (or similar dynamic
 approach): the exhaustiveness check would not apply.
 
 ## Adding a pretty printer
@@ -361,8 +366,9 @@ purpose.
 
 So far our `eval` cannot fail: every constructor evaluates
 cleanly. Real interpreters have runtime failures (division by
-zero, missing variable, stack overflow). The option monad (Lecture
-2) is the natural way to add a layer of fallibility:
+zero, missing variable, stack overflow). The
+[option monad (Lecture 2)](M08-L02-option-monad.html) is the
+natural way to add a layer of fallibility:
 
 :::slide
 
@@ -404,11 +410,12 @@ genuine runtime failures: you do not know whether the divisor is
 zero until you evaluate it, so you handle that case with `None`
 short-circuit semantics.
 
-For a real interpreter you would pick `result` over `option` so
-that the error case carries a useful message ("divide by zero at
-expression 4711"). The shape of the code is identical: `let*`
-chains, GADT pattern matching with `type a. ...`, runtime checks
-in the constructor cases that can fail.
+For a real interpreter you would pick
+[`result`](M08-L03-result-monad.html) over `option` so that the
+error case carries a useful message ("divide by zero at expression
+4711"). The shape of the code is identical: `let*` chains, GADT
+pattern matching with `type a. ...`, runtime checks in the
+constructor cases that can fail.
 
 This is the design pattern for a serious typed interpreter:
 GADTs at the type level to rule out type errors, monads at the
@@ -566,10 +573,8 @@ After Module 8 you can:
 
 - You have finished the **functional programming** half of the
   course (Modules 1-8).
-- The second half (Modules 9-12) turns to **secure systems
-  software**: runtime/GC, memory safety, unikernels, concurrency.
-- The toolkit you built here is the foundation for everything to
-  come.
+- The toolkit you built here is the foundation for the
+  secure-systems half of the course (to be added).
 
 :::
 
@@ -580,18 +585,34 @@ do not need to use them daily, but you need to recognise them
 when reading other people's code, and you need to be able to reach
 for them when the problem calls for them.
 
-The functional-programming half of the course (Modules 1-8) is
-now complete. We started from primitive literals and built up
-through `let` bindings, functions, recursion, pattern matching,
-algebraic data types, higher-order functions, modules, monads, and
-GADTs. The remaining four modules pivot to the systems half of
-the course: how OCaml programs run (the runtime and garbage
-collector), what memory safety means and why OCaml provides it
-by default, how to build small predictable systems
-([unikernels](https://mirage.io/)), and how to write concurrent
-code with effect-based schedulers
-([Eio](https://github.com/ocaml-multicore/eio)). All of that
-builds on the foundation we have just finished.
+The functional-programming half of the course
+(Modules [1](M01-L01-course-intro.html)-8) is now complete. We
+started from [primitive literals](M02-L01-literals.html) and built
+up through [`let` bindings](M02-L02-let-bindings.html),
+[functions](M03-L01-functions-as-values.html),
+[recursion](M03-L02-recursion.html),
+[pattern matching](M05-L01-basic-patterns.html),
+[algebraic data types](M04-L03-variants.html),
+[higher-order functions](M06-L01-functions-revisited.html),
+[modules](M07-L04-module-basics.html),
+[monads](M08-L01-sequencing.html), and
+[GADTs](M08-L05-gadts-basics.html). Each module fed the next: refs
+in M07 gave the imperative ground for the state monad in M08;
+variants in M04 set up GADTs in M08; modules in M07 are the
+packaging you reach for whenever you grow a real codebase.
+
+<!-- TODO: the secure-systems half (runtime/GC, memory safety,
+     unikernels with Mirage, concurrency with Eio) is planned but
+     not yet authored; this paragraph will link forward once those
+     modules exist. -->
+
+What you carry forward from here is not the specific syntax of
+`let*` or the exact shape of a GADT constructor, but a *taste* for
+typed-first thinking: pick the data shape, then write functions on
+it; lean on the compiler to find your missing cases; keep mutation
+in a small corner and prefer values everywhere else. Those habits
+travel: to systems code, to web back-ends, to whatever you build
+next.
 
 ## Reading
 

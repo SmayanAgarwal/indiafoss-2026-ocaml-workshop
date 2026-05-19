@@ -22,13 +22,16 @@ list has no head. `1 / 0` cannot return an `int`: integer division
 by zero is undefined. `int_of_string "hello"` cannot return an
 `int`: the string is not a number.
 
-We have already seen one way to express this: the `option` type
+We have already seen one way to express this: the
+[`option` type](M04-L05-option-and-aliases.html#the-option-type)
 (`None` when there is no answer, `Some x` when there is) and the
-`result` type (`Error e` instead of just `None`, so the failure
-can carry a reason). Those were the subjects of Module 4. They are
-the *typed* approach to partial functions: the possibility of
-failure is right there in the return type, and the compiler will
-not let you forget to handle it.
+[`result` type](M04-L05-option-and-aliases.html#the-result-type)
+(`Error e` instead of just `None`, so the failure can carry a
+reason). Those were the subjects of
+[Module 4](M04-L05-option-and-aliases.html). They are the *typed*
+approach to partial functions: the possibility of failure is right
+there in the return type, and the compiler will not let you forget
+to handle it.
 
 This lecture covers the other approach: *exceptions*. An exception
 is a kind of value that, when *raised*, interrupts the normal flow
@@ -70,7 +73,7 @@ Some standard exceptions you will meet:
 - `End_of_file` is raised by reading-from-channel functions when
   they hit the end of input.
 
-There are a handful more; the [stdlib documentation](https://v2.ocaml.org/api/Stdlib.html)
+There are a handful more; the [OCaml stdlib documentation](https://v2.ocaml.org/api/Stdlib.html)
 lists them under "Predefined exceptions."
 
 :::slide
@@ -153,9 +156,9 @@ polymorphic, the types match without any coercion.
 
 ## Catching exceptions: try and with
 
-A `try ... with` expression looks like a `match`, except it
-matches on the *exception* a body raises rather than on a value
-the body produces.
+A `try ... with` expression looks like a
+[`match`](M05-L01-basic-patterns.html), except it matches on the
+*exception* a body raises rather than on a value the body produces.
 
 ```ocaml
 let safe_head xs =
@@ -212,10 +215,12 @@ let _ = safe_divide 10 3
 
 :::
 
-The patterns on the right of `with` are real *patterns*: they can
-match on the constructor, bind the payload, and even include
-nested patterns. The wildcard `_` matches any payload. You can
-have multiple clauses, each catching a different exception:
+The patterns on the right of `with` are real
+[*patterns*](M05-L01-basic-patterns.html): they can match on the
+constructor, bind the payload, and even include
+[nested patterns](M05-L02-nested-and-or-patterns.html). The
+wildcard `_` matches any payload. You can have multiple clauses,
+each catching a different exception:
 
 ```ocaml
 let safely f x =
@@ -242,7 +247,7 @@ unexpected ones propagate.
 ## Defining your own exception
 
 Custom exceptions are declared with the `exception` keyword, much
-like a variant constructor.
+like a [variant constructor](M04-L03-variants.html).
 
 ```ocaml
 exception Negative_input
@@ -265,8 +270,9 @@ let _ =
 `120` for `factorial 5`; `-1` for `factorial (-1)`, because the
 exception was raised and caught.
 
-An exception can also carry a payload, just like a variant
-constructor with arguments. The declaration uses `of`:
+An exception can also carry a payload, just like a
+[variant constructor with arguments](M04-L03-variants.html). The
+declaration uses `of`:
 
 ```ocaml
 exception Parse_error of string * int  (* message, line *)
@@ -313,14 +319,14 @@ exception Parse_error of string * int  (* message, line *)
 
 Under the hood, exceptions are an *extensible variant*: they all
 share a single type called `exn`, and every `exception` declaration
-adds a new constructor to that type. This is unusual: most OCaml
-variants are closed (the set of constructors is fixed at the
-declaration). The `exn` type is the one exception, because
-libraries throughout a program need to be able to add their own
-exception constructors. We will not need the deeper machinery of
-extensible variants; the practical takeaway is that you can declare
-new exception types anywhere and they all flow through the same
-`try ... with` mechanism.
+adds a new constructor to that type. This is unusual: most
+[OCaml variants](M04-L03-variants.html) are closed (the set of
+constructors is fixed at the declaration). The `exn` type is the
+one exception, because libraries throughout a program need to be
+able to add their own exception constructors. We will not need the
+deeper machinery of extensible variants; the practical takeaway is
+that you can declare new exception types anywhere and they all flow
+through the same `try ... with` mechanism.
 
 ## Exception vs option vs result
 
@@ -451,13 +457,14 @@ wrong call.
 
 **For predictable missing values.** "The key might be missing from
 the map" is not an exceptional case, it is the expected behaviour
-of a lookup. Use `option`; the caller will pattern-match cleanly.
+of a lookup. Use [`option`](M04-L05-option-and-aliases.html#the-option-type);
+the caller will pattern-match cleanly.
 
 **For "this can't happen" assertions.** If a code path is
 unreachable, write `assert false` or, better, restructure the
-types so the unreachable case is genuinely impossible (a variant
-without that constructor). Exceptions are not a substitute for
-type-driven design.
+types so the unreachable case is genuinely impossible (a
+[variant](M04-L03-variants.html) without that constructor).
+Exceptions are not a substitute for type-driven design.
 
 **For deeply nested control flow.** An exception raised three
 levels deep, caught at the top, can be hard to follow when you
@@ -607,12 +614,12 @@ easier to read for your case.
 
 ## What's next
 
-That closes the imperative half of Module 7. The next three
-lectures turn to *modules*: how OCaml structures code at scale,
-namespaces large libraries, and hides representation behind type
-signatures. The standard library you have been using all course
-(`List`, `Array`, `String`, `Option`) is a tree of modules; we
-finally meet the machinery that builds it.
+That closes the imperative half of Module 7. The
+[next three lectures](M07-L04-module-basics.html) turn to *modules*:
+how OCaml structures code at scale, namespaces large libraries, and
+hides representation behind type signatures. The standard library
+you have been using all course (`List`, `Array`, `String`, `Option`)
+is a tree of modules; we finally meet the machinery that builds it.
 
 :::slide
 

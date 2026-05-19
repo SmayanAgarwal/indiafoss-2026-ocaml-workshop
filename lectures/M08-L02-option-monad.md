@@ -14,20 +14,22 @@ reading:
 
 # The option monad
 
-In the previous lecture we built up a helper `bind` for sequencing
-optional computations, and previewed the `let*` syntactic sugar
-that lets such code read top to bottom. This lecture turns that
-preview into a working tool: we define `let*` formally as a
-*let-operator*, look at the standard library's `Option.bind` and
-`Option.map`, walk through a realistic example, and discuss when
-the monad is the right hammer.
+In the [previous lecture](M08-L01-sequencing.html) we built up a
+helper `bind` for sequencing optional computations, and previewed
+the `let*` syntactic sugar that lets such code read top to bottom.
+This lecture turns that preview into a working tool: we define
+`let*` formally as a *let-operator*, look at the standard library's
+`Option.bind` and `Option.map`, walk through a realistic example,
+and discuss when the monad is the right hammer.
 
 The option monad is the workhorse for "this step may fail, and we
 do not need to say why". A parser that may or may not match. A
 lookup that may or may not find a key. An arithmetic step that may
-or may not produce a sensible answer. Use `option` when the
-*identity* of the failure is the whole story; use `result` (next
-lecture) when callers want a message or an error code.
+or may not produce a sensible answer. Use
+[`option`](M04-L05-option-and-aliases.html#the-option-type) when
+the *identity* of the failure is the whole story; use `result`
+([next lecture](M08-L03-result-monad.html)) when callers want a
+message or an error code.
 
 ## Definition
 
@@ -360,7 +362,8 @@ failures rather than short-circuit on the first one. The option
 monad gives you the first-`None`-wins behaviour. If you want "try
 all the parses and tell me everything that failed", that is the
 *applicative* (or *validation*) shape, which is a sibling pattern.
-We will not study it in detail in this course; the next lecture
+We will not study it in detail in this course; the
+[next lecture](M08-L03-result-monad.html#when-you-want-to-collect-all-errors)
 will mention it again when we get to `result`.
 
 ## The monad laws (a teaser)
@@ -519,9 +522,11 @@ Lecture 3: the **result monad**.
 :::
 
 `option` is fine when "no value here" is all you need to know.
-The next lecture moves to `result`, where the failure case carries
-a payload (an error message, a code, a variant). Same monad shape,
-richer information. After that, the state monad in lecture four.
+The [next lecture](M08-L03-result-monad.html) moves to `result`,
+where the failure case carries a payload (an error message, a code,
+a [variant](M04-L03-variants.html)). Same monad shape, richer
+information. After that, [the state monad](M08-L04-state-monad.html)
+in lecture four.
 
 ## Reading
 

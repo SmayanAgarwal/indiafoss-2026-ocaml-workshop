@@ -14,19 +14,21 @@ reading:
 
 # GADTs: variants with type-level information
 
-This lecture switches gears entirely from the monad story. So far
-in Module 8 we have been about *sequencing* computations; now we
-turn to a more advanced type-system feature called *generalized
-algebraic data types*, almost always abbreviated *GADTs*. They are
-the second half of the OCaml toolkit needed for typed embedded
-languages, and they show up in serious OCaml code whenever you
-want the compiler to do more work for you.
+This lecture switches gears entirely from the
+[monad story](M08-L01-sequencing.html). So far in Module 8 we have
+been about *sequencing* computations; now we turn to a more
+advanced type-system feature called *generalized algebraic data
+types*, almost always abbreviated *GADTs*. They are the second
+half of the OCaml toolkit needed for typed embedded languages, and
+they show up in serious OCaml code whenever you want the compiler
+to do more work for you.
 
-Ordinary variants say "this value is one of a finite set of cases".
-GADTs add: "and each case can have a *different* type index". The
-practical consequence is that the compiler can prove things at
-compile time that an ordinary variant would have to check at
-runtime. Wrong combinations become type errors, not crashes.
+[Ordinary variants](M04-L03-variants.html) say "this value is one
+of a finite set of cases". GADTs add: "and each case can have a
+*different* type index". The practical consequence is that the
+compiler can prove things at compile time that an ordinary variant
+would have to check at runtime. Wrong combinations become type
+errors, not crashes.
 
 The idea is in some ways simple. The notation is unusual. The
 type theory is involved. We will keep the type theory light, focus
@@ -35,7 +37,8 @@ with more substantial use cases.
 
 ## Ordinary variant: same parameter for all constructors
 
-To set the contrast, an ordinary parameterised variant:
+To set the contrast, an
+[ordinary parameterised variant](M04-L04-recursive-types.html):
 
 :::slide
 
@@ -173,10 +176,10 @@ what type this is" because the compiler wants to know now.
 
 ## Pattern matching with type refinement
 
-The compiler's bookkeeping continues into pattern matching. When
-you `match` on a GADT value, each case knows which constructor
-fired, and OCaml *refines* the type index based on which one it
-was.
+The compiler's bookkeeping continues into
+[pattern matching](M05-L01-basic-patterns.html). When you `match`
+on a GADT value, each case knows which constructor fired, and
+OCaml *refines* the type index based on which one it was.
 
 :::slide
 
@@ -336,9 +339,10 @@ suffice and reach for GADTs only when phantom types cannot express
 the relationship they want.
 
 The polymorphic variants `` [`User] `` and `` [`Order] `` are a
-related OCaml feature (Module 5 covered ordinary variants; we will
-not dive into polymorphic variants in this course). The key thing
-for now: they are tags that the type system tracks distinctly.
+related OCaml feature ([Module 4](M04-L03-variants.html) covered
+ordinary variants; we will not dive into polymorphic variants in
+this course). The key thing for now: they are tags that the type
+system tracks distinctly.
 
 ## When to reach for GADTs
 
@@ -368,12 +372,14 @@ A useful question to ask before reaching for a GADT: "what
 specifically would go wrong if I used an ordinary variant and
 runtime checks?" If the answer is "I would crash with a
 type-mismatch error after running for hours", GADTs are worth it.
-If the answer is "I would have to add an `option` return type
-and pattern-match in two places", they are probably not.
+If the answer is "I would have to add an
+[`option`](M04-L05-option-and-aliases.html#the-option-type) return
+type and pattern-match in two places", they are probably not.
 
-The next lecture shows three or four real use cases that pull this
-into focus: typed pretty-printers, heterogeneous lists, type-safe
-builders, and the GADT machinery behind `Printf`.
+The [next lecture](M08-L06-gadts-use-cases.html) shows three or
+four real use cases that pull this into focus: typed
+pretty-printers, heterogeneous lists, type-safe builders, and the
+GADT machinery behind `Printf`.
 
 ## A quick check
 
@@ -513,12 +519,14 @@ monad pattern in a small typed evaluator.
 
 :::
 
-The next lecture takes the basic machinery here and shows three or
-four real applications. The lecture after that is the tutorial:
-combining a GADT-based typed AST with an option-monad evaluator
-that can fail at runtime (division by zero, say) while still
-guaranteeing type safety on the success path. That is the
-capstone for the OCaml half of the course.
+The [next lecture](M08-L06-gadts-use-cases.html) takes the basic
+machinery here and shows three or four real applications. The
+[lecture after that](M08-L07-tutorial.html) is the tutorial:
+combining a GADT-based typed AST with an
+[option-monad](M08-L02-option-monad.html) evaluator that can fail
+at runtime (division by zero, say) while still guaranteeing type
+safety on the success path. That is the capstone for the OCaml
+half of the course.
 
 ## Reading
 

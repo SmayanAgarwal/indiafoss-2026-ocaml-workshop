@@ -14,12 +14,13 @@ reading:
 
 # The state monad
 
-The previous two lectures used monads for *failure*: option and
-result both encode "this step may or may not produce a value". The
-state monad is a different flavour of the same machinery: rather
-than failure, it encodes *threaded state*. Each step of a chain
-receives the current state from the previous step and returns a
-new state to the next.
+The previous two lectures used monads for *failure*:
+[option](M08-L02-option-monad.html) and
+[result](M08-L03-result-monad.html) both encode "this step may or
+may not produce a value". The state monad is a different flavour
+of the same machinery: rather than failure, it encodes *threaded
+state*. Each step of a chain receives the current state from the
+previous step and returns a new state to the next.
 
 Why would we want this? Plenty of computations need to thread a
 piece of state without it being a parameter of every function:
@@ -34,10 +35,10 @@ piece of state without it being a parameter of every function:
 
 In every case the state is "ambient": you do not want it cluttering
 every function signature, but it has to be threaded through
-deterministically. Reference cells (Module 7) give you one
-solution: use a `ref` and mutate it. The state monad gives you a
-different solution: encode the threading in the type, and let the
-monad plumbing do it. We will compare both at the end.
+deterministically. [Reference cells](M07-L01-references.html) give
+you one solution: use a `ref` and mutate it. The state monad gives
+you a different solution: encode the threading in the type, and let
+the monad plumbing do it. We will compare both at the end.
 
 ## The type
 
@@ -86,8 +87,9 @@ function; the function is the value.
 `return x` is the simplest possible stateful computation: it
 ignores the input state, produces the value `x`, and returns the
 same state unchanged. "I have no effect on the state; here is
-this value." It is the analogue of `Some x` for option, or `Ok
-x` for result.
+this value." It is the analogue of
+[`Some x` for option](M08-L02-option-monad.html#definition), or
+[`Ok x` for result](M08-L03-result-monad.html#definition).
 
 `bind m f` is where the state threading happens. We call `m`
 first, passing the input state `s`; we get back `(a, s')`, where
@@ -98,7 +100,7 @@ that against `s'` and return its result. The threading is
 is the whole game.
 
 The `let* = bind` line, as before, lets us write monadic code
-that reads like ordinary `let`-bindings.
+that reads like ordinary [`let`-bindings](M02-L02-let-bindings.html).
 
 ## Two primitives: `get` and `put`
 
@@ -348,6 +350,11 @@ fresh_counter`, threaded through every step of inference. Modern
 language implementations bury this in monadic abstractions that
 look very much like the gensym pattern above, scaled up.
 
+<!-- TODO: parser-combinator example and type-checker pipeline are
+     out of scope for this course; tighten if a future module covers
+     parsers in detail. -->
+
+
 The monad shape, in all these cases, is the same: a wrapper type,
 `return`, `bind`, `let*`. The state itself varies wildly; the
 plumbing does not.
@@ -495,13 +502,17 @@ Lectures 5-6: **GADTs**.
 
 :::
 
-We have seen three monads with the same `let*` shape: `option`,
-`result`, and `state`. The next two lectures change direction
+We have seen three monads with the same `let*` shape:
+[`option`](M08-L02-option-monad.html),
+[`result`](M08-L03-result-monad.html), and `state`. The
+[next](M08-L05-gadts-basics.html)
+[two](M08-L06-gadts-use-cases.html) lectures change direction
 entirely and study a different advanced feature: generalized
 algebraic data types. They are not part of the monad story
 mechanically, but they often appear in the same kinds of code
-(small embedded languages with typed ASTs), and the tutorial in
-lecture 7 brings the two threads together.
+(small embedded languages with typed ASTs), and the
+[tutorial in lecture 7](M08-L07-tutorial.html) brings the two
+threads together.
 
 ## Reading
 

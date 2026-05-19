@@ -15,12 +15,13 @@ reading:
 # `filter`: keep what passes the predicate
 
 `filter` is the second of the three canonical higher-order list
-functions. Where `map` transforms every element and keeps them all,
-`filter` keeps each element exactly as it was, but drops the ones
-that fail a test. Its type signature, `('a -> bool) -> 'a list -> 'a
-list`, encodes that promise: the function argument is a *predicate*
-(it returns a `bool`), and the result list has the same element type
-as the input. No transformation; just selection.
+functions. Where [`map`](M06-L02-map.html) transforms every element
+and keeps them all, `filter` keeps each element exactly as it was,
+but drops the ones that fail a test. Its type signature, `('a ->
+bool) -> 'a list -> 'a list`, encodes that promise: the function
+argument is a *predicate* (it returns a `bool`), and the result list
+has the same element type as the input. No transformation; just
+selection.
 
 The pair `map` + `filter` covers a remarkable amount of everyday
 list manipulation. The rest of this lecture works through the
@@ -30,8 +31,8 @@ something else.
 
 ## Writing `filter` from scratch
 
-Just as we did with `map`, let us start from two concrete functions
-that share a shape.
+Just as we did with [`map`](M06-L02-map.html#writing-map-from-scratch),
+let us start from two concrete functions that share a shape.
 
 ```ocaml
 let rec evens = function
@@ -103,7 +104,8 @@ The element type appears in three places, and it is the same `'a`
 in each: the predicate takes an `'a`, the input is a list of `'a`,
 the output is also a list of `'a`. Filtering cannot change the type
 of the elements. If you find yourself wanting to "filter and
-transform," you want `filter_map`, which we will see below.
+transform," you want [`filter_map`](#filter_map-filter-and-transform-in-one-pass),
+which we will see below.
 
 The output is always a *sublist* of the input, in the same order.
 The relative order of elements is preserved: filter never reshuffles.
@@ -133,12 +135,12 @@ let _ = List.filter (fun s -> String.length s > 3) ["hi"; "hello"; "ok"; "world"
 
 The argument order matters: predicate first, list second. This is
 consistent with `List.map` (function first, list second) and with
-`List.fold_left` (function first, accumulator second, list third).
-The convention is that "the part that varies between calls" (the
-function argument) comes first; the list comes last. This lets you
-partially apply the function argument and get back a useful
-specialised function, like `evens = filter (...)` above. Module 5
-will give more examples; the rule of thumb is "data goes last."
+[`List.fold_left`](M06-L04-fold.html#fold_left-the-other-direction)
+(function first, accumulator second, list third). The convention is
+that "the part that varies between calls" (the function argument)
+comes first; the list comes last. This lets you partially apply the
+function argument and get back a useful specialised function, like
+`evens = filter (...)` above; the rule of thumb is "data goes last."
 
 ## Combining `map` and `filter`
 
@@ -180,9 +182,9 @@ let _ = big_squares [1; 2; 3; 4; 5]
 
 The pipeline operator `|>` is just function application written in
 the other direction: `x |> f` is exactly `f x`. We will dedicate
-Lecture 5 to it. For now, notice that the pipeline reads top to
-bottom as a clear sequence of steps: start with the list, square,
-filter. The alternative is nested calls:
+[Lecture 5](M06-L05-pipelines.html) to it. For now, notice that the
+pipeline reads top to bottom as a clear sequence of steps: start
+with the list, square, filter. The alternative is nested calls:
 
 ```ocaml
 let big_squares xs =
@@ -528,8 +530,8 @@ let unique xs =
 We carry a `seen` list (in reverse, so prepending is cheap), check
 each element against it, and add only the first occurrence. The
 final `List.rev` restores original order. This is `O(n^2)` because
-`List.mem` is linear; for large lists you would use a `Set` (Module
-7) for `O(n log n)`.
+`List.mem` is linear; for large lists you would use a `Set`
+([Module 7](M07-L06-functors.html)) for `O(n log n)`.
 
 ## Activity
 
@@ -568,17 +570,17 @@ let _ = unique ["a"; "b"; "a"; "c"; "b"]
 - Maintain a `seen` list (in reverse for efficiency).
 - Include each element only if not already seen.
 - `List.mem` is `O(n)` per call: overall `O(n^2)`.
-- Fine for short lists; use a `Set` (Module 7) for big lists.
+- Fine for short lists; use a `Set` ([Module 7](M07-L06-functors.html)) for big lists.
 
 :::
 
 ## What's next
 
 We have `map` (transform every element) and `filter` (keep a
-sublist). Both build new lists. The next lecture, `fold`, builds
-*anything*: a number, a string, a record, another list. It is the
-most general of the three, and is the one that subsumes the other
-two.
+sublist). Both build new lists. The next lecture,
+[`fold`](M06-L04-fold.html), builds *anything*: a number, a string,
+a record, another list. It is the most general of the three, and is
+the one that subsumes the other two.
 
 :::slide
 

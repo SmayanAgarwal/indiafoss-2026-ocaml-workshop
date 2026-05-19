@@ -26,13 +26,14 @@ everyday OCaml. Any time you have a list and you want a new list of
 "the same things, but transformed somehow," `map` is the right tool.
 This lecture goes through `map` carefully because the patterns we
 develop here (extracting a walk, writing recursive higher-order
-functions, thinking about polymorphic types) carry over to `filter`,
-`fold`, and everything else in this module.
+functions, thinking about [polymorphic types](M02-L03-types-and-inference.html#polymorphism-for-free))
+carry over to [`filter`](M06-L03-filter.html), [`fold`](M06-L04-fold.html),
+and everything else in this module.
 
 ## Writing `map` from scratch
 
-We saw a hint of `map` at the end of Lecture 1. Here is the full
-derivation. Suppose we want two list functions:
+We saw a hint of `map` at the end of [Lecture 1](M06-L01-functions-revisited.html#why-bother-the-abstraction-principle).
+Here is the full derivation. Suppose we want two list functions:
 
 ```ocaml
 let rec add1 = function
@@ -95,11 +96,13 @@ let add1        = map (fun x -> x + 1)
 let concat_bang = map (fun s -> s ^ "!")
 ```
 
-Each is a *partial application* of `map`: we have supplied the
-function argument and left the list argument unbound. The result of
-each partial application is a function that, given a list of the
-right element type, returns the transformed list. This is exactly
-the Abstraction Principle from Lecture 1, made concrete.
+Each is a [*partial application*](M03-L03-currying.html#partial-application-the-payoff)
+of `map`: we have supplied the function argument and left the list
+argument unbound. The result of each partial application is a
+function that, given a list of the right element type, returns the
+transformed list. This is exactly the
+[Abstraction Principle](M06-L01-functions-revisited.html#why-bother-the-abstraction-principle)
+from Lecture 1, made concrete.
 
 The OCaml standard library calls this function `List.map`. The
 implementation is essentially what we just wrote. From now on, use
@@ -161,8 +164,10 @@ sort it, or split it; it just transforms each element in place.
 Fourth, **the result has the same length as the input.** The
 implementation makes one output element per input element. No
 duplications, no omissions. If you want a different length, you
-want a different function: `filter` (drops elements), `filter_map`
-(drops and transforms), or `fold_left` (returns anything you want).
+want a different function: [`filter`](M06-L03-filter.html) (drops
+elements), [`filter_map`](M06-L03-filter.html#filtermap-filter-and-transform-in-one-pass)
+(drops and transforms), or [`fold_left`](M06-L04-fold.html#fold_left-the-other-direction)
+(returns anything you want).
 
 Reading types this carefully pays off. Once you internalise what a
 type signature is telling you, you can predict the rough shape of a
@@ -202,8 +207,9 @@ similarly to turn a list of strings into a list of their lengths.
 
 ## Partial application + `map`
 
-Combining the operator-as-function trick from Lecture 1 with `map`
-gives some of the most compact OCaml in the standard library:
+Combining the [operator-as-function trick](M06-L01-functions-revisited.html#operators-are-functions-too)
+from Lecture 1 with `map` gives some of the most compact OCaml in
+the standard library:
 
 ```ocaml
 let _ = List.map ((+) 10) [1; 2; 3]
@@ -265,9 +271,10 @@ When you want something else:
 `map` is the right tool *only* when input length and output length
 should match. If you find yourself reaching for `map` and then
 filtering the result to discard some elements, the right tool was
-probably `filter_map` (Lecture 3); if you want to collapse the list
-to a single value, the right tool is `fold` (Lecture 4). Picking
-the right tool is half the job; this is the easy bit.
+probably [`filter_map`](M06-L03-filter.html#filtermap-filter-and-transform-in-one-pass)
+(Lecture 3); if you want to collapse the list to a single value, the
+right tool is [`fold`](M06-L04-fold.html) (Lecture 4). Picking the
+right tool is half the job; this is the easy bit.
 
 ## Tail recursion and `List.map`
 
@@ -282,7 +289,8 @@ let rec map f = function
 The recursive call `map f t` is not the *last* thing the function
 does. After it returns, we still have to cons `f h` onto its result.
 So the call sits in the call stack waiting for the recursion to
-return, just like the naive recursive `sum` we saw in Module 3.
+return, just like the naive recursive `sum` we saw in
+[Module 3](M03-L04-tail-recursion.html#what-a-stack-overflow-looks-like).
 
 :::slide
 
@@ -376,9 +384,10 @@ escape hatches.
 `List.map` is the most familiar instance of a deeper pattern. *Any*
 container-like type that "holds" elements can have its own `map`.
 
-OCaml's option type is the simplest example after lists. An
-`'a option` is either `None` (no value) or `Some x` (a value of type
-`'a`). The standard library provides `Option.map`:
+OCaml's [option type](M04-L05-option-and-aliases.html#the-option-type)
+is the simplest example after lists. An `'a option` is either `None`
+(no value) or `Some x` (a value of type `'a`). The standard library
+provides `Option.map`:
 
 ```ocaml
 let _ = Option.map (fun x -> x + 1) (Some 5)
@@ -413,7 +422,8 @@ transform the elements, preserve the structure.
 ## `map` on trees
 
 For your own data types, you can define `map` yourself. Here is a
-binary tree with values at internal nodes:
+[binary tree](M04-L04-recursive-types.html#a-binary-tree) with
+values at internal nodes:
 
 ```ocaml
 type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
@@ -449,9 +459,9 @@ let _ = map_tree (fun x -> x * 10)
 :::
 
 The result has the same shape as the input; only the values are
-transformed. We will return to this generalisation in Module 8 when
-we look at how libraries like `Map` and `Set` package these patterns
-into reusable abstractions.
+transformed. We will return to this generalisation in
+[Module 7](M07-L06-functors.html) when we look at how libraries like
+`Map` and `Set` package these patterns into reusable abstractions.
 
 ## Worked example: producing nicely-formatted strings
 
@@ -541,11 +551,11 @@ let rec zip_with f xs ys =
   | x :: xr, y :: yr -> f x y :: zip_with f xr yr
 ```
 
-The interesting part is the `[], _ | _, []` or-pattern: if either
-list is empty, return the empty list. The other case takes one head
-from each and combines them. If you have not seen or-patterns yet,
+The interesting part is the `[], _ | _, []` [or-pattern](M05-L02-nested-and-or-patterns.html#or-patterns-shared-right-hand-sides)
+from Module 5: if either list is empty, return the empty list. The
+other case takes one head from each and combines them. If you prefer,
 you can write the two cases separately: `| [], _ -> [] | _, [] -> []
-| ...`. We will see or-patterns in detail in Module 5.
+| ...`.
 
 ## Activity
 
@@ -584,9 +594,9 @@ let _ = zip_with (+) [1; 2; 3] [10; 20]
 
 ## What's next
 
-`map` transforms but never drops. The next lecture is `filter`:
-the higher-order function for *dropping* elements based on a
-predicate.
+`map` transforms but never drops. The next lecture is
+[`filter`](M06-L03-filter.html): the higher-order function for
+*dropping* elements based on a predicate.
 
 :::slide
 

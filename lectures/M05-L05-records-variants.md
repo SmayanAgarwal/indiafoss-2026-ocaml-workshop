@@ -22,8 +22,10 @@ everyday-syntax pass: the short forms, the deep nesting, the
 combinations you will reach for over and over again.
 
 We have already seen most of the pieces. Module 4 introduced
-records and variants; Lecture 1 introduced the basic pattern
-forms; Lectures 2 and 3 added nesting, or-patterns, and guards.
+[records](M04-L02-records.html) and [variants](M04-L03-variants.html);
+[Lecture 1](M05-L01-basic-patterns.html) introduced the basic
+pattern forms; [Lectures 2](M05-L02-nested-and-or-patterns.html) and
+[3](M05-L03-guards.html) added nesting, or-patterns, and guards.
 This lecture pulls them together and shows the idiomatic
 patterns: how to ignore record fields, how to rename them on the
 way in, how to walk a tree, how to handle pairs of options,
@@ -318,8 +320,9 @@ on the *parts you need*, wildcards on the rest.
 
 The general meta-pattern here (one clause per constructor, each
 clause computing its result from the sub-parts) will be the
-core of the tutorial in Lecture 6, and the central idea of
-Module 6 (higher-order functions and folds).
+core of the tutorial in [Lecture 6](M05-L06-tutorial.html), and the
+central idea of [Module 6](M06-L01-functions-revisited.html)
+(higher-order functions and [folds](M06-L04-fold.html)).
 
 ## Matching a tuple of values: the diagonal idiom
 
@@ -385,8 +388,9 @@ Some _)`.
 
 ## Or-patterns to group constructors
 
-Or-patterns from Lecture 2 shine when several constructors share a
-right-hand side. HTTP status codes are a classic example:
+Or-patterns from [Lecture 2](M05-L02-nested-and-or-patterns.html#or-patterns-shared-right-hand-sides)
+shine when several constructors share a right-hand side. HTTP status
+codes are a classic example:
 
 ```ocaml
 type http_status =
@@ -441,7 +445,8 @@ or-pattern version forces the compiler to warn: a new constructor
 is unhandled, please decide which side.
 
 This is the "avoid wildcards on variants" discipline from
-Lecture 4, applied here.
+[Lecture 4](M05-L04-exhaustiveness.html#when-to-use-a-wildcard-catch-all-on-variants),
+applied here.
 
 ## When there are many constructors
 
@@ -685,9 +690,9 @@ type, this match will warn until you handle it.
 ## What's next
 
 We have now covered the static checking *and* the everyday
-syntax for matching records and variants. Lecture 6 is the
-tutorial: a worked walkthrough of an arithmetic expression AST,
-implementing an evaluator, a pretty-printer, a depth function,
+syntax for matching records and variants. [Lecture 6](M05-L06-tutorial.html)
+is the tutorial: a worked walkthrough of an arithmetic expression
+AST, implementing an evaluator, a pretty-printer, a depth function,
 and a constant-folder, each as a single pattern match on the
 expression type. By the end you will have the workhorse
 pattern of Module 5 firmly in your hands.

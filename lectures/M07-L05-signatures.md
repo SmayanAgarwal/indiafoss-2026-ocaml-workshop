@@ -14,12 +14,14 @@ reading:
 
 # Module signatures
 
-The last lecture introduced modules: named bundles of definitions
-you can refer to with dot notation. We ran into a limitation
-right at the end. The `Stack` module's internal `ref` was visible
-to the outside world, because everything declared in a module is
-visible by default. There is no way to write a "private" helper
-just with the tools we have so far.
+The [last lecture](M07-L04-module-basics.html) introduced modules:
+named bundles of definitions you can refer to with dot notation.
+We ran into a
+[limitation right at the end](M07-L04-module-basics.html#hiding-internals-the-natural-limitation).
+The `Stack` module's internal [`ref`](M07-L01-references.html) was
+visible to the outside world, because everything declared in a
+module is visible by default. There is no way to write a "private"
+helper just with the tools we have so far.
 
 This lecture introduces the fix: *module signatures*. A signature
 is a type-level description of a module, listing the names that
@@ -38,8 +40,8 @@ than nominal, and it is checked entirely at compile time.
 
 A signature is a `sig ... end` block listing values and their
 types. Module type names conventionally begin with an uppercase
-letter; an older convention from Standard ML uses ALL CAPS, which
-you still see in textbooks.
+letter; an older convention from [Standard ML](https://smlfamily.github.io/)
+uses ALL CAPS, which you still see in textbooks.
 
 ```ocaml
 module type COUNTER = sig
@@ -296,8 +298,9 @@ start from `Stack.empty` and apply `Stack.push`. The only way to
 
 If you later switch the representation to a `Dynarray`, or to two
 lists for amortised O(1) operations (we will see this in the
-tutorial, M07-L07), no external code notices. The signature is
-the *only* place the rest of the program sees the type.
+tutorial, [M07-L07](M07-L07-tutorial.html)), no external code
+notices. The signature is the *only* place the rest of the program
+sees the type.
 
 Abstract types are how almost every serious OCaml library is
 structured. `Set.t`, `Map.t`, `Hashtbl.t`, `Buffer.t`: all
@@ -638,14 +641,15 @@ detail.
 
 ## What's next
 
-The next lecture introduces *functors*: modules parameterized by
-other modules. A functor is the way OCaml writes *generic* code
-that depends not just on a type but on the *operations* on that
-type. The classic example is the standard library's `Map.Make` and
-`Set.Make`: you give them an ordered type (a module with `t` and
-`compare`), and they return a full map or set module specialised
-to that type. This is how the standard library stays generic and
-how you build your own generic data structures.
+The [next lecture](M07-L06-functors.html) introduces *functors*:
+modules parameterized by other modules. A functor is the way OCaml
+writes *generic* code that depends not just on a type but on the
+*operations* on that type. The classic example is the standard
+library's `Map.Make` and `Set.Make`: you give them an ordered type
+(a module with `t` and `compare`), and they return a full map or
+set module specialised to that type. This is how the standard
+library stays generic and how you build your own generic data
+structures.
 
 :::slide
 

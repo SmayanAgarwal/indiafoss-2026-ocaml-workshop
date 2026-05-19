@@ -23,12 +23,12 @@ the answer is yes, it stays quiet.
 
 This sounds like a small convenience. It is in fact the most
 important property your type system can give you, and it is the
-single biggest reason to prefer variants over ad-hoc encodings
-(strings, integers, "magic numbers") for finite kinds. Once you
-have used it in anger on a real codebase (adding a new
-constructor to a variant and watching the compiler enumerate
-every place that needs updating), you will not want to write
-production code without it.
+single biggest reason to prefer [variants](M04-L03-variants.html)
+over ad-hoc encodings (strings, integers, "magic numbers") for
+finite kinds. Once you have used it in anger on a real codebase
+(adding a new constructor to a variant and watching the compiler
+enumerate every place that needs updating), you will not want to
+write production code without it.
 
 This lecture covers what exhaustiveness checking is, how to read
 the warnings, the dual check for redundant clauses, and the
@@ -37,7 +37,7 @@ projects.
 
 ## A non-exhaustive match
 
-Take the traffic-light example from Module 4:
+Take the traffic-light example from [Module 4](M04-L03-variants.html#exhaustiveness-checking):
 
 ```ocaml skip
 type traffic_light = Red | Yellow | Green
@@ -126,7 +126,7 @@ let small = function
 
 Warns: there are infinitely many integers, and you have covered
 exactly three. The fix is `| _ -> "many"`, exactly as we did in
-Lecture 1.
+[Lecture 1](M05-L01-basic-patterns.html#the-catch-all-wildcard).
 
 ## Why this matters
 
@@ -267,7 +267,8 @@ Warning 11 [redundant-case]: this match case is unused.
 Warning 11 fires when a clause is *shadowed* by an earlier one.
 The duplicate `Red` clause can never run, because the first
 `Red` clause matches every red light. We saw the same warning
-in Lecture 1 when a variable pattern appeared before a literal:
+in [Lecture 1](M05-L01-basic-patterns.html#why-pattern-order-matters)
+when a variable pattern appeared before a literal:
 
 ```ocaml skip
 let label = function
@@ -332,7 +333,8 @@ would enumerate `3 * 3 = 9` combinations.
 
 ## Exhaustiveness and guards: one more reminder
 
-We saw in Lecture 3 that guards suppress exhaustiveness. The
+We saw in [Lecture 3](M05-L03-guards.html#exhaustiveness-with-guards-is-conservative)
+that guards suppress exhaustiveness. The
 compiler treats a guarded clause as "may fail," so the cases
 covered by a guarded pattern are not considered part of the
 total. The fix is to add an unguarded catch-all:
@@ -401,7 +403,7 @@ In real projects, treat partial-match warnings as errors:
   (env (_ (flags (:standard -w +a-3-49))))
   ```
 - `-w +a` makes all warnings into errors; `-3-49` disables a few benign ones.
-- Module 7 covers dune in detail.
+- [Module 7](M07-L04-module-basics.html) covers modules; dune is the build tool you use to wire them together.
 
 :::
 
@@ -606,9 +608,9 @@ yours. Without exhaustiveness, you would do both, badly.
 
 ## What's next
 
-We have now covered the static analysis. Lecture 5 returns to
-*syntax*: the everyday patterns for matching on records and
-variants in real code, including the short forms for ignoring
+We have now covered the static analysis. [Lecture 5](M05-L05-records-variants.html)
+returns to *syntax*: the everyday patterns for matching on records
+and variants in real code, including the short forms for ignoring
 fields, deeply nested matches, and the combination of patterns
 that comes up in everyday OCaml.
 

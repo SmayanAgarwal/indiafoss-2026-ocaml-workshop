@@ -14,7 +14,8 @@ reading:
 
 # `fold`: reduce a list to a single value
 
-`map` returns a list. `filter` returns a list. `fold` returns
+[`map`](M06-L02-map.html) returns a list.
+[`filter`](M06-L03-filter.html) returns a list. `fold` returns
 *anything*: a number, a string, a record, another list, a tree. If
 the answer to your problem is computed by walking the elements of a
 list and combining them somehow, `fold` is the tool. It is the most
@@ -304,9 +305,10 @@ let rec fold_right f xs acc =
 
 The recursive call is *inside* `f h (...)`: after it returns, we
 still have to apply `f` to its result and `h`. So the recursive call
-is not in tail position; each pending call lives on the stack until
-its callee returns. For a list of `n` elements, `fold_right` builds
-a stack of depth `n`. For lists in the millions, this overflows.
+is not in [tail position](M03-L04-tail-recursion.html#what-is-a-tail-call);
+each pending call lives on the stack until its callee returns. For a
+list of `n` elements, `fold_right` builds a stack of depth `n`. For
+lists in the millions, this overflows.
 
 :::slide
 
@@ -435,8 +437,9 @@ toolbox.)
 
 ## Beyond lists: fold any structure
 
-Fold generalises to anything recursive. Trees are the next-most-common
-example:
+Fold generalises to anything recursive.
+[Trees](M04-L04-recursive-types.html#a-binary-tree) are the
+next-most-common example:
 
 ```ocaml
 type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
@@ -488,9 +491,10 @@ The general technique: for any recursive data type, write a fold
 that takes one function argument per constructor (or per place the
 type recursively occurs), and at each constructor pass the appropriate
 combining function. This pattern generalises beyond trees to any
-algebraic data type, and it is the entry point to the abstract idea
-of a *catamorphism* (a fancy name for "generalised fold") that
-appears in category theory. We will see more of it in Module 8.
+[algebraic data type](M04-L04-recursive-types.html), and it is the
+entry point to the abstract idea of a *catamorphism* (a fancy name
+for "generalised fold") that appears in category theory. We will see
+more of it in [Module 8](M08-L01-sequencing.html).
 
 ## When `fold` is overkill
 
@@ -654,8 +658,9 @@ let _ = rev [1; 2; 3; 4]
 ## What's next
 
 We have the three big higher-order list functions: `map`, `filter`,
-`fold`. Next lecture: the pipeline operator `|>`, which lets us
-chain these together cleanly and read the result top-to-bottom.
+`fold`. Next lecture: the [pipeline operator `|>`](M06-L05-pipelines.html),
+which lets us chain these together cleanly and read the result
+top-to-bottom.
 
 :::slide
 

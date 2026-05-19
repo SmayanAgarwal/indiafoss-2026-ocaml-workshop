@@ -14,13 +14,14 @@ reading:
 
 # Functors
 
-We have been writing functions that take values and return values
-all course. Modules, the last two lectures introduced, are
-collections of values, types, and helpers grouped under a name.
-This lecture introduces the natural next step: *functions from
-modules to modules*. In OCaml these are called *functors*, and
-they are how the language expresses generic data structures and
-algorithms.
+We have been writing [functions](M03-L01-functions-as-values.html)
+that take values and return values all course. Modules, the
+[last](M07-L04-module-basics.html) [two](M07-L05-signatures.html)
+lectures introduced, are collections of values, types, and helpers
+grouped under a name. This lecture introduces the natural next step:
+*functions from modules to modules*. In OCaml these are called
+*functors*, and they are how the language expresses generic data
+structures and algorithms.
 
 The name "functor" comes from [category theory](https://en.wikipedia.org/wiki/Functor),
 where a functor maps between categories: a kind of structure-preserving
@@ -42,9 +43,10 @@ own.
 
 Most of the parameterisation we have done so far has been
 *parametric polymorphism*: a function or type that works for any
-element type without knowing anything about it. `List.map : ('a ->
-'b) -> 'a list -> 'b list` is parametric in `'a` and `'b`; it
-treats elements as opaque tokens and never looks inside them.
+element type without knowing anything about it.
+[`List.map`](M06-L02-map.html)`: ('a -> 'b) -> 'a list -> 'b list`
+is parametric in `'a` and `'b`; it treats elements as opaque tokens
+and never looks inside them.
 
 But many data structures cannot get away with that. A binary
 search tree of `'a` needs to *compare* values of `'a` to decide
@@ -269,7 +271,8 @@ functor returns a full map.
 ## Writing your own functor
 
 Here is a toy `Set` functor, building on the `ORDERED` signature
-we wrote at the end of the previous lecture.
+we wrote at the
+[end of the previous lecture](M07-L05-signatures.html#module-type-aliasing).
 
 ```ocaml
 module type ORDERED = sig
@@ -586,26 +589,28 @@ let _ = M.find_opt "dave" ages
 
 :::
 
-A few things to notice. The `|>` operator chains the inserts left
-to right, which is far more readable than the alternative `M.add
-"alice" 30 (M.add "bob" 25 (M.add "carol" 28 M.empty))`. Each
-`M.add` returns a *new* map; the old map is unchanged. (Inside,
-`Map.Make` uses persistent balanced trees that share structure
-between versions; the per-insert cost is O(log n), not O(n).)
+A few things to notice. The [`|>` operator](M06-L05-pipelines.html)
+chains the inserts left to right, which is far more readable than
+the alternative `M.add "alice" 30 (M.add "bob" 25 (M.add "carol" 28
+M.empty))`. Each `M.add` returns a *new* map; the old map is
+unchanged. (Inside, `Map.Make` uses persistent balanced trees that
+share structure between versions; the per-insert cost is O(log n),
+not O(n).)
 
-The `_opt` suffix on `find_opt` is the same convention from M07-L03:
+The `_opt` suffix on `find_opt` is the same convention from
+[M07-L03](M07-L03-exceptions.html#exception-vs-option-vs-result):
 the raising form `M.find` is older; the optional form is the one to
 reach for in new code.
 
 ## What's next
 
-Lecture 7 is the tutorial for Module 7. We build a small
-*functional queue* using the classic two-stack trick: keep two
-lists, one for the front and one for the back in reverse order;
-push onto the back and pop from the front, refilling the front
-from the (reversed) back when it runs out. We package the queue
-as a module with a signature hiding the representation, then turn
-it into a functor parameterised by the element type. It is a
+[Lecture 7](M07-L07-tutorial.html) is the tutorial for Module 7.
+We build a small *functional queue* using the classic two-stack
+trick: keep two lists, one for the front and one for the back in
+reverse order; push onto the back and pop from the front, refilling
+the front from the (reversed) back when it runs out. We package the
+queue as a module with a signature hiding the representation, then
+turn it into a functor parameterised by the element type. It is a
 worked example that touches every piece of machinery from this
 module.
 

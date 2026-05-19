@@ -14,23 +14,26 @@ reading:
 
 # Mutable records and arrays
 
-Beyond the single-cell `ref`, OCaml has two more mutable building
-blocks: *records with mutable fields* and *fixed-size arrays*. The
-previous lecture introduced `ref` and saw briefly that a `ref` is
-just a one-field record with the field marked `mutable`. This
-lecture goes further. We pick up the mutable record story, then
-spend most of our time on arrays: when they are the right tool,
-how to allocate and access them, how they compare with the lists
-we have been using all course, and the loop syntax that lives
-alongside them.
+Beyond the single-cell [`ref`](M07-L01-references.html), OCaml has
+two more mutable building blocks: *records with mutable fields*
+and *fixed-size arrays*. The
+[previous lecture](M07-L01-references.html) introduced `ref` and
+saw briefly that a `ref` is
+[just a one-field record](M07-L01-references.html#a-ref-is-a-record-with-one-mutable-field)
+with the field marked `mutable`. This lecture goes further. We pick
+up the mutable record story, then spend most of our time on arrays:
+when they are the right tool, how to allocate and access them, how
+they compare with [the lists](M04-L04-recursive-types.html) we have
+been using all course, and the loop syntax that lives alongside
+them.
 
 The decision of when in-place mutation pays for the equational
 reasoning you give up runs through both halves of the lecture.
 
 ## Mutable record fields
 
-You mark a record field `mutable` when you want to update it in
-place after the record has been constructed.
+You mark a [record](M04-L02-records.html) field `mutable` when you
+want to update it in place after the record has been constructed.
 
 ```ocaml
 type counter = { mutable n : int; name : string }
@@ -143,7 +146,8 @@ A few syntactic things to note:
   saw on records.
 - Indexing is zero-based.
 - Out-of-bounds access raises the standard exception
-  `Invalid_argument` (we cover exceptions in the next lecture).
+  `Invalid_argument` (we cover exceptions in the
+  [next lecture](M07-L03-exceptions.html)).
 
 :::slide
 
@@ -199,8 +203,9 @@ The standard trade-off is between O(1) random access (arrays) and
 O(1) prepending plus immutability (lists). If your computation
 walks the data front to back, building up a result as it goes, a
 list is usually the more natural shape; we have seen this all
-through Modules 5 and 6. If your computation needs to *jump* to
-arbitrary positions, an array is the right tool.
+through [Module 5](M05-L01-basic-patterns.html) and
+[Module 6](M06-L01-functions-revisited.html). If your computation
+needs to *jump* to arbitrary positions, an array is the right tool.
 
 :::slide
 
@@ -273,10 +278,12 @@ in a particular order, but in practice it is `0, 1, ..., n-1`.
 
 ## Iterating arrays
 
-The Array module mirrors the higher-order functions we have seen
-on lists. `Array.iter` is the side-effecting walk; `Array.map`
-returns a new array; there are also `fold_left`, `fold_right`,
-`length`, `to_list`, and the obvious shape-shifters.
+The [`Array`](https://v2.ocaml.org/api/Array.html) module mirrors
+the [higher-order functions we have seen on lists](M06-L01-functions-revisited.html).
+`Array.iter` is the side-effecting walk;
+[`Array.map`](M06-L02-map.html) returns a new array; there are also
+[`fold_left`, `fold_right`](M06-L04-fold.html), `length`,
+`to_list`, and the obvious shape-shifters.
 
 ```ocaml
 let a = [|10; 20; 30|]
@@ -428,8 +435,8 @@ This is exactly the case where mutation is the right tool.
 
 ## When you do not want mutation
 
-For most everyday list-shaped work, a fold or map is clearer than
-an array-and-loop.
+For most everyday list-shaped work, a [fold](M06-L04-fold.html) or
+[map](M06-L02-map.html) is clearer than an array-and-loop.
 
 ```ocaml
 let sum_lst xs = List.fold_left (+) 0 xs
@@ -613,12 +620,14 @@ keep the data as a list in the first place.
 
 ## What's next
 
-The next lecture covers *exceptions*, the third member of the
-imperative trio (alongside refs and arrays). Exceptions let you
-signal "something went wrong" without threading an option or
-result through every layer of code. After that, Lectures 4
-through 6 turn to *modules* and the way OCaml organizes code at
-scale.
+The [next lecture](M07-L03-exceptions.html) covers *exceptions*,
+the third member of the imperative trio (alongside refs and arrays).
+Exceptions let you signal "something went wrong" without threading
+an [option or result](M04-L05-option-and-aliases.html) through every
+layer of code. After that,
+Lectures [4](M07-L04-module-basics.html) through
+[6](M07-L06-functors.html) turn to *modules* and the way OCaml
+organizes code at scale.
 
 :::slide
 

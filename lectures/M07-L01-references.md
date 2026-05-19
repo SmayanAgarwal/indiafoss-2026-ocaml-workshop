@@ -16,12 +16,13 @@ reading:
 
 For six modules we have written OCaml without using mutation. Every
 value has been immutable; whenever we needed a new state, we made a
-new value, with `let` shadowing the old name or building a fresh
-list, record, or tuple. This is the *functional* style and it has
-real benefits: any expression `f x` produces the same answer
-regardless of when in the program you run it, so reasoning about
-code reduces to substituting values for names, and the compiler can
-inline and reorder freely.
+new value, with [`let` shadowing](M02-L02-let-bindings.html) the
+old name or building a fresh list, record, or tuple. This is the
+*functional* style and it has real benefits: any expression `f x`
+produces the same answer regardless of when in the program you run
+it, so reasoning about code reduces to
+[substituting values for names](M01-L02-why-fp.html#equational-reasoning),
+and the compiler can inline and reorder freely.
 
 But mutation is, sometimes, the right tool. A statistics routine
 walks a stream of numbers and updates a running sum. A web server
@@ -156,10 +157,11 @@ let _ = get_next ()
 Contrast with a pure function. If `let f x = x + 1`, then `f 3` is
 always `4`. You can replace any occurrence of `f 3` in the program
 with `4` and nothing changes: the behaviour is the same, the
-performance is the same. This *equational* property is what makes
-pure code easy to reason about. You think of a function call as
-naming a value, the way `pi` names `3.14159`, and you can substitute
-freely.
+performance is the same. This
+[*equational* property](M01-L02-why-fp.html#equational-reasoning)
+is what makes pure code easy to reason about. You think of a function
+call as naming a value, the way `pi` names `3.14159`, and you can
+substitute freely.
 
 Mutation gives that up. `get_next ()` is not the name of a value;
 it is the name of an *action*. The action consults a shared mutable
@@ -202,10 +204,10 @@ with refs and arrays: this is the imperative corner of the
 language, and you use it where the algorithm wants it.
 
 **Caches.** A memoization table that maps inputs to previously
-computed outputs grows across calls. A `Hashtbl.t` is itself
-mutable; you reach for it directly without wrapping in a `ref`.
-A small inline cache, on the other hand, is often a `ref` of an
-option or a list.
+computed outputs grows across calls. A [`Hashtbl.t`](https://v2.ocaml.org/api/Hashtbl.html)
+is itself mutable; you reach for it directly without wrapping in a
+`ref`. A small inline cache, on the other hand, is often a `ref` of
+an [option](M04-L05-option-and-aliases.html#the-option-type) or a list.
 
 **Recursive references.** Building a cyclic structure (a graph
 with cycles, a doubly-linked list, a function that needs to refer
@@ -312,8 +314,9 @@ updating that field:
 - `r := x` is `r.contents <- x`.
 
 The `<-` operator is the assignment operator for mutable record
-fields. We will see it again in the next lecture when we look at
-mutable records in their own right.
+fields. We will see it again in
+[the next lecture](M07-L02-arrays-and-mutation.html#mutable-record-fields)
+when we look at mutable records in their own right.
 
 :::slide
 
@@ -411,8 +414,8 @@ discard is intentional, wrap the expression in `ignore`:
 
 The `begin ... end` and `(...)` brackets group a sequence into
 one expression, which we sometimes need when a sequence appears
-in the branch of an `if`. We saw this in M03-L02 when writing
-`count_down`.
+in the branch of an `if`. We saw this in
+[M03-L02](M03-L02-recursion.html) when writing `count_down`.
 
 ## incr and decr
 
@@ -641,20 +644,23 @@ let _ = a (), a (), a (), b (), b ()
 Each call to `make_counter ()` is a fresh allocation of `n`,
 captured by a fresh closure. The two counters `a` and `b` are
 *independent*: `a`'s `n` and `b`'s `n` are different cells. This
-is the same closure machinery from Module 3, with the captured
-value happening to be a mutable cell rather than an integer.
+is the same [closure machinery from Module 3](M03-L01-functions-as-values.html),
+with the captured value happening to be a mutable cell rather than
+an integer.
 
 ## What's next
 
-The next lecture extends the mutation toolkit: mutable record
-fields (briefly) and *arrays*, the fixed-size random-access
-mutable sequence. Lecture 3 covers exceptions, the other major
-form of "side effect" in OCaml. Together these three (refs,
+The [next lecture](M07-L02-arrays-and-mutation.html) extends the
+mutation toolkit: mutable record fields (briefly) and *arrays*,
+the fixed-size random-access mutable sequence.
+[Lecture 3](M07-L03-exceptions.html) covers exceptions, the other
+major form of "side effect" in OCaml. Together these three (refs,
 arrays, exceptions) give you the imperative subset of the
-language. Lectures 4 through 6 turn to *modules*, the unit of
+language. Lectures [4](M07-L04-module-basics.html) through
+[6](M07-L06-functors.html) turn to *modules*, the unit of
 program structure: how OCaml organizes code at scale, hides
 representation, and writes generic data structures via functors.
-Lecture 7 is the tutorial.
+[Lecture 7](M07-L07-tutorial.html) is the tutorial.
 
 :::slide
 

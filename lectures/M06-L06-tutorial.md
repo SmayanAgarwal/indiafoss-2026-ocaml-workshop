@@ -16,13 +16,15 @@ reading:
 
 This lecture is the worked-exercise capstone of Module 6. Across the
 previous five lectures we built up a small but powerful toolkit:
-higher-order functions, `map`, `filter`, `fold_left` and `fold_right`,
-the pipeline operator `|>`, and function composition. The thesis of
-this module has been that this small toolkit is enough to express a
-surprising amount of list processing without writing a single
-hand-coded recursion. In this tutorial we try to make good on that
-claim: pick a list function from the standard library, then build it
-from the toolkit.
+[higher-order functions](M06-L01-functions-revisited.html),
+[`map`](M06-L02-map.html), [`filter`](M06-L03-filter.html),
+[`fold_left` and `fold_right`](M06-L04-fold.html), the
+[pipeline operator `|>`, and function composition](M06-L05-pipelines.html).
+The thesis of this module has been that this small toolkit is enough
+to express a surprising amount of list processing without writing a
+single hand-coded recursion. In this tutorial we try to make good on
+that claim: pick a list function from the standard library, then
+build it from the toolkit.
 
 The point of the exercise is not that you should always re-derive
 standard library functions in real code; you should not. Use
@@ -70,10 +72,10 @@ stack.
 
 Notice we did not write `match xs with [] -> 0 | _ :: t -> 1 +
 length t`. The hand-written recursion works fine, but it is *not*
-tail-recursive and would overflow the stack on very long lists. The
-fold version is automatically tail-recursive. This is one of the
-small wins of using the higher-order toolkit: you get the safe
-recursion shape for free.
+[tail-recursive](M03-L04-tail-recursion.html) and would overflow the
+stack on very long lists. The fold version is automatically
+tail-recursive. This is one of the small wins of using the
+higher-order toolkit: you get the safe recursion shape for free.
 
 ## Problem 2: `sum` and `product`
 
@@ -160,8 +162,8 @@ This is the standard library's `List.rev`. The combining function is
 `fun acc x -> x :: acc`. If you want the original order back, use
 `List.fold_right (fun x acc -> x :: acc) xs []`, which walks
 right-to-left and rebuilds the list in order. (That is the identity
-fold we discussed in Lecture 4: replace `::` with `::` and `[]` with
-`[]`.)
+fold we discussed in [Lecture 4](M06-L04-fold.html#what-foldright-computes):
+replace `::` with `::` and `[]` with `[]`.)
 
 ## Problem 4: `map` (via `fold_right`)
 
@@ -210,10 +212,10 @@ which is fine for small lists and matches the standard library's
 `List.map` behaviour. The `fold_left + rev` version is
 tail-recursive but makes two passes.
 
-It is worth pausing here: we have just rebuilt `map`, one of the
-three pillars of this module, from `fold_right`. This is a small
-but real piece of evidence for the claim that `fold` is the most
-general of the three: anything `map` does, `fold` can do too.
+It is worth pausing here: we have just rebuilt [`map`](M06-L02-map.html),
+one of the three pillars of this module, from `fold_right`. This is
+a small but real piece of evidence for the claim that `fold` is the
+most general of the three: anything `map` does, `fold` can do too.
 
 ## Problem 5: `filter` (via `fold_right`)
 
@@ -400,8 +402,8 @@ garbage.
 Let us combine pieces from across the module into a slightly larger
 example. We count how often each word appears in a piece of text.
 We will return the answer as an *association list* (a list of
-pairs); in Module 7 we will see proper hash tables and balanced
-maps.
+pairs); in [Module 7](M07-L06-functors.html) we will see proper hash
+tables and balanced maps.
 
 ```ocaml
 let word_counts text =
@@ -432,9 +434,9 @@ small loop with a hash table. In OCaml with the higher-order
 toolkit, it is a single pipeline. The trade-off is that this
 implementation is `O(n^2)` in the number of distinct words (each
 `List.assoc` and `List.remove_assoc` is linear); the proper solution
-uses `Map` or `Hashtbl`, which we will meet in Module 7. For now,
-the point is that the *shape* of the computation is captured
-cleanly.
+uses `Map` or `Hashtbl`, which we will meet in
+[Module 7](M07-L06-functors.html). For now, the point is that the
+*shape* of the computation is captured cleanly.
 
 ## A quick check
 
@@ -582,22 +584,21 @@ After Module 6 you can:
 
 What's coming up:
 
-- Module 7: side effects (`ref`, mutation, exceptions) and **modules**
-  (the OCaml language feature, not the NPTEL kind).
-- Module 8: monads and GADTs.
+- [Module 7](M07-L01-references.html): side effects (`ref`, mutation, exceptions) and **modules** (the OCaml language feature, not the NPTEL kind).
+- [Module 8](M08-L01-sequencing.html): monads and GADTs.
 
 :::
 
 ## What's next
 
-Module 7 is a turn back toward the imperative side of OCaml:
-*side effects* (mutable references, exceptions, `Printf`), and
-*modules* (the OCaml language feature for organising code into
-named, type-bearing units). Higher-order functions remain in play
-throughout; we will see them again in Module 7 in the form of
-references that hold functions and in Module 8 in the form of
-monads, where the whole programming pattern is built on
-higher-order composition.
+[Module 7](M07-L01-references.html) is a turn back toward the
+imperative side of OCaml: *side effects* (mutable references,
+exceptions, `Printf`), and *modules* (the OCaml language feature for
+organising code into named, type-bearing units). Higher-order
+functions remain in play throughout; we will see them again in
+Module 7 in the form of references that hold functions and in
+[Module 8](M08-L02-option-monad.html) in the form of monads, where
+the whole programming pattern is built on higher-order composition.
 
 ## Reading
 

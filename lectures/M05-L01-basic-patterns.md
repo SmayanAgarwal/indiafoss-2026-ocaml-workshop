@@ -15,12 +15,14 @@ reading:
 # Basic patterns
 
 You have been writing `match ... with` and `let (x, y) = ...` since
-Module 2, in small doses. From this lecture on, pattern matching
-moves to the centre of the language. It is, more than any single
-other feature, what makes OCaml *feel* like OCaml. You will reach
-for it dozens of times a day: to take apart a tuple, to dispatch on
-a constructor, to walk a tree, to handle an option, to write the
-body of nearly every interesting function.
+[Module 2](M02-L02-let-bindings.html), in small doses. From this
+lecture on, pattern matching moves to the centre of the language. It
+is, more than any single other feature, what makes OCaml *feel* like
+OCaml. You will reach for it dozens of times a day: to take apart a
+[tuple](M04-L01-tuples.html), to dispatch on a [constructor](M04-L03-variants.html),
+to walk a [tree](M04-L04-recursive-types.html), to handle an
+[option](M04-L05-option-and-aliases.html), to write the body of
+nearly every interesting function.
 
 The shape we start with is the `match` expression, the way you ask
 "what shape is this value, and what should I do for each shape?"
@@ -36,11 +38,14 @@ the basic shape and the three simplest pattern forms:
 2. **Variable patterns** match *anything* and give the matched value a name.
 3. **The wildcard** `_` matches anything and binds no name.
 
-The next four lectures build on this base. Lecture 2 covers
-patterns inside patterns, and or-patterns. Lecture 3 covers
-`when`-guards. Lecture 4 is about exhaustiveness, the most
-load-bearing static check in the language. Lecture 5 puts it all
-together for records and variants. Lecture 6 is the tutorial.
+The next four lectures build on this base.
+[Lecture 2](M05-L02-nested-and-or-patterns.html) covers patterns
+inside patterns, and or-patterns. [Lecture 3](M05-L03-guards.html)
+covers `when`-guards. [Lecture 4](M05-L04-exhaustiveness.html) is
+about exhaustiveness, the most load-bearing static check in the
+language. [Lecture 5](M05-L05-records-variants.html) puts it all
+together for records and variants. [Lecture 6](M05-L06-tutorial.html)
+is the tutorial.
 
 ## The shape of a `match`
 
@@ -142,9 +147,10 @@ A **literal pattern** is a value spelled exactly as it appears.
 `0` matches the integer `0`. `'a'` matches the character `'a'`.
 `"hello"` matches the string `"hello"`. `true` matches the boolean
 `true`. The check is the same structural equality (`=`) we saw in
-M02-L01. Two strings with the same bytes match; two records with
-the same fields match. The literal pattern is the workhorse for
-"is this the special case I want to handle?"
+[M02-L04](M02-L04-operators.html#comparison-and-equality). Two
+strings with the same bytes match; two records with the same fields
+match. The literal pattern is the workhorse for "is this the special
+case I want to handle?"
 
 A **variable pattern** is a lowercase identifier. It matches
 *anything at all*, and inside the right-hand side, that
@@ -225,11 +231,11 @@ Warning 11 [redundant-case]: this match case is unused.
 ```
 
 Warning 11 is the dual of the exhaustiveness warning (warning 8,
-which we will meet in Lecture 4): it says you have a clause that
-*never* fires, usually because an earlier clause already covers
-it. When you see warning 11, you have almost certainly put a
-variable pattern (or a wildcard) before something more specific,
-and that more specific clause is dead.
+which we will meet in [Lecture 4](M05-L04-exhaustiveness.html)): it
+says you have a clause that *never* fires, usually because an
+earlier clause already covers it. When you see warning 11, you have
+almost certainly put a variable pattern (or a wildcard) before
+something more specific, and that more specific clause is dead.
 
 The discipline is simple: **specific patterns first, general
 patterns last.** Put your literal cases before any variable or
@@ -354,9 +360,10 @@ type with five constructors and you write four specific cases
 plus a wildcard, and then later add a sixth constructor, the
 compiler will *not* warn you, because the wildcard "covers" the
 new case (probably with the wrong answer). We will return to
-this in Lecture 4. For now, use the wildcard freely on `int`s
-and `string`s, where there is no other way to enumerate the
-cases; use it more cautiously on variants.
+this in [Lecture 4](M05-L04-exhaustiveness.html#when-to-use-a-wildcard-catch-all-on-variants).
+For now, use the wildcard freely on `int`s and `string`s, where
+there is no other way to enumerate the cases; use it more
+cautiously on variants.
 
 ## `function` shorthand
 
@@ -434,9 +441,9 @@ let _ = x + y
 
 The left-hand side of a `let` is also a pattern. So you can
 destructure a tuple in a `let` binding directly: `(x, y) = (3, 4)`
-binds `x = 3` and `y = 4`. We have been using this since Module 2
-without calling it pattern matching, but that is exactly what it
-is.
+binds `x = 3` and `y = 4`. We have been using this since
+[Module 4](M04-L01-tuples.html#pattern-matching-in-function-arguments)
+without calling it pattern matching, but that is exactly what it is.
 
 :::slide
 
@@ -485,7 +492,8 @@ shape, and the value had better match it. If it does not, the
 program raises `Match_failure` at runtime. So `let (x, y) = z`
 works only if `z` is a pair; `let Some n = opt` works only if
 `opt` is `Some _`. The compiler will warn you about partial
-matches like this; we will see the warning in Lecture 4.
+matches like this; we will see the warning in
+[Lecture 4](M05-L04-exhaustiveness.html).
 
 ## A quick taste of exhaustiveness
 
@@ -525,9 +533,9 @@ OCaml emits warning 8 and reports a sample missing input. The
 fix is either to add more specific clauses (`| 2 -> "two"`, etc.)
 or to add a wildcard catch-all (`| _ -> "many"`). On finite types
 like booleans or small variants, you can usually enumerate every
-case; on `int`, you almost always end with a wildcard. Lecture 4
-covers exhaustiveness in detail; for now, just know that the
-warning exists and is helpful.
+case; on `int`, you almost always end with a wildcard.
+[Lecture 4](M05-L04-exhaustiveness.html) covers exhaustiveness in
+detail; for now, just know that the warning exists and is helpful.
 
 ## How `match` evaluates
 
@@ -678,7 +686,7 @@ every clause, including the first, for vertical alignment.
 values of the *same type*. If one clause returns `"hello"` and
 another returns `42`, the compiler will reject the whole `match`.
 This is the same expression-typing rule we saw for `if`/`else` in
-Module 2.
+[M02-L05](M02-L05-if-expressions.html#why-the-branches-must-agree).
 
 **Pitfall 4: forgetting the wildcard on `int` or `string`.** OCaml
 will let you write a `match` on `int` with only specific cases
@@ -739,13 +747,14 @@ and why "specific first, general last" is the rule to internalise.
 
 ## What's next
 
-Lecture 2 covers two extensions to the patterns we have seen:
-patterns inside patterns (nesting), and or-patterns (`p1 | p2`)
-that let multiple alternatives share a right-hand side. Both let
-you express more in a single clause. Lecture 3 adds `when`
-guards. Lecture 4 puts exhaustiveness on a firmer footing. By the
-end of Module 5 you will be writing pattern matches as easily as
-you write arithmetic.
+[Lecture 2](M05-L02-nested-and-or-patterns.html) covers two
+extensions to the patterns we have seen: patterns inside patterns
+(nesting), and or-patterns (`p1 | p2`) that let multiple alternatives
+share a right-hand side. Both let you express more in a single
+clause. [Lecture 3](M05-L03-guards.html) adds `when` guards.
+[Lecture 4](M05-L04-exhaustiveness.html) puts exhaustiveness on a
+firmer footing. By the end of Module 5 you will be writing pattern
+matches as easily as you write arithmetic.
 
 :::slide
 

@@ -29,15 +29,19 @@ helpers that no caller should depend on. Two libraries written by
 different teams need to coexist without clashing.
 
 OCaml's answer to all of this is the *module system*. A module is
-a named collection of definitions (values, types, exceptions, even
-sub-modules) that you can refer to as a unit. The standard library
-you have been using all course is a tree of modules: `List`,
-`String`, `Array`, `Option`, `Map`, and so on. A real OCaml
-project is a tree of *your* modules using and being used by them.
-This lecture introduces the syntax. Lecture 5 covers *signatures*,
-the type-level description of a module that lets you hide
-internals. Lecture 6 covers *functors*, modules parameterized by
-other modules. Lecture 7 is the tutorial.
+a named collection of definitions (values, types,
+[exceptions](M07-L03-exceptions.html), even sub-modules) that you
+can refer to as a unit. The standard library you have been using
+all course is a tree of modules:
+[`List`](M04-L04-recursive-types.html), `String`, `Array`,
+[`Option`](M04-L05-option-and-aliases.html), `Map`, and so on. A
+real OCaml project is a tree of *your* modules using and being used
+by them. This lecture introduces the syntax.
+[Lecture 5](M07-L05-signatures.html) covers *signatures*, the
+type-level description of a module that lets you hide internals.
+[Lecture 6](M07-L06-functors.html) covers *functors*, modules
+parameterized by other modules.
+[Lecture 7](M07-L07-tutorial.html) is the tutorial.
 
 ## Inline modules
 
@@ -132,7 +136,7 @@ in a `.ml` file and the file system will do the wrapping for you.
 ## Modules contain types too
 
 A module is not just a namespace for values. It can hold *types*,
-*exceptions*, and *sub-modules* as well.
+*[exceptions](M07-L03-exceptions.html)*, and *sub-modules* as well.
 
 ```ocaml
 module Color = struct
@@ -340,11 +344,12 @@ let _ = !Counter.n  (* leaks: external code can poke at n directly *)
 
 :::
 
-This is the major motivation for the next lecture. The fix is to
-constrain the module with a *signature*: a type-level description
-that lists exactly which names escape, with which types. Anything
-not in the signature is invisible from the outside. We hold off
-on the details until M07-L05.
+This is the major motivation for the
+[next lecture](M07-L05-signatures.html). The fix is to constrain
+the module with a *signature*: a type-level description that lists
+exactly which names escape, with which types. Anything not in the
+signature is invisible from the outside. We hold off on the details
+until [M07-L05](M07-L05-signatures.html).
 
 ## Modules can nest
 
@@ -424,7 +429,7 @@ not for everyday code. For the standard module toolkit this
 lecture introduces, modules live at compile time and are used
 statically. The "function-like" thing that takes a module and
 returns a module is called a *functor*, and we cover it in
-Lecture 6.
+[Lecture 6](M07-L06-functors.html).
 
 :::slide
 
@@ -573,29 +578,30 @@ let _ = Stack.pop ()
 
 :::
 
-A few things to notice. The state is a `ref` of an `int list`,
-held by the module itself. Every caller of `Stack.push` mutates
-the same list; there is exactly one stack in the program. If you
-wanted multiple independent stacks, you would either (a) make the
-stack a *type* with operations that take and return stacks (the
-functional style we will see in M07-L07), or (b) provide a
-constructor `Stack.make ()` that returns a fresh ref each time.
+A few things to notice. The state is a [`ref`](M07-L01-references.html)
+of an `int list`, held by the module itself. Every caller of
+`Stack.push` mutates the same list; there is exactly one stack in
+the program. If you wanted multiple independent stacks, you would
+either (a) make the stack a *type* with operations that take and
+return stacks (the functional style we will see in
+[M07-L07](M07-L07-tutorial.html)), or (b) provide a constructor
+`Stack.make ()` that returns a fresh ref each time.
 
 The other thing to notice: the `s` ref is visible to outside
 code, just like the `n` ref in the `Counter` example earlier.
 Someone could write `Stack.s := []` from outside and break the
 abstraction. Hiding `s` is the job of a signature, which is the
-next lecture.
+[next lecture](M07-L05-signatures.html).
 
 ## What's next
 
-The next lecture introduces *signatures*, the type-level
-description of a module. A signature lists which names escape and
-at what type; everything else is hidden. Once you constrain a
-module by a signature, the internal `ref`s and helper functions
-become invisible to the outside world, and you can change them
-later without breaking any caller. This is OCaml's encapsulation
-story.
+The [next lecture](M07-L05-signatures.html) introduces *signatures*,
+the type-level description of a module. A signature lists which
+names escape and at what type; everything else is hidden. Once you
+constrain a module by a signature, the internal `ref`s and helper
+functions become invisible to the outside world, and you can change
+them later without breaking any caller. This is OCaml's
+encapsulation story.
 
 :::slide
 

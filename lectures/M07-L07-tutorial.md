@@ -136,7 +136,8 @@ directly, possibly violating our invariant. Even worse, a caller
 can come to *rely on* the two-list shape, so that any future
 change to the representation breaks their code.
 
-The fix from M07-L05: a signature with an abstract type.
+The fix from [M07-L05](M07-L05-signatures.html#abstract-types): a
+signature with an abstract type.
 
 ```ocaml
 module type QUEUE = sig
@@ -226,7 +227,8 @@ let _ = Queue.is_empty Queue.empty
 
 ## Why hide the representation?
 
-The two reasons from M07-L05, applied here.
+The [two reasons from M07-L05](M07-L05-signatures.html#why-hide-internals),
+applied here.
 
 :::slide
 
@@ -265,8 +267,9 @@ with a typed printer attached. (Maybe we want a debugger view, or
 a logger that prints queue contents.) The element type can no
 longer be free: we need a way to turn an element into a string.
 
-The mechanism from M07-L06: a functor. We start by writing a
-signature describing what we need from the element type.
+The mechanism from [M07-L06](M07-L06-functors.html): a functor. We
+start by writing a signature describing what we need from the
+element type.
 
 ```ocaml
 module type ELT = sig
@@ -360,9 +363,10 @@ a `to_string : t -> string`. Inside `Make`, we reference `E.t`
 module type fixes `elt = E.t`, so `IQ.elt` is `int` once we
 instantiate with the `int` module.
 
-This is the same shape as `Map.Make`: a constraint on the element
-type (via the parameter signature), and a generic implementation
-parameterised by that constraint.
+This is the same shape as
+[`Map.Make`](M07-L06-functors.html#the-pattern-mapmake): a
+constraint on the element type (via the parameter signature), and
+a generic implementation parameterised by that constraint.
 
 ## What is notable about the functor
 
@@ -611,17 +615,24 @@ Module 8 covers **monads and GADTs**:
 :::
 
 You have now seen every piece of the imperative and modular OCaml
-toolkit. Refs and arrays for mutation when the algorithm wants
-it. Exceptions for unexpected failures, alongside `option` and
-`result` for predictable ones. Modules for grouping and
-namespacing. Signatures for hiding internals. Functors for
-writing generic data structures parameterised by element
-operations. Together they are enough to structure a real OCaml
-project at scale.
+toolkit. [Refs](M07-L01-references.html) and
+[arrays](M07-L02-arrays-and-mutation.html) for mutation when the
+algorithm wants it. [Exceptions](M07-L03-exceptions.html) for
+unexpected failures, alongside
+[`option` and `result`](M04-L05-option-and-aliases.html) for
+predictable ones. [Modules](M07-L04-module-basics.html) for
+grouping and namespacing.
+[Signatures](M07-L05-signatures.html) for hiding internals.
+[Functors](M07-L06-functors.html) for writing generic data
+structures parameterised by element operations. Together they are
+enough to structure a real OCaml project at scale.
 
-Module 8 turns to two more advanced abstractions: *monads*, which
-sequence computations cleanly across effects (option, result,
-state, exceptions, IO), and *GADTs*, generalized algebraic data
+[Module 8](M08-L01-sequencing.html) turns to two more advanced
+abstractions: *monads*, which sequence computations cleanly across
+effects ([option](M08-L02-option-monad.html),
+[result](M08-L03-result-monad.html),
+[state](M08-L04-state-monad.html), exceptions, IO), and
+[*GADTs*](M08-L05-gadts-basics.html), generalized algebraic data
 types, which let you encode richer constraints in the type
 system. Both are common in serious OCaml code; both reward the
 groundwork we have laid through Modules 1 through 7.

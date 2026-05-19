@@ -32,7 +32,8 @@ next clause.
 
 Guards extend what you can express in a `match`, but they come at
 a cost: they suppress exhaustiveness checking for the guarded
-clause. We will see why and what to do about it in this lecture.
+clause. We will see why and what to do about it in this lecture,
+and revisit the trade-off in [Lecture 4](M05-L04-exhaustiveness.html#exhaustiveness-and-guards-one-more-reminder).
 
 ## A first example
 
@@ -529,10 +530,11 @@ at runtime.
 
 We have now seen four pattern forms (literal, variable,
 wildcard, structured) and one extension (`when` guards).
-Lecture 4 zooms in on the static check that has been hovering in
-the background: exhaustiveness. Why it matters, how the compiler
-proves it, what to do when it warns, and why it is the
-single biggest argument for using variants in your designs.
+[Lecture 4](M05-L04-exhaustiveness.html) zooms in on the static
+check that has been hovering in the background: exhaustiveness. Why
+it matters, how the compiler proves it, what to do when it warns,
+and why it is the single biggest argument for using
+[variants](M04-L03-variants.html) in your designs.
 
 :::slide
 

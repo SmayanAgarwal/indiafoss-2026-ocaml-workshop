@@ -17,12 +17,13 @@ reading:
 In this tutorial we build a tiny expression language and four
 functions over it: an evaluator, a pretty printer, a depth
 calculator, and a constant folder. Each function is a pattern
-match on the same algebraic data type, and each illustrates a
-different facet of the patterns we have learned over the module.
-By the end, you will have seen the workhorse shape of pattern
-matching on recursive data, the shape you will reach for every
-time you build a parser, a transformer, an interpreter, a query
-compiler, or any other code that walks a tree.
+match on the same [algebraic data type](M04-L04-recursive-types.html#modelling-arithmetic-expressions),
+and each illustrates a different facet of the patterns we have
+learned over the module. By the end, you will have seen the
+workhorse shape of pattern matching on [recursive data](M04-L04-recursive-types.html),
+the shape you will reach for every time you build a parser, a
+transformer, an interpreter, a query compiler, or any other code
+that walks a tree.
 
 The choice of "arithmetic expressions" is not arbitrary. It is
 the simplest interesting *algebraic data type*: leaves are
@@ -156,17 +157,17 @@ Five clauses, one per constructor. The shape is:
   evaluate the two sub-expressions, then combine them with the
   appropriate operator.
 
-Crucially, OCaml's exhaustiveness check guarantees we handled
-every constructor: the match has no warning. If we had forgotten
-`Div`, the compiler would warn ("not exhaustive; here is an
-example that is not matched: `Div (...)`"). The check is doing
-real work even in a tutorial.
+Crucially, OCaml's [exhaustiveness check](M05-L04-exhaustiveness.html)
+guarantees we handled every constructor: the match has no warning.
+If we had forgotten `Div`, the compiler would warn ("not exhaustive;
+here is an example that is not matched: `Div (...)`"). The check is
+doing real work even in a tutorial.
 
-This is *structural recursion*: each recursive call is on a
-*strictly smaller* sub-expression, so the function is guaranteed
-to terminate. The base case (`Num n`) does not recurse. Every
-other case recurses on a sub-expression, which has one fewer
-constructor than the parent.
+This is [*structural recursion*](M04-L04-recursive-types.html#structural-induction):
+each recursive call is on a *strictly smaller* sub-expression, so
+the function is guaranteed to terminate. The base case (`Num n`)
+does not recurse. Every other case recurses on a sub-expression,
+which has one fewer constructor than the parent.
 
 `eval example` returns `10.5`, matching our hand calculation.
 
@@ -228,8 +229,9 @@ with a printed symbol in `pretty`.
 
 This already starts to look like a *template*: walk the
 expression, do something at the leaf, combine recursive results
-at each node. Module 6 will give us the tool (`fold`) for
-capturing this template generically, so we can write just the
+at each node. [Module 6](M06-L01-functions-revisited.html) will
+give us the tool ([`fold`](M06-L04-fold.html#beyond-lists-fold-any-structure))
+for capturing this template generically, so we can write just the
 "do something" parts and let the walker be supplied. For now we
 write out the template by hand each time.
 
@@ -295,11 +297,12 @@ them into one with `|`:
     1 + max (depth a) (depth b)
 ```
 
-Recall from Lecture 2: every alternative of an or-pattern must
-bind the same variables at the same types. Here, each
-alternative binds `a : expr` and `b : expr`. The compiler is
-happy: regardless of which constructor matched, the right-hand
-side has both `a` and `b` in scope as `expr`.
+Recall from [Lecture 2](M05-L02-nested-and-or-patterns.html#the-binding-constraint-on-or-patterns):
+every alternative of an or-pattern must bind the same variables at
+the same types. Here, each alternative binds `a : expr` and `b :
+expr`. The compiler is happy: regardless of which constructor
+matched, the right-hand side has both `a` and `b` in scope as
+`expr`.
 
 The leaf case `Num _` uses a wildcard because we do not care
 what number a leaf carries: every leaf has depth `0` regardless.
@@ -383,9 +386,10 @@ is:
    original constructor with the folded subtrees.
 
 The inner `match ... with` uses the tuple-form pattern from
-Lecture 5: `match fold a, fold b with | Num x, Num y -> ... | a',
-b' -> ...`. This is the cleanest way to dispatch on the
-combination of two values.
+[Lecture 5](M05-L05-records-variants.html#matching-a-tuple-of-values-the-diagonal-idiom):
+`match fold a, fold b with | Num x, Num y -> ... | a', b' -> ...`.
+This is the cleanest way to dispatch on the combination of two
+values.
 
 On our example, *every* sub-expression is constant, so the whole
 thing folds to a single `Num 10.5`. On an expression that
@@ -395,9 +399,9 @@ preserved. This is what real compilers do for arithmetic
 expressions in source code.
 
 The structure is repetitive: four cases that differ only in the
-operator. Module 6's `fold` will let us collapse this
-repetition; for now, four near-identical cases is the price of
-the explicit walk.
+operator. [Module 6's `fold`](M06-L04-fold.html) will let us
+collapse this repetition; for now, four near-identical cases is the
+price of the explicit walk.
 
 ## The meta-pattern
 
@@ -460,7 +464,8 @@ expr` (unary minus). What does the compiler do to `eval`,
 **Why:** the four functions are exhaustive *as written*, but
 adding a constructor breaks that. The compiler issues warning 8
 for each match site, naming `Neg _` as the missing case. This is
-exactly the refactoring-with-the-compiler pattern from Lecture 4.
+exactly the refactoring-with-the-compiler pattern from
+[Lecture 4](M05-L04-exhaustiveness.html#the-big-payoff-refactoring-with-the-compiler).
 :::
 
 :::quiz mcq
@@ -637,10 +642,11 @@ After Module 5, you should be able to:
 - Walk recursive ADTs by pattern matching on the constructors,
   with structural recursion as the default shape.
 
-Module 6 picks up where this lecture leaves off. The
-"meta-pattern" of structural recursion on an ADT is so common
-that the standard library provides higher-order functions
-(`map`, `filter`, `fold`) that capture the walker for you. You
+[Module 6](M06-L01-functions-revisited.html) picks up where this
+lecture leaves off. The "meta-pattern" of structural recursion on an
+ADT is so common that the standard library provides higher-order
+functions ([`map`](M06-L02-map.html), [`filter`](M06-L03-filter.html),
+[`fold`](M06-L04-fold.html)) that capture the walker for you. You
 write only the per-element work; the walker is reused. We will
 spend Module 6 making this idea precise.
 

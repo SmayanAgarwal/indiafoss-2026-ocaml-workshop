@@ -16,14 +16,15 @@ reading:
 
 # Functions as values, revisited
 
-Back in Module 3 we said, almost in passing, that functions are
-*first-class values* in OCaml: a function is a value the same way
-`42` is a value, with the same rights to be named, passed around,
-returned from another function, or dropped into a data structure.
-We even saw a couple of small consequences of that fact: `let plus_one
-= fun x -> x + 1` looks like a perfectly ordinary `let` binding;
-`make_adder 5` returns a brand new function value; `apply_twice f x`
-takes a function as an argument.
+Back in [Module 3](M03-L01-functions-as-values.html) we said,
+almost in passing, that functions are *first-class values* in OCaml:
+a function is a value the same way `42` is a value, with the same
+rights to be named, passed around, returned from another function,
+or dropped into a data structure. We even saw a couple of small
+consequences of that fact: `let plus_one = fun x -> x + 1` looks
+like a perfectly ordinary `let` binding; `make_adder 5` returns a
+brand new function value; `apply_twice f x` takes a function as an
+argument.
 
 This module is where we take that idea and lean on it. The remaining
 five lectures in Module 6 are, in a sense, a single sustained
@@ -31,9 +32,10 @@ exercise in higher-order programming: writing functions that take
 other functions, returning functions from other functions, and
 combining the two to express computations that would be much more
 verbose in a first-order language. We are going to meet the famous
-trio `map`, `filter`, and `fold`; the pipeline operator `|>`; and
-finally, in the tutorial, rebuild a sizeable slice of the standard
-library out of those few pieces.
+trio [`map`](M06-L02-map.html), [`filter`](M06-L03-filter.html), and
+[`fold`](M06-L04-fold.html); the [pipeline operator `|>`](M06-L05-pipelines.html);
+and finally, in [the tutorial](M06-L06-tutorial.html), rebuild a
+sizeable slice of the standard library out of those few pieces.
 
 A **higher-order function** is one that does either of two things:
 it takes a function as an argument, or it returns a function as its
@@ -234,14 +236,14 @@ let _ = map (fun x -> x + 1) [1; 2; 3]
 
 :::
 
-`map` is the protagonist of Lecture 2. We are previewing it here to
-make the larger point: factoring *the walk* out of *the work* gives
-you one general-purpose function plus a small data-like description
-of what to do at each step. Three concrete computations collapsed
-into three one-line definitions. This is the *Abstraction Principle*
-(Bruce MacLennan's name for it): identify a pattern that repeats,
-abstract it into a reusable form, and supply only the variations as
-parameters.
+`map` is the protagonist of [Lecture 2](M06-L02-map.html). We are
+previewing it here to make the larger point: factoring *the walk*
+out of *the work* gives you one general-purpose function plus a
+small data-like description of what to do at each step. Three
+concrete computations collapsed into three one-line definitions.
+This is the *Abstraction Principle* (Bruce MacLennan's name for
+it): identify a pattern that repeats, abstract it into a reusable
+form, and supply only the variations as parameters.
 
 The Abstraction Principle is at the heart of why higher-order
 functions matter. It is not just an aesthetic gain: when you later
@@ -427,9 +429,10 @@ higher-order on both ends.
 
 ## Closures revisited: capture happens once
 
-We saw closures in Module 3. The one point worth repeating, because
-it surprises people, is that a closure captures values *at the time
-the function is created*, not names that get re-looked-up later.
+We saw closures in [Module 3](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment).
+The one point worth repeating, because it surprises people, is that
+a closure captures values *at the time the function is created*,
+not names that get re-looked-up later.
 
 ```ocaml
 let n = 10
@@ -444,11 +447,12 @@ value. The later `let n = 99` shadows the outer `n` for code written
 *after* it, but does not retroactively update what `f` saw. Closures
 freeze the environment at the moment of creation.
 
-This is the same point we made in Module 2 (shadowing is not
-mutation), applied here to function values. Functions returned from
-`make_adder` work the same way: the captured `n` is whatever it was
-when that particular function was created. Each `make_adder` call
-creates an independent closure with its own captured `n`.
+This is the same point we made in [Module 2](M02-L02-let-bindings.html#why-shadowing-differs-from-mutation-closures-see-the-old-value)
+(shadowing is not mutation), applied here to function values.
+Functions returned from `make_adder` work the same way: the captured
+`n` is whatever it was when that particular function was created.
+Each `make_adder` call creates an independent closure with its own
+captured `n`.
 
 ## Functions can return functions can return functions
 
@@ -492,8 +496,8 @@ let _ = curry3 dist3 3 4 12
 will eventually bundle them into a triple and apply `dist3`.
 "Currying" is the term for this technique: turning an `n`-argument
 function into a chain of `n` one-argument functions. We saw it in
-M03-L03 and will see it again as a recurring background hum
-throughout this module.
+[M03-L03](M03-L03-currying.html) and will see it again as a recurring
+background hum throughout this module.
 
 The point of the example above is not currying itself; it is the
 demonstration that *functions are values you can shape and reshape
@@ -613,11 +617,13 @@ long as the function maps `'a` to `'a`, can be repeated.
 
 We have set the stage. The next four lectures take the abstraction-of-a-walk
 idea and follow it to the three canonical higher-order list
-functions: `map` (transform each element), `filter` (keep some
-elements), and `fold` (combine all elements). Lecture 5 introduces
-the pipeline operator `|>`, which lets us chain these three together
-in left-to-right reading order. Lecture 6 is the tutorial: rebuild
-parts of the `List` module from this small toolkit.
+functions: [`map`](M06-L02-map.html) (transform each element),
+[`filter`](M06-L03-filter.html) (keep some elements), and
+[`fold`](M06-L04-fold.html) (combine all elements).
+[Lecture 5](M06-L05-pipelines.html) introduces the pipeline operator
+`|>`, which lets us chain these three together in left-to-right
+reading order. [Lecture 6](M06-L06-tutorial.html) is the tutorial:
+rebuild parts of the `List` module from this small toolkit.
 
 :::slide
 

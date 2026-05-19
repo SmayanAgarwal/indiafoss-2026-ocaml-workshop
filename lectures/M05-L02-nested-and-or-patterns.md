@@ -14,14 +14,15 @@ reading:
 
 # Nested patterns and or-patterns
 
-The pattern forms we saw in Lecture 1 (literals, variables,
-wildcards) match a value at exactly one level: "this is the
-constant `0`", or "this is anything, call it `x`." Real OCaml
-values are usually built out of pieces: a tuple holds two
-things, a constructor wraps a payload, a list is a head followed
-by a tail. Patterns mirror that nested structure. A pattern can
-contain *other patterns* inside it, exactly the way a value
-contains other values.
+The pattern forms we saw in [Lecture 1](M05-L01-basic-patterns.html)
+(literals, variables, wildcards) match a value at exactly one level:
+"this is the constant `0`", or "this is anything, call it `x`." Real
+OCaml values are usually built out of pieces: a [tuple](M04-L01-tuples.html)
+holds two things, a [constructor](M04-L03-variants.html#constructors-with-payload)
+wraps a payload, a [list](M04-L04-recursive-types.html#lists-are-a-recursive-variant)
+is a head followed by a tail. Patterns mirror that nested structure.
+A pattern can contain *other patterns* inside it, exactly the way a
+value contains other values.
 
 This lecture covers two extensions:
 
@@ -39,9 +40,10 @@ nontrivial pattern match you write uses one or both.
 ## Patterns inside constructors
 
 The most common nested pattern is to look inside a constructor's
-payload. We have not formally introduced variant types yet (that
-was Module 4), but you have seen `Some` and `None` and you have
-seen records and lists. Here is a record example:
+payload. We saw [variant types in M04-L03](M04-L03-variants.html)
+and you have seen `Some` and `None` and you have seen [records](M04-L02-records.html)
+and [lists](M04-L04-recursive-types.html#lists-are-a-recursive-variant).
+Here is a record example:
 
 ```ocaml
 type point = { x : float; y : float }
@@ -444,7 +446,7 @@ let starts_nonpositive = function
 
 The or-pattern has four literal alternatives. (For a real
 "non-positive" check, you would use a guard, which is the topic
-of Lecture 3; this is just an illustration.)
+of [Lecture 3](M05-L03-guards.html); this is just an illustration.)
 
 ## The `as` binder: keep a name for the whole
 
@@ -686,12 +688,13 @@ of a list, ignore the rest." You will use it constantly.
 
 ## What's next
 
-Lecture 3 introduces `when`-guards: predicates attached to a
-pattern that further filter when the clause fires. Guards let you
-express conditions that pure patterns cannot, like "this list
-has a positive number at the front." They come with one
-important caveat: they disable the compiler's exhaustiveness
-check for that clause, which we will see why in Lecture 4.
+[Lecture 3](M05-L03-guards.html) introduces `when`-guards:
+predicates attached to a pattern that further filter when the clause
+fires. Guards let you express conditions that pure patterns cannot,
+like "this list has a positive number at the front." They come with
+one important caveat: they disable the compiler's exhaustiveness
+check for that clause, which we will see why in
+[Lecture 4](M05-L04-exhaustiveness.html#exhaustiveness-and-guards-one-more-reminder).
 
 :::slide
 
