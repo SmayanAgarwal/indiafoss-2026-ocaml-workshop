@@ -34,8 +34,9 @@ beginners reliably make.
 | Negate | `-a` | `-. a` |
 | Absolute | `abs a` | `Float.abs a` |
 
-The float operators all end in `.`. Mixing `int` and `float` is a
-type error; you convert with `float_of_int` or `int_of_float`.
+- Float operators all end in `.`.
+- Mixing `int` and `float`: **type error**.
+- Convert with `float_of_int` or `int_of_float`.
 
 :::
 
@@ -58,14 +59,13 @@ let _ = 3 <> 4
 let _ = 1.5 >= 1.5
 ```
 
-`<`, `<=`, `>`, `>=` are the four orderings. `=` is **structural**
-equality, `<>` is structural inequality. All five are *polymorphic*:
-they work for any type that has a sensible structural compare
-(numbers, strings, tuples, lists, variants, records).
+- Orderings: `<`, `<=`, `>`, `>=`.
+- `=` is **structural** equality; `<>` structural inequality.
+- All five are **polymorphic**: work on any type with a sensible structural compare.
+  - Numbers, strings, tuples, lists, variants, records.
 
-You will sometimes see `==` and `!=`. These are **physical**
-identity ("same allocation in memory") and almost never what you
-want. Use `=` and `<>`.
+- `==` and `!=` are **physical** identity ("same allocation in memory").
+- Almost never what you want. **Use `=` and `<>`.**
 
 :::
 
@@ -92,11 +92,11 @@ let _ = not true
 let _ = false && (1 / 0 = 0)
 ```
 
-`false`. The right-hand side is never evaluated, so the division by
-zero never happens. Same for `true || ...`.
-
-This is identical to C, Java, JavaScript, Python. The shape is
-familiar; just the keyword is `not` instead of `!`.
+- Result: `false`.
+- RHS never evaluated: no division by zero.
+- Same for `true || ...`.
+- Identical to C, Java, JavaScript, Python.
+- Only difference: keyword `not` instead of `!`.
 
 :::
 
@@ -120,16 +120,16 @@ wouldn't work.
 let _ = "first" ^ " " ^ "second"
 ```
 
-`^` is right-associative: `"a" ^ "b" ^ "c"` parses as
-`"a" ^ ("b" ^ "c")`. For three strings this is fine; for many
-strings you reach for `String.concat`:
+- `^` is **right-associative**.
+- `"a" ^ "b" ^ "c"` parses as `"a" ^ ("b" ^ "c")`.
+- Fine for a few strings; for many, use `String.concat`:
 
 ```ocaml
 let _ = String.concat ", " ["apple"; "banana"; "cherry"]
 ```
 
-`String.concat sep xs` returns the elements of `xs` joined with
-`sep` between them. More efficient than chained `^`.
+- `String.concat sep xs`: joins elements of `xs` with `sep` between.
+- More efficient than chained `^`.
 
 :::
 
@@ -137,8 +137,7 @@ let _ = String.concat ", " ["apple"; "banana"; "cherry"]
 
 ## Function application is its own "operator"
 
-In OCaml, **function application is just juxtaposition**. No
-parentheses:
+- In OCaml, **function application is just juxtaposition**. No parens.
 
 ```ocaml
 let _ = succ 5
@@ -146,15 +145,14 @@ let _ = max 3 7
 let _ = String.length "hello"
 ```
 
-`succ 5` is "the function `succ` applied to `5`". You only put
-parentheses around arguments when *grouping* them with an operator:
+- `succ 5`: function `succ` applied to `5`.
+- Parens used only when **grouping** with another operator:
 
 ```ocaml
 let _ = succ (max 3 7)
 ```
 
-Without those parens it would parse as `(succ max) 3 7`, which is
-not what you want.
+- Without parens: parses as `(succ max) 3 7`, not what you want.
 
 :::
 
@@ -169,8 +167,8 @@ natural reading; we'll see this in Module 3.
 
 ## Operator precedence
 
-OCaml's operator precedence follows standard mathematical
-conventions, with some additions. From tightest binding to loosest:
+- Standard math conventions, with additions.
+- From **tightest** binding to **loosest**:
 
 ```
 .       (record / module access)
@@ -185,8 +183,8 @@ function application
 ;       (sequence)
 ```
 
-When in doubt, parenthesize. Code is read more than it is written;
-explicit parens cost nothing.
+- When in doubt, **parenthesize**.
+- Code is read more than written; explicit parens cost nothing.
 
 :::
 
@@ -231,14 +229,14 @@ Error: This expression has type int but an expression was expected
        of type string
 ```
 
-In Python or JavaScript, `"value: " + 5` would either work or
-silently coerce. In OCaml you convert explicitly:
+- Python / JavaScript: `"value: " + 5` works or silently coerces.
+- OCaml: convert **explicitly**.
 
 ```ocaml
 let _ = "value: " ^ string_of_int 5
 ```
 
-For more formatting, `Printf.sprintf` is the tool:
+For richer formatting, use `Printf.sprintf`:
 
 ```ocaml
 let _ = Printf.sprintf "value: %d" 5
@@ -254,17 +252,16 @@ let _ = Printf.sprintf "value: %d" 5
 let _ = abs -5
 ```
 
-Looks like "the absolute value of negative 5", but parses as
-"`abs` minus `5`", which is a type error because `abs` is a function.
-
-You write unary minus on a literal with no space and parens are
-useful for clarity:
+- Looks like "absolute value of negative 5".
+- **Parses as** "`abs` minus `5`": type error (`abs` is a function).
+- Fix: use parens around the negative literal.
 
 ```ocaml
 let _ = abs (-5)
 ```
 
-Same problem with `-.` for floats. When in doubt, parenthesize.
+- Same problem with `-.` for floats.
+- When in doubt, **parenthesize**.
 
 :::
 
@@ -276,16 +273,15 @@ Same problem with `-.` for floats. When in doubt, parenthesize.
 let _ = 0 < x < 10
 ```
 
-This parses as `(0 < x) < 10`, which compares a `bool` to an `int`
-and is a type error. Write it as:
+- Parses as `(0 < x) < 10`: compares a `bool` to an `int`. Type error.
+- Spell it out with `&&`:
 
 ```ocaml skip
 let _ = 0 < x && x < 10
 ```
 
-Python is one of the rare languages where `a < b < c` does what
-mathematicians mean. Most languages (OCaml included) make you
-spell it out with `&&`.
+- Python is a rare language where `a < b < c` does the math thing.
+- OCaml (like most languages) makes you write `&&`.
 
 :::
 
@@ -309,16 +305,14 @@ What does it evaluate to? Trace through.
 
 Parse with precedence:
 
-- `*` binds tighter than `+`: `2 * 3` first.
-- `+` then: `1 + 6 = 7`.
-- `=` then: `7 = 7` is `true`.
-- `&&` then: `true && true` is `true`.
+- `*` tighter than `+`: do `2 * 3` first.
+- Then `+`: `1 + 6 = 7`.
+- Then `=`: `7 = 7` is `true`.
+- Then `&&`: `true && true` is `true`.
 
-So the answer is `true`, with implicit groupings:
-`((1 + (2 * 3)) = 7) && true`.
-
-If any of those groupings surprise you, that's a candidate for
-explicit parens in your own code.
+- Answer: `true`.
+- Implicit groupings: `((1 + (2 * 3)) = 7) && true`.
+- Any grouping that surprises you: a candidate for **explicit parens**.
 
 :::
 
@@ -326,10 +320,9 @@ explicit parens in your own code.
 
 ## What's next
 
-Lecture 5: `if`/`then`/`else` as an *expression*. The piece that
-turns straight-line code into branching code, and a worked example
-of how OCaml's expression-oriented design changes the way you
-program.
+- Lecture 5: `if`/`then`/`else` as an **expression**.
+- Turns straight-line code into branching code.
+- Worked example of OCaml's expression-oriented design.
 
 :::
 

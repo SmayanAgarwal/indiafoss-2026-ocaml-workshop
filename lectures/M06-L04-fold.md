@@ -32,12 +32,12 @@ let rec fold_left f acc = function
 let _ = fold_left (+) 0 [1; 2; 3; 4]
 ```
 
-`int = 10`. Sum of the list, by folding `+` over it with starting
-accumulator `0`.
+`int = 10`.
 
-Type: `('acc -> 'a -> 'acc) -> 'acc -> 'a list -> 'acc`. The
-function combines the running accumulator with each element to
-produce the next accumulator.
+- Sum of the list: fold `+` over it with starting accumulator `0`.
+- Type: `('acc -> 'a -> 'acc) -> 'acc -> 'a list -> 'acc`.
+- The function combines running accumulator with each element to
+  produce the next accumulator.
 
 :::
 
@@ -51,9 +51,10 @@ produce the next accumulator.
 f (f (f acc x1) x2) x3
 ```
 
-The function `f` is applied repeatedly: first to `acc` and `x1`,
-then to that result and `x2`, then to that result and `x3`. Each
-intermediate result becomes the new accumulator.
+- `f` applied first to `acc` and `x1`.
+- Then to that result and `x2`.
+- Then to that result and `x3`.
+- Each intermediate result becomes the new accumulator.
 
 For `fold_left (+) 0 [1; 2; 3]`:
 
@@ -70,13 +71,11 @@ For `fold_left (+) 0 [1; 2; 3]`:
 
 ## `fold_left` is tail-recursive
 
-The recursive call in `fold_left f (f acc x) rest` has nothing
-after it. OCaml optimizes this to a loop; constant stack space
-regardless of list length.
-
-This makes `fold_left` the right choice when the order doesn't
-matter or you can structure the accumulator to take left-to-right
-folding.
+- The recursive call has nothing after it.
+- OCaml optimizes it to a loop.
+- Constant stack space, regardless of list length.
+- Right choice when order doesn't matter, or the accumulator
+  naturally fits left-to-right folding.
 
 :::
 
@@ -90,15 +89,17 @@ folding.
 f x1 (f x2 (f x3 acc))
 ```
 
-Right-associative. The function takes the *element first*, the
-accumulator second.
+- Right-associative.
+- The function takes the **element first**, accumulator second.
 
 ```ocaml
 let _ = List.fold_right (fun x acc -> x :: acc) [1; 2; 3] []
 ```
 
-`[1; 2; 3]`. With `::` as `f`, this rebuilds the list exactly.
-Useful for "preserve order" computations.
+`[1; 2; 3]`.
+
+- With `::` as `f`, this rebuilds the list exactly.
+- Useful for "preserve order" computations.
 
 :::
 
@@ -113,12 +114,10 @@ let rec fold_right f xs acc =
   | x :: rest -> f x (fold_right f rest acc)
 ```
 
-`f x (...)` has work to do after the recursive call (apply `f`
-with the result). Not tail. Stack-overflow risk on long lists.
-
-For *very* long lists, prefer `fold_left` with an accumulator
-order tweak, or `List.rev (fold_left ...)` if you need the
-right-to-left semantics.
+- `f x (...)` does work *after* the recursive call.
+- Not tail-recursive: stack-overflow risk on long lists.
+- For very long lists, prefer `fold_left` with an accumulator tweak.
+- Or use `List.rev (fold_left ...)` for right-to-left semantics.
 
 :::
 
@@ -135,8 +134,10 @@ let map_via_fold f xs =
 let _ = map_via_fold (fun n -> n * n) [1; 2; 3]
 ```
 
-`[1; 4; 9]`. The accumulator starts as `[]`; for each element
-(right-to-left) we cons `f x` onto it.
+`[1; 4; 9]`.
+
+- Accumulator starts as `[]`.
+- For each element (right-to-left) we cons `f x` onto it.
 
 Or with `fold_left` and a reverse:
 
@@ -164,11 +165,11 @@ let filter_via_fold p xs =
 let _ = filter_via_fold (fun n -> n > 2) [1; 2; 3; 4]
 ```
 
-`[3; 4]`. The combining function decides whether to include each
-element in the accumulator.
+`[3; 4]`.
 
-`fold` is genuinely more general than `map` or `filter`: both can
-be expressed in terms of it.
+- The combining function decides whether to include each element.
+- `fold` is more general than `map` or `filter`.
+- Both can be expressed in terms of it.
 
 :::
 
@@ -192,11 +193,12 @@ let _ = fold_tree (+) 0
           (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
 ```
 
-`int = 6`. An in-order tree fold. The accumulator visits left
-subtree, then root, then right subtree.
+`int = 6`.
 
-Once you've internalized fold, you can apply it to any data
-shape: trees, expressions, records-of-lists.
+- An in-order tree fold.
+- Accumulator visits left subtree, then root, then right subtree.
+- Once internalized, fold applies to any shape: trees, expressions,
+  records-of-lists.
 
 :::
 
@@ -204,11 +206,11 @@ shape: trees, expressions, records-of-lists.
 
 ## When `fold` is overkill
 
-If you can express the computation as `map` or `filter`, prefer
-those: they read better and signal intent more clearly. `fold` is
-the right tool when the answer isn't a list at all (a single
-number, a record, a Map), or when you need both summary and
-transformation in one pass.
+- Prefer `map` or `filter` when you can: they read better and
+  signal intent more clearly.
+- Reach for `fold` when the answer isn't a list (a number, a
+  record, a `Map`).
+- Or when you need both summary and transformation in one pass.
 
 ```ocaml
 (* Both produce the same answer; prefer the first *)
@@ -219,9 +221,11 @@ let _ = sum_squares_a [1; 2; 3]
 let _ = sum_squares_b [1; 2; 3]
 ```
 
-Both give `14`. The first is a pipeline (map, then sum); the second
-is one fold. In practice the first is clearer for small steps;
-the second is more efficient (one pass).
+Both give `14`.
+
+- First: pipeline (map, then sum).
+- Second: one fold.
+- First is clearer for small steps; second is more efficient (one pass).
 
 :::
 
@@ -249,15 +253,11 @@ let _ = rev [1; 2; 3; 4]
 
 `4`, `[4; 3; 2; 1]`.
 
-`length`: ignore each element, just bump the counter.
-
-`rev`: prepend each element to the accumulator. Because we
-prepend in left-to-right order, the first element ends up
-*deepest*; the result is reversed.
-
-Try `List.fold_right (fun x acc -> x :: acc) xs []` instead — you
-get the *original* order, because `fold_right` walks
-right-to-left.
+- `length`: ignore each element, bump the counter.
+- `rev`: prepend each element to the accumulator.
+- Prepending left-to-right puts the first element *deepest*: reversed.
+- Try `List.fold_right (fun x acc -> x :: acc) xs []`: you get the
+  *original* order, because `fold_right` walks right-to-left.
 
 :::
 
@@ -265,9 +265,10 @@ right-to-left.
 
 ## What's next
 
-Lecture 5: **function composition and pipelines**. The plumbing
-that lets you string `map`, `filter`, `fold` together cleanly.
-Then the Module 6 tutorial.
+Lecture 5: **function composition and pipelines**.
+
+- The plumbing that strings `map`, `filter`, `fold` together cleanly.
+- Then the Module 6 tutorial.
 
 :::
 

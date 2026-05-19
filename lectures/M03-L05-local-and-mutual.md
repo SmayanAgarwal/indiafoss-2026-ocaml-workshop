@@ -33,12 +33,10 @@ let factorial n =
   go 1 n
 ```
 
-`go` is defined *inside* the body of `factorial` with a `let rec
-... in`. It is in scope only for the rest of that expression.
-Outside `factorial`, the name `go` doesn't exist.
-
-This is the right place for a helper that's only useful as
-implementation detail of one outer function.
+- `go` is defined *inside* `factorial` with `let rec ... in`.
+- In scope only for the rest of that expression.
+- Outside `factorial`, the name `go` doesn't exist.
+- Right place for a helper that's only useful as implementation detail of one outer function.
 
 :::
 
@@ -72,15 +70,12 @@ let rec factorial_go acc n =
 let factorial n = factorial_go 1 n
 ```
 
-This works. The downside: `factorial_go` is now a public name.
-Anyone reading your code or autocomplete-listing your module sees
-it as an option. They might call it with `factorial_go 0 5` and get
-`0`, which is a wrong answer that the API of `factorial` would have
-prevented.
-
-A local `let rec ... in` keeps the helper invisible to callers.
-That's the *encapsulation* argument for local definitions, and the
-default choice.
+- This works.
+- Downside: `factorial_go` is now a public name.
+- Anyone reading your code or using autocomplete sees it.
+- They might call `factorial_go 0 5` and get `0`: wrong answer that the `factorial` API would have prevented.
+- A local `let rec ... in` keeps the helper invisible to callers.
+- The *encapsulation* argument for local definitions, and the default choice.
 
 :::
 
@@ -99,13 +94,13 @@ let average xs =
   sum xs / List.length xs
 ```
 
-`sum` is general-purpose; `average` uses it. Top-level. Both are
-public.
+- `sum` is general-purpose; `average` uses it.
+- Both top-level, both public.
 
-Rule of thumb: if the helper has a meaningful name *other callers
-might want*, make it top-level. If it's a tactical aid for one
-function (an accumulator-passing version, an unfolded base case,
-etc.), make it local.
+Rule of thumb:
+
+- Helper has a meaningful name *other callers might want*: top-level.
+- Tactical aid for one function (accumulator-passing version, unfolded base case): local.
 
 :::
 
@@ -127,12 +122,11 @@ let _ = is_even 10
 let _ = is_odd 10
 ```
 
-`true, false`. Each function calls the other. The two are tied
-together by the `and` keyword.
-
-Without `and`, the first function couldn't see the second (because
-the second isn't defined yet). With `and`, both names are brought
-into scope simultaneously, and each can reference the other.
+- `true, false`.
+- Each function calls the other.
+- Tied together by the `and` keyword.
+- Without `and`, the first couldn't see the second (not defined yet).
+- With `and`, both names are in scope simultaneously and can reference each other.
 
 :::
 
@@ -145,18 +139,16 @@ let rec is_even n = if n = 0 then true  else is_odd  (n - 1)
 let rec is_odd  n = if n = 0 then false else is_even (n - 1)
 ```
 
-OCaml rejects the first line: `Unbound value is_odd`. At the time
-the first `let rec` is processed, `is_odd` does not exist yet.
-
-The `and` keyword threads multiple recursive definitions through a
-single name-resolution step:
+- OCaml rejects the first line: `Unbound value is_odd`.
+- When the first `let rec` is processed, `is_odd` doesn't exist yet.
+- The `and` keyword threads multiple recursive definitions through one name-resolution step:
 
 ```
 let rec X = ... and Y = ... and Z = ...
 ```
 
-All of `X`, `Y`, `Z` are in scope inside each body. That's exactly
-what mutual recursion requires.
+- All of `X`, `Y`, `Z` are in scope inside each body.
+- Exactly what mutual recursion requires.
 
 :::
 
@@ -182,9 +174,9 @@ and read_op n tokens =
   | _ -> None
 ```
 
-`read_number` calls `read_op`, which calls `read_number`. The two
-implement a small recursive-descent parser together. Mutual
-recursion here is the natural fit.
+- `read_number` calls `read_op`, which calls `read_number`.
+- Together they implement a small recursive-descent parser.
+- Mutual recursion is the natural fit.
 
 :::
 
@@ -207,8 +199,8 @@ let collatz n =
   step n
 ```
 
-That example is single-recursive, but `let rec` and `and` work
-inside an `in` expression the same way:
+- Single-recursive example.
+- `let rec` and `and` work inside `in` expressions the same way:
 
 ```ocaml
 let demo () =
@@ -220,7 +212,8 @@ let demo () =
   ping 5
 ```
 
-`string = "done"`. The two local helpers refer to each other.
+- `string = "done"`.
+- The two local helpers refer to each other.
 
 :::
 
@@ -252,24 +245,27 @@ and is_odd n =
   else is_even (n - 1)
 ```
 
-`is_even 6` calls `is_odd 5`, which calls `is_even 4`, ..., down
-to `is_odd 0` which is `false`... wait, let me retrace.
+Trace for `is_even 6`:
 
-`is_even 6 → is_odd 5 → is_even 4 → is_odd 3 → is_even 2 → is_odd 1 → is_even 0 → true`.
+- `is_even 6 → is_odd 5 → is_even 4 → is_odd 3 → is_even 2 → is_odd 1 → is_even 0 → true`.
 
-`is_odd 6 → is_even 5 → is_odd 4 → ... → is_even 0 → true`... hmm,
-let me recheck. `is_odd 0 = false`. `is_even 1 = is_odd 0 = false`.
-`is_odd 2 = is_even 1 = false`. `is_even 3 = is_odd 2 = false`.
-`is_odd 4 = is_even 3 = false`. `is_even 5 = is_odd 4 = false`.
-`is_odd 6 = is_even 5 = false`. Correct: 6 is not odd.
+Trace for `is_odd 6`:
 
-Note: this isn't tail-recursive (the recursive call is in tail
-position, but it's calling a *different* function; the OCaml
-compiler handles tail-calls between mutually recursive functions
-the same way, so this *is* in fact constant-stack).
+- `is_odd 0 = false`.
+- `is_even 1 = is_odd 0 = false`.
+- `is_odd 2 = is_even 1 = false`.
+- `is_even 3 = is_odd 2 = false`.
+- `is_odd 4 = is_even 3 = false`.
+- `is_even 5 = is_odd 4 = false`.
+- `is_odd 6 = is_even 5 = false`. Correct: 6 is not odd.
 
-For very large `n`, prefer `n mod 2 = 0`. But the mutual-recursion
-version is a clean illustration of the pattern.
+Notes:
+
+- This is in tail position (calling a *different* function).
+- OCaml handles tail calls between mutually recursive functions the same way.
+- So this *is* constant-stack.
+- For large `n`, prefer `n mod 2 = 0`.
+- The mutual-recursion version is a clean illustration of the pattern.
 
 :::
 
@@ -277,9 +273,10 @@ version is a clean illustration of the pattern.
 
 ## What's next
 
-Lecture 6: the **tutorial** for Module 3. We work through `fib`,
-`gcd`, a small list utility, and the trade-offs between naive
-recursion and tail recursion.
+Lecture 6: the **tutorial** for Module 3.
+
+- Work through `fib`, `gcd`, and a small list utility.
+- Trade-offs between naive recursion and tail recursion.
 
 :::
 

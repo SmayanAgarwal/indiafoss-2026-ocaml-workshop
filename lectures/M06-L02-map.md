@@ -32,8 +32,9 @@ let _ = map (fun x -> x * x) [1; 2; 3; 4]
 
 `int list = [1; 4; 9; 16]`.
 
-The function `f : 'a -> 'b`, the input is `'a list`, the output is
-`'b list`. Same length, possibly different element types.
+- `f : 'a -> 'b`.
+- Input is `'a list`, output is `'b list`.
+- Same length; possibly different element types.
 
 :::
 
@@ -50,15 +51,13 @@ let rec map (f : 'a -> 'b) (xs : 'a list) : 'b list =
 
 `('a -> 'b) -> 'a list -> 'b list`.
 
-That signature says, with no extra commentary:
+What the signature says:
 
 - Takes a function from some type `'a` to some type `'b`.
 - Takes a list of `'a`.
 - Returns a list of `'b`.
-- The two element types may differ (think `int list -> string list`).
-
-Whenever you see that signature, you know: *one-to-one
-transformation*, no element is dropped or duplicated.
+- The two element types may differ (e.g. `int list -> string list`).
+- Always *one-to-one*: no element dropped or duplicated.
 
 :::
 
@@ -74,8 +73,9 @@ let _ = List.map string_of_int [1; 2; 3]
 let _ = List.map String.length ["hello"; "world"; "!"]
 ```
 
-`[2; 4; 6]`, `["1"; "2"; "3"]`, `[5; 5; 1]`. Each call transforms
-the list element-by-element with the given function.
+`[2; 4; 6]`, `["1"; "2"; "3"]`, `[5; 5; 1]`.
+
+Each call transforms the list element-by-element with the given function.
 
 :::
 
@@ -88,13 +88,13 @@ let _ = List.map ((+) 10) [1; 2; 3]
 let _ = List.map (( * ) 2) [1; 2; 3]
 ```
 
-`[11; 12; 13]` and `[2; 4; 6]`. `(+) 10` is the function "add
-10"; `( * ) 2` is "multiply by 2". Both are partial applications of
-infix operators. No lambdas needed.
+`[11; 12; 13]` and `[2; 4; 6]`.
 
-This idiom is so common that you'll write more `List.map ((+) k)`
-than you'll write `List.map (fun x -> x + k)`. Less noise; the
-intent is right there.
+- `(+) 10` is the function "add 10".
+- `( * ) 2` is "multiply by 2".
+- Both are partial applications of infix operators; no lambdas needed.
+- You'll write `List.map ((+) k)` more often than
+  `List.map (fun x -> x + k)`: less noise, intent is clear.
 
 :::
 
@@ -102,13 +102,14 @@ intent is right there.
 
 ## `map` doesn't change the length
 
-The result of `List.map f xs` is the same length as `xs`. Always.
-This is a structural invariant: one input element produces exactly
-one output element.
+- `List.map f xs` has the **same length** as `xs`. Always.
+- One input element produces exactly one output element.
 
-If you want to drop elements, use `List.filter` (Lecture 3). If you
-want to drop *and* transform, use `List.filter_map`. If you want a
-totally different shape, use `List.fold_left` (Lecture 4).
+When you want something else:
+
+- Drop elements: `List.filter` (Lecture 3).
+- Drop *and* transform: `List.filter_map`.
+- Totally different shape: `List.fold_left` (Lecture 4).
 
 `map` is for "transform each element in place".
 
@@ -126,12 +127,10 @@ let rec map f = function
   | x :: rest -> f x :: map f rest
 ```
 
-`f x :: map f rest` does work *after* the recursive call returns
-(the cons). For very long lists, this overflows the stack.
-
-The standard library's `List.map` is implemented in a way that
-handles "reasonable" list lengths gracefully, but you should prefer
-`List.rev (List.rev_map f xs)` for very long inputs.
+- `f x :: map f rest` does work *after* the recursive call (the cons).
+- Very long lists overflow the stack.
+- `List.map` handles "reasonable" lengths gracefully.
+- For very long inputs, prefer `List.rev (List.rev_map f xs)`.
 
 A tail-recursive version with an accumulator:
 
@@ -146,8 +145,10 @@ let map f xs =
 let _ = map (fun x -> x * x) [1; 2; 3; 4]
 ```
 
-`[1; 4; 9; 16]`. We accumulate in reverse, then reverse at the
-end. Two passes through the list, constant stack.
+`[1; 4; 9; 16]`.
+
+- Accumulate in reverse, then reverse at the end.
+- Two passes through the list, constant stack.
 
 :::
 
@@ -155,16 +156,18 @@ end. Two passes through the list, constant stack.
 
 ## `map` on options and trees
 
-`map` is a *pattern*, not just a list function. The same idea
-generalises to anything that "contains" elements:
+- `map` is a *pattern*, not just a list function.
+- The idea generalises to anything that "contains" elements:
 
 ```ocaml
 let _ = Option.map (fun x -> x + 1) (Some 5)
 let _ = Option.map (fun x -> x + 1) None
 ```
 
-`Some 6`, `None`. `Option.map` applies the function inside `Some`
-or passes `None` through.
+`Some 6`, `None`.
+
+- `Option.map` applies the function inside `Some`.
+- It passes `None` through unchanged.
 
 For trees:
 
@@ -179,10 +182,10 @@ let _ = map_tree (fun x -> x * 10)
                  (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
 ```
 
-`Node (Node (Leaf, 10, Leaf), 20, Node (Leaf, 30, Leaf))`. Same
-shape; every value multiplied by 10.
+`Node (Node (Leaf, 10, Leaf), 20, Node (Leaf, 30, Leaf))`.
 
-Any "container of elements" type can have its own `map`.
+- Same shape; every value multiplied by 10.
+- Any "container of elements" type can have its own `map`.
 
 :::
 
@@ -213,11 +216,9 @@ let _ = zip_with (+) [1; 2; 3] [10; 20]
 
 `[11; 22; 33]`, `["hello"; "world"]`, `[11; 22]`.
 
-The pattern `[], _ | _, []` is an or-pattern that catches either
-list being empty. When either runs out, we stop.
-
-The third call shows the "stop early" behaviour: the longer list's
-extra element is just dropped.
+- `[], _ | _, []` is an or-pattern catching either list empty.
+- When either runs out, we stop.
+- Third call: extra element of the longer list is dropped.
 
 :::
 
@@ -225,9 +226,11 @@ extra element is just dropped.
 
 ## What's next
 
-Lecture 3: **`filter`**. Keep only the elements that match a
-predicate. The second of the three canonical higher-order
-list operations (`map`, `filter`, `fold`).
+Lecture 3: **`filter`**.
+
+- Keep only the elements that match a predicate.
+- The second of the three canonical higher-order list operations
+  (`map`, `filter`, `fold`).
 
 :::
 

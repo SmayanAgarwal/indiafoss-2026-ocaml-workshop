@@ -37,9 +37,8 @@ let _ = !counter
 - `ref x` creates a mutable cell holding `x`.
 - `!cell` reads the current value (dereferencing).
 - `cell := y` writes a new value into the cell.
-
-The cell itself has type `int ref`. The contents (`!counter`) have
-type `int`.
+- The cell itself has type `int ref`.
+- The contents (`!counter`) have type `int`.
 
 :::
 
@@ -54,11 +53,9 @@ update. OCaml separates them:
   cell* containing 0.
 - **Read**: `!counter` reads from the cell.
 - **Write**: `counter := 1` writes to the cell.
-
-This is the same distinction C makes implicitly with pointers:
-`int *p = malloc(sizeof(int)); *p = 0;` is the create step;
-`*p = 1` is the write; `*p` is the read. OCaml just makes it
-explicit at the syntax level.
+- C makes this same distinction implicitly with pointers: `malloc`
+  creates, `*p = 1` writes, `*p` reads.
+- OCaml just makes it explicit at the syntax level.
 
 :::
 
@@ -75,12 +72,13 @@ let _ = get_next ()
 let _ = get_next ()
 ```
 
-`1`, `2`, `3`. `get_next ()` is *not* equal to `get_next ()`: the
-first call returns 1, the second returns 2. We can't replace one
-call by its result without changing the program's behaviour.
+`1`, `2`, `3`.
 
-That's the cost of mutation: the equational reasoning we had with
-pure functions (Module 2) is gone for code that touches a `ref`.
+- `get_next ()` is *not* equal to `get_next ()`.
+- First call returns 1, second returns 2.
+- You can't replace a call by its result without changing behaviour.
+- **The cost of mutation**: the equational reasoning we had with
+  pure functions (Module 2) is gone for code that touches a `ref`.
 
 :::
 
@@ -100,9 +98,8 @@ read more carefully.
 - **Recursive references** (rarely needed but possible).
 - **Interop with code that expects mutation** (callbacks, GUI
   state).
-
-Most everyday OCaml code uses no `ref`s at all. We reach for them
-when the alternative is awkward.
+- Most everyday OCaml code uses no `ref`s at all; reach for them
+  only when the alternative is awkward.
 
 :::
 
@@ -126,12 +123,13 @@ let _ = f ()
 let _ = f ()
 ```
 
-`Some "first call"`, `None`, `None`. The closure captures `used`;
-the first call sets it, subsequent calls see it set and return
-`None`.
+`Some "first call"`, `None`, `None`.
 
-This pattern (private mutable state inside a function, shared by
-all calls to that function) is one of the cleanest uses of `ref`.
+- The closure captures `used`.
+- The first call sets it; subsequent calls see it set and return
+  `None`.
+- This pattern (**private mutable state inside a function**, shared
+  by all calls) is one of the cleanest uses of `ref`.
 
 :::
 
@@ -149,10 +147,10 @@ The operators `!` and `:=` are just shorthand:
 
 - `!r` is `r.contents`.
 - `r := x` is `r.contents <- x`.
-
-So `ref` isn't a magic builtin; it's a record with one mutable
-field, packaged for convenience. Anywhere you'd want named
-mutable state, you can use a `mutable` record field directly:
+- `ref` is **not a magic builtin**: it's a record with one mutable
+  field, packaged for convenience.
+- Anywhere you'd want named mutable state, you can use a `mutable`
+  record field directly:
 
 ```ocaml
 type counter = { mutable n : int }
@@ -172,8 +170,8 @@ fields.
 
 ## Sequencing side effects
 
-When you do several side-effecting things in a row, you sequence
-them with `;` (the *statement* semicolon, distinct from `;;`):
+Several side-effecting actions in a row are sequenced with `;`
+(the *statement* semicolon, distinct from `;;`):
 
 ```ocaml
 let r = ref 0
@@ -184,12 +182,12 @@ let () =
   r := 3
 ```
 
-Each `;` says "do this, then that". The left-hand side of each
-`;` must have type `unit` (the value `()`).
-
-If you have a non-unit expression in sequence (`r := 1; 5; r :=
-2`), OCaml warns: the value `5` is being thrown away. Wrap it in
-`let _ = 5` or `ignore 5` to silence.
+- Each `;` says "do this, then that".
+- The left-hand side of each `;` must have type `unit` (the value
+  `()`).
+- A non-unit expression in sequence (`r := 1; 5; r := 2`) triggers
+  a warning: the value `5` is being thrown away.
+- Wrap it in `let _ = 5` or `ignore 5` to silence.
 
 :::
 
@@ -220,12 +218,12 @@ let _ = next ()
 
 `1`, `2`, `3`.
 
-The closure captures `n`. Each call increments and reads. `incr n`
-is shorthand for `n := !n + 1`; `decr` exists too for the other
-direction.
-
-Two different counters made from `make_counter ()` have *independent*
-state:
+- The closure captures `n`.
+- Each call increments and reads.
+- `incr n` is shorthand for `n := !n + 1`.
+- `decr` exists too for the other direction.
+- Two different counters made from `make_counter ()` have
+  *independent* state:
 
 ```ocaml
 let make_counter () =
@@ -245,10 +243,12 @@ let _ = a (), a (), a (), b (), b ()
 
 ## What's next
 
-Lecture 2: **mutable records and arrays**. Beyond the one-cell
-`ref`, OCaml has mutable fields on records (as we've seen) and
-fixed-size mutable arrays. Both for code that genuinely needs
-in-place updates.
+Lecture 2: **mutable records and arrays**.
+
+- Beyond the one-cell `ref`, OCaml has mutable fields on records
+  (as we've seen).
+- It also has fixed-size mutable arrays.
+- Both are for code that genuinely needs in-place updates.
 
 :::
 

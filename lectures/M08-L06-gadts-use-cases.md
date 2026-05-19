@@ -48,15 +48,12 @@ let _ = show (T_list T_int) [1; 2; 3]
 
 `"42"`, `"(3, \"hi\")"`, `"[1; 2; 3]"`.
 
-`ty` is a *witness* of the OCaml type of a value: `T_int` is the
-witness for `int`, `T_pair (a, b)` is the witness for `'a * 'b`,
-etc. The `show` function takes a witness and a value of the type
-that witness describes. Each case refines the type and unpacks the
-value accordingly.
-
-Without GADTs, you couldn't write a single function whose return
-type depends on the constructor of the type-witness argument. With
-GADTs, the compiler ties the pieces together.
+- `ty` is a *witness* of the OCaml type of a value.
+- `T_int` is the witness for `int`; `T_pair (a, b)` for `'a * 'b`; etc.
+- `show` takes a witness and a value of the type that witness describes.
+- Each case refines the type and unpacks the value accordingly.
+- Without GADTs, no single function could have its return type depend on the constructor of the type-witness argument.
+- GADTs let the compiler tie the pieces together.
 
 :::
 
@@ -76,9 +73,8 @@ let example : (int * (string * (bool * unit))) hlist =
   HCons (42, HCons ("hi", HCons (true, HNil)))
 ```
 
-The type tells you the exact tuple-shape of the list: an `int`, a
-`string`, a `bool`. Pattern matching can destructure each piece
-with the correct type:
+- The type tells you the exact tuple-shape of the list: an `int`, a `string`, a `bool`.
+- Pattern matching can destructure each piece with the correct type:
 
 ```ocaml
 type _ hlist =
@@ -94,11 +90,12 @@ let first : type a r. (a * r) hlist -> a = function
 let _ = first example
 ```
 
-`int = 42`. The compiler knows that the first element of `example`
-is an `int`, so `first example` has type `int` without a cast.
+`int = 42`.
 
-This is what `tuple<...>` in C++ or `Tuple` types in some
-functional languages do; in OCaml it's an explicit GADT.
+- The compiler knows that the first element of `example` is an `int`.
+- So `first example` has type `int` without a cast.
+- Analogous to `tuple<...>` in C++ or `Tuple` types in some functional languages.
+- In OCaml it's an explicit GADT.
 
 :::
 
@@ -106,9 +103,9 @@ functional languages do; in OCaml it's an explicit GADT.
 
 ## Use 3: type-safe builders
 
-Building up something piece by piece where the *type* of the
-partial value changes as you add pieces. Classic example: a
-typed query / DSL.
+- Build something piece by piece.
+- The *type* of the partial value changes as you add pieces.
+- Classic example: a typed query / DSL.
 
 ```ocaml
 type _ query =
@@ -120,10 +117,10 @@ let _ : int query =
   Where (Map (All, fun () -> 42), fun n -> n > 0)
 ```
 
-Each builder step refines the type, and the next step's expected
-input type is fixed by the previous. You can't `Where`-filter by
-a predicate that expects the wrong type; it's a type error at
-build time.
+- Each builder step refines the type.
+- The next step's expected input type is fixed by the previous.
+- You can't `Where`-filter by a predicate that expects the wrong type.
+- It's a type error at build time.
 
 :::
 
@@ -131,21 +128,18 @@ build time.
 
 ## Use 4: format strings
 
-OCaml's `Printf.printf` is implemented with a GADT. The format
-string `"%d %s\n"` has a *type* that encodes "this format takes an
-`int`, then a `string`, then prints":
+- OCaml's `Printf.printf` is implemented with a GADT.
+- The format string `"%d %s\n"` has a *type*.
+- That type encodes "this format takes an `int`, then a `string`, then prints":
 
 ```
 val printf : ('a, out_channel, unit) format -> 'a
 ```
 
-When you call `Printf.printf "%d %s\n" 42 "hello"`, the format
-type forces the next argument to be `int`, the one after to be
-`string`. Calling `printf "%d %s\n" "wrong" 42` is a type error.
-
-You won't write `printf`'s format type machinery yourself; it's
-built into the standard library. But you'll feel its safety every
-time you use it: typed format strings, courtesy of GADTs.
+- Call `Printf.printf "%d %s\n" 42 "hello"`: the format type forces the next argument to be `int`, then `string`.
+- Calling `printf "%d %s\n" "wrong" 42` is a type error.
+- You won't write `printf`'s format type machinery yourself; it's built into the standard library.
+- You'll feel its safety every time you use it: typed format strings, courtesy of GADTs.
 
 :::
 
@@ -160,11 +154,10 @@ For:
 - Most parsing tasks (a regular ADT + interpreter is fine).
 - Code that's exhausted by simple types.
 
-GADTs are tools for code that *needs* the type system to do real
-work. If the existing variants + records do the job, prefer them.
-The GADT toolchain is more involved (locally abstract types,
-explicit annotations) and worth pulling out when you genuinely
-have heterogeneous typed data flowing through.
+- GADTs are tools for code that *needs* the type system to do real work.
+- If the existing variants + records do the job, prefer them.
+- The GADT toolchain is more involved (locally abstract types, explicit annotations).
+- Worth pulling out when you genuinely have heterogeneous typed data flowing through.
 
 :::
 
@@ -198,13 +191,12 @@ let _ = convert String_t "hello"
 
 `"42"`, `"\"hello\""`.
 
-The function's return type is `string`, but the *input* value's
-type depends on the witness. With `String_t`, `v : string`; with
-`Int_t`, `v : int`. The compiler refines `a` per case.
-
-Without GADTs you'd write two functions (one for each type) or
-take an `option` of either and hand-code the dispatch. GADTs let
-one function do both with the type guarantee.
+- The function's return type is `string`.
+- The *input* value's type depends on the witness.
+- With `String_t`, `v : string`; with `Int_t`, `v : int`.
+- The compiler refines `a` per case.
+- Without GADTs you'd write two functions (one per type) or hand-code dispatch on an `option`.
+- GADTs let one function do both with the type guarantee.
 
 :::
 
@@ -212,10 +204,11 @@ one function do both with the type guarantee.
 
 ## What's next
 
-Lecture 7: the Module 8 **tutorial**. We pull together the option
-monad, GADTs, and pattern matching to build a small well-typed
-expression evaluator. The capstone for the OCaml half of the
-course.
+Lecture 7: the Module 8 **tutorial**.
+
+- We pull together the option monad, GADTs, and pattern matching.
+- Build a small well-typed expression evaluator.
+- The capstone for the OCaml half of the course.
 
 :::
 

@@ -40,9 +40,10 @@ let _ = Greet.goodbye "world"
 
 `"hello, world"`, `"goodbye, world"`.
 
-A module is `module Name = struct ... end`. Inside the struct, you
-write top-level definitions just like in a `.ml` file. Outside, you
-access them with `Name.value`.
+- A module is `module Name = struct ... end`.
+- Inside the struct, you write top-level definitions just like in
+  a `.ml` file.
+- Outside, you access them with `Name.value`.
 
 :::
 
@@ -50,15 +51,13 @@ access them with `Name.value`.
 
 ## Each `.ml` file is a module
 
-When you write code in a file `foo.ml`, OCaml automatically wraps
-it in `module Foo = struct ... end`. Other files reference its
-contents as `Foo.x`, `Foo.f`, etc.
-
-This is how the standard library is organized: `list.ml` exposes
-the `List` module, `string.ml` exposes `String`, etc.
-
-For now we'll use inline modules (`module M = struct ... end`) in
-the toplevel cells to keep examples self-contained.
+- Code in `foo.ml` is automatically wrapped in
+  `module Foo = struct ... end`.
+- Other files reference its contents as `Foo.x`, `Foo.f`, etc.
+- The standard library is organized this way: `list.ml` exposes
+  the `List` module, `string.ml` exposes `String`, etc.
+- For now we use inline modules (`module M = struct ... end`) in
+  the toplevel cells to keep examples self-contained.
 
 :::
 
@@ -79,12 +78,14 @@ let c : Color.t = Color.Red
 let _ = Color.to_string c
 ```
 
-`"red"`. The `Color` module exposes a type `t` and a function
-`to_string`. From outside we write `Color.t` for the type and
-`Color.Red` for the constructor.
+`"red"`.
 
-By convention, a module that's mainly about a type names that
-type `t` (so it's `Color.t`, not `Color.color`).
+- The `Color` module exposes a type `t` and a function
+  `to_string`.
+- From outside: `Color.t` for the type, `Color.Red` for the
+  constructor.
+- **Convention**: a module mainly about a type names that type `t`
+  (so it's `Color.t`, not `Color.color`).
 
 :::
 
@@ -108,10 +109,11 @@ let _ =
 
 `"hello, alice; goodbye, alice"`.
 
-`let open M in expr` opens `M` inside `expr` only. Outside, `Greet`
-is still required as a prefix. This is the *local open*; it's
-preferred over the global `open M` because it makes the scope of
-the open visible.
+- `let open M in expr` opens `M` inside `expr` only.
+- Outside, `Greet` is still required as a prefix.
+- This is the **local open**.
+- Preferred over the global `open M` because it makes the scope of
+  the open visible.
 
 :::
 
@@ -119,21 +121,24 @@ the open visible.
 
 ## When *not* to `open`
 
-Global `open M` brings every name from `M` into the rest of the
-file. For small modules, fine. For big ones (`open List`,
-`open Stdlib`), it can hide where a name comes from.
-
-A middle ground: `M.()` (apply notation) or `M.[...]` (list
-syntax) lets you use module-specific forms briefly:
+- Global `open M` brings every name from `M` into the rest of the
+  file.
+- For small modules, fine.
+- For big ones (`open List`, `open Stdlib`), it can hide where a
+  name comes from.
+- **Middle ground**: `M.()` (apply notation) or `M.[...]` (list
+  syntax) lets you use module-specific forms briefly:
 
 ```ocaml
 let _ = List.[1; 2; 3]
 let _ = String.length "x" + String.length "yy"
 ```
 
-`[1; 2; 3]`, `3`. The first is unnecessary here (lists are
-top-level) but shows the syntax. The second avoids the verbose
-prefix without opening.
+`[1; 2; 3]`, `3`.
+
+- The first is unnecessary here (lists are top-level) but shows
+  the syntax.
+- The second avoids the verbose prefix without opening.
 
 :::
 
@@ -141,10 +146,11 @@ prefix without opening.
 
 ## Hiding internals
 
-Inside a module you can define *helpers* that aren't meant to be
-called from outside. Without an interface (next lecture), every
-definition is visible. With an interface, you control what
-escapes:
+- Inside a module you can define *helpers* not meant to be called
+  from outside.
+- **Without an interface** (next lecture), every definition is
+  visible.
+- **With an interface**, you control what escapes:
 
 ```ocaml
 module Counter = struct
@@ -158,8 +164,10 @@ let _ = Counter.next ()
 let _ = !Counter.n  (* leaks: external code can poke at n directly *)
 ```
 
-`1`, `2`, `2`. The `n` ref is visible from outside. We'll see how
-to hide it in Lecture 5 with module signatures.
+`1`, `2`, `2`.
+
+- The `n` ref is **visible from outside**.
+- We'll see how to hide it in Lecture 5 with module signatures.
 
 :::
 
@@ -185,11 +193,12 @@ let p = Geometry.Point.make 3.0 4.0
 let _ = p.Geometry.Point.x
 ```
 
-`float = 3.0`. Sub-modules organize a tree of related concepts;
-access goes through the full path.
+`float = 3.0`.
 
-For a real project this is heavy; usually each `.ml` file is one
-module and the file system gives you the tree.
+- **Sub-modules organize a tree** of related concepts.
+- Access goes through the full path.
+- For a real project this is heavy: usually each `.ml` file is one
+  module and the file system gives you the tree.
 
 :::
 
@@ -197,13 +206,13 @@ module and the file system gives you the tree.
 
 ## Modules are values, sort of
 
-OCaml modules are not first-class values *by default*; you can't
-pass them around like ints. There are extensions (*first-class
-modules*) that let you, but for the basic Module 7 toolkit, modules
-exist at *compile time* and are used statically.
-
-The "function-like" thing that takes a module and returns a module
-is called a **functor**; we'll see those in Lecture 6.
+- OCaml modules are **not first-class values by default**: you
+  can't pass them around like ints.
+- Extensions (*first-class modules*) exist, but for the basic
+  Module 7 toolkit, modules exist at *compile time* and are used
+  statically.
+- The "function-like" thing that takes a module and returns a
+  module is called a **functor** (see Lecture 6).
 
 :::
 
@@ -242,11 +251,13 @@ let _ = Stack.pop ()
 let _ = Stack.pop ()
 ```
 
-`Some 3`, `Some 3`, `Some 2`. We push 1, 2, 3 (top is 3); peek
-gives `Some 3`; pop removes and returns 3, then 2.
+`Some 3`, `Some 3`, `Some 2`.
 
-There's *one* stack, shared by every caller. That's the simplest
-design; for multiple independent stacks we'd parameterize.
+- We push 1, 2, 3 (top is 3).
+- Peek gives `Some 3`; pop removes and returns 3, then 2.
+- There's *one* stack, shared by every caller: the simplest
+  design.
+- For multiple independent stacks we'd parameterize.
 
 :::
 
@@ -254,10 +265,12 @@ design; for multiple independent stacks we'd parameterize.
 
 ## What's next
 
-Lecture 5: **module signatures**. A signature (`sig ... end` or a
-`.mli` file) is a type-level description of a module: which names
-escape, with which types. The basis of OCaml's encapsulation
-story.
+Lecture 5: **module signatures**.
+
+- A signature (`sig ... end` or a `.mli` file) is a type-level
+  description of a module.
+- It specifies which names escape, with which types.
+- The basis of OCaml's encapsulation story.
 
 :::
 

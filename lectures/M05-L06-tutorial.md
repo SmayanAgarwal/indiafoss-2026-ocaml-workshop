@@ -67,9 +67,11 @@ let example =
 let _ = eval example
 ```
 
-`float = 10.5`. One clause per constructor. The recursive cases
-delegate to `eval` on their sub-expressions and combine with the
-arithmetic operator.
+`float = 10.5`.
+
+- One clause per constructor.
+- Recursive cases delegate to `eval` on sub-expressions.
+- Combine with the arithmetic operator.
 
 :::
 
@@ -99,12 +101,12 @@ let example =
 let _ = pretty example
 ```
 
-A string like `"((1. + 2.) * (4. - 0.5))"`. Same shape as `eval`:
-one clause per constructor; recursive cases call `pretty` on
-sub-expressions.
+A string like `"((1. + 2.) * (4. - 0.5))"`.
 
-A real pretty printer would suppress unnecessary parens based on
-precedence; we keep them all for simplicity.
+- Same shape as `eval`: one clause per constructor.
+- Recursive cases call `pretty` on sub-expressions.
+- A real pretty printer would suppress unnecessary parens via precedence.
+- We keep all parens for simplicity.
 
 :::
 
@@ -134,9 +136,12 @@ let example =
 let _ = depth example
 ```
 
-`int = 2`. The four binary operators all do the same thing
-(recursively look at both sides), so we use an **or-pattern** to
-share their clause. Same right-hand side, four constructors.
+`int = 2`.
+
+- All four binary operators do the same thing.
+- Recursively look at both sides.
+- Use an **or-pattern** to share their clause.
+- Same right-hand side, four constructors.
 
 :::
 
@@ -185,10 +190,10 @@ let example =
 let _ = fold example
 ```
 
-`expr = Num 10.5`. The whole expression was constant, so folding
-reduces it to a single `Num`. For an expression with variables (we
-don't have those yet), it would partially fold what it could and
-leave the rest as a tree.
+`expr = Num 10.5`.
+
+- The whole expression was constant: folding reduces it to a single `Num`.
+- For an expression with variables (not yet), folding would handle constants and leave the rest as a tree.
 
 :::
 
@@ -202,7 +207,7 @@ passes.
 
 ## Notice the pattern (the meta-pattern)
 
-Every function on `expr` has the same skeleton:
+- Every function on `expr` has the same skeleton:
 
 ```
 let rec f = function
@@ -213,15 +218,12 @@ let rec f = function
   | Div (a, b) -> <combine f a and f b>
 ```
 
-This is **structural recursion** on the type. Once you have it,
-every walk over `expr` follows the same template. The differences
-are in the right-hand sides.
-
-In Module 6 we'll see **folds**, which extract this template into
-a generic function: "walk an expr, given a leaf-handler and a
-binary-op-handler". You'll write one fold for `expr` and use it for
-`eval`, `pretty`, `depth`, `fold`, and anything else you want over
-`expr`.
+- This is **structural recursion** on the type.
+- Every walk over `expr` follows the same template.
+- Differences live in the right-hand sides.
+- Module 6: **folds** extract this template into a generic function.
+- "Walk an expr, given a leaf-handler and a binary-op-handler".
+- Write one fold; reuse for `eval`, `pretty`, `depth`, `fold`, etc.
 
 :::
 
@@ -257,24 +259,23 @@ type expr =
   | Div of expr * expr
 ```
 
-The compiler warns *every match on `expr`*: `eval`, `pretty`,
-`depth`, `fold`. Each one needs new clauses for `Var` and `Neg`.
+- Compiler warns *every match on `expr`*: `eval`, `pretty`, `depth`, `fold`.
+- Each needs new clauses for `Var` and `Neg`.
 
-- `pretty` is straightforward: stringify the variable name; prefix
-  the result of recursing on `e` with `-`.
-- `depth` is easy: `Var _ -> 0`, `Neg e -> 1 + depth e`.
-- `fold` is straightforward for `Neg`: if the inside is `Num x`,
-  return `Num (-. x)`; else keep as `Neg`.
-- `eval` is suddenly **a different shape**: with variables, `eval`
-  needs an environment (a mapping from name to value) to look up
-  the value of `Var "x"`. The signature changes from `expr -> float`
-  to `(string -> float) -> expr -> float` (or
-  `(string * float) list -> expr -> float`).
+Per-function notes:
 
-This is the compiler doing the work *for you*: it pointed at every
-place that needs attention, and even surfaced a deeper change
-(eval's signature must grow). You only need to make the design
-calls; the punch list comes from the compiler.
+- `pretty`: stringify the variable name; prefix recursive result with `-`.
+- `depth`: `Var _ -> 0`, `Neg e -> 1 + depth e`.
+- `fold`: for `Neg`, if inside is `Num x` return `Num (-. x)`; else keep as `Neg`.
+- `eval`: **different shape**. Needs an environment (name to value).
+  - Signature grows from `expr -> float` to `(string -> float) -> expr -> float`.
+  - Or `(string * float) list -> expr -> float`.
+
+Takeaway:
+
+- The compiler points at every place needing attention.
+- It surfaces deeper changes (eval's signature must grow).
+- You make the design calls; the punch list comes from the compiler.
 
 :::
 
@@ -292,10 +293,9 @@ After Module 5 you can:
   cases.
 - Walk recursive ADTs by pattern matching on the constructors.
 
-Module 6 picks up the meta-pattern of the recursive-walk and
-generalises it: **higher-order functions** (`map`, `filter`,
-`fold`) that capture *the walk*, leaving you to specify only the
-per-element work.
+- Module 6 picks up the recursive-walk meta-pattern and generalises it.
+- **Higher-order functions** (`map`, `filter`, `fold`) capture *the walk*.
+- You specify only the per-element work.
 
 :::
 

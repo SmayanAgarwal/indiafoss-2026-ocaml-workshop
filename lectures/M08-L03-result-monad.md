@@ -30,12 +30,10 @@ type ('a, 'e) result =
   | Error of 'e
 ```
 
-`Ok x` is success; `Error e` is failure with payload `e`. The
-payload type is a *parameter*: you choose what to carry on
-failure. Common choices: a `string` message, an error code variant,
-a record.
-
-We saw this type back in Module 4. Now we use it as a monad.
+- `Ok x` is success; `Error e` is failure with payload `e`.
+- The payload type is a *parameter*: you choose what to carry on failure.
+- Common choices: a `string` message, an error code variant, a record.
+- We saw this type back in Module 4; now we use it as a monad.
 
 :::
 
@@ -66,9 +64,8 @@ let _ = demo "200"
 
 `Ok 10`, `Error "not an int: frog"`, `Error "too big"`.
 
-Same shape as the option monad. The difference: when something
-goes wrong, we get an *informative* `Error` payload rather than
-just `None`.
+- Same shape as the option monad.
+- The difference: when something goes wrong, we get an *informative* `Error` payload rather than just `None`.
 
 :::
 
@@ -81,10 +78,8 @@ just `None`.
   that.
 - **Multiple failure modes**. With a variant payload, you can
   distinguish "not an int" from "out of range" from "wrong format".
-
-When the only thing that can go wrong is "no value here", `option`
-is enough. When there's diagnostic info worth surfacing, `result`
-is the better fit.
+- Only thing that can go wrong is "no value here": `option` is enough.
+- Diagnostic info worth surfacing: `result` is the better fit.
 
 :::
 
@@ -106,9 +101,8 @@ let _ = to_result "missing" None
 
 `Ok 42`, `Error "missing"`.
 
-This pattern is so common it's sometimes called `Option.to_result`
-or `Result.of_option`. The standard library has
-`Option.to_result ~none:err opt` (with labelled argument).
+- This pattern is so common it's sometimes called `Option.to_result` or `Result.of_option`.
+- The standard library has `Option.to_result ~none:err opt` (with labelled argument).
 
 :::
 
@@ -141,8 +135,8 @@ let _ = parse_int_v "9999"
 `Ok 42`, `Error (Not_an_int "frog")`, `Error Empty_input`,
 `Error (Too_large 9999)`.
 
-The variant tells callers exactly which error case fired. They can
-pattern-match on it and decide what to do.
+- The variant tells callers exactly which error case fired.
+- They can pattern-match on it and decide what to do.
 
 :::
 
@@ -150,8 +144,8 @@ pattern-match on it and decide what to do.
 
 ## Chaining: errors propagate first-wins
 
-The result monad propagates the *first* `Error` it encounters.
-Subsequent steps don't run.
+- The result monad propagates the *first* `Error` it encounters.
+- Subsequent steps don't run.
 
 ```ocaml
 let ( let* ) = Result.bind
@@ -168,11 +162,11 @@ let pipeline () =
 let _ = pipeline ()
 ```
 
-`Error "first"`. Once `step1` errored, the pipeline is dead; we
-never see "second" or 42.
+`Error "first"`.
 
-This is what you usually want: the *origin* of the failure is the
-useful information, not how it cascaded.
+- Once `step1` errored, the pipeline is dead.
+- We never see "second" or 42.
+- This is what you usually want: the *origin* of the failure is the useful information, not how it cascaded.
 
 :::
 
@@ -202,11 +196,11 @@ let _ = combine (validate_int "frog") (validate_int "bar")
 `Ok (1, 2)`, `Error ["frog is not an int"]`,
 `Error ["frog is not an int"; "bar is not an int"]`.
 
-The error type is a *list* of messages; `combine` accumulates.
-This is sometimes called the *Applicative* or *Validation* shape:
-it runs both arms regardless and aggregates failures. Not a strict
-monad (the second step doesn't depend on the first's result), but
-the same flavour of "what to do on failure" abstraction.
+- The error type is a *list* of messages; `combine` accumulates.
+- Sometimes called the *Applicative* or *Validation* shape.
+- It runs both arms regardless and aggregates failures.
+- Not a strict monad (the second step doesn't depend on the first's result).
+- Same flavour of "what to do on failure" abstraction.
 
 :::
 
@@ -214,9 +208,8 @@ the same flavour of "what to do on failure" abstraction.
 
 ## When `result` becomes heavy
 
-A function chain six `let*`s long is fine. A whole codebase where
-every function returns `('a, my_error_type) result` is a lot to
-carry.
+- A function chain six `let*`s long is fine.
+- A whole codebase where every function returns `('a, my_error_type) result` is a lot to carry.
 
 Real OCaml code often:
 
@@ -274,8 +267,8 @@ let _ = parse_pair_r "frog"
 `Ok (3, 4)`, `Error "second: not an int: frog"`,
 `Error "expected '(... , ...)'"`.
 
-The two `let*`s short-circuit on the first parse failure with a
-specific message.
+- The two `let*`s short-circuit on the first parse failure.
+- Each carries a specific message.
 
 :::
 
@@ -283,9 +276,10 @@ specific message.
 
 ## What's next
 
-Lecture 4: **the state monad**. Thread a hidden mutable-ish state
-through a chain of computations *without* mutation. The third
-monad shape; the same `let*` notation.
+Lecture 4: **the state monad**.
+
+- Thread a hidden mutable-ish state through a chain of computations *without* mutation.
+- The third monad shape; the same `let*` notation.
 
 :::
 

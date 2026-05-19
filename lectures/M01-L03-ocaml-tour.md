@@ -55,9 +55,8 @@ truncates:
 17 mod 5
 ```
 
-OCaml integers are 63-bit on a 64-bit machine (one bit goes to the
-runtime for tagging). For arbitrary precision you reach for `zarith`,
-not the built-in `int`.
+- 63-bit on a 64-bit machine — one bit for runtime tagging.
+- For arbitrary precision: `zarith`, not built-in `int`.
 
 :::
 
@@ -79,9 +78,9 @@ Mixing them is a *type error*, caught at compile time:
 1 + 2.0
 ```
 
-This will refuse to evaluate. OCaml is telling you something other
-languages hide: integer addition and floating-point addition are
-genuinely different operations.
+- This refuses to compile.
+- Integer addition and float addition are **genuinely different operations**.
+- Other languages hide that; OCaml makes it explicit.
 
 :::
 
@@ -142,9 +141,9 @@ let area_of_circle r = pi *. r *. r
 let _ = area_of_circle 2.0
 ```
 
-Bindings are **immutable** by default. `let pi = 3.14159` does not
-create a variable cell you can later assign to; it just makes the name
-`pi` refer to the value `3.14159` from then on.
+- Bindings are **immutable** by default.
+- `let pi = 3.14159` does NOT create a variable cell.
+- It just makes the name `pi` refer to the value `3.14159`.
 
 :::
 
@@ -183,9 +182,9 @@ let x = x + 1
 let y = x
 ```
 
-After this, `y` is `2`. The first `x` (the one equal to `1`) is no
-longer reachable by name, but if some earlier code captured it, that
-old value is still alive and still equal to `1`.
+- After: `y = 2`.
+- The first `x` (`= 1`) is **no longer reachable by name.**
+- If earlier code captured it, that value is still alive — and still `1`.
 
 :::
 
@@ -217,11 +216,9 @@ Without writing a single type annotation.
 let add_f x y = x +. y
 ```
 
-Now the toplevel reports `val add_f : float -> float -> float = <fun>`,
-because `+.` constrains the arguments to be floats.
-
-The distinction between `+` and `+.` is what makes this work without
-any "guess what the user meant" heuristics.
+- Toplevel: `val add_f : float -> float -> float = <fun>`.
+- `+.` constrains the arguments to be `float`.
+- That's the whole trick — no "guess what the user meant" heuristics.
 
 :::
 
@@ -240,8 +237,8 @@ let double (x : int) : int = x + x
 let triple : int -> int = fun x -> x + x + x
 ```
 
-Most of the time you leave them off and let inference do the work. In
-public APIs you put them on for documentation.
+- Most of the time: leave them off.
+- On public APIs: put them on for documentation.
 
 :::
 
@@ -281,14 +278,13 @@ Take a moment, then peek.
 
 ## Activity discussion
 
-`f : float -> float`. The `+.` operator forces `x` to be a `float`, so
-the result is a `float`, so the function is `float -> float`.
+`f : float -> float`.
 
-If you had written `let f x = x + 1`, you would get `int -> int`. The
-choice of operator drives inference.
+- `+.` forces `x` to be `float`.
+- Result is `float`. Function is `float -> float`.
+- If we'd written `+`: `int -> int` instead.
 
-This is the entire trick to reading OCaml type errors: ask which
-operators or constructors are constraining each variable.
+**The operator drives inference.** That's the whole trick to reading OCaml type errors.
 
 :::
 
@@ -296,8 +292,9 @@ operators or constructors are constraining each variable.
 
 ## What's next
 
-Week 2 zooms into expressions: literals, let bindings, operators, type
-inference, `if`/`then`/`else`. We start writing real (small) programs.
+- **Module 2 zooms into expressions:**
+- Literals, `let` bindings, operators, type inference, `if`/`then`/`else`.
+- We start writing real (small) programs.
 
 :::
 

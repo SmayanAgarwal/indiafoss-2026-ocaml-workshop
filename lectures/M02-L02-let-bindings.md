@@ -24,7 +24,7 @@ ability to re-bind an existing name without mutating anything.
 
 ## Two forms of `let`
 
-OCaml has *the same keyword* for two related things:
+- Same keyword, two related uses:
 
 **Top-level `let`:** introduces a name into the rest of the file.
 
@@ -44,8 +44,8 @@ let _ =
   pi *. r *. r
 ```
 
-Same idea, different scope. The expression form does not pollute the
-outer namespace.
+- Same idea, different scope.
+- The expression form does **not** pollute the outer namespace.
 
 :::
 
@@ -67,12 +67,10 @@ let circle_area r =
 let _ = circle_area 5.0
 ```
 
-`r_sq` is in scope inside the body of `circle_area`. Outside the
-function it doesn't exist; `let _ = r_sq` after the function would
-fail with `Unbound value r_sq`.
-
-This is the equivalent of a local variable in C, except no mutation
-is happening and the name disappears at the end of the expression.
+- `r_sq` is in scope **inside** `circle_area`'s body.
+- Outside the function it doesn't exist: `let _ = r_sq` would fail with `Unbound value r_sq`.
+- Like a C local variable, except **no mutation**.
+- The name disappears at the end of the expression.
 
 :::
 
@@ -102,17 +100,12 @@ let x = x * 10
 
 After these three lines, what is `x`?
 
-Step through:
+- After line 1: `x` is `1`.
+- After line 2: new `x` bound to `(old x) + 1 = 2`. First `x` still exists; the name now refers to the new binding.
+- After line 3: another new `x`, bound to `(previous x) * 10 = 20`.
+- Final: `x = 20`.
 
-1. After line 1: `x` is `1`.
-2. After line 2: a new `x` is bound to `(old x) + 1 = 2`. The first
-   `x` still exists; the *name* `x` now refers to the new binding.
-3. After line 3: another new `x`, bound to `(previous x) * 10 = 20`.
-
-So `x = 20`.
-
-This is **shadowing**. No mutation, three distinct bindings, and the
-name happens to be the same.
+- This is **shadowing**: no mutation, three distinct bindings, same name.
 
 :::
 
@@ -129,12 +122,11 @@ let _ = f ()
 
 What does `f ()` return?
 
-`1`. The function `f` was defined when `x` was `1`. It captured the
-value `1`, not "the current value of `x`". The later `let x = 99`
-does not retroactively change what `f` sees.
-
-If `let` were mutation, `f` would return `99` and the language would
-be much less predictable.
+- Answer: `1`.
+- `f` was defined when `x` was `1`: it **captured the value** `1`.
+- Not "the current value of `x`".
+- Later `let x = 99` does **not** retroactively change what `f` sees.
+- If `let` were mutation, `f` would return `99`: language would be much less predictable.
 
 :::
 
@@ -151,7 +143,7 @@ scoped: `f` returns what `x` meant when `f` was defined.
 
 ## Nested `let ... in`
 
-You can chain `let ... in`s to compute intermediate values:
+Chain `let ... in`s to compute intermediate values:
 
 ```ocaml
 let _ =
@@ -161,8 +153,8 @@ let _ =
   c
 ```
 
-`int = 25`. Each `let ... in` introduces a name, and the body of
-that `let ... in` can use it.
+- Result: `int = 25`.
+- Each `let ... in` introduces a name visible in its body.
 
 Shadowing works in nested bindings too:
 
@@ -174,7 +166,7 @@ let _ =
   x
 ```
 
-`int = 22`.
+- Result: `int = 22`.
 
 :::
 
@@ -193,12 +185,11 @@ let _ = demo ()
 let _ = x
 ```
 
-`demo ()` returns `1`; the top-level `x` is `100`. The local
-binding inside `demo` shadows the outer one, but only inside the
-function body. Outside, the outer `x` is unchanged.
-
-This is the same shape as nested scopes in C / Java: an inner
-local hides the outer name within the inner scope.
+- `demo ()` returns `1`.
+- Top-level `x` is still `100`.
+- Local binding shadows the outer one **only inside** the function body.
+- Outside, the outer `x` is unchanged.
+- Same shape as nested scopes in C / Java: inner local hides outer within inner scope.
 
 :::
 
@@ -229,14 +220,11 @@ let _ = print_endline "hi"
 let _ = 3 + 4
 ```
 
-The pattern `_` matches any value and discards it. We use `let _ =
-...` when the expression is being evaluated for its side effect (the
-first line) or its type-check (the second; the compiler will report
-the result but no name is taken).
-
-This is also why you sometimes see `let _name = ...` (with a leading
-underscore on a real name): "I'm binding this but might not use
-it; please don't warn me about that".
+- `_` matches any value and discards it.
+- Use `let _ = ...` when evaluating for:
+  - **side effect** (first line)
+  - **type-check** (second; compiler reports result, no name is taken)
+- Related: `let _name = ...` (leading `_` on a real name) means "binding this, might not use it: don't warn me".
 
 :::
 
@@ -265,13 +253,10 @@ What is the final value? Predict, then run.
 - Outer: `x = 1`
 - After first inner: `x = 2`
 - After second inner: `x = 20`
-
-Result: `20`. Three shadowing bindings, no mutation.
-
-The original `1` is still in memory at the moment line 2 evaluates;
-after that, no reachable code refers to it, so the garbage collector
-will reclaim it the next time it runs. Garbage collection is what
-lets you write shadowing-heavy code without leaking memory.
+- Result: `20`. Three shadowing bindings, **no mutation**.
+- Original `1` lingers in memory while line 2 evaluates.
+- After that no reachable code refers to it: the GC reclaims it.
+- **Garbage collection** is what lets shadowing-heavy code avoid leaks.
 
 :::
 
@@ -279,9 +264,9 @@ lets you write shadowing-heavy code without leaking memory.
 
 ## What's next
 
-In the next lecture we make the type system explicit: **static vs
-dynamic semantics**. What it means for a language to *catch errors
-before running the program*, and where OCaml lands on that spectrum.
+- Next: **static vs dynamic semantics**.
+- What it means to *catch errors before running the program*.
+- Where OCaml lands on that spectrum.
 
 :::
 

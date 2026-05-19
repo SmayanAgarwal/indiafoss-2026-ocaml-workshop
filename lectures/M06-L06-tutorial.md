@@ -28,8 +28,10 @@ let length xs = List.fold_left (fun n _ -> n + 1) 0 xs
 let _ = length [10; 20; 30; 40]
 ```
 
-`int = 4`. Ignore the element; bump the counter. Tail-recursive,
-constant stack.
+`int = 4`.
+
+- Ignore the element; bump the counter.
+- Tail-recursive, constant stack.
 
 :::
 
@@ -43,10 +45,12 @@ let sum xs = List.fold_left (+) 0 xs
 let _ = sum [1; 2; 3; 4; 5]
 ```
 
-`int = 15`. `+` is the combining function; `0` is the starting
-accumulator.
+`int = 15`.
 
-The same shape for `product`:
+- `+` is the combining function.
+- `0` is the starting accumulator.
+
+Same shape for `product`:
 
 ```ocaml
 let product xs = List.fold_left ( * ) 1 xs
@@ -54,8 +58,9 @@ let product xs = List.fold_left ( * ) 1 xs
 let _ = product [1; 2; 3; 4; 5]
 ```
 
-`int = 120`. The accumulator starts at `1` (identity for
-multiplication).
+`int = 120`.
+
+- Accumulator starts at `1` (identity for multiplication).
 
 :::
 
@@ -69,9 +74,11 @@ let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
 let _ = rev [1; 2; 3; 4]
 ```
 
-`[4; 3; 2; 1]`. Prepend each element to the accumulator. Because
-we go left-to-right and prepend, the first element ends up at the
-*bottom*: the result is reversed.
+`[4; 3; 2; 1]`.
+
+- Prepend each element to the accumulator.
+- Left-to-right traversal + prepending: first element ends up *deepest*.
+- Result is reversed.
 
 :::
 
@@ -86,12 +93,13 @@ let map f xs =
 let _ = map (fun n -> n * n) [1; 2; 3; 4]
 ```
 
-`[1; 4; 9; 16]`. `fold_right` walks right-to-left, so the
-cons-order matches the original order. The combining function
-takes an element `x`, applies `f`, and conses onto the running
-list.
+`[1; 4; 9; 16]`.
 
-The same expressed with `fold_left + rev`:
+- `fold_right` walks right-to-left.
+- Cons-order matches the original order.
+- Combining function: take `x`, apply `f`, cons onto the running list.
+
+Same with `fold_left + rev`:
 
 ```ocaml
 let map_tail f xs =
@@ -117,8 +125,10 @@ let filter p xs =
 let _ = filter (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5; 6]
 ```
 
-`[2; 4; 6]`. For each element, decide whether to include it; the
-combining function picks either `x :: acc` or `acc`.
+`[2; 4; 6]`.
+
+- For each element, decide whether to include it.
+- Combining function picks either `x :: acc` or `acc`.
 
 :::
 
@@ -135,12 +145,13 @@ let concat xss =
 let _ = concat [[1; 2]; [3; 4; 5]; [6]]
 ```
 
-`[1; 2; 3; 4; 5; 6]`. `@` is list-append. We fold over the outer
-list and append each inner list to the accumulator.
+`[1; 2; 3; 4; 5; 6]`.
 
-This is `O(n)` in total length but builds up garbage from the
-intermediate appends; for very long inputs, `List.concat` from the
-standard library uses a more efficient implementation.
+- `@` is list-append.
+- Fold over the outer list; append each inner list to the accumulator.
+- `O(n)` in total length, but builds up garbage from intermediate appends.
+- For very long inputs, `List.concat` from the standard library is
+  more efficient.
 
 :::
 
@@ -160,14 +171,13 @@ let _ = exists (fun n -> n < 0) [1; -2; 3]
 
 `true`, `false`, `true`.
 
-`for_all`: accumulator starts `true`; an element fails if `p x` is
-false, dragging the whole `&&` to false. `exists`: accumulator
-starts `false`; an element succeeding flips the `||` to true.
-
-Note: these don't short-circuit (fold visits every element). The
-standard library's `List.for_all` and `List.exists` do
-short-circuit; for a really long list with an early failure, prefer
-those.
+- `for_all`: accumulator starts `true`; an element with `p x = false`
+  drags the whole `&&` to false.
+- `exists`: accumulator starts `false`; a passing element flips the
+  `||` to true.
+- These don't short-circuit: fold visits every element.
+- The standard library's `List.for_all` / `List.exists` do
+  short-circuit; prefer those for long lists with early failure.
 
 :::
 
@@ -184,11 +194,12 @@ let count p xs =
 let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]
 ```
 
-`int = 3`. Three positive elements. The accumulator counts; the
-combining function bumps on a passing element.
+`int = 3`.
 
-You could also write this as `List.length (List.filter p xs)`. The
-fold version is one pass, no intermediate list.
+- Three positive elements.
+- Accumulator counts; combining function bumps on a passing element.
+- Alternative: `List.length (List.filter p xs)`.
+- Fold version is one pass, no intermediate list.
 
 :::
 
@@ -220,12 +231,11 @@ let _ = maximum ([] : int list)
 
 `Some 9`, `None`.
 
-The accumulator is an `int option`. Initially `None` (no element
-seen yet). For each element, if the accumulator was `None`, take
-this element; otherwise compare and keep the larger.
-
-The type annotation `([] : int list)` is needed for an empty list
-because `[]` alone is polymorphic and OCaml needs to pick a type.
+- Accumulator is an `int option`.
+- Starts at `None` (no element seen yet).
+- For each element: if `None`, take this element; otherwise keep the larger.
+- `([] : int list)` annotation is needed: `[]` alone is polymorphic
+  and OCaml needs to pick a type.
 
 :::
 
@@ -243,9 +253,11 @@ After Module 6 you can:
 - Chain operations with `|>` pipelines.
 - Recognize when the standard library has a function for the job.
 
-Module 7 turns to side effects (`ref`, mutation, exceptions) and to
-**modules** (the OCaml language feature, not the NPTEL kind). After
-that, Module 8 covers monads and GADTs.
+What's coming up:
+
+- Module 7: side effects (`ref`, mutation, exceptions) and **modules**
+  (the OCaml language feature, not the NPTEL kind).
+- Module 8: monads and GADTs.
 
 :::
 

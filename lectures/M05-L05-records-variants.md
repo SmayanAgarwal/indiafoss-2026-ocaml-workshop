@@ -34,9 +34,9 @@ let _ = summary { name = "Alice"; age = 30; admin = true }
 
 `"Alice, age 30"`.
 
-The pattern `{ name; age; _ }` binds `name` and `age` from the
-record; the `_` says "and there may be more fields, ignored". Without
-the `_`, OCaml warns about an unhandled field.
+- Pattern `{ name; age; _ }` binds `name` and `age` from the record.
+- `_` says "more fields exist, ignored".
+- Without `_`, OCaml warns about unhandled fields.
 
 :::
 
@@ -54,12 +54,11 @@ let _ = role { name = "Bob"; age = 25; admin = true }
 let _ = role { name = "Carol"; age = 28; admin = false }
 ```
 
-`"Bob (admin)"`, `"Carol"`. The pattern `{ name = n; admin }`
-binds the field `name` to the local name `n`, and binds `admin` to
-itself (sugar for `admin = admin`).
+`"Bob (admin)"`, `"Carol"`.
 
-The "and other fields are ignored" is implicit when you list
-specific fields you care about.
+- Pattern `{ name = n; admin }` binds field `name` to local name `n`.
+- Binds `admin` to itself (sugar for `admin = admin`).
+- "Other fields are ignored" is implicit when you list specific fields.
 
 :::
 
@@ -83,9 +82,9 @@ let _ = perimeter (Rectangle (3.0, 4.0))
 let _ = perimeter (Polygon [1.0; 2.0; 3.0])
 ```
 
-Each clause matches a constructor and binds the payload to a name
-(`r`, `(w, h)`, `sides`). The pattern says "this kind; here's how
-to take its data apart".
+- Each clause matches a constructor.
+- Binds the payload to a name (`r`, `(w, h)`, `sides`).
+- The pattern says "this kind; here's how to take its data apart".
 
 :::
 
@@ -111,9 +110,8 @@ let _ = describe Quit
 
 `"click at (100, 200)"`, `"key: q"`, `"quit"`.
 
-The `Click` constructor's payload is a *record* declared inline.
-The pattern destructures it the same way a top-level record
-pattern would.
+- `Click`'s payload is a *record* declared inline.
+- The pattern destructures it like any top-level record pattern.
 
 :::
 
@@ -138,9 +136,9 @@ let example = Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf))
 let _ = mirror example
 ```
 
-The pattern `Node (l, v, r)` destructures the constructor and
-gives names to its three components. The recursive case rebuilds
-a `Node` with the subtrees swapped (and recursively mirrored).
+- Pattern `Node (l, v, r)` destructures the constructor.
+- Names the three components.
+- Recursive case rebuilds with subtrees swapped (and mirrored).
 
 You can also nest deeper:
 
@@ -171,12 +169,12 @@ let zip_pair_status (a, b) =
 let _ = zip_pair_status (Some 1, None)
 ```
 
-`"first only"`. The pattern `None, None` is sugar for `(None,
-None)` — you don't need the outer parens. We match on the *pair* of
-two options; four cases cover all combinations.
+`"first only"`.
 
-This is a recurring pattern: when you have two related options or
-two related variants, match on the tuple of both.
+- Pattern `None, None` is sugar for `(None, None)`; outer parens optional.
+- We match on the *pair* of two options.
+- Four cases cover all combinations.
+- Recurring idiom: for two related options or variants, match on the **tuple of both**.
 
 :::
 
@@ -199,8 +197,10 @@ let _ = is_error NotFound
 let _ = is_error OK
 ```
 
-`true`, `false`. Group constructors with `|` to share a right-hand
-side. Same pattern we saw in Lecture 2.
+`true`, `false`.
+
+- Group constructors with `|` to share a right-hand side.
+- Same pattern as Lecture 2.
 
 :::
 
@@ -208,8 +208,8 @@ side. Same pattern we saw in Lecture 2.
 
 ## When the variant has many constructors
 
-For a status with 30 constructors, `match` becomes long. A common
-idiom is to split into helpers:
+- A status with 30 constructors makes `match` long.
+- Common idiom: split into helpers grouping related cases.
 
 ```ocaml
 type status =
@@ -225,10 +225,10 @@ let category = function
   | S_500 | S_502 | S_503 -> `Server_error
 ```
 
-`category : status -> [> ...]`. The category itself is a small
-"polymorphic variant" (a different OCaml feature; we mention it
-in passing here). The point is: when constructors have natural
-groupings, encode the groupings with helper functions.
+`category : status -> [> ...]`.
+
+- The category is a small "polymorphic variant" (different OCaml feature, mentioned in passing).
+- Point: when constructors have natural groupings, encode them with helper functions.
 
 :::
 
@@ -266,8 +266,9 @@ let _ = describe (Click { x = 50; y = 75 })
 let _ = describe (Key 'a')
 ```
 
-`"click at (50, 75)"`, `"key pressed: a"`. Two cases, each
-destructuring the payload as needed.
+`"click at (50, 75)"`, `"key pressed: a"`.
+
+- Two cases, each destructuring the payload as needed.
 
 :::
 
@@ -275,9 +276,9 @@ destructuring the payload as needed.
 
 ## What's next
 
-Lecture 6: the **tutorial** for Module 5. We build a small AST
-walker that uses every pattern shape from this module: literals,
-variables, wildcards, nesting, or-patterns, guards.
+- Lecture 6: the **tutorial** for Module 5.
+- Build a small AST walker.
+- Uses every pattern shape: literals, variables, wildcards, nesting, or-patterns, guards.
 
 :::
 

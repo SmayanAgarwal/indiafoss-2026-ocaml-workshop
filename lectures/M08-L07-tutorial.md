@@ -41,9 +41,7 @@ Six constructors. Notice:
 - `If` is polymorphic in its return type but requires the
   condition to be `bool expr` and the branches to have the same
   `'a expr`.
-
-The compiler can already enforce a lot about what you build with
-this.
+- The compiler can already enforce a lot about what you build with this.
 
 :::
 
@@ -69,12 +67,9 @@ let rec eval : type a. a expr -> a = function
   | If (c, t, e) -> if eval c then eval t else eval e
 ```
 
-The `type a. a expr -> a` says: "for any `a`, an `a expr`
-evaluates to an `a`". Each pattern refines `a`: `Int_lit n -> n`
-returns an `int`, `Bool_lit b -> b` returns a `bool`, and so on.
-
-The compiler accepts this because each clause's right-hand side
-matches the constructor's index.
+- The `type a. a expr -> a` says: for any `a`, an `a expr` evaluates to an `a`.
+- Each pattern refines `a`: `Int_lit n -> n` returns an `int`, `Bool_lit b -> b` returns a `bool`, and so on.
+- The compiler accepts this because each clause's right-hand side matches the constructor's index.
 
 :::
 
@@ -112,8 +107,10 @@ let _ = eval e1
 let _ = eval e2
 ```
 
-`9` and `100`. The evaluator returns the expected types because
-the expressions are well-typed at the OCaml level.
+`9` and `100`.
+
+- The evaluator returns the expected types.
+- This works because the expressions are well-typed at the OCaml level.
 
 :::
 
@@ -132,11 +129,9 @@ let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
 let bad = If (Bool_lit true, Int_lit 1, Bool_lit false)
 ```
 
-All three are *compile* errors. We don't need the evaluator to
-catch them; the AST itself doesn't admit them.
-
-This is the rebuilt promise of GADTs: failure modes that would
-normally be evaluator bugs (or runtime checks) become type errors.
+- All three are *compile* errors.
+- We don't need the evaluator to catch them; the AST itself doesn't admit them.
+- This is the rebuilt promise of GADTs: failure modes that would normally be evaluator bugs (or runtime checks) become type errors.
 
 :::
 
@@ -148,8 +143,8 @@ normally be evaluator bugs (or runtime checks) become type errors.
 | Less : int expr * int expr -> bool expr
 ```
 
-Inputs are `int expr`, output is `bool expr`. Adding this to the
-type and the evaluator:
+- Inputs are `int expr`, output is `bool expr`.
+- Adding this to the type and the evaluator:
 
 ```ocaml
 type _ expr =
@@ -175,8 +170,8 @@ let _ = eval (If (Less (Int_lit 3, Int_lit 5), Int_lit 1, Int_lit 0))
 
 `1` (3 < 5 is true).
 
-The compiler made us add the new case in `eval`; the exhaustiveness
-warning we relied on in Module 5 still works for GADTs.
+- The compiler made us add the new case in `eval`.
+- The exhaustiveness warning we relied on in Module 5 still works for GADTs.
 
 :::
 
@@ -210,10 +205,11 @@ let _ = pretty
        Mul (Int_lit 4, Int_lit 5)))
 ```
 
-A string like `"(if (3 < 5) then (1 + 2) else (4 * 5))"`. Note
-`pretty`'s signature: `'a expr -> string`. The return is always
-`string`, regardless of the expression's type index. That's a
-valid signature: the result type doesn't have to depend on `a`.
+A string like `"(if (3 < 5) then (1 + 2) else (4 * 5))"`.
+
+- Note `pretty`'s signature: `'a expr -> string`.
+- The return is always `string`, regardless of the expression's type index.
+- That's a valid signature: the result type doesn't have to depend on `a`.
 
 :::
 
@@ -242,12 +238,12 @@ let _ = eval_safe (Div (Int_lit 10, Int_lit 2))
 let _ = eval_safe (Div (Int_lit 10, Int_lit 0))
 ```
 
-`Some 5`, `None`. We combine GADT-based AST with option-monad
-sequencing. The evaluator returns `'a option`; the option monad
-short-circuits on division by zero.
+`Some 5`, `None`.
 
-This is the design pattern for any non-trivial typed interpreter:
-GADTs for type safety, an error monad for runtime failure.
+- We combine GADT-based AST with option-monad sequencing.
+- The evaluator returns `'a option`.
+- The option monad short-circuits on division by zero.
+- This is the design pattern for any non-trivial typed interpreter: GADTs for type safety, an error monad for runtime failure.
 
 :::
 
@@ -266,12 +262,11 @@ that work for arbitrary `'a`?
 
 ## Activity discussion
 
-A `Less : 'a expr * 'a expr -> bool expr` would type-check for
-constructing values, but the evaluator would fail. In the case
-`Less (a, b) -> eval a < eval b`, OCaml's `<` works for any
-*concrete* type via polymorphic compare, but here `a` and `b` have
-*abstract* type `'a` inside the GADT case. We don't know enough
-about `'a` to compare values of that type.
+- A `Less : 'a expr * 'a expr -> bool expr` would type-check for constructing values.
+- But the evaluator would fail.
+- In `Less (a, b) -> eval a < eval b`, OCaml's `<` works for any *concrete* type via polymorphic compare.
+- Here `a` and `b` have *abstract* type `'a` inside the GADT case.
+- We don't know enough about `'a` to compare values of that type.
 
 There are two fixes:
 
@@ -280,9 +275,9 @@ There are two fixes:
 - **Specialize**: keep `Less : int expr * int expr -> bool expr`
   and define `Less_float` etc. for other numeric types.
 
-The first is more elegant; the second is what we already have. The
-takeaway: a GADT lets you encode constraints precisely, but you
-have to encode all the constraints you'll actually need.
+- The first is more elegant; the second is what we already have.
+- Takeaway: a GADT lets you encode constraints precisely.
+- But you have to encode all the constraints you'll actually need.
 
 :::
 
@@ -299,11 +294,9 @@ After Module 8 you can:
 - Define and use simple GADTs to encode type-level information.
 - Combine GADTs with monads in a small typed interpreter.
 
-You've finished the **functional programming** half of the course
-(Modules 1-8). The second half (Modules 9-12) turns to **secure
-systems software**: runtime / GC, memory safety, unikernels,
-concurrency. The toolkit you've built will be the foundation for
-everything that comes.
+- You've finished the **functional programming** half of the course (Modules 1-8).
+- The second half (Modules 9-12) turns to **secure systems software**: runtime / GC, memory safety, unikernels, concurrency.
+- The toolkit you've built will be the foundation for everything that comes.
 
 :::
 

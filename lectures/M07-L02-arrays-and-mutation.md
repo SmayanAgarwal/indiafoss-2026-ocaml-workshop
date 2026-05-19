@@ -37,11 +37,10 @@ let _ = c.name
 
 `int = 2`, `string = "visits"`.
 
-Only fields marked `mutable` can be updated. The `name` field is
-immutable; trying to write `c.name <- "x"` would be a compile
-error.
-
-The `<-` is the field-assignment operator.
+- Only fields marked `mutable` can be updated.
+- The `name` field is immutable.
+- Trying to write `c.name <- "x"` would be a compile error.
+- `<-` is the field-assignment operator.
 
 :::
 
@@ -49,10 +48,11 @@ The `<-` is the field-assignment operator.
 
 ## Why some fields mutable and others not
 
-Marking just the fields that change makes the design intent
-visible. A `counter` with `mutable n` but immutable `name` says:
-"the number changes; the label does not". Anyone reading the type
-can tell from the declaration.
+- Marking just the fields that change makes **design intent
+  visible**.
+- A `counter` with `mutable n` but immutable `name` says: "the
+  number changes; the label does not".
+- Anyone reading the type can tell from the declaration.
 
 ```ocaml
 type buffer = {
@@ -62,7 +62,7 @@ type buffer = {
 }
 ```
 
-The type declaration documents what's allowed to change.
+- The type declaration documents what's allowed to change.
 
 :::
 
@@ -87,8 +87,7 @@ let _ = a
 - Indexing uses `a.(i)`.
 - Assignment uses `a.(i) <- value`.
 - Out-of-bounds access raises `Invalid_argument`.
-
-Arrays are *zero-indexed*, like lists.
+- Arrays are *zero-indexed*, like lists.
 
 :::
 
@@ -106,14 +105,10 @@ Arrays are *zero-indexed*, like lists.
 | Sharing tails | yes | no |
 | Equational reasoning | yes | no for mutated cells |
 
-Use **arrays** when you need fast random access by index and the
-size is fixed.
-
-Use **lists** when you're traversing front-to-back and want
-immutability.
-
-For *dynamic-size, indexed access*, neither is great; reach for
-`Dynarray` (added in OCaml 5.2) or `Buffer` (for byte strings).
+- **Arrays**: fast random access by index, size fixed.
+- **Lists**: traversing front-to-back, immutability.
+- **Neither fits dynamic-size, indexed access**: reach for
+  `Dynarray` (OCaml 5.2) or `Buffer` (for byte strings).
 
 :::
 
@@ -146,8 +141,10 @@ let a = [|10; 20; 30|]
 let () = Array.iter (fun x -> print_endline (string_of_int x)) a
 ```
 
-Prints 10, 20, 30 on separate lines. `Array.iter` is the
-side-effecting walk; the function returns unit.
+Prints 10, 20, 30 on separate lines.
+
+- `Array.iter` is the **side-effecting walk**.
+- The function returns unit.
 
 For a pure transformation:
 
@@ -156,11 +153,11 @@ let b = Array.map (fun x -> x * 2) a
 let _ = b
 ```
 
-`int array = [|20; 40; 60|]`. `Array.map` returns a *new* array;
-the input is untouched.
+`int array = [|20; 40; 60|]`.
 
-There's also `Array.fold_left`, `Array.length`, `Array.to_list`,
-etc.
+- `Array.map` returns a *new* array; the input is untouched.
+- Other useful functions: `Array.fold_left`, `Array.length`,
+  `Array.to_list`, etc.
 
 :::
 
@@ -183,12 +180,14 @@ let _ =
   (c.(Char.code 'l'), c.(Char.code 'o'))
 ```
 
-`(2, 1)`. Two 'l's, one 'o'. An array is the right shape: indexed
-by character code, mutated in place during the scan.
+`(2, 1)`. Two 'l's, one 'o'.
 
-This is what an imperative loop in C looks like, translated to
-OCaml. We use mutation because the natural shape of the algorithm
-is "step through the input, update this counter table".
+- An array is the right shape here: **indexed by character code,
+  mutated in place** during the scan.
+- This is what an imperative loop in C looks like, translated to
+  OCaml.
+- We use mutation because the natural shape of the algorithm is
+  "step through the input, update this counter table".
 
 :::
 
@@ -211,9 +210,12 @@ let _ = sum_lst [1;2;3;4;5]
 let _ = sum_arr [|1;2;3;4;5|]
 ```
 
-Both give `15`. The fold version is one line; the array version is
-three lines with a `ref`. Reach for arrays only when you actually
-need the indexed-access or fixed-size properties.
+Both give `15`.
+
+- The fold version is **one line**.
+- The array version is **three lines with a `ref`**.
+- Reach for arrays only when you actually need the indexed-access
+  or fixed-size properties.
 
 :::
 
@@ -245,17 +247,17 @@ let () = reverse_in_place a
 let _ = a
 ```
 
-`[|5; 4; 3; 2; 1|]`. The function returns `unit`; its effect is to
-mutate `a`.
+`[|5; 4; 3; 2; 1|]`.
 
-The classic two-pointer reverse: swap element at index `i` with
-the one at `n - 1 - i`, for `i` from `0` to halfway through. The
-`for ... to ... do ... done` is OCaml's standard imperative loop;
-it's pretty much only used in arrays-and-mutation code.
-
-Note this is *destructive*. The original list of values is lost.
-For an immutable reverse, prefer `Array.of_list (List.rev (Array.to_list a))`
-or just keep it as a list.
+- The function returns `unit`; its effect is to mutate `a`.
+- **Classic two-pointer reverse**: swap element at index `i` with
+  the one at `n - 1 - i`, for `i` from `0` to halfway through.
+- `for ... to ... do ... done` is OCaml's standard imperative
+  loop; it's pretty much only used in arrays-and-mutation code.
+- This is *destructive*: the original list of values is lost.
+- For an immutable reverse, prefer
+  `Array.of_list (List.rev (Array.to_list a))` or just keep it as
+  a list.
 
 :::
 
@@ -263,9 +265,11 @@ or just keep it as a list.
 
 ## What's next
 
-Lecture 3: **exceptions**. The other major form of "side effect"
-in OCaml. They let you signal "something went wrong" without
-threading an option / result through every layer of code.
+Lecture 3: **exceptions**.
+
+- The other major form of "side effect" in OCaml.
+- They let you signal "something went wrong" without threading an
+  option / result through every layer of code.
 
 :::
 

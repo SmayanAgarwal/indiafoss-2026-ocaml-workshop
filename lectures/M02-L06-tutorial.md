@@ -22,8 +22,8 @@ these tools and meet the type errors when they show up.
 
 ## Problem 1: the classic temperature classifier
 
-Write a function that returns a label for a Celsius temperature:
-"freezing", "cold", "comfortable", or "hot".
+- Return a label for a Celsius temperature.
+- Labels: "freezing", "cold", "comfortable", "hot".
 
 ```ocaml
 let temperature_label c =
@@ -35,11 +35,9 @@ let temperature_label c =
 let _ = temperature_label 22.5
 ```
 
-`string = "comfortable"`.
-
-Try `30.0`, `-2.0`, `10.0`. Notice the threshold at the boundary:
-`15.0` itself is classified as "comfortable" because the `<` is
-strict.
+- Result: `string = "comfortable"`.
+- Try `30.0`, `-2.0`, `10.0`.
+- Boundary: `15.0` is classified "comfortable" because `<` is **strict**.
 
 :::
 
@@ -51,8 +49,7 @@ rather it be "cold", swap the operator.
 
 ## Problem 2: a leap year predicate
 
-A year is a leap year if it is divisible by 4, *unless* it is
-divisible by 100, *unless again* it is divisible by 400.
+- Leap year: divisible by 4, *unless* by 100, *unless again* by 400.
 
 ```ocaml
 let is_leap y =
@@ -64,11 +61,9 @@ let _ = is_leap 1900
 let _ = is_leap 2000
 ```
 
-Expected: `true, false, false, true`.
-
-The parens around the first conjunction are not strictly needed
-(`&&` binds tighter than `||`) but they make the rule readable.
-This is a place where explicit parens beat clever precedence.
+- Expected: `true, false, false, true`.
+- Parens around the first `&&` not strictly needed (`&&` binds tighter than `||`).
+- They make the rule **readable**: explicit parens beat clever precedence.
 
 :::
 
@@ -76,12 +71,12 @@ This is a place where explicit parens beat clever precedence.
 
 ## Problem 3: BMI category
 
-Body Mass Index is `mass / height²`. The standard categories:
-
-- under 18.5 → underweight
-- 18.5 to 25 → normal
-- 25 to 30 → overweight
-- 30 and above → obese
+- BMI = `mass / height²`.
+- Standard categories:
+  - under 18.5: underweight
+  - 18.5 to 25: normal
+  - 25 to 30: overweight
+  - 30 and above: obese
 
 ```ocaml
 let bmi mass height = mass /. (height *. height)
@@ -96,8 +91,8 @@ let bmi_category mass height =
 let _ = bmi_category 70.0 1.75
 ```
 
-`string = "normal"`. Use `let b = bmi mass height in` to compute the
-BMI once and name it `b`, then branch.
+- Result: `string = "normal"`.
+- `let b = bmi mass height in`: compute BMI **once**, name it, then branch.
 
 :::
 
@@ -122,9 +117,10 @@ let _ = clamp 0 10 (-3)
 let _ = clamp 0 10 25
 ```
 
-`7, 0, 10`. The function is `int -> int -> int -> int`. The three
-parameters come in the order `lo`, `hi`, `x`; the result is the
-clamped value.
+- Results: `7, 0, 10`.
+- Type: `int -> int -> int -> int`.
+- Parameter order: `lo`, `hi`, `x`.
+- Result: the clamped value.
 
 :::
 
@@ -144,13 +140,12 @@ let _ = scaled 100.0 4.0 5.0
 let _ = scaled 100.0 0.0 5.0
 ```
 
-`26.25` and `0.0`. The second call avoids a divide-by-zero by
-checking `b = 0.0` in `safe_divide`.
-
-Notice that `safe_divide` *replaces* the bad case with a sentinel
-value (`0.0`). That is a design decision, and not always the right
-one; sometimes you want the error to be visible (a runtime exception
-or a `result` type). We'll come back to this in Module 4.
+- Results: `26.25` and `0.0`.
+- Second call avoids divide-by-zero via `b = 0.0` check in `safe_divide`.
+- `safe_divide` **replaces** the bad case with a sentinel (`0.0`).
+- A design decision, not always right.
+- Sometimes you want the error visible: exception or `result` type.
+- We'll come back to this in Module 4.
 
 :::
 
@@ -172,10 +167,9 @@ Error: This expression has type float but an expression was expected
        of type int
 ```
 
-Read it: the compiler is reporting on `3.14`, saying its type
-(`float`) doesn't match the expected type (`int`). The "expected" is
-driven by the *operator*: `*` is integer multiplication, so it
-expected an `int`. Fix: switch to `*.`.
+- Compiler reports on `3.14`: its type (`float`) doesn't match expected (`int`).
+- "Expected" is **driven by the operator**: `*` is integer mul.
+- Fix: switch to `*.`.
 
 :::
 
@@ -193,8 +187,9 @@ Error: This expression has type int but an expression was expected
        of type string
 ```
 
-The function `bad` was inferred as `string -> string` (because of
-`^`), so passing an `int` is rejected. Convert with `string_of_int`:
+- `bad` was inferred as `string -> string` (because of `^`).
+- Passing an `int` is rejected.
+- Convert with `string_of_int`:
 
 ```ocaml skip
 let _ = bad (string_of_int 5)
@@ -217,9 +212,9 @@ Error: This expression has type int but an expression was expected
        of type string
 ```
 
-The two branches of an `if` must have the same type. Decide whether
-you want a `string` (rewrite the else) or an `int` (rewrite the
-then). Both are fine; pick one.
+- Both `if` branches must have the **same type**.
+- Decide: `string` (rewrite else) or `int` (rewrite then).
+- Either is fine; pick one.
 
 :::
 
@@ -256,12 +251,12 @@ let signum_f x =
 
 What changed:
 
-- Comparison literals: `0` became `0.0`.
-- Returned literals: `-1, 0, 1` became `-1.0, 0.0, 1.0`.
-- Type signature: `int -> int` became `float -> float`.
+- Comparison literals: `0` to `0.0`.
+- Returned literals: `-1, 0, 1` to `-1.0, 0.0, 1.0`.
+- Type signature: `int -> int` to `float -> float`.
 
-The *structure* of the function is identical. OCaml made you spell
-out the type choice, but the logic is the same.
+- **Structure is identical.**
+- OCaml made you spell out the type choice; the logic is the same.
 
 :::
 
@@ -271,17 +266,16 @@ out the type choice, but the logic is the same.
 
 After Module 2 you can:
 
-- Write integer, float, boolean, and string literals.
+- Write `int`, `float`, `bool`, `string` literals.
 - Use `let` and `let ... in` to name values.
 - Read the type the toplevel reports for any expression.
-- Recognise the three common type errors and know how to fix them.
+- Recognise the three common type errors and fix them.
 - Write multi-branch `if`/`else if`/`else` expressions.
 - Compose small functions like `bmi`, `clamp`, `signum`.
 
-Module 3 turns to **functions** as values in their own right:
-currying, partial application, recursion, tail recursion. Once we
-have functions as first-class values, real programs start to take
-shape.
+- **Next, Module 3**: functions as values.
+- Currying, partial application, recursion, tail recursion.
+- Once functions are first-class, real programs take shape.
 
 :::
 

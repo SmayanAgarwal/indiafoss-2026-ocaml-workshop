@@ -36,13 +36,11 @@ type direction = North | South | East | West
 let d = North
 ```
 
-Four *constructors*, separated by `|`. Each is a distinct value
-of type `direction`. `North`, `South`, etc. are written
-capitalized (constructors always start with a capital).
-
-A variable of type `direction` holds *exactly one* of these four.
-
-This is what an `enum` looks like in C or Java.
+- Four *constructors*, separated by `|`
+- Each is a distinct value of type `direction`
+- Constructors are **capitalized** (always start with a capital)
+- A `direction` value holds *exactly one* of the four
+- This is what an `enum` looks like in C or Java
 
 :::
 
@@ -61,13 +59,15 @@ let s = Square 5.0
 let r = Rectangle (4.0, 6.0)
 ```
 
-Three constructors, each carrying data: a `Circle` carries one
-`float` (its radius), a `Square` one `float` (side length), a
-`Rectangle` two `float`s (width and height).
+Three constructors, each carrying data:
 
-`Circle 3.0` is a value. `Square 5.0` is another value. They both
-have type `shape`. The constructor tells you *which kind* of shape,
-and the payload gives the data for that kind.
+- `Circle` carries one `float` (radius)
+- `Square` carries one `float` (side length)
+- `Rectangle` carries two `float`s (width, height)
+
+- `Circle 3.0`, `Square 5.0`: both values of type `shape`
+- Constructor: *which kind* of shape
+- Payload: data for that kind
 
 :::
 
@@ -86,13 +86,12 @@ let _ = area (Circle 3.0)
 let _ = area (Rectangle (4.0, 6.0))
 ```
 
-`28.27...` and `24.0`. The `match` expression inspects which
-constructor was used and binds the payload to local names. For
-`Circle r`, the `r` is the float we packed in.
-
-This is what a `switch` looks like in C, but with two crucial
-upgrades: the compiler checks that you handled every constructor,
-and you can destructure the payload at the same time.
+- Results: `28.27...` and `24.0`
+- `match` inspects which constructor was used
+- Binds the payload to local names (`Circle r`: `r` is the packed float)
+- Like a `switch` in C, with two upgrades:
+  - Compiler checks **every** constructor is handled
+  - You can **destructure** the payload at the same time
 
 :::
 
@@ -123,13 +122,12 @@ Here is an example of a case that is not matched:
 Rectangle (_, _)
 ```
 
-The compiler tells you that `Rectangle` is unhandled. It even tells
-you what shape of case it expects. This warning *catches a class
-of bugs* statically, before any test runs.
-
-In stricter projects you turn this warning into an error: forgetting
-a case becomes a compile failure. We'll see how to enable that in
-Module 7 when we discuss dune configuration.
+- Compiler flags that `Rectangle` is unhandled
+- Even tells you the *shape* of the missing case
+- Catches a class of bugs **statically**, before any test runs
+- Stricter projects turn this warning into an **error**
+- Forgetting a case becomes a compile failure
+- (Module 7 will show how to enable that via dune)
 
 :::
 
@@ -153,12 +151,13 @@ let area s =
   | Rectangle (w, h) -> w *. h
 ```
 
-Suddenly the compiler warns *every* `match` on `shape` that doesn't
-handle `Triangle`. We get a punch list of places to update.
-
-This is "refactor with the compiler's help": add a case, compile,
-fix every site the compiler flags. When the warnings stop, the
-refactor is done.
+- Compiler warns **every** `match` on `shape` that doesn't handle `Triangle`
+- You get a punch list of places to update
+- This is **refactor-with-the-compiler's-help**:
+  - Add a case
+  - Compile
+  - Fix every flagged site
+  - When the warnings stop, the refactor is done
 
 :::
 
@@ -181,13 +180,12 @@ type tcp_state =
   | Closed of { reason : string }
 ```
 
-A connection is in one of four states; each state carries the data
-relevant to *that* state. `Listening` carries no payload (it's
-just a tag); the others carry what they need.
+- A connection is in **one of four states**
+- Each state carries the data relevant to *that* state
+- `Listening`: no payload (just a tag)
+- Others: carry what they need
 
-(That syntax with `{ ... }` is a variant constructor whose payload is
-a small inline record. Convenient when the payload itself is
-multi-field.)
+(The `{ ... }` syntax is a variant constructor with an **inline record** payload; convenient for multi-field payloads.)
 
 :::
 
@@ -209,9 +207,9 @@ The `list` type is a variant:
 type 'a list = [] | (::) of 'a * 'a list
 ```
 
-`[]` is the empty-list constructor; `::` is the cons constructor
-with two payloads: head and tail. List patterns like `x :: rest`
-are just *variant pattern matching* on this declaration.
+- `[]`: empty-list constructor
+- `::`: cons constructor with two payloads (head, tail)
+- List patterns like `x :: rest`: just **variant pattern matching**
 
 `option` is a variant:
 
@@ -219,10 +217,9 @@ are just *variant pattern matching* on this declaration.
 type 'a option = None | Some of 'a
 ```
 
-`None` is the "no value" constructor; `Some x` wraps a value.
-
-Every time you've matched on a list, you've been using variant
-pattern matching.
+- `None`: the "no value" constructor
+- `Some x`: wraps a value
+- Every list match you've written has been variant pattern matching
 
 :::
 
@@ -242,11 +239,10 @@ let t : int tree =
     Node (Leaf, 3, Node (Leaf, 4, Leaf)))
 ```
 
-A binary tree carrying values of any type `'a`. `Leaf` is empty;
-`Node (l, v, r)` has a left subtree, a value, and a right subtree.
-
-We will work with this in Module 4 lecture 4 (recursive types) and
-Module 5 (pattern matching).
+- Binary tree carrying values of any type `'a`
+- `Leaf`: empty
+- `Node (l, v, r)`: left subtree, value, right subtree
+- Used in Module 4 lecture 4 (recursive types) and Module 5 (pattern matching)
 
 :::
 
@@ -280,10 +276,9 @@ let _ = area (Square 3.0)
 let _ = area (Rectangle (4.0, 5.0))
 ```
 
-`12.56...`, `9.0`, `20.0`.
-
-(`function` is shorthand for `fun x -> match x with ...`. Common
-when a function's whole body is a `match` on its argument.)
+- Results: `12.56...`, `9.0`, `20.0`
+- `function` is shorthand for `fun x -> match x with ...`
+- Common when a function's whole body is a `match` on its argument
 
 :::
 

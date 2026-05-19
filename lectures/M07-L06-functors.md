@@ -28,18 +28,18 @@ work with associative data.
 
 ## Why we need them
 
-In Module 6 we wrote `List.map` once and used it on any element
-type. That's *parametric polymorphism*: the function doesn't
-depend on what `'a` is.
-
-For more complex data structures, you can't get away with that.
-A binary search tree of `'a` needs to *compare* values of `'a`; a
-hash table needs to *hash* and compare them. Parametric
-polymorphism doesn't give you a compare or hash function.
-
-Enter functors: a functor takes a module that includes the
-required operations and produces a data structure specialised to
-that module's type.
+- In Module 6 we wrote `List.map` once and used it on any element
+  type.
+- That's **parametric polymorphism**: the function doesn't depend
+  on what `'a` is.
+- More complex data structures can't get away with that: a binary
+  search tree of `'a` needs to *compare* values of `'a`; a hash
+  table needs to *hash* and compare them.
+- Parametric polymorphism doesn't give you a compare or hash
+  function.
+- **Enter functors**: a functor takes a module providing the
+  required operations and produces a data structure specialised to
+  that module's type.
 
 :::
 
@@ -65,9 +65,11 @@ let _ = Int_map.find_opt 999 m
 
 `"two"`, `None`.
 
-`Map.Make` is a functor. Its argument is a module providing a
-type `t` and a `compare` function. It returns a module specialised
-to that type: keys are `int`, values can be any type.
+- `Map.Make` is a **functor**.
+- Its argument is a module providing a type `t` and a `compare`
+  function.
+- It returns a module specialised to that type: keys are `int`,
+  values can be any type.
 
 :::
 
@@ -90,9 +92,10 @@ let _ = String_map.find_opt "dave" m
 
 `Some 30`, `None`.
 
-`String` already has the right shape (type `t` aliased to
-`string`, and `String.compare`), so we pass it directly. `Map.Make`
-specialises to give us a string-keyed map.
+- `String` already has the right shape: a type `t` aliased to
+  `string` and a `String.compare`.
+- We pass it directly.
+- `Map.Make` specialises to give us a string-keyed map.
 
 :::
 
@@ -119,13 +122,12 @@ module Map = struct
 end
 ```
 
-`Make` is a functor: it takes a module satisfying the small
-signature (a type `t` and a `compare`) and produces a full map
-module.
-
-The standard library's actual `Map.Make` is a few hundred lines
-implementing a balanced binary search tree, but the *interface* is
-this same shape.
+- `Make` is a functor: takes a module satisfying the small
+  signature (a type `t` and a `compare`) and produces a full map
+  module.
+- The standard library's actual `Map.Make` is a few hundred lines
+  implementing a balanced binary search tree.
+- The *interface* is this same shape.
 
 :::
 
@@ -172,8 +174,10 @@ let _ = Int_set.mem 5 s
 let _ = Int_set.mem 99 s
 ```
 
-`true`, `false`. We built a toy set in maybe twenty lines,
-parameterized over any ordered type.
+`true`, `false`.
+
+- A toy set in maybe twenty lines, parameterized over any ordered
+  type.
 
 :::
 
@@ -187,14 +191,15 @@ you want.
 
 ## Functors are how `Set` and `Map` stay generic
 
-There's no `Set` type in OCaml's standard library that "just
-works for any type". There's `Set.Make` which lets you
-*construct* a set type for any *ordered* type. The orderedness is
-the constraint; you provide it as a module.
-
-Compare with Java: `TreeSet<E>` requires `E` to implement
-`Comparable<E>`. Same idea, expressed as a Java *interface* rather
-than an OCaml *module type*.
+- There's **no `Set` type** in OCaml's stdlib that "just works for
+  any type".
+- There's `Set.Make`, which lets you *construct* a set type for
+  any *ordered* type.
+- The orderedness is the **constraint**; you provide it as a
+  module.
+- **Compare with Java**: `TreeSet<E>` requires `E` to implement
+  `Comparable<E>`. Same idea, expressed as a Java *interface*
+  rather than an OCaml *module type*.
 
 :::
 
@@ -202,8 +207,8 @@ than an OCaml *module type*.
 
 ## Including a functor's output
 
-If you build a module from a functor and want to extend it, you
-can `include` the result:
+- Build a module from a functor and want to extend it?
+- Use `include` on the result:
 
 ```ocaml
 module Int_map = struct
@@ -213,12 +218,13 @@ module Int_map = struct
 end
 ```
 
-We start with `Map.Make(Int)`, include all its definitions, and
-add a `pp` function on top. The resulting `Int_map` is the
-standard int-map plus our extension.
-
-(Note: this snippet uses `Format`, which we won't go into detail
-on here.)
+- Start with `Map.Make(Int)`.
+- Include all its definitions.
+- Add a `pp` function on top.
+- The resulting `Int_map` is the **standard int-map plus our
+  extension**.
+- (This snippet uses `Format`, which we won't go into detail on
+  here.)
 
 :::
 
@@ -251,9 +257,10 @@ let _ = M.find_opt "dave" ages
 
 `Some 30`, `None`.
 
-`M.find_opt` returns `int option`: `Some n` for found keys, `None`
-for missing. `M.find` raises `Not_found` instead (same convention
-as Module 7 Lecture 3).
+- `M.find_opt` returns `int option`: `Some n` for found keys,
+  `None` for missing.
+- `M.find` raises `Not_found` instead.
+- Same convention as Module 7 Lecture 3.
 
 :::
 
@@ -261,9 +268,11 @@ as Module 7 Lecture 3).
 
 ## What's next
 
-Lecture 7 is the **tutorial** for Module 7. We build a small
-"functional queue" using two stacks, package it as a module with
-an interface, and parameterize it as a functor.
+Lecture 7 is the **tutorial** for Module 7.
+
+- Build a small "functional queue" using two stacks.
+- Package it as a module with an interface.
+- Parameterize it as a functor.
 
 :::
 

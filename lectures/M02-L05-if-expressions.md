@@ -28,13 +28,10 @@ int abs_val;
 if (x < 0) abs_val = -x; else abs_val = x;
 ```
 
-The `if`/`else` *does something* (assigns to `abs_val`), but it has
-no value. You can't write `int abs_val = if (x < 0) -x else x;` in
-C.
-
-This is why you need a *separate declaration* (`int abs_val;`) and
-then a *separate statement* that fills it in. Two pieces of code
-where one might do.
+- `if`/`else` **does something** (assigns) but has **no value**.
+- Can't write `int abs_val = if (x < 0) -x else x;` in C.
+- Forces a separate declaration plus a separate statement.
+- Two pieces of code where one might do.
 
 :::
 
@@ -46,12 +43,10 @@ where one might do.
 let abs_val = if x < 0 then -x else x
 ```
 
-`if x < 0 then -x else x` is an *expression*. It has a type, a value,
-and you can bind it to a name, return it from a function, or pass it
-to another function.
-
-No separate "first declare, then fill in". The expression *is* the
-value you want.
+- `if x < 0 then -x else x` is an **expression**.
+- Has a type and a value.
+- Can be bound, returned, or passed as an argument.
+- No "first declare, then fill in": the expression **is** the value.
 
 :::
 
@@ -68,21 +63,17 @@ to mutate. You'll see this pattern in nearly every OCaml program.
 if E1 then E2 else E3
 ```
 
-Three sub-expressions:
-
-- `E1` is the **condition**. Must have type `bool`.
-- `E2` is the **then-branch**. Has some type `T`.
-- `E3` is the **else-branch**. Must have **the same type `T`** as
-  `E2`.
-
-The whole `if`/`then`/`else` expression has type `T`.
+- `E1` **condition**: must be `bool`.
+- `E2` **then-branch**: some type `T`.
+- `E3` **else-branch**: must be the **same `T`** as `E2`.
+- Whole expression: type `T`.
 
 ```ocaml
 let _ = if true then 13 else 14
 ```
 
-`int = 13`. The condition is `bool`, both branches are `int`, so
-the whole expression is `int`.
+- Result `int = 13`.
+- Condition `bool`, both branches `int`, whole expression `int`.
 
 :::
 
@@ -101,13 +92,10 @@ Error: This expression has type float but an expression was expected
        of type int
 ```
 
-The then-branch is `int`, the else-branch is `float`. The compiler
-cannot give the whole expression a single type. If it accepted this,
-the type of the `if` would depend on which branch ran, which is a
-dynamic-not-static property.
-
-So OCaml says: if you want to mix types, decide up front, and
-convert one side.
+- Then-branch `int`, else-branch `float`.
+- Compiler can't assign a **single type** to the whole expression.
+- If accepted, the type would depend on which branch ran: dynamic, not static.
+- OCaml's rule: to mix, **decide up front and convert one side**.
 
 :::
 
@@ -119,7 +107,7 @@ convert one side.
 let _ = if true then 13.0 else 13.4
 ```
 
-`float = 13.0`. Both branches are now `float`.
+- Result `float = 13.0`. Both branches now `float`.
 
 Or:
 
@@ -127,10 +115,8 @@ Or:
 let _ = if true then 13 else int_of_float 13.4
 ```
 
-`int = 13`. Both branches are now `int`.
-
-The choice depends on what you want the answer to be. The compiler
-will not pick for you.
+- Result `int = 13`. Both branches now `int`.
+- The choice depends on the answer you want; the **compiler won't pick** for you.
 
 :::
 
@@ -144,7 +130,7 @@ forces the two branches to agree.
 
 ## Inference rule, written out
 
-A useful piece of notation: the **typing rule** for `if`.
+The **typing rule** for `if`:
 
 ```
   E1 : bool      E2 : T      E3 : T
@@ -152,13 +138,11 @@ A useful piece of notation: the **typing rule** for `if`.
         if E1 then E2 else E3 : T
 ```
 
-Read the bar as "if the things above hold, then the thing below
-holds". The premises (above the bar) are: `E1` has type `bool`, `E2`
-has type `T`, `E3` has type `T`. The conclusion (below the bar) is:
-the whole expression has type `T`.
-
-You will see inference rules a lot in this course. They are the
-precise way to write what we've been saying in English.
+- Read the bar as "if the things above hold, then the thing below holds".
+- **Premises** (above): `E1 : bool`, `E2 : T`, `E3 : T`.
+- **Conclusion** (below): whole expression has type `T`.
+- Inference rules recur throughout this course.
+- Precise way to write what we've been saying in English.
 
 :::
 
@@ -177,12 +161,10 @@ let grade_letter score =
 let _ = grade_letter 87
 ```
 
-`string = "B"`. A chain of `if`/`then`/`else` is one big expression
-whose type is `string` (all branches return strings).
-
-This is the shape you use whenever you want to "compute X based on
-input Y". It replaces what would be a `switch` or a nested `if`/
-`else` in an imperative language.
+- Result: `string = "B"`.
+- Chain of `if`/`then`/`else` is **one big expression** of type `string`.
+- The shape for "compute X based on input Y".
+- Replaces `switch` / nested `if`/`else` in an imperative language.
 
 :::
 
@@ -190,22 +172,21 @@ input Y". It replaces what would be a `switch` or a nested `if`/
 
 ## `if` without `else`
 
-You can write `if cond then expr` with no `else`. But the type rule
-is strict: the omitted `else` is treated as `else ()` (the unit
-value), so `expr` must have type `unit`.
+- You can write `if cond then expr` with no `else`.
+- The omitted `else` is treated as `else ()` (unit value).
+- So `expr` must have type `unit`.
 
 ```ocaml
 let warn_if_negative x =
   if x < 0 then print_endline "warning: negative"
 ```
 
-`val warn_if_negative : int -> unit`. The body has type `unit` (one
-side is `print_endline ...`, the other side is the implicit
-`()`). When `x` is positive, nothing is printed and the function
-returns `()`.
+- `val warn_if_negative : int -> unit`.
+- Body has type `unit`: then-side prints, else-side is implicit `()`.
+- For positive `x`, nothing is printed; function returns `()`.
 
-You only use one-armed `if` for side effects (printing, mutating).
-For computing a value, you always need both branches.
+- Use one-armed `if` only for **side effects** (printing, mutating).
+- For computing a value, always need both branches.
 
 :::
 
@@ -220,8 +201,8 @@ let sign x =
   else 0
 ```
 
-The "else if" is just `else (if ... then ... else ...)`. The
-expression nests:
+- `"else if"` is just `else (if ... then ... else ...)`.
+- Same expression, with parens made explicit:
 
 ```ocaml
 let sign x =
@@ -229,9 +210,8 @@ let sign x =
   else (if x < 0 then -1 else 0)
 ```
 
-Same thing, with the nesting made explicit by parens. Idiomatic OCaml
-leaves the parens off and reads top-to-bottom: `if`, `else if`,
-`else if`, `else`.
+- Idiomatic OCaml leaves parens off.
+- Reads top-to-bottom: `if`, `else if`, `else if`, `else`.
 
 :::
 
@@ -239,8 +219,7 @@ leaves the parens off and reads top-to-bottom: `if`, `else if`,
 
 ## Branches can return functions, or lists, or anything
 
-`if` is an expression, so it has a value, and that value can be
-*anything* of the agreed-upon type.
+- `if` is an expression: its value can be **anything** of the agreed type.
 
 ```ocaml
 let pick mode =
@@ -251,13 +230,12 @@ let f = pick "double"
 let _ = f 7
 ```
 
-`int = 14`. The two branches are functions; the whole `if` returns
-a function; `pick` has type `string -> int -> int`.
-
-This kind of "compute which function to apply" pattern is verbose in
-C and Java (you'd need an interface, or function pointers, or a
-switch). In OCaml it's just a value: an `if`-expression returning
-two different functions, picked at runtime.
+- Result: `int = 14`.
+- Both branches are functions; whole `if` returns a function.
+- `pick : string -> int -> int`.
+- "Pick which function to apply" pattern is verbose in C / Java.
+  - Needs interfaces, function pointers, or a switch.
+- In OCaml it's just a value: `if`-expression of two functions, picked at runtime.
 
 :::
 
@@ -280,22 +258,20 @@ let label x =
 
 ## Activity discussion
 
-The `if` expression's two branches don't have the same type:
+Branches don't share a type:
 
-- Then-branch: `"positive"` is `string`.
-- Else-branch: `0` is `int`.
+- Then: `"positive"` is `string`.
+- Else: `0` is `int`.
 
-The typing rule for `if` requires both branches to share a type `T`.
-There is no `T` that is both `string` and `int`. The compiler
-reports:
+- Typing rule for `if`: both branches share a type `T`.
+- No `T` is both `string` and `int`. Compiler reports:
 
 ```
 Error: This expression has type int but an expression was expected
        of type string
 ```
 
-To fix, decide whether `label` should return a `string` (then change
-the else to `"non-positive"` or similar) or an `int`.
+- To fix: decide whether `label` returns `string` (else `"non-positive"`) or `int`.
 
 :::
 
@@ -303,10 +279,10 @@ the else to `"non-positive"` or similar) or an `int`.
 
 ## What's next
 
-Lecture 6 is the **tutorial** for Module 2: we work through several
-small programs end to end, using everything from this module
-(literals, `let`, types, operators, `if`), and meet a few of the
-type errors that show up in practice.
+- Lecture 6: **tutorial** for Module 2.
+- Work through several small programs end to end.
+- Uses everything from this module: literals, `let`, types, operators, `if`.
+- Meet a few of the type errors that show up in practice.
 
 :::
 

@@ -33,21 +33,19 @@ without forcing you to write them down.
 
 Every expression has both:
 
-- **Static semantics**: rules that say what the expression *means*
-  before you run it. The main piece of static semantics is **what
-  type the expression has**.
-- **Dynamic semantics**: rules that say what happens when you *run*
-  the expression. The result of running is a **value**.
+- **Static semantics**: meaning *before* you run.
+  - Main piece: **what type the expression has**.
+- **Dynamic semantics**: what happens when you *run* it.
+  - Result: a **value**.
 
 ```ocaml
 let _ = 23 + 45
 ```
 
-- Static: this is `int + int`, so the expression has type `int`.
-- Dynamic: it evaluates to `68`.
+- Static: `int + int`, so the expression has type `int`.
+- Dynamic: evaluates to `68`.
 
-Both kinds of meaning matter. Static catches whole classes of bug
-before you ever press Run.
+- Both matter; static catches whole classes of bug before you press Run.
 
 :::
 
@@ -64,26 +62,22 @@ semantics** discovered while the program is executing.
 
 ## A spectrum of languages
 
-You cannot put a language cleanly into a single "static" or
-"dynamic" box. It is more useful to think of a spectrum:
+Think of a spectrum, not a binary:
 
-- **Mostly dynamic** (JavaScript, Python). Almost everything is
-  checked at runtime. Programs run with very little upfront
-  ceremony; bugs surface when the code path that contains them is
-  exercised.
-- **Some static, mostly dynamic** (C). Types are declared and the
-  compiler checks them, but the type system is weak: a cast or a
-  void* lets you sidestep it. Memory errors are runtime, and often
-  silent.
-- **More static** (Java, Scala, Rust, Kotlin, Swift). Strong type
-  systems; most type errors are compile-time. Some things (null
-  references, downcast failures) still surface at runtime.
-- **Mostly static** (OCaml, Haskell). Almost no runtime type errors
-  in well-typed code. The compiler catches a large fraction of bugs
-  before the program runs.
+- **Mostly dynamic** (JavaScript, Python):
+  - Almost everything checked at runtime.
+  - Bugs surface only when their code path runs.
+- **Some static, mostly dynamic** (C):
+  - Types declared, but weak system: casts / `void*` sidestep it.
+  - Memory errors are runtime, often silent.
+- **More static** (Java, Scala, Rust, Kotlin, Swift):
+  - Strong type systems; most type errors compile-time.
+  - Null refs and downcast failures still surface at runtime.
+- **Mostly static** (OCaml, Haskell):
+  - Almost no runtime type errors in well-typed code.
+  - Compiler catches a large fraction of bugs pre-run.
 
-OCaml sits near the "mostly static" end. That's a deliberate design
-choice.
+- OCaml sits near the **"mostly static"** end: a deliberate choice.
 
 :::
 
@@ -95,16 +89,16 @@ choice.
 let _ = 23 = 45.0
 ```
 
-OCaml rejects this: the left side is `int`, the right side is
-`float`, and `=` requires both sides to have the same type.
+- Rejected: left is `int`, right is `float`.
+- `=` requires both sides to have the **same type**.
 
 ```
 Error: This expression has type float but an expression was expected
        of type int because it is in the right operand of equality.
 ```
 
-The program does not run. You haven't even gotten to "well, what
-does the comparison return"; the static check failed first.
+- The program does not run.
+- Static check fails first: never reaches "what does the comparison return".
 
 :::
 
@@ -116,12 +110,10 @@ does the comparison return"; the static check failed first.
 let _ = 23 = 45
 ```
 
-Both sides are `int`. The static check is happy: the expression has
-type `bool`. At runtime, the comparison evaluates: `false`.
-
-The dynamic semantics produced a value. That value is `false`. It is
-not an error to have an expression evaluate to `false`; it is what
-the comparison means.
+- Both sides `int`: static check passes, expression type is `bool`.
+- At runtime, the comparison evaluates to `false`.
+- Dynamic semantics produced a **value** (`false`).
+- Evaluating to `false` is **not an error**; it's what the comparison means.
 
 :::
 
@@ -130,19 +122,15 @@ the comparison means.
 ## Why catch errors statically?
 
 - **Earlier is cheaper.** A bug caught at compile time can't ship.
-- **Better localization.** The compiler points at the file and line.
-  A runtime null-pointer exception three function calls deep is
-  harder to trace.
-- **Fearless refactoring.** Rename a field, change a type; the
-  compiler tells you every call site that needs updating. In a
-  dynamic language you find them by running the code.
-- **Documentation.** Types annotate the program with what each
-  function expects and returns, mechanically checked.
+- **Better localization.** Compiler points at file and line.
+  - A runtime null-pointer three calls deep is harder to trace.
+- **Fearless refactoring.** Rename a field; compiler lists every call site.
+  - In a dynamic language you find them by running the code.
+- **Documentation.** Types annotate the API, mechanically checked.
 
-The cost is some upfront friction: you have to make the code well
-typed before you can run any of it. People used to dynamic languages
-sometimes find this annoying. The trade is fewer bugs at later,
-more expensive stages.
+- **Cost**: upfront friction; must be well-typed before running.
+- People from dynamic languages sometimes find this annoying.
+- Trade: fewer bugs at later, more expensive stages.
 
 :::
 
@@ -172,14 +160,10 @@ let add x y = x + y
 
 Toplevel reports: `val add : int -> int -> int = <fun>`.
 
-How did inference arrive at this?
-
-- `x + y` uses `(+)`, which has type `int -> int -> int`.
-- So `x` must be `int`, `y` must be `int`, and the result of `x + y`
-  is `int`.
-- The function `add x y` therefore has type `int -> int -> int`.
-
-You wrote zero type annotations. The compiler did the work.
+- `x + y` uses `(+) : int -> int -> int`.
+- So `x : int`, `y : int`, result `int`.
+- Therefore `add : int -> int -> int`.
+- **Zero annotations written.** Compiler did the work.
 
 :::
 
@@ -193,11 +177,11 @@ let add_f x y = x +. y
 
 `val add_f : float -> float -> float = <fun>`.
 
-Same shape; just `+.` instead of `+`. The float operator forces both
-arguments to be `float`, so the function is `float -> float -> float`.
-
-This is the whole secret: the operators carry type information.
-Inference propagates it through the rest of the function.
+- Same shape; `+.` instead of `+`.
+- Float operator forces both args to `float`.
+- So `add_f : float -> float -> float`.
+- **Secret**: operators carry type information.
+- Inference propagates it through the rest of the function.
 
 :::
 
@@ -211,16 +195,11 @@ let mag x y = sqrt (x *. x +. y *. y)
 
 `val mag : float -> float -> float = <fun>`.
 
-Walk it:
-
-- `sqrt` has type `float -> float`. Its argument must be `float`.
-- `x *. x +. y *. y` must therefore be `float`.
-- `*.` and `+.` force both their operands to `float`.
-- So `x` is `float` and `y` is `float`.
-- Result is `float`.
-
-You'd have to write all this out as annotations in many other
-languages. OCaml does it for you and reports the final type.
+- `sqrt : float -> float`, argument must be `float`.
+- So `x *. x +. y *. y` must be `float`.
+- `*.` and `+.` force operands to `float`.
+- Hence `x : float`, `y : float`, result `float`.
+- Many languages need this spelled out as annotations; OCaml infers it.
 
 :::
 
@@ -234,10 +213,9 @@ let identity x = x
 
 `val identity : 'a -> 'a = <fun>`.
 
-Read `'a` as "some type, to be filled in by the caller". OCaml has
-*parametric polymorphism* (the same idea as Java generics or C++
-templates, just more pleasant): functions that don't constrain their
-argument's type stay polymorphic.
+- Read `'a` as "some type, to be filled in by the caller".
+- OCaml has **parametric polymorphism** (like Java generics / C++ templates, more pleasant).
+- Functions that don't constrain their arg type stay polymorphic.
 
 ```ocaml
 let _ = identity 5
@@ -245,7 +223,7 @@ let _ = identity "hello"
 let _ = identity true
 ```
 
-Each call instantiates `'a` differently. No casting.
+- Each call instantiates `'a` differently. **No casting.**
 
 :::
 
@@ -260,22 +238,20 @@ uses.
 
 ## Annotations: when and why
 
-You can write types explicitly. They must *agree* with what inference
-would have produced:
+- Annotations are optional; must **agree** with what inference would produce.
 
 ```ocaml
 let triple (x : int) : int = x + x + x
 ```
 
-Inference would have given `int -> int` anyway. The annotation:
+- Inference would have given `int -> int` anyway.
+- Annotation uses:
+  - **Documents intent** in public APIs.
+  - **Pins down ambiguity** (rare, with records and modules).
+  - **Locates type errors**: an annotated function fails at *its* line.
 
-- documents intent in public APIs,
-- pins down ambiguity (rare, but happens with records and modules),
-- helps you locate the source of a type error: an annotated function
-  fails at *its* line rather than propagating the error elsewhere.
-
-For everyday code, leave annotations off. For module signatures
-(the `.mli` files we'll see in Module 7), the annotations are the API.
+- For everyday code, leave annotations off.
+- For module signatures (`.mli`, Module 7), annotations **are the API**.
 
 :::
 
@@ -283,8 +259,7 @@ For everyday code, leave annotations off. For module signatures
 
 ## When inference reports a surprising type
 
-Sometimes you write a function and the inferred type is more general
-than you expected:
+Sometimes the inferred type is more general than you expected:
 
 ```ocaml
 let first (x, _) = x
@@ -292,18 +267,18 @@ let first (x, _) = x
 
 `val first : 'a * 'b -> 'a = <fun>`.
 
-`first` works on any pair. The first element can be any type `'a`,
-the second any (possibly different) type `'b`, and the result is
-`'a`. We didn't ask for genericity; inference gave it to us.
+- Works on any pair.
+- First element any type `'a`, second any (possibly different) `'b`, result `'a`.
+- We didn't ask for genericity; inference gave it.
 
-If you want to *constrain* it, annotate:
+To **constrain**, annotate:
 
 ```ocaml
 let first_int (x, _ : int * int) = x
 ```
 
-`val first_int : int * int -> int = <fun>`. Now it only works on
-pairs of ints. Less general, but sometimes that's what you want.
+- `val first_int : int * int -> int = <fun>`.
+- Now only works on pairs of `int`. Less general, sometimes what you want.
 
 :::
 
@@ -328,13 +303,13 @@ Predict, then run.
 `val f : float -> float -> float = <fun>`.
 
 - `2.0` is `float`.
-- `y *. 2.0` requires `y` to be `float`; result is `float`.
-- `x +. (...)` requires `x` to be `float`; result is `float`.
-- So `f` is `float -> float -> float`.
+- `y *. 2.0` forces `y : float`; result `float`.
+- `x +. (...)` forces `x : float`; result `float`.
+- So `f : float -> float -> float`.
 
-If you had written `x + y *. 2.0` you'd have gotten an error: `+`
-wants `int`, `*.` wants `float`. Inference reports an inconsistency
-and points at the offender.
+- Had you written `x + y *. 2.0`: type error.
+- `+` wants `int`, `*.` wants `float`.
+- Inference reports an inconsistency and points at the offender.
 
 :::
 
@@ -342,9 +317,8 @@ and points at the offender.
 
 ## What's next
 
-In Lecture 4 we cover **operators and pitfalls**: precedence, the
-list of operators you'll use daily, and the small set of mistakes that
-catch beginners.
+- Next: **operators and pitfalls**.
+- Precedence, daily operators, and beginner mistakes.
 
 :::
 

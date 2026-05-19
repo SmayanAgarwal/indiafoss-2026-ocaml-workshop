@@ -29,9 +29,9 @@ A "stateful computation that produces an `'a`" is a function:
 state -> ('a * state)
 ```
 
-It takes the current state and returns both a value and the
-*new* state. Each step in the chain receives the state from the
-previous, and produces the state for the next.
+- Takes the current state.
+- Returns both a value and the *new* state.
+- Each step in the chain receives the state from the previous, and produces the state for the next.
 
 We'll make the state an `int` for concreteness (a counter):
 
@@ -67,12 +67,9 @@ let put new_s : unit state = fun _ -> ((), new_s)
 let run (m : 'a state) (s : int) : 'a * int = m s
 ```
 
-`get` returns the current state without changing it (the value
-*is* the state). `put new_s` sets the state to `new_s` (the value
-is unit).
-
-`run` is the escape: at the end, give it an initial state and you
-get back a final value and final state.
+- `get` returns the current state without changing it (the value *is* the state).
+- `put new_s` sets the state to `new_s` (the value is unit).
+- `run` is the escape: give it an initial state, get back a final value and final state.
 
 :::
 
@@ -108,11 +105,11 @@ let program =
 let _ = run program 1
 ```
 
-`(("x_1", "x_2", "y_3"), 4)`. The state starts at `1` and ends at
-`4` (we called `gensym` three times). The three names are fresh
-and ordered.
+`(("x_1", "x_2", "y_3"), 4)`.
 
-The monad threads the counter through; no `ref` involved.
+- State starts at `1` and ends at `4` (we called `gensym` three times).
+- The three names are fresh and ordered.
+- The monad threads the counter through; no `ref` involved.
 
 :::
 
@@ -149,10 +146,9 @@ Two-line function. Easy to write. And:
   implementation.
 - If you ever fork a parallel computation, the counter races.
 
-The state monad version is purer (the counter is data, not a
-side effect). At small scales it's overkill; at larger scales (a
-type-inference pass that needs fresh variable names, a compiler
-pass with many threaded counters) it pays off.
+- State monad version is purer (the counter is data, not a side effect).
+- At small scales it's overkill.
+- At larger scales (a type-inference pass that needs fresh variable names, a compiler pass with many threaded counters) it pays off.
 
 :::
 
@@ -160,8 +156,8 @@ pass with many threaded counters) it pays off.
 
 ## A "labelled" version
 
-You can hide the threaded plumbing further by making types more
-specific:
+- You can hide the threaded plumbing further.
+- Make the types more specific:
 
 ```ocaml
 type counter_state = int
@@ -189,9 +185,10 @@ let prog =
 let _ = run prog 1
 ```
 
-`(["x_1"; "y_2"; "z_3"], 4)`. The state-passing logic is a
-one-liner inside `fresh`; the user sees just `let* a = fresh "x"
-in ...`.
+`(["x_1"; "y_2"; "z_3"], 4)`.
+
+- The state-passing logic is a one-liner inside `fresh`.
+- The user sees just `let* a = fresh "x" in ...`.
 
 :::
 
@@ -207,9 +204,8 @@ The state monad shows up under various names in real code:
   variable counter.
 - **Web request handling**: state is the request context.
 
-In all of them, the monad encodes "thread this through every
-step" without forcing the user to pass it explicitly at each call
-site.
+- In all of them, the monad encodes "thread this through every step".
+- The user doesn't pass the state explicitly at each call site.
 
 :::
 
@@ -250,11 +246,12 @@ let program =
 let _ = run program 0
 ```
 
-`(["v_0"; "v_1"; "v_2"], 3)`. State starts at `0`, three calls,
-state ends at `3`. Three fresh names produced.
+`(["v_0"; "v_1"; "v_2"], 3)`.
 
-The state is hidden inside the `let*` chain. The caller doesn't
-explicitly pass a counter around; the monad does it.
+- State starts at `0`, three calls, state ends at `3`.
+- Three fresh names produced.
+- The state is hidden inside the `let*` chain.
+- The caller doesn't explicitly pass a counter around; the monad does it.
 
 :::
 
@@ -262,10 +259,11 @@ explicitly pass a counter around; the monad does it.
 
 ## What's next
 
-Lectures 5-6: **GADTs**. A more advanced type-system feature
-that lets variant constructors carry type-level information. Used
-heavily in tiny well-typed interpreters; the Module 8 tutorial
-combines GADTs with everything we've seen.
+Lectures 5-6: **GADTs**.
+
+- A more advanced type-system feature that lets variant constructors carry type-level information.
+- Used heavily in tiny well-typed interpreters.
+- The Module 8 tutorial combines GADTs with everything we've seen.
 
 :::
 

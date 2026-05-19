@@ -29,11 +29,11 @@ let triple  = (1, "two", 3.0)
 let nested  = ((1, 2), (3, 4))
 ```
 
-`pair : int * bool`. `triple : int * string * float`. `nested :
-(int * int) * (int * int)`.
-
-The `*` in the type is "and": "an int *and* a bool". Note this is
-the type-level `*`, not multiplication.
+- `pair : int * bool`
+- `triple : int * string * float`
+- `nested : (int * int) * (int * int)`
+- `*` in a type reads as "and": "an int *and* a bool"
+- This is the **type-level** `*`, not multiplication
 
 :::
 
@@ -52,13 +52,12 @@ let _ : int * int       = (1, 2)
 let _ : int * int * int = (1, 2, 3)
 ```
 
-These are *different types*. You cannot pass an `int * int * int`
-where an `int * int` is expected. Each tuple type is its own thing.
-
-This contrasts with Python's tuples, which are variable-length: a
-2-tuple and a 3-tuple are both just `tuple`. OCaml's choice gives
-you static checking ("this function wants exactly two coordinates")
-at the cost of needing a fresh type for each shape.
+- These are *different types*
+- Can't pass an `int * int * int` where an `int * int` is expected
+- Each tuple type is its own thing
+- Contrast with Python: a 2-tuple and a 3-tuple are both just `tuple`
+- OCaml's choice: static checking ("exactly two coordinates")
+- Cost: a fresh type for each shape
 
 :::
 
@@ -72,8 +71,9 @@ let _ = fst p
 let _ = snd p
 ```
 
-`fst : 'a * 'b -> 'a`, `snd : 'a * 'b -> 'b`. They work on pairs
-only. For triples (or larger) you destructure:
+- `fst : 'a * 'b -> 'a`, `snd : 'a * 'b -> 'b`
+- Work on **pairs only**
+- For triples (or larger) you **destructure**:
 
 ```ocaml
 let (x, y, z) = (1, 2, 3)
@@ -82,8 +82,8 @@ let _ = y
 let _ = z
 ```
 
-The `let (x, y, z) = ...` is a **pattern**: it gives names to each
-component at once.
+- `let (x, y, z) = ...` is a **pattern**
+- Names each component at once
 
 :::
 
@@ -108,12 +108,11 @@ let distance (x1, y1) (x2, y2) =
 let _ = distance (0.0, 0.0) (3.0, 4.0)
 ```
 
-`float = 5.0`. The function takes two pairs; each parameter is a
-*pattern* `(x1, y1)`. OCaml binds `x1` and `y1` from the first
-argument, `x2` and `y2` from the second.
-
-The inferred type is `float * float -> float * float -> float`.
-Two pairs in, one float out.
+- Result: `float = 5.0`
+- Each parameter is a *pattern* `(x1, y1)`
+- OCaml binds `x1`, `y1` from arg 1; `x2`, `y2` from arg 2
+- Inferred type: `float * float -> float * float -> float`
+- Two pairs in, one float out
 
 :::
 
@@ -134,8 +133,7 @@ Don't use a tuple when:
 - You'd have ten fields (use a record).
 - The number of values varies (use a list).
 
-Tuples are great when there are two or three of something and the
-positions speak for themselves.
+**Rule of thumb:** two or three of something, positions speak for themselves.
 
 :::
 
@@ -143,8 +141,8 @@ positions speak for themselves.
 
 ## Returning multiple values
 
-OCaml functions return a single value, but that value can be a
-tuple:
+- OCaml functions return a **single** value
+- That value can be a tuple
 
 ```ocaml
 let divmod a b =
@@ -153,15 +151,14 @@ let divmod a b =
 let _ = divmod 17 5
 ```
 
-`(int * int) = (3, 2)`. The function returns a pair. Callers
-destructure:
+- Result: `(int * int) = (3, 2)`
+- Caller destructures:
 
 ```ocaml
 let (q, r) = divmod 17 5
 ```
 
-This is the OCaml idiom for what Python or Go do with multiple
-return values.
+- OCaml idiom for what Python or Go do with multiple return values
 
 :::
 
@@ -175,8 +172,7 @@ You'll often see lists of tuples (each tuple a "row"):
 let pairs = [(1, "one"); (2, "two"); (3, "three")]
 ```
 
-`(int * string) list`. A list whose elements are pairs of `int`
-and `string`.
+- Type: `(int * string) list`: a list of `int * string` pairs
 
 To search this for a key:
 
@@ -189,12 +185,9 @@ let rec lookup key = function
 let _ = lookup 2 pairs
 ```
 
-`string option = Some "two"`. The pattern `(k, v) :: rest`
-destructures the head of the list (a pair) and binds `k` and `v`
-at once.
-
-We will see `option` in lecture 5 of this module, and more on lists
-in Module 5. Treat this as a preview.
+- Result: `string option = Some "two"`
+- Pattern `(k, v) :: rest` destructures the head pair, binds `k` and `v` at once
+- Preview: `option` in lecture 5, more on lists in Module 5
 
 :::
 
@@ -207,11 +200,9 @@ let nums = [1; 2; 3; 4; 5]
 let _ = List.map (fun x -> (x, x * x)) nums
 ```
 
-`(int * int) list = [(1,1); (2,4); (3,9); (4,16); (5,25)]`.
-Each input maps to a pair of (input, square).
-
-This pattern (map a list into pairs) is how you'd build a small
-table from a computation.
+- Result: `(int * int) list = [(1,1); (2,4); (3,9); (4,16); (5,25)]`
+- Each input maps to a pair `(input, square)`
+- Pattern: map a list into pairs to build a small table from a computation
 
 :::
 
@@ -233,17 +224,15 @@ Write the function.
 
 ## Activity discussion
 
-1. `p : int * bool * string`. Three components, in order.
+1. `p : int * bool * string` (three components, in order).
 2. Function:
 
 ```ocaml
 let first3 (x, _, _) = x
 ```
 
-`val first3 : 'a * 'b * 'c -> 'a = <fun>`.
-
-The `_` in the pattern is "ignore this component". We only care
-about the first.
+- Type: `val first3 : 'a * 'b * 'c -> 'a = <fun>`
+- The `_` means "ignore this component"; we only care about the first
 
 Try `first3 p`:
 
@@ -251,7 +240,7 @@ Try `first3 p`:
 let _ = first3 (3, true, "hi")
 ```
 
-`int = 3`.
+- Result: `int = 3`
 
 :::
 

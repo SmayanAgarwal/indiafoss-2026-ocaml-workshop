@@ -60,13 +60,11 @@ let factorial n =
   else n * factorial (n - 1)
 ```
 
-OCaml rejects this with `Error: Unbound value factorial`. Inside the
-body of a *non-recursive* `let factorial = ...`, the name
-`factorial` is not in scope yet (we are still defining what it is).
-
-`let rec` says "bring the name into scope inside the body too".
-That's the only difference. Use `let rec` when the function refers
-to itself; `let` otherwise.
+- OCaml rejects this: `Error: Unbound value factorial`.
+- Inside the body of a *non-recursive* `let factorial = ...`, the name `factorial` isn't in scope yet.
+- `let rec` says "bring the name into scope inside the body too".
+- That's the only difference.
+- Use `let rec` when the function refers to itself; `let` otherwise.
 
 :::
 
@@ -90,16 +88,15 @@ let rec length xs =
 let _ = length [10; 20; 30; 40]
 ```
 
-`int = 4`. The base case is the empty list `[]` (length 0). The
-recursive case unpacks a cons cell `_ :: rest` and adds 1 to the
-length of the rest.
+- `int = 4`.
+- Base case: empty list `[]` (length 0).
+- Recursive case: unpack cons cell `_ :: rest`, add 1 to the length of the rest.
+- Using pattern matching (full coverage in Module 5).
 
-We are using pattern matching here, which Module 5 covers in full.
-For now, read the cases:
+Read the cases:
 
-- `[] -> 0`: the empty list has length 0.
-- `_ :: rest -> 1 + length rest`: a non-empty list has length 1 plus
-  the length of its tail.
+- `[] -> 0`: empty list has length 0.
+- `_ :: rest -> 1 + length rest`: non-empty has length 1 plus length of tail.
 
 :::
 
@@ -124,12 +121,10 @@ let rec count_down n =
 let _ = count_down 5
 ```
 
-Prints `5`, `4`, `3`, `2`, `1`, `0`. The base case is `n < 0`
-(do nothing). The recursive case prints `n` and then recurs on
-`n - 1`.
-
-The `begin ... end` brackets a sequenced block; we'll see this
-construct more in Module 7 when we talk about side effects.
+- Prints `5`, `4`, `3`, `2`, `1`, `0`.
+- Base case: `n < 0`, do nothing.
+- Recursive case: print `n`, then recur on `n - 1`.
+- `begin ... end` brackets a sequenced block; more in Module 7 (side effects).
 
 :::
 
@@ -145,12 +140,11 @@ let rec sum_up_to n =
 let _ = sum_up_to 10
 ```
 
-`int = 55`. The "structure" we are recursing on is the integer
-itself: each step reduces `n` by one until we hit zero.
-
-This is mathematically `n + (n-1) + ... + 1`. The function
-computes it by recursion. (A closed form exists, `n * (n + 1) / 2`,
-which is faster; we use recursion here to illustrate the pattern.)
+- `int = 55`.
+- We recurse on the integer itself: each step reduces `n` by one until zero.
+- Mathematically: `n + (n-1) + ... + 1`.
+- Closed form exists (`n * (n + 1) / 2`) and is faster.
+- We use recursion here to illustrate the pattern.
 
 :::
 
@@ -158,23 +152,23 @@ which is faster; we use recursion here to illustrate the pattern.)
 
 ## Termination
 
-Every recursive function must **terminate**: the recursion must
-eventually hit a base case.
+- Every recursive function must **terminate**: it must eventually hit a base case.
 
 ```ocaml
 let rec bad n = bad (n + 1)
 ```
 
-Type-checks fine. Run it; it never returns. Eventually OCaml's
-stack overflows and you get a runtime error.
+- Type-checks fine.
+- Run it: never returns.
+- Eventually OCaml's stack overflows and you get a runtime error.
 
-For termination, *every* recursive call must move *closer* to a
-base case. `factorial (n - 1)` is closer to `0` than `factorial n`,
-provided `n` started ≥ 0. `length rest` is closer to `[]` than
-`length xs`.
+For termination:
 
-Always ask: *is the argument to the recursive call strictly smaller,
-by some measure, than the current argument?*
+- *Every* recursive call must move *closer* to a base case.
+- `factorial (n - 1)` is closer to `0` than `factorial n`, if `n` started ≥ 0.
+- `length rest` is closer to `[]` than `length xs`.
+
+Always ask: *is the argument to the recursive call strictly smaller, by some measure, than the current argument?*
 
 :::
 
@@ -190,8 +184,8 @@ let rec factorial n =
 let _ = factorial (-1)
 ```
 
-Stack overflow eventually. The base case is `n = 0`, but a negative
-input goes `-1 → -2 → -3 → ...`, never reaching `0`.
+- Stack overflow eventually.
+- Base case is `n = 0`, but negative inputs go `-1 → -2 → -3 → ...`, never reaching `0`.
 
 Two fixes:
 
@@ -201,7 +195,9 @@ let rec factorial n =
   else n * factorial (n - 1)
 ```
 
-`<= 0` treats all non-positive inputs as base. Or be strict:
+- `<= 0` treats all non-positive inputs as base.
+
+Or be strict:
 
 ```ocaml
 let rec factorial n =
@@ -210,8 +206,8 @@ let rec factorial n =
   else n * factorial (n - 1)
 ```
 
-This rejects negative inputs at runtime, surfacing the bug instead
-of producing a wrong answer.
+- Rejects negative inputs at runtime.
+- Surfaces the bug instead of producing a wrong answer.
 
 :::
 
@@ -219,19 +215,14 @@ of producing a wrong answer.
 
 ## The mental model
 
-When you read or write a recursive function, the mental rhythm is:
+The rhythm for reading or writing a recursive function:
 
-1. **What is the input made of?** A number? A list? Both have a
-   natural shape: zero or successor; empty or cons.
-2. **What is the base case?** What does the function return for the
-   smallest possible input?
-3. **What is the recursive case?** Given the answer for a *smaller*
-   input (which we trust the function to compute), how do I combine
-   it with the current piece to get the answer for the bigger
-   input?
+1. **What is the input made of?** Number? List? Each has a natural shape (zero or successor; empty or cons).
+2. **What is the base case?** What does the function return for the smallest input?
+3. **What is the recursive case?** Given the answer for a *smaller* input (trust the function), how do I combine it with the current piece to get the bigger answer?
 
-This is the famous **inductive style**. Once you have it, writing
-recursive functions becomes mechanical for many problems.
+- This is the famous **inductive style**.
+- Once you have it, writing recursive functions becomes mechanical.
 
 :::
 
@@ -249,11 +240,10 @@ let rec power x n =
 let _ = power 2 10
 ```
 
-`int = 1024`.
-
-Base case: anything to the zero is `1`. Recursive case: `x^n = x *
-x^(n-1)`. The recursive call has `n - 1`, so we're moving toward
-the base.
+- `int = 1024`.
+- Base case: anything to the zero is `1`.
+- Recursive case: `x^n = x * x^(n-1)`.
+- Recursive call has `n - 1`: moving toward the base.
 
 :::
 
@@ -269,13 +259,11 @@ let rec fib n =
 let _ = fib 10
 ```
 
-`int = 55`. Two base cases bundled into one: `fib 0 = 0`, `fib 1 =
-1`. The recursive case has *two* calls.
-
-This works but is slow for large `n`: `fib n` computes `fib (n-1)`
-and `fib (n-2)` from scratch, which themselves recompute
-overlapping subproblems. We will come back to this in the
-tail-recursion lecture and again in Module 6.
+- `int = 55`.
+- Two base cases bundled: `fib 0 = 0`, `fib 1 = 1`.
+- Recursive case has *two* calls.
+- Slow for large `n`: each call recomputes overlapping subproblems from scratch.
+- We'll revisit in the tail-recursion lecture and in Module 6.
 
 :::
 
@@ -302,12 +290,16 @@ let rec count_down n =
   end
 ```
 
-Base case: `n < 0`, do nothing (`()`). Recursive case: print `n`,
-recur on `n - 1`.
+- Base case: `n < 0`, do nothing (`()`).
+- Recursive case: print `n`, recur on `n - 1`.
 
-`count_down 3` prints `3`, then recursively `count_down 2`, which
-prints `2`, then `count_down 1`, prints `1`, then `count_down 0`,
-prints `0`, then `count_down (-1)`, base case, done.
+`count_down 3` trace:
+
+- prints `3`, calls `count_down 2`
+- prints `2`, calls `count_down 1`
+- prints `1`, calls `count_down 0`
+- prints `0`, calls `count_down (-1)`
+- base case, done.
 
 :::
 
@@ -315,11 +307,14 @@ prints `0`, then `count_down (-1)`, base case, done.
 
 ## What's next
 
-Lecture 3: **currying and partial application**. We make explicit
-the "function returning function" pattern we glimpsed earlier, and
-use it to write small reusable utilities. After that, Lecture 4
-covers **tail recursion**, which fixes the stack-overflow risk that
-a naive recursive function has.
+Lecture 3: **currying and partial application**.
+
+- Make explicit the "function returning function" pattern.
+- Use it to write small reusable utilities.
+
+Lecture 4: **tail recursion**.
+
+- Fixes the stack-overflow risk of naive recursive functions.
 
 :::
 

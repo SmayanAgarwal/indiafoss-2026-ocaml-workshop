@@ -30,13 +30,10 @@ type 'a option =
   | Some of 'a
 ```
 
-`'a option` is one of two things: `None` (no value), or `Some x`
-(a value `x` of type `'a`). It's a variant with two constructors,
-parameterized by the inner type.
-
-`int option`: either `None` or `Some i` where `i : int`.
-
-`string option`: either `None` or `Some s` where `s : string`.
+- `'a option` is one of two things: `None` (no value) or `Some x` (a value `x : 'a`)
+- A variant with two constructors, parameterized by the inner type
+- `int option`: `None` or `Some i` where `i : int`
+- `string option`: `None` or `Some s` where `s : string`
 
 ```ocaml
 let x : int option = Some 42
@@ -49,15 +46,16 @@ let y : int option = None
 
 ## Why not `null`?
 
-Many languages use `null` (Java, C, Go) or `undefined` (JavaScript)
-to mean "no value". The trouble: every reference might secretly be
-null, and the type system doesn't tell you which.
+- Many languages use `null` (Java, C, Go) or `undefined` (JavaScript) for "no value"
+- Trouble: **every** reference might secretly be null
+- The type system doesn't tell you which
 
 `var name = lookup("alice");
 println(name.length());`
 
-This compiles. It crashes at runtime if `lookup` returned `null`.
-Every reader has to remember to check for null on every reference.
+- Compiles fine
+- Crashes at runtime if `lookup` returned `null`
+- Every reader must remember to check on **every** reference
 
 OCaml's `option`:
 
@@ -65,10 +63,9 @@ OCaml's `option`:
 val lookup : string -> string option
 ```
 
-Forces you to spell out that you're handling both cases. The type
-*tells* the reader (and the compiler) that the function might not
-return a value. There is no way to use the inner string without
-first inspecting whether it's `None`.
+- Forces you to spell out that both cases are handled
+- The type **tells** reader and compiler the function may not return a value
+- No way to use the inner string without inspecting for `None` first
 
 :::
 
@@ -94,11 +91,9 @@ let _ = describe (Some 7)
 let _ = describe None
 ```
 
-`"got 7"` and `"no value"`.
-
-You can't write `(Some 7) + 1`. That would mean adding an `int
-option` to an `int`, which is a type error. You must unwrap it
-first:
+- Results: `"got 7"` and `"no value"`
+- Can't write `(Some 7) + 1`: that's adding `int option` to `int`, a type error
+- Must **unwrap** first:
 
 ```ocaml skip
 match find_age "alice" with
@@ -106,7 +101,7 @@ match find_age "alice" with
 | Some n -> n + 1
 ```
 
-Either you handle the missing case, or you don't compile.
+- Either you handle the missing case, or it doesn't compile
 
 :::
 
@@ -123,14 +118,13 @@ let _ = safe_div 10 2
 let _ = safe_div 10 0
 ```
 
-`Some 5` and `None`. The function's type is
-`int -> int -> int option`. The caller is forced to handle the
-divide-by-zero case explicitly.
-
-Compare with a C-style version that returns -1 on error: callers
-might forget the check, mistake a legitimate -1 result for the
-error code, or otherwise misbehave. `option` makes the error case
-unmistakable.
+- Results: `Some 5` and `None`
+- Type: `int -> int -> int option`
+- Caller is **forced** to handle the divide-by-zero case explicitly
+- Compare a C-style version returning `-1` on error:
+  - Callers might forget the check
+  - Or mistake a legitimate `-1` result for the error code
+- `option` makes the error case **unmistakable**
 
 :::
 
@@ -158,9 +152,10 @@ let increment_age name =
   Option.map (fun n -> n + 1) (lookup_age name)
 ```
 
-`Option.map f x` is `None` if `x` is `None`, otherwise `Some (f
-v)` where `x = Some v`. The standard `Option` module also has
-`Option.bind`, `Option.get`, `Option.value` with a default, etc.
+- `Option.map f x`:
+  - `None` if `x` is `None`
+  - `Some (f v)` if `x = Some v`
+- Standard `Option` module also has `Option.bind`, `Option.get`, `Option.value` (with default), etc.
 
 :::
 
@@ -180,10 +175,10 @@ type ('a, 'e) result =
   | Error of 'e
 ```
 
-Like `option`, but the failure case carries a value too: an error
-message, an error code, a structured error type. `Ok 42` is
-"success with value 42". `Error "out of memory"` is "failure with
-this reason".
+- Like `option`, but the failure case **carries a value**
+- That value: error message, error code, structured error type
+- `Ok 42`: "success with value 42"
+- `Error "out of memory"`: "failure with this reason"
 
 ```ocaml
 let parse_int s =
@@ -194,10 +189,8 @@ let _ = parse_int "42"
 let _ = parse_int "frog"
 ```
 
-`Ok 42`, `Error "not an int: frog"`.
-
-`result` is what you use when you want the caller to know *why* it
-failed, not just *that* it failed.
+- Results: `Ok 42`, `Error "not an int: frog"`
+- Use `result` when callers need to know **why** it failed, not just *that* it failed
 
 :::
 
@@ -212,17 +205,17 @@ type point = float * float
 type points = point list
 ```
 
-Now `point` and `(float * float)` are the same type, and `points`
-and `(float * float) list` are the same. The names exist purely for
-readability.
+- `point` and `(float * float)` are the **same** type
+- `points` and `(float * float) list` are the same
+- Names exist purely for **readability**
 
 ```ocaml
 let origin : point = (0.0, 0.0)
 let triangle : points = [(0.0, 0.0); (1.0, 0.0); (0.5, 1.0)]
 ```
 
-The type signature documents intent; the compiler treats `point`
-and `float * float` interchangeably.
+- Type signature documents intent
+- Compiler treats `point` and `float * float` interchangeably
 
 :::
 
@@ -232,16 +225,18 @@ and `float * float` interchangeably.
 
 Both let you give a name to a compound type:
 
-- **Type abbreviation** (`type point = float * float`): the
-  underlying representation leaks. `(1.0, 2.0)` and a `point` are
-  the same. Field access is positional (`fst`, `snd`).
-- **Record** (`type point = { x : float; y : float }`): a *new*
-  type. Construction requires the type name (or context); access
-  is by field name.
+- **Type abbreviation** (`type point = float * float`):
+  - Underlying representation **leaks**: `(1.0, 2.0)` and a `point` are the same
+  - Field access is positional (`fst`, `snd`)
+- **Record** (`type point = { x : float; y : float }`):
+  - A *new* type
+  - Construction requires the type name (or context)
+  - Access by field name
 
-Records are nominally typed and self-documenting. Abbreviations
-are aliases. Reach for records when you want a real new type;
-reach for abbreviations to *name* an existing type for readability.
+- Records: nominally typed, self-documenting
+- Abbreviations: aliases
+- Use records for a **real new type**
+- Use abbreviations to **name** an existing type for readability
 
 :::
 
@@ -267,10 +262,10 @@ let _ = safe_div 100 7
 let _ = safe_div 100 0
 ```
 
-`Some 14` and `None`. The caller has to decide what to do with
-each.
+- Results: `Some 14` and `None`
+- Caller decides what to do with each
 
-A common idiom for handling it is:
+A common idiom for handling it.
 
 ```ocaml skip
 match safe_div 100 b with
@@ -278,8 +273,8 @@ match safe_div 100 b with
 | Some q -> q
 ```
 
-The compiler enforces that you have both branches; it cannot let
-you pretend the `None` case won't happen.
+- Compiler enforces **both** branches
+- Cannot pretend the `None` case won't happen
 
 :::
 

@@ -35,9 +35,9 @@ let _ = sign 0
 
 `"positive"`, `"negative"`, `"zero"`.
 
-Each clause has a pattern (here, the variable `n` or the wildcard
-`_`) and optionally a guard (`when n > 0`). A clause matches if
-both the pattern matches *and* the guard evaluates to `true`.
+- Each clause has a pattern (variable `n` or wildcard `_`).
+- Optionally a guard (`when n > 0`).
+- Clause matches if pattern matches **and** guard is `true`.
 
 :::
 
@@ -45,7 +45,7 @@ both the pattern matches *and* the guard evaluates to `true`.
 
 ## Without guards, you'd nest `if`
 
-Without `when`, the same logic looks like:
+- Without `when`, the same logic looks like:
 
 ```ocaml
 let sign n =
@@ -56,8 +56,8 @@ let sign n =
       else "zero"
 ```
 
-or even worse: a chain of `if`/`else`. Guards keep the cases lined
-up vertically, which is easier to read.
+- Or worse: a chain of `if`/`else`.
+- Guards keep cases lined up vertically: easier to read.
 
 :::
 
@@ -80,9 +80,8 @@ let _ = report (2, 4)
 
 `"diagonal"`, `"on the y-axis"`, `"on the x-axis"`, `"elsewhere"`.
 
-Each clause destructures the pair *and* adds a predicate on the
-extracted components. The pattern selects the shape; the guard
-filters further.
+- Each clause destructures the pair **and** adds a predicate.
+- Pattern selects the shape; guard filters further.
 
 :::
 
@@ -101,9 +100,10 @@ let _ = starts_negative [1; 2; 3]
 let _ = starts_negative []
 ```
 
-`true`, `false`, `false`. The guard `when x < 0` references `x`,
-which was bound by the pattern `x :: _`. You can only use names
-that the pattern in the *same clause* introduced.
+`true`, `false`, `false`.
+
+- Guard `when x < 0` references `x`, bound by pattern `x :: _`.
+- Guards can only use names from the **same clause's** pattern.
 
 :::
 
@@ -125,9 +125,9 @@ Warning 8: this pattern-matching is not exhaustive.
 Here is an example of a case that is not matched: 0
 ```
 
-The compiler can't know that `n > 0` and `n < 0` together cover
-every integer. It assumes a guard can fail, so it can't prove
-exhaustiveness on its own.
+- The compiler can't know that `n > 0` and `n < 0` together cover every integer.
+- It assumes a guard **can fail**.
+- Can't prove exhaustiveness on its own.
 
 You must add the explicit zero case (or a wildcard):
 
@@ -164,10 +164,11 @@ let is_origin = function
   | _ -> false
 ```
 
-Same behaviour; no guard needed because the literal pattern does
-the work. Reach for `when` only when the predicate cannot be a
-pure pattern: numeric inequalities, string predicates,
-relationships between two bindings.
+- Same behaviour; no guard needed.
+- Use `when` only when a pure pattern can't express the predicate:
+  - Numeric inequalities.
+  - String predicates.
+  - Relationships between two bindings.
 
 :::
 
@@ -198,8 +199,8 @@ let _ = sign 0
 
 `"positive"`, `"negative"`, `"zero"`.
 
-The wildcard `_` at the bottom covers the only remaining case
-(zero). Without it, the compiler warns about exhaustiveness.
+- Wildcard `_` at the bottom covers the zero case.
+- Without it, the compiler warns about exhaustiveness.
 
 :::
 
@@ -207,10 +208,9 @@ The wildcard `_` at the bottom covers the only remaining case
 
 ## What's next
 
-Lecture 4: **exhaustiveness checking** in detail. We saw the
-"this pattern-matching is not exhaustive" warning a few times. The
-next lecture shows how it works and why it is one of the most
-useful pieces of static checking OCaml offers.
+- Lecture 4: **exhaustiveness checking** in detail.
+- We've seen "not exhaustive" warnings a few times.
+- Next: how it works, why it's one of OCaml's most useful static checks.
 
 :::
 

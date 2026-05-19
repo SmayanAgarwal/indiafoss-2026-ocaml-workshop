@@ -27,8 +27,10 @@ lecture covers how to raise, how to catch, and when the
 let _ = try List.hd [] with Failure _ -> 0
 ```
 
-`int = 0`. `List.hd` raises `Failure "hd"` on an empty list. The
-`try ... with` catches.
+`int = 0`.
+
+- `List.hd` raises `Failure "hd"` on an empty list.
+- The `try ... with` catches.
 
 A handful of exceptions are defined in the standard library:
 
@@ -37,9 +39,8 @@ A handful of exceptions are defined in the standard library:
 - `Not_found` - raised by lookup functions when the key is absent.
 - `Division_by_zero` - raised by `/` and `mod` on `0`.
 - `End_of_file` - raised when reading past the end.
-
-Plus a few others. You'll see these as the failures of various
-standard library functions.
+- Plus a few others; you'll see them as the failures of various
+  standard library functions.
 
 :::
 
@@ -57,9 +58,10 @@ let _ = head [1; 2; 3]
 
 `int = 1`.
 
-`failwith s` is short for `raise (Failure s)`. `invalid_arg s` is
-`raise (Invalid_argument s)`. They're convenience wrappers; you
-can also `raise some_exception` directly.
+- `failwith s` is short for `raise (Failure s)`.
+- `invalid_arg s` is `raise (Invalid_argument s)`.
+- These are **convenience wrappers**.
+- You can also `raise some_exception` directly.
 
 :::
 
@@ -76,12 +78,14 @@ let _ = safe_head [1; 2; 3]
 let _ = safe_head []
 ```
 
-`Some 1`, `None`. The `try ... with` runs the body; if an
-exception is raised, the matching clause's right-hand side
-becomes the result.
+`Some 1`, `None`.
 
-The `with` part uses pattern matching: clauses match exception
-constructors. You can catch specific exceptions:
+- `try ... with` runs the body.
+- If an exception is raised, the matching clause's right-hand side
+  becomes the result.
+- The `with` part uses **pattern matching**: clauses match
+  exception constructors.
+- You can catch specific exceptions:
 
 ```ocaml
 let safe_divide a b =
@@ -118,14 +122,16 @@ let _ =
   try factorial (-1) with Negative_input -> -1
 ```
 
-`120`, `-1`. Custom exceptions can carry payload:
+`120`, `-1`.
+
+- Custom exceptions can carry a **payload**:
 
 ```ocaml
 exception Parse_error of string * int  (* message, line *)
 ```
 
-`raise (Parse_error ("unexpected token", 42))` and catch with
-`Parse_error (msg, line) -> ...`.
+- Raise: `raise (Parse_error ("unexpected token", 42))`.
+- Catch with `Parse_error (msg, line) -> ...`.
 
 :::
 
@@ -149,10 +155,9 @@ Trade-offs:
   `None`. No reason for the failure.
 - **Result**: failure has a payload (an error message, an error
   code).
-
-Convention in the standard library: each function comes in
-*both* shapes. `List.find` raises `Not_found`; `List.find_opt`
-returns `None`. Reach for the `_opt` form by default.
+- **Stdlib convention**: each function comes in *both* shapes
+  (`List.find` raises `Not_found`; `List.find_opt` returns `None`).
+- **Default**: reach for the `_opt` form.
 
 :::
 
@@ -171,12 +176,13 @@ let _ =
   with Failure _ -> 0
 ```
 
-`int = 10`. The `try` expression has a value: either the body's
-result (if no exception was raised), or the value of the matching
-handler.
+`int = 10`.
 
-Both have to have the *same type*. `List.hd` returns `int`, the
-handler returns `int`, the `try` has type `int`.
+- The `try` expression has a value: either the body's result (if
+  no exception was raised), or the value of the matching handler.
+- Both have to have the *same type*.
+- Here: `List.hd` returns `int`, the handler returns `int`, the
+  `try` has type `int`.
 
 :::
 
@@ -199,9 +205,10 @@ let _ = safely (fun n -> 100 / n) 0
 
 `Ok 25`, `Error "div by zero"`.
 
-Multiple handlers, one for each exception kind. The wildcard `_`
-catches anything else; use it sparingly because it can hide bugs
-(an unrelated `Stack_overflow` would be silently swallowed).
+- **Multiple handlers**, one for each exception kind.
+- The wildcard `_` catches anything else.
+- **Use sparingly**: it can hide bugs (an unrelated
+  `Stack_overflow` would be silently swallowed).
 
 :::
 
@@ -214,11 +221,11 @@ catches anything else; use it sparingly because it can hide bugs
   redesign to make it unrepresentable).
 - For deeply nested computations where reasoning about *when* the
   exception escapes is hard.
-
-Exceptions are good for genuinely rare failures (parse failed,
-file not found) where the calling code's structure shouldn't be
-polluted by error handling at every step. For predictable
-"missing value" cases, `option` is clearer.
+- **Good fit**: genuinely rare failures (parse failed, file not
+  found) where calling code shouldn't be polluted by error
+  handling at every step.
+- **Bad fit**: predictable "missing value" cases, where `option`
+  is clearer.
 
 :::
 
@@ -251,12 +258,11 @@ let _ = find_first_opt (fun n -> n > 100) [1; 2; 3]
 
 `Some 7`, `None`.
 
-`find_first_opt` is the safe wrapper: it catches the exception and
-turns it into an `option`. This is the standard pattern when you
-want to expose both APIs.
-
-The standard library's `List.find` and `List.find_opt` are exactly
-this pair.
+- `find_first_opt` is the **safe wrapper**: catches the exception
+  and turns it into an `option`.
+- Standard pattern when you want to expose both APIs.
+- The stdlib's `List.find` and `List.find_opt` are exactly this
+  pair.
 
 :::
 
@@ -264,10 +270,12 @@ this pair.
 
 ## What's next
 
-Lecture 4: **module basics**. OCaml has a powerful module system,
-distinct from the variants/records/functions we've been using.
-Modules let you group related definitions, hide internals, and
-parameterize over implementations.
+Lecture 4: **module basics**.
+
+- OCaml has a powerful module system, distinct from the
+  variants/records/functions we've been using.
+- Modules let you **group related definitions**, **hide
+  internals**, and **parameterize over implementations**.
 
 :::
 

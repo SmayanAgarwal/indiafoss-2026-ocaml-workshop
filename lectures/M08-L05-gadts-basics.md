@@ -34,9 +34,9 @@ type 'a tree =
   | Node of 'a tree * 'a * 'a tree
 ```
 
-Here `'a` is the same throughout. Every constructor of `'a tree`
-produces a value of type `'a tree`. The compiler doesn't
-distinguish "tree of int" from "tree of string" except by the `'a`.
+- Here `'a` is the same throughout.
+- Every constructor of `'a tree` produces a value of type `'a tree`.
+- The compiler doesn't distinguish "tree of int" from "tree of string" except by the `'a`.
 
 :::
 
@@ -62,9 +62,8 @@ Reading the constructors:
   produces an `int expr`. Can't add `bool expr`s.
 - `If : bool expr * 'a expr * 'a expr -> 'a expr`: condition must
   be `bool expr`; the two branches must have the *same* `'a`.
-
-The `_` in `type _ expr` is a placeholder for the type index. Each
-constructor decides what fills it in.
+- The `_` in `type _ expr` is a placeholder for the type index.
+- Each constructor decides what fills it in.
 
 :::
 
@@ -83,9 +82,9 @@ let e1 : int expr = Add (Int_lit 1, Int_lit 2)
 let e2 : int expr = If (Bool_lit true, Int_lit 5, Int_lit 10)
 ```
 
-Both compile. `Add` expects `int expr`s; we give it `Int_lit`
-constructors which are `int expr`. `If` expects matching branches;
-both `Int_lit 5` and `Int_lit 10` are `int expr`.
+- Both compile.
+- `Add` expects `int expr`s; we give it `Int_lit` constructors which are `int expr`.
+- `If` expects matching branches; both `Int_lit 5` and `Int_lit 10` are `int expr`.
 
 Now try:
 
@@ -94,12 +93,11 @@ let bad = Add (Int_lit 1, Bool_lit true)  (* type error *)
 let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)  (* type error *)
 ```
 
-OCaml refuses to compile these. `Add` requires both arguments to
-be `int expr`; `Bool_lit true` is `bool expr`. `If` requires its
-condition to be `bool expr`; `Int_lit 5` is `int expr`.
-
-What would be a runtime "type error: expected boolean" in a
-dynamically-typed AST becomes a *compile-time* error here.
+- OCaml refuses to compile these.
+- `Add` requires both arguments to be `int expr`; `Bool_lit true` is `bool expr`.
+- `If` requires its condition to be `bool expr`; `Int_lit 5` is `int expr`.
+- A dynamically-typed AST would raise a runtime "type error: expected boolean".
+- Here it becomes a *compile-time* error.
 
 :::
 
@@ -135,10 +133,8 @@ Two new things:
   constructor matched. `Int_lit n -> n` returns `n : int`; the
   type rule of `Int_lit` says the result type is `int expr`, so
   `a = int` in this case, and `n : int` is consistent.
-
-The compiler is doing real type-level work here. Each case's
-right-hand side is checked under the type-refinement implied by
-the constructor that matched.
+- The compiler is doing real type-level work here.
+- Each case's right-hand side is checked under the type-refinement implied by the constructor that matched.
 
 :::
 
@@ -157,9 +153,8 @@ Three reasons:
   "list known non-empty" or "string known to be valid UTF-8" or
   "value known to be positive".
 
-The cost: the type-level reasoning is more involved. Some patterns
-that "obviously" work need help (the `type a. ...` annotation, or
-explicit constraints).
+- The cost: the type-level reasoning is more involved.
+- Some patterns that "obviously" work need help (the `type a. ...` annotation, or explicit constraints).
 
 :::
 
@@ -167,8 +162,8 @@ explicit constraints).
 
 ## A simpler use: phantom types
 
-You don't always need a fancy GADT. Sometimes just a *phantom*
-type parameter is enough:
+- You don't always need a fancy GADT.
+- Sometimes just a *phantom* type parameter is enough:
 
 ```ocaml
 type 'a id = string
@@ -178,10 +173,9 @@ let new_order_id (s : string) : [`Order] id = s
 let greet (u : [`User] id) = "hello, " ^ u
 ```
 
-The `'a` in `'a id` doesn't appear in the implementation (it's
-secretly always a string). But the compiler uses it to keep
-`[`User] id` and `[`Order] id` distinct. Trying to greet an
-order id would be a type error.
+- The `'a` in `'a id` doesn't appear in the implementation (it's secretly always a string).
+- The compiler uses it to keep `` [`User] id `` and `` [`Order] id `` distinct.
+- Trying to greet an order id would be a type error.
 
 ```ocaml skip
 let order = new_order_id "ord-42"
@@ -209,9 +203,9 @@ Avoid them when:
 - A regular variant + `option`/`result` is enough.
 - The complexity exceeds the safety gain (real engineering trade).
 
-GADTs are powerful but they're a more advanced tool. Most real
-OCaml code does not use them; the code that does (interpreters,
-some library cores) uses them heavily.
+- GADTs are powerful but they're a more advanced tool.
+- Most real OCaml code does not use them.
+- The code that does (interpreters, some library cores) uses them heavily.
 
 :::
 
@@ -257,8 +251,8 @@ Error: This expression has type int expr but an expression was
        expected of type bool expr
 ```
 
-The compiler enforces that the `If`'s condition is `bool expr`. An
-`Int_lit` constructor doesn't fit.
+- The compiler enforces that the `If`'s condition is `bool expr`.
+- An `Int_lit` constructor doesn't fit.
 
 :::
 
@@ -266,9 +260,10 @@ The compiler enforces that the `If`'s condition is `bool expr`. An
 
 ## What's next
 
-Lecture 6: **GADT use cases**. Less-trivial examples: heterogeneous
-lists, type witnesses (`Type.Equal`), printf-style format types.
-Then Lecture 7, the Module 8 tutorial.
+Lecture 6: **GADT use cases**.
+
+- Less-trivial examples: heterogeneous lists, type witnesses (`Type.Equal`), printf-style format types.
+- Then Lecture 7, the Module 8 tutorial.
 
 :::
 

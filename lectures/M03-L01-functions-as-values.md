@@ -45,13 +45,10 @@ This is **syntactic sugar** for:
 let double = fun x -> x + x
 ```
 
-The `fun x -> x + x` is an **anonymous function** (sometimes called
-a lambda). It evaluates to a function value, which the `let` then
-binds to the name `double`.
-
-Both definitions produce the same `double`. Use the shorter form
-when defining a named function; use the `fun` form when you need a
-function on the fly.
+- `fun x -> x + x` is an **anonymous function** (a lambda).
+- It evaluates to a function value; `let` binds it to `double`.
+- Both definitions produce the same `double`.
+- Use the shorter form for named functions; use `fun` for one-off functions.
 
 :::
 
@@ -59,24 +56,25 @@ function on the fly.
 
 ## Anonymous functions
 
-`fun x -> e` is the expression form. It's a value of function type:
+- `fun x -> e` is the expression form.
+- It's a value of function type.
 
 ```ocaml
 let _ = fun x -> x + 1
 ```
 
-The toplevel reports `int -> int = <fun>` and binds the value to
-`_`. The function exists; we just haven't named it. We can apply it
-right there:
+- Toplevel reports `int -> int = <fun>`, binds to `_`.
+- The function exists; we just haven't named it.
+
+We can apply it right there:
 
 ```ocaml
 let _ = (fun x -> x + 1) 7
 ```
 
-`int = 8`. Parenthesize the `fun ... -> ...` and apply it as a
-function. We almost never do this; we'd just write `7 + 1`. But the
-point is that `fun ... -> ...` is a real expression that evaluates
-to a function.
+- `int = 8`. Parenthesize, then apply.
+- Rarely done in practice (we'd just write `7 + 1`).
+- Key point: `fun ... -> ...` is a real expression evaluating to a function.
 
 :::
 
@@ -90,13 +88,11 @@ let add' = fun x y -> x + y
 let add'' = fun x -> fun y -> x + y
 ```
 
-All three define the same function. The third form makes something
-explicit: a "two-argument function" in OCaml is actually a
-*one-argument function that returns another one-argument function*.
-
-We will dive deeper into this (currying) in Lecture 3. For now,
-just notice that `fun x y -> ...` and `fun x -> fun y -> ...` are
-the same.
+- All three define the same function.
+- The third form makes something explicit.
+- A "two-argument function" in OCaml is really a *one-argument function returning another one-argument function*.
+- Deeper dive: **currying**, Lecture 3.
+- For now: `fun x y -> ...` and `fun x -> fun y -> ...` are the same.
 
 :::
 
@@ -121,10 +117,9 @@ let _ = double 5
 let _ = triple 5
 ```
 
-Three function values, named with `let`, then applied. Nothing magic;
-this is the same shape as `let pi = 3.14`.
-
-The difference is that the value happens to be a function.
+- Three function values, named with `let`, then applied.
+- Same shape as `let pi = 3.14`.
+- The only difference: the value happens to be a function.
 
 :::
 
@@ -142,13 +137,12 @@ let _ = plus_five 3
 let _ = plus_ten 3
 ```
 
-`make_adder` is `int -> (int -> int)` (read: takes an `int`, returns
-a function from `int` to `int`). Applying `make_adder 5` produces
-a *new function* that adds 5; applying `make_adder 10` produces
-another one that adds 10.
-
-This is the first example of a **higher-order function**: a function
-that returns or takes functions. We'll see more in Module 6.
+- `make_adder : int -> (int -> int)`.
+- Takes an `int`, returns a function from `int` to `int`.
+- `make_adder 5` produces a *new function* that adds 5.
+- `make_adder 10` produces another that adds 10.
+- This is our first **higher-order function**: takes or returns functions.
+- More in Module 6.
 
 :::
 
@@ -163,15 +157,12 @@ let plus_five = make_adder 5
 let _ = plus_five 100
 ```
 
-When we call `plus_five 100`, the function body is `x + n`. At call
-time `n` is... where does it come from? It's not a parameter of
-`plus_five`. It was the parameter of `make_adder`, which has long
-since returned.
-
-OCaml functions are **closures**: they capture the values of any
-names they reference, at the point they are created. `plus_five`
-remembers that, when it was made, `n` was `5`. It will always add
-5, no matter how the rest of the program changes.
+- Calling `plus_five 100`, the body is `x + n`. Where does `n` come from?
+- Not a parameter of `plus_five`.
+- It was `make_adder`'s parameter; `make_adder` has long since returned.
+- OCaml functions are **closures**: they capture the values of names they reference, at creation time.
+- `plus_five` remembers that `n` was `5` when it was made.
+- It always adds 5, no matter how the rest of the program changes.
 
 :::
 
@@ -188,12 +179,11 @@ let _ = f 1
 
 What does `f 1` return? `11`.
 
-The function `f` was defined when `n` was `10`. It captured the
-value `10`, not "the name n". The later `let n = 99` shadows the
-outer `n` but does not retroactively change what `f` saw.
-
-This is the same shadowing-vs-mutation point we made in Module 2,
-applied to functions.
+- `f` was defined when `n` was `10`.
+- It captured the **value** `10`, not "the name `n`".
+- The later `let n = 99` shadows the outer `n`.
+- Shadowing does not retroactively change what `f` saw.
+- Same shadowing-vs-mutation point from Module 2, applied to functions.
 
 :::
 
@@ -208,15 +198,11 @@ let _ = apply_twice (fun x -> x + 1) 5
 let _ = apply_twice double 5
 ```
 
-`apply_twice` takes a function `f` and a value `x`, then computes
-`f (f x)`. The first call passes the anonymous function `fun x -> x + 1`;
-the second passes `double` (which we defined earlier as `fun x -> x * 2`).
-
-The toplevel reports
-`val apply_twice : ('a -> 'a) -> 'a -> 'a = <fun>`.
-
-Read: `apply_twice` takes a function from some type `'a` to itself,
-plus a value of type `'a`, and returns an `'a`.
+- `apply_twice` takes a function `f` and a value `x`, computes `f (f x)`.
+- First call: passes the anonymous `fun x -> x + 1`.
+- Second call: passes `double` (defined earlier).
+- Toplevel: `val apply_twice : ('a -> 'a) -> 'a -> 'a = <fun>`.
+- Read: takes a function from `'a` to itself, plus an `'a`, returns an `'a`.
 
 :::
 
@@ -224,24 +210,24 @@ plus a value of type `'a`, and returns an `'a`.
 
 ## Anonymous functions are everywhere
 
-You will write `fun x -> ...` a lot. It is the standard way to pass
-a small one-off function to something like `List.map`:
+- You will write `fun x -> ...` a lot.
+- Standard way to pass a small one-off function to e.g. `List.map`.
 
 ```ocaml
 let nums = [1; 2; 3; 4; 5]
 let _ = List.map (fun x -> x * x) nums
 ```
 
-Without anonymous functions you'd need to:
+Without anonymous functions:
 
 ```ocaml
 let square x = x * x
 let _ = List.map square nums
 ```
 
-The first form is shorter and keeps the logic close to where it is
-used. Both are fine; idiom leans toward anonymous functions for
-small, single-use computations.
+- First form is shorter; keeps logic close to where it's used.
+- Both are fine.
+- Idiom leans toward anonymous functions for small, single-use computations.
 
 :::
 
@@ -258,22 +244,22 @@ giving it a name.
 val add : int -> int -> int
 ```
 
-Reads as `int -> (int -> int)`. The arrows associate right.
+- Reads as `int -> (int -> int)`.
+- Arrows associate right.
 
 ```ocaml skip
 val apply_twice : ('a -> 'a) -> 'a -> 'a
 ```
 
-Reads as `('a -> 'a) -> ('a -> 'a)`. The first argument is itself
-a function (parens make it explicit). The rest follow the
-right-associativity rule.
+- Reads as `('a -> 'a) -> ('a -> 'a)`.
+- First argument is itself a function (parens make it explicit).
+- Rest follows right-associativity.
 
-When reading a function type from left to right, each arrow says
-"and given an X, produces":
+When reading left to right, each arrow says "and given an X, produces":
 
 > "given an `('a -> 'a)`, produces (given an `'a`, produces an `'a`)"
 
-You'll get fluent at this with practice.
+You'll get fluent with practice.
 
 :::
 
@@ -295,18 +281,18 @@ Predict before binding it.
 
 ## Activity discussion
 
-`float -> float`. The `+.` forces `x` to be `float`, the result is
-`float`.
+- Type: `float -> float`.
+- `+.` forces `x` to be `float`; result is `float`.
 
-Now try a slightly trickier one:
+Now try a trickier one:
 
 ```ocaml
 fun f x -> f (f x)
 ```
 
-This is the anonymous version of `apply_twice`. Its type is
-`('a -> 'a) -> 'a -> 'a`. Two arguments: a function (the type that
-loops on itself), and a starting value.
+- Anonymous version of `apply_twice`.
+- Type: `('a -> 'a) -> 'a -> 'a`.
+- Two arguments: a function (type loops on itself), and a starting value.
 
 :::
 
@@ -314,10 +300,11 @@ loops on itself), and a starting value.
 
 ## What's next
 
-Lecture 2: **recursion**. The pattern for writing functions that
-process structures (lists, trees, numbers built by counting up) by
-having the function call itself. The bread and butter of functional
-programming.
+Lecture 2: **recursion**.
+
+- Pattern for writing functions that process structures (lists, trees, counts).
+- Function calls itself.
+- The bread and butter of functional programming.
 
 :::
 

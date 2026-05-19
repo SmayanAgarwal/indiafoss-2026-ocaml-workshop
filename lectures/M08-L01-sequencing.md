@@ -51,11 +51,9 @@ let _ = demo "frog"
 let _ = demo "100"
 ```
 
-The third call prints nothing because `100 * 2 = 200` is rejected
-by `small`.
-
-Notice the *shape*: four steps, four `match`es, four `None -> None`
-clauses. The actual logic is buried in the right-hand sides.
+- The third call prints nothing: `100 * 2 = 200` is rejected by `small`.
+- Notice the *shape*: four steps, four `match`es, four `None -> None` clauses.
+- The actual logic is buried in the right-hand sides.
 
 :::
 
@@ -63,9 +61,9 @@ clauses. The actual logic is buried in the right-hand sides.
 
 ## What we want
 
-Each step's pattern is the same: "if previous was `None`, give up;
-otherwise, unwrap, run the next step". A helper would let us write
-it once:
+- Each step's pattern is the same.
+- "If previous was `None`, give up; otherwise, unwrap, run the next step."
+- A helper would let us write it once:
 
 ```ocaml
 let bind opt f =
@@ -87,8 +85,8 @@ let demo s =
 let _ = demo "5"
 ```
 
-Each step is one line: `bind (this) (fun x -> rest)`. The "what to
-do if `None`" logic is captured once, in `bind`.
+- Each step is one line: `bind (this) (fun x -> rest)`.
+- The "what to do if `None`" logic is captured once, in `bind`.
 
 :::
 
@@ -96,8 +94,8 @@ do if `None`" logic is captured once, in `bind`.
 
 ## `let*` syntax (preview)
 
-The nested `bind` is still slightly heavy. OCaml has a sugar for
-it (`let*`) that we'll cover in Lecture 2:
+- The nested `bind` is still slightly heavy.
+- OCaml has a sugar for it (`let*`) that we'll cover in Lecture 2:
 
 ```ocaml
 let ( let* ) opt f =
@@ -119,12 +117,11 @@ let demo s =
 let _ = demo "5"
 ```
 
-That reads almost like ordinary `let ... in ...` sequencing.
-Behind the scenes it's exactly the nested `bind`s from before.
-
-This is what people mean by "an option monad". The *shape* is:
-(`return : 'a -> 'a option`) + (`bind : 'a option -> ('a -> 'b
-option) -> 'b option`). Anything with that shape is a monad.
+- Reads almost like ordinary `let ... in ...` sequencing.
+- Behind the scenes it's exactly the nested `bind`s from before.
+- This is what people mean by "an option monad".
+- The *shape* is: (`return : 'a -> 'a option`) + (`bind : 'a option -> ('a -> 'b option) -> 'b option`).
+- Anything with that shape is a monad.
 
 :::
 
@@ -137,18 +134,11 @@ That's it. We'll see it for `option`, `result`, state, and others.
 
 ## Why this matters
 
-In Module 4 we said `option` is OCaml's answer to null. The
-trade-off was: option-flavoured code requires lots of `match`
-statements. The pyramid of doom is exactly that trade-off in
-practice.
-
-Monad-shaped helpers make the trade-off cheap. You get the
-type-safety of `option` *and* code that reads top-to-bottom like
-ordinary sequential code. That's the win.
-
-The same pattern lifts to other shapes (`result`, `Lwt`/`Async`
-promises, parsers, state). Each one is a different monad; the
-notation is the same.
+- In Module 4 we said `option` is OCaml's answer to null.
+- Trade-off: option-flavoured code requires lots of `match` statements.
+- The pyramid of doom is exactly that trade-off in practice.
+- Monad-shaped helpers make the trade-off cheap: type-safety of `option` **and** top-to-bottom readable code.
+- Same pattern lifts to other shapes (`result`, `Lwt`/`Async` promises, parsers, state); same notation.
 
 :::
 
@@ -162,10 +152,8 @@ notation is the same.
   the failure case carries info.
 - **State monad** (Lecture 4): `state -> 'a * state`. Threads a
   hidden state through a chain of computations.
-
-After those, Lectures 5-6 cover GADTs, a more advanced type-system
-feature that's loosely connected to monads (used together for
-"typed embedded DSLs").
+- Lectures 5-6 cover **GADTs**: a more advanced type-system feature.
+- Loosely connected to monads (used together for "typed embedded DSLs").
 
 :::
 
@@ -206,8 +194,8 @@ let _ = pipeline "-3"
 
 `Some 10`, `None`, `None`.
 
-`bind` captures the "if `None`, abort; otherwise, unwrap and pass
-on" logic. Three steps, three `bind`s, no nested `match`.
+- `bind` captures the "if `None`, abort; otherwise, unwrap and pass on" logic.
+- Three steps, three `bind`s, no nested `match`.
 
 :::
 

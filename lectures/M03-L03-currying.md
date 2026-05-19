@@ -39,18 +39,17 @@ This is short for:
 let add = fun x -> fun y -> x + y
 ```
 
-`add` is a one-argument function. Its argument is named `x`. Its
-result is a *function* of one argument (named `y`) which returns
-`x + y`.
+- `add` is a one-argument function with argument `x`.
+- Its result is a *function* of one argument `y` returning `x + y`.
 
-The type confirms this:
+The type confirms:
 
 ```
 val add : int -> int -> int
 ```
 
-Read with right-associativity: `int -> (int -> int)`. *Takes an
-int, returns a function from int to int.*
+- Right-associative: `int -> (int -> int)`.
+- *Takes an int, returns a function from int to int.*
 
 :::
 
@@ -63,18 +62,17 @@ let add x y = x + y
 let add5 = add 5
 ```
 
-`add5` is a function of type `int -> int`. It will add 5 to
-whatever int you give it.
+- `add5 : int -> int`.
+- Adds 5 to whatever int you give it.
 
 ```ocaml
 let _ = add5 3
 ```
 
-`int = 8`. We *partially applied* `add` to just one of its two
-arguments. The result is a function that wants the second.
-
-This works for any curried function. You can always supply some
-arguments and get back a function waiting for the rest.
+- `int = 8`.
+- We *partially applied* `add` to one of its two arguments.
+- Result: a function waiting for the second.
+- Works for any curried function: supply some arguments, get back a function for the rest.
 
 :::
 
@@ -87,13 +85,11 @@ let xs = [1; 2; 3; 4]
 let xs_plus_10 = List.map (add 10) xs
 ```
 
-`int list = [11; 12; 13; 14]`. `List.map` wants a function from
-`int` to `int`. We don't have to write a one-off lambda
-`fun x -> add 10 x`; we just write `add 10`, which already *is*
-that function.
-
-This is the most common reason to like currying: it eliminates
-small wrapper lambdas in higher-order code.
+- `int list = [11; 12; 13; 14]`.
+- `List.map` wants an `int -> int` function.
+- No need for the one-off lambda `fun x -> add 10 x`.
+- `add 10` already *is* that function.
+- Common reason to like currying: eliminates small wrapper lambdas in higher-order code.
 
 :::
 
@@ -115,23 +111,18 @@ let divide x y = x / y
 let half x = divide x 2  (* not "divide 2 x" *)
 ```
 
-If you write `divide 2`, you get a function that takes `y` and
-returns `2 / y`. That's not "half"; that's "two divided by".
+- `divide 2` gives a function taking `y` and returning `2 / y`.
+- That's "two divided by", not "half".
+- The **first** argument is the one most easily fixed by partial application.
+- Stdlib APIs often place arguments in the order most useful for partial application.
 
-The first argument is the one most easily fixed by partial
-application. In standard-library APIs, this is why the function
-order is sometimes counter-intuitive: arguments are placed in the
-order most useful for partial application.
-
-For instance, `List.map` takes the *function* first and the *list*
-second:
+For example, `List.map` takes the *function* first, *list* second:
 
 ```ocaml skip
 val List.map : ('a -> 'b) -> 'a list -> 'b list
 ```
 
-That way you can write `List.map (add 10)` and partial-apply both
-arguments meaningfully.
+- So you can write `List.map (add 10)` and partial-apply meaningfully.
 
 :::
 
@@ -147,12 +138,10 @@ let _ = increment 5
 let _ = double 5
 ```
 
-`(+)` is the prefix-call form of the `+` operator: it's the
-function `fun x y -> x + y`. We partial-apply it to `1` and get
-`increment`. Same for `(*)` and `2`.
-
-(The space inside `( * )` is to avoid being parsed as a comment
-`(*`.)
+- `(+)` is the prefix-call form of `+`: it's `fun x y -> x + y`.
+- Partial-apply to `1` to get `increment`.
+- Same for `(*)` and `2`.
+- Space inside `( * )` avoids being parsed as the comment `(*`.
 
 :::
 
@@ -174,11 +163,11 @@ let _ = in_human_range 42
 let _ = in_celsius_room 22.5
 ```
 
-`true` and `true`. `between` takes three arguments (`lo`, `hi`,
-`x`); partial-applying two of them gives a *one-argument*
-predicate. We make two specialized predicates here.
-
-Same idea as `add 5`, just one more layer of nesting.
+- Both `true`.
+- `between` takes three arguments (`lo`, `hi`, `x`).
+- Partial-applying two of them gives a *one-argument* predicate.
+- We make two specialized predicates here.
+- Same idea as `add 5`, with one more layer of nesting.
 
 :::
 
@@ -198,16 +187,15 @@ you can drop the `x`:
 let f = g
 ```
 
-If `f` is just *applying* `g` to its argument and returning the
-result, the two are equivalent. OCaml lets you write the shorter
-form.
+- If `f` just *applies* `g` and returns the result, the two are equivalent.
+- OCaml lets you write the shorter form.
 
 ```ocaml
 let xs_plus_10 = List.map (add 10) xs
 ```
 
-We didn't need `fun x -> List.map (add 10) x`; we wrote it directly.
-Same idea.
+- We didn't need `fun x -> List.map (add 10) x`.
+- Same eta-reduction idea.
 
 :::
 
@@ -215,8 +203,8 @@ Same idea.
 
 ## When currying isn't what you want
 
-Sometimes you really do want a function that takes "a pair of
-ints", not "an int and then another int". In that case use a tuple:
+- Sometimes you want "a pair of ints", not "an int then another int".
+- Use a tuple:
 
 ```ocaml
 let add_pair (x, y) = x + y
@@ -224,14 +212,11 @@ let add_pair (x, y) = x + y
 let _ = add_pair (3, 4)
 ```
 
-`add_pair` has type `int * int -> int`. It takes *one* argument,
-which is a pair.
-
-The two forms are not interchangeable: `add 3 4` and `add_pair (3,
-4)` are different syntax, and you can't partial-apply the tuple
-version. Most OCaml code prefers the curried form for that reason;
-the tuple form is used when the two values are *conceptually one
-thing* (like a point in 2D).
+- `add_pair : int * int -> int`.
+- Takes *one* argument: a pair.
+- `add 3 4` and `add_pair (3, 4)` are different syntax.
+- Can't partial-apply the tuple version.
+- Most OCaml code prefers curried; tuple is used when the values are *conceptually one thing* (e.g. a 2D point).
 
 :::
 
@@ -257,16 +242,12 @@ Predict:
 
 ## Activity discussion
 
-- The type of `add 5` is `int -> int`. It's the function `fun y -> 5
-  + y`.
-- `add 5` evaluates to a function value. The toplevel reports
-  `int -> int = <fun>`.
-- `(add 5) 3` evaluates to `8`. We first compute `add 5`, then apply
-  it to `3`.
-
-`add 5 3` (no parens) gives the same `8` because function
-application is left-associative: `((add) 5) 3`. The parens version
-just makes the partial application explicit.
+- Type of `add 5`: `int -> int`. It's the function `fun y -> 5 + y`.
+- `add 5` evaluates to a function value. Toplevel: `int -> int = <fun>`.
+- `(add 5) 3` evaluates to `8`. First compute `add 5`, then apply to `3`.
+- `add 5 3` (no parens) gives the same `8`.
+- Function application is left-associative: `((add) 5) 3`.
+- The parens version just makes partial application explicit.
 
 :::
 
@@ -274,9 +255,10 @@ just makes the partial application explicit.
 
 ## What's next
 
-Lecture 4: **tail recursion**. A way of writing recursive functions
-that doesn't risk stack overflow on large inputs. We rewrite
-`factorial` and `sum` to be tail recursive.
+Lecture 4: **tail recursion**.
+
+- Write recursive functions without stack-overflow risk on large inputs.
+- Rewrite `factorial` and `sum` to be tail recursive.
 
 :::
 

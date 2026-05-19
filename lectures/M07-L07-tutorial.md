@@ -47,9 +47,12 @@ let q = enqueue 3 (enqueue 2 (enqueue 1 empty))
 let _ = dequeue q
 ```
 
-`Some (1, ...)`. The first call to `dequeue` triggers the
-recursive case (front is empty), reverses `back` into `front`, and
-recurses. The next dequeue is O(1).
+`Some (1, ...)`.
+
+- The first call to `dequeue` triggers the recursive case (front
+  is empty).
+- Reverses `back` into `front`, and recurses.
+- The next dequeue is O(1).
 
 :::
 
@@ -57,8 +60,9 @@ recurses. The next dequeue is O(1).
 
 ## The signature
 
-We want callers to see only `'a t`, `empty`, `enqueue`, `dequeue`,
-`is_empty`. The representation should be hidden:
+- Callers should see only `'a t`, `empty`, `enqueue`, `dequeue`,
+  `is_empty`.
+- The representation should be **hidden**:
 
 ```ocaml
 module type QUEUE = sig
@@ -90,9 +94,11 @@ let _ = Queue.dequeue q
 let _ = Queue.is_empty Queue.empty
 ```
 
-`Some (1, ...)`, `true`. From outside, `Queue.t` is abstract. We
-can construct, enqueue, dequeue, check empty — that's it. The
-two-list representation is hidden.
+`Some (1, ...)`, `true`.
+
+- From outside, `Queue.t` is **abstract**.
+- We can construct, enqueue, dequeue, check empty: that's it.
+- The two-list representation is **hidden**.
 
 :::
 
@@ -114,9 +120,10 @@ Two reasons we've seen before:
 
 ## Turning it into a functor
 
-Suppose we want a queue parameterized by element type, with
-typed-printer for elements. The element type isn't free anymore;
-we need a `pp` function on it.
+- Suppose we want a queue parameterized by element type, with a
+  typed-printer for elements.
+- The element type isn't free anymore.
+- We need a `pp` function on it.
 
 ```ocaml
 module type ELT = sig
@@ -152,9 +159,9 @@ let () = IQ.print q
 Prints `[ | 3, 2, 1]` (front is empty; back is `[3; 2; 1]`,
 reversed for display gives `1, 2, 3`).
 
-The functor expects an element type with a `to_string`. We pass
-an inline module providing `int` and `string_of_int`. We get out a
-fully working int-queue with print capability.
+- The functor expects an element type with a `to_string`.
+- We pass an inline module providing `int` and `string_of_int`.
+- We get out a fully working int-queue with print capability.
 
 :::
 
@@ -174,8 +181,9 @@ module Q = struct end  (* dummy *)
 
 (actually `module String_queue = Make(struct type t = string let to_string s = s end)`)
 
-This is how `Map.Make`, `Set.Make`, `Hashtbl.Make` work in the
-standard library: one implementation, many specialisations.
+- This is how `Map.Make`, `Set.Make`, `Hashtbl.Make` work in the
+  standard library.
+- **One implementation, many specialisations.**
 
 :::
 
@@ -219,13 +227,15 @@ let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty))
 let _ = Queue.length q
 ```
 
-`int = 3`. The signature now lists `length`; the implementation
-provides it.
+`int = 3`.
 
-If you forget to add `length` to the *module*, OCaml errors:
-`Signature mismatch: missing value 'length'`. If you add `length`
-to the signature without implementing it, same error. The
-compiler enforces both sides.
+- The signature now lists `length`; the implementation provides
+  it.
+- **Forget to add `length` to the module** and OCaml errors:
+  `Signature mismatch: missing value 'length'`.
+- **Add `length` to the signature without implementing it** and
+  you get the same error.
+- The compiler enforces both sides.
 
 :::
 
@@ -245,9 +255,10 @@ After Module 7 you can:
 - Use functors from the standard library (`Map.Make`, `Set.Make`).
 - Write your own simple functor.
 
-Module 8 covers **monads and GADTs**: two abstractions for
-sequencing computations cleanly and for encoding richer
-type-level information.
+Module 8 covers **monads and GADTs**:
+
+- Two abstractions for sequencing computations cleanly.
+- And for encoding richer type-level information.
 
 :::
 

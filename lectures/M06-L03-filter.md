@@ -34,9 +34,9 @@ let _ = filter (fun x -> x mod 2 = 0) [1; 2; 3; 4; 5; 6]
 
 `int list = [2; 4; 6]`.
 
-Type: `('a -> bool) -> 'a list -> 'a list`. The predicate takes a
-list element, returns a `bool`. The result list has the same
-element type, possibly shorter.
+- Type: `('a -> bool) -> 'a list -> 'a list`.
+- Predicate takes an element and returns a `bool`.
+- Result list has the **same element type**, possibly shorter.
 
 :::
 
@@ -51,8 +51,8 @@ let _ = List.filter (fun s -> String.length s > 3) ["hi"; "hello"; "ok"; "world"
 
 `[7; 8; 9]`, `["hello"; "world"]`.
 
-Same pattern: predicate first, list second. The result is a sublist
-(elements in the same order as the input, just fewer).
+- Same pattern: predicate first, list second.
+- Result is a sublist: elements in the same order, just fewer.
 
 :::
 
@@ -71,10 +71,9 @@ let _ = big_squares [1; 2; 3; 4; 5]
 
 `[16; 25]`.
 
-The `|>` is the *pipeline operator*: `x |> f` is the same as `f x`,
-but written left-to-right. We will cover it properly in Lecture 5.
-Here it lets us read the computation top-to-bottom: start with the
-list, square each element, keep the ones above 10.
+- `|>` is the *pipeline operator*: `x |> f` is the same as `f x`.
+- Lets you read left-to-right (covered fully in Lecture 5).
+- Top-to-bottom: start with the list, square each, keep those above 10.
 
 :::
 
@@ -82,17 +81,18 @@ list, square each element, keep the ones above 10.
 
 ## `filter` doesn't change order
 
-Like `map`, `filter` preserves relative order. The output is a
-subsequence of the input.
+- Like `map`, `filter` preserves relative order.
+- The output is a subsequence of the input.
 
 ```ocaml
 let _ = List.filter (fun x -> x > 3) [5; 1; 7; 2; 9; 3; 4]
 ```
 
-`[5; 7; 9; 4]`. Elements that passed, in the order they appeared.
+`[5; 7; 9; 4]`.
 
-This matters when you're filtering an already-sorted list, or a
-log of timestamped events: the order is preserved for you.
+- Elements that passed, in the order they appeared.
+- Matters when filtering a sorted list or a log of timestamped events.
+- Order is preserved for you.
 
 :::
 
@@ -109,12 +109,13 @@ let parse_ints xs =
 let _ = parse_ints ["42"; "frog"; "13"; "; "; "0"]
 ```
 
-`[42; 13; 0]`. `int_of_string_opt` returns `int option`:
-`Some n` if the string parses, `None` otherwise. `filter_map`
-discards the `None`s and unwraps the `Some`s.
+`[42; 13; 0]`.
 
-This is `List.filter (Option.is_some) |> List.map Option.get` in
-one pass, with no exception risk.
+- `int_of_string_opt : string -> int option`.
+- `Some n` if it parses, `None` otherwise.
+- `filter_map` discards `None`s and unwraps `Some`s.
+- Equivalent to `filter Option.is_some |> map Option.get`, but in
+  one pass and with no exception risk.
 
 :::
 
@@ -136,9 +137,9 @@ let _ = failed
 
 `[85; 73; 95]`, `[42; 30; 58]`.
 
-`partition p xs` returns *two* lists: those that passed the
-predicate, and those that didn't. Like calling `filter` twice (once
-with `p`, once with `fun x -> not (p x)`), but in one pass.
+- `partition p xs` returns *two* lists: passed, then failed.
+- Equivalent to `filter p` and `filter (not p)`.
+- But done in a single pass.
 
 :::
 
@@ -163,12 +164,12 @@ let modern_long = List.filter
 let _ = List.map (fun b -> b.title) modern_long
 ```
 
-`["OCaml"; "Rust"]`. We filter on a compound predicate (modern
-*and* long), then map to titles.
+`["OCaml"; "Rust"]`.
 
-The pattern (filter, then map) is so common it has a name in some
-codebases: *select-where*, *project-select*. In OCaml, two
-chained function calls.
+- Filter on a compound predicate (modern *and* long).
+- Then map to titles.
+- This filter-then-map pattern is sometimes called *select-where* or
+  *project-select*. In OCaml: two chained function calls.
 
 :::
 
@@ -204,10 +205,10 @@ let _ = unique ["a"; "b"; "a"; "c"; "b"]
 
 `[1; 2; 3; 4]`, `["a"; "b"; "c"]`.
 
-We maintain a `seen` list (in reverse for efficiency) and only
-include each element if not already seen. `List.mem` is `O(n)` per
-call, so the whole thing is `O(n²)` — fine for short lists. For
-big lists, use a `Set` (Module 7).
+- Maintain a `seen` list (in reverse for efficiency).
+- Include each element only if not already seen.
+- `List.mem` is `O(n)` per call: overall `O(n²)`.
+- Fine for short lists; use a `Set` (Module 7) for big lists.
 
 :::
 
@@ -215,9 +216,11 @@ big lists, use a `Set` (Module 7).
 
 ## What's next
 
-Lecture 4: **`fold`**. The most general of the three; both `map`
-and `filter` can be expressed in terms of `fold`. Once you grok
-`fold`, you can express most list computations with it.
+Lecture 4: **`fold`**.
+
+- The most general of the three.
+- Both `map` and `filter` can be expressed in terms of `fold`.
+- Once you grok `fold`, most list computations follow.
 
 :::
 

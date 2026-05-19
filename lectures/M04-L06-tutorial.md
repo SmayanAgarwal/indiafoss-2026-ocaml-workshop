@@ -32,9 +32,10 @@ type json =
   | JObject of (string * json) list
 ```
 
-Six constructors: the standard JSON kinds. The recursive cases are
-`JArray` (a list of `json`s) and `JObject` (a list of key-value
-pairs where each value is a `json`).
+- Six constructors: the standard JSON kinds
+- Recursive cases:
+  - `JArray`: a list of `json`s
+  - `JObject`: a list of key-value pairs, each value a `json`
 
 A small example:
 
@@ -54,9 +55,9 @@ let value =
 
 ## Operation 1: depth
 
-Maximum nesting depth. A `JNull`/`JBool`/`JNumber`/`JString` has
-depth 1. A `JArray` or `JObject` has depth 1 + max depth of its
-contents.
+- Maximum nesting depth
+- Scalars (`JNull`/`JBool`/`JNumber`/`JString`): depth 1
+- `JArray` or `JObject`: 1 + max depth of contents
 
 ```ocaml
 let rec depth = function
@@ -69,11 +70,10 @@ let rec depth = function
 let _ = depth value
 ```
 
-`int = 2`. The deepest field is `pets`, which is a `JArray`
-containing strings (depth 1); the array itself adds 1, total 2.
-
-`JNull | JBool _ | ...` is an *or-pattern*: it matches any of the
-listed constructors. The compiler treats it as one case.
+- Result: `int = 2`
+- Deepest field is `pets`: a `JArray` of strings (depth 1), array adds 1, total 2
+- `JNull | JBool _ | ...` is an **or-pattern**: matches any listed constructor
+- Compiler treats it as one case
 
 :::
 
@@ -95,11 +95,10 @@ let _ = lookup "phone" value
 let _ = lookup "name" (JString "not an object")
 ```
 
-`Some (JString "Alice")`, `None`, `None`.
-
-The function returns `json option`. It's `None` when the input
-isn't a `JObject` *or* when the key isn't present. `List.assoc`
-raises `Not_found`; we catch and turn into `None`.
+- Results: `Some (JString "Alice")`, `None`, `None`
+- Returns `json option`
+- `None` when: input isn't a `JObject` **or** the key isn't present
+- `List.assoc` raises `Not_found`; we catch it and turn it into `None`
 
 :::
 
@@ -145,10 +144,10 @@ A long string like:
 {"name": "Alice", "age": 30., "pets": ["cat", "dog"], "alive": true}
 ```
 
-Each constructor gets a case; arrays and objects recurse. Notice we
-*didn't* handle escaping inside strings (a real JSON pretty-printer
-would escape `\`, `"`, control characters). For a toy ADT, this is
-the spine.
+- Each constructor gets a case
+- Arrays and objects **recurse**
+- We *didn't* handle string escaping (a real printer escapes `\`, `"`, control chars)
+- For a toy ADT, this is the spine
 
 :::
 
@@ -156,8 +155,8 @@ the spine.
 
 ## Operation 4: shallow update
 
-Replace a field if it exists; add it if not. Returns a new `json`
-value (immutable update):
+- Replace a field if it exists; add it if not
+- Returns a new `json` value (**immutable** update)
 
 ```ocaml
 let set_field key new_value = function
@@ -175,13 +174,13 @@ let with_phone = set_field "phone" (JString "555-1234") value
 let _ = lookup "phone" with_phone
 ```
 
-`Some (JString "555-1234")`. The original `value` is unchanged;
-`with_phone` is a fresh value with the field added.
-
-This is structural recursion over the list of fields. We use a
-*when-clause* (`when k = key`) on the pattern: it adds a runtime
-guard that lets us distinguish "found the key" from "different
-key". When-clauses are covered properly in Module 5.
+- Result: `Some (JString "555-1234")`
+- Original `value` is **unchanged**
+- `with_phone` is a fresh value with the field added
+- Structural recursion over the list of fields
+- `when k = key`: a **when-clause**, a runtime guard on the pattern
+- Distinguishes "found the key" from "different key"
+- When-clauses are covered properly in Module 5
 
 :::
 
@@ -200,8 +199,8 @@ This tutorial used everything:
 - **Pattern matching** (every operation).
 - **Recursion** (every operation on the recursive constructors).
 
-This is the everyday Module 4 toolkit. You will reach for these
-pieces in nearly every OCaml program you write.
+- The everyday Module 4 toolkit
+- You'll reach for these pieces in nearly every OCaml program
 
 :::
 
@@ -239,13 +238,12 @@ type json =
   | JObject of (string * json) list
 ```
 
-The compiler now warns *every match* on `json` that doesn't handle
-`JFloat`: `depth`, `pretty`, `set_field`, etc. You go down the
-list and add a `| JFloat f -> ...` clause to each.
-
-This is the *refactor-with-the-compiler* property. You don't have
-to find call sites by reading; the compiler finds them for you and
-won't be quiet until they're all handled.
+- Compiler now warns *every match* on `json` that doesn't handle `JFloat`
+- Affected: `depth`, `pretty`, `set_field`, etc.
+- Go down the list, add a `| JFloat f -> ...` clause to each
+- This is the **refactor-with-the-compiler** property
+- You don't find call sites by reading; the compiler finds them
+- It won't be quiet until they're all handled
 
 :::
 
@@ -263,10 +261,15 @@ After Module 4 you can:
 - Use `option` and `result` to express "maybe" and "succeeded or
   not" without nulls.
 
-Module 5 zooms in on **pattern matching** itself: the syntax
-features we've been sketching (or-patterns, when-clauses,
-exhaustiveness checking, nested patterns, the `function`
-shorthand) and how they fit together.
+Module 5 zooms in on **pattern matching** itself:
+
+- The syntax features we've been sketching:
+  - or-patterns
+  - when-clauses
+  - exhaustiveness checking
+  - nested patterns
+  - the `function` shorthand
+- And how they fit together
 
 :::
 

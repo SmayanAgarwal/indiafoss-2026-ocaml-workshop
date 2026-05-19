@@ -34,11 +34,11 @@ module type COUNTER = sig
 end
 ```
 
-That's a signature: a `sig ... end` block listing values (here,
-`next` and `reset`) with their types.
-
-By convention, signature names are ALL CAPS. The type itself is
-just a description; it doesn't have an implementation yet.
+- A signature is a `sig ... end` block listing values (here,
+  `next` and `reset`) with their types.
+- **Convention**: signature names are ALL CAPS.
+- The type itself is just a description; it doesn't have an
+  implementation yet.
 
 :::
 
@@ -64,16 +64,19 @@ let () = Counter.reset ()
 let _ = Counter.next ()
 ```
 
-`1`, `2`, `1`. The module compiles because every value listed in
-`COUNTER` (`next`, `reset`) is provided by the struct. The internal
-`n` is *not* listed in the signature, so it's hidden:
+`1`, `2`, `1`.
+
+- The module compiles because every value listed in `COUNTER`
+  (`next`, `reset`) is provided by the struct.
+- The internal `n` is **not listed** in the signature, so it's
+  hidden:
 
 ```ocaml skip
 let _ = !Counter.n  (* error: Unbound value Counter.n *)
 ```
 
-The signature is acting as a *type-level wall* between the
-implementation and the outside world.
+- The signature acts as a *type-level wall* between the
+  implementation and the outside world.
 
 :::
 
@@ -104,8 +107,8 @@ operations rather than as raw records.
 
 ## Abstract types
 
-A signature can hide not just *values* but the *type* of a
-module's representation:
+- A signature can hide not just *values* but the **type** of a
+  module's representation:
 
 ```ocaml
 module type STACK = sig
@@ -128,12 +131,14 @@ let s = Stack.push 1 (Stack.push 2 (Stack.push 3 Stack.empty))
 let _ = Stack.pop s
 ```
 
-`Some (1, ...)`. From outside, `Stack.t` is an *abstract* type:
-you don't know it's a list. You can only manipulate stacks through
-the operations `empty`, `push`, `pop`.
+`Some (1, ...)`.
 
-If you change the representation later (to a `Dynarray`, to two
-lists for amortized cost), no external code notices.
+- From outside, `Stack.t` is an **abstract type**: you don't know
+  it's a list.
+- You can only manipulate stacks through the operations `empty`,
+  `push`, `pop`.
+- If you change the representation later (to a `Dynarray`, to two
+  lists for amortized cost), no external code notices.
 
 :::
 
@@ -141,8 +146,9 @@ lists for amortized cost), no external code notices.
 
 ## `.mli` files: the same idea, in a separate file
 
-In a real project, `foo.ml` is the implementation and `foo.mli` is
-the interface. The compiler enforces that `foo.ml` matches `foo.mli`.
+- In a real project, `foo.ml` is the implementation and `foo.mli`
+  is the interface.
+- The compiler enforces that `foo.ml` matches `foo.mli`.
 
 ```
 (* counter.mli *)
@@ -155,12 +161,11 @@ let next () = incr n; !n
 let reset () = n := 0
 ```
 
-This is the same pattern as the inline signature, with the
-benefits of: living in a separate file (the interface is a clean
-read), only the things in `.mli` are visible to other modules.
-
-For the toplevel cells in these lectures we use inline signatures;
-in your projects you'll see `.mli` files everywhere.
+- Same pattern as the inline signature, with two benefits:
+  - The interface lives in a separate file (a clean read).
+  - Only the things in `.mli` are visible to other modules.
+- For the toplevel cells in these lectures we use inline
+  signatures; in your projects you'll see `.mli` files everywhere.
 
 :::
 
@@ -184,11 +189,11 @@ let _ = Greet_extended.shout "alice"
 
 `"hello, alice"`, `"HELLO, ALICE"`.
 
-`include Greet` copies all of `Greet`'s definitions into
-`Greet_extended`, which can then add new ones (like `shout`).
-
-Useful for extending standard library modules, or for layering
-modules where one is "everything in A plus a bit more".
+- `include Greet` **copies all of `Greet`'s definitions** into
+  `Greet_extended`.
+- The extended module can then add new ones (like `shout`).
+- **Useful for**: extending standard library modules, or for
+  layering modules where one is "everything in A plus a bit more".
 
 :::
 
@@ -215,11 +220,10 @@ module String_ord : ORDERED = struct
 end
 ```
 
-Two modules implementing the same signature. We've encoded what
-in Haskell is called a "type class" (`Ord`) by hand: a module
-with a `compare` operation on its abstract type.
-
-This is also the basis of functors, which we cover next.
+- Two modules implementing the same signature.
+- We've encoded by hand what Haskell calls a "type class" (`Ord`):
+  a module with a `compare` operation on its abstract type.
+- This is the **basis of functors**, which we cover next.
 
 :::
 
@@ -257,9 +261,10 @@ let _ = Counter.next ()
 
 `1`, `2`, `1`.
 
-If we try `let _ = !Counter.n` we get a compile error: `Unbound
-value Counter.n`. The signature hides it. We can only interact
-through `next` and `reset`.
+- Try `let _ = !Counter.n` and you get a compile error:
+  `Unbound value Counter.n`.
+- The signature hides it.
+- We can only interact through `next` and `reset`.
 
 :::
 
@@ -267,9 +272,12 @@ through `next` and `reset`.
 
 ## What's next
 
-Lecture 6: **functors**. A functor is a module that takes another
-module as an argument and produces a new module. The way OCaml
-expresses "parameterize over a type with its operations".
+Lecture 6: **functors**.
+
+- A functor is a module that takes another module as an argument
+  and produces a new module.
+- The way OCaml expresses "parameterize over a type with its
+  operations".
 
 :::
 

@@ -37,10 +37,10 @@ let _ = classify 5
 
 `"one"` and `"many"`.
 
-`match` takes a value and a list of clauses. Each clause is a
-**pattern** on the left and an **expression** on the right. The
-first pattern that matches wins; its right-hand side is the value
-of the whole `match` expression.
+- `match` takes a value and a list of clauses.
+- Each clause has a **pattern** (left) and an **expression** (right).
+- The **first pattern that matches wins**.
+- Its right-hand side becomes the value of the whole `match`.
 
 :::
 
@@ -63,8 +63,8 @@ let _ =
   | n -> "non-zero: " ^ string_of_int n
 ```
 
-The second clause's pattern `n` matches anything; the right-hand
-side uses `n` to reference the matched value.
+- Pattern `n` matches anything.
+- The right-hand side uses `n` to reference the matched value.
 
 :::
 
@@ -81,16 +81,17 @@ let classify n =
 let _ = classify 0
 ```
 
-`"variable: 0"`. The variable pattern `x` matches *anything*,
-including `0`. Once it has matched, the second clause is
-unreachable. OCaml will warn you:
+`"variable: 0"`.
+
+- Variable pattern `x` matches *anything*, including `0`.
+- Once matched, the second clause is **unreachable**.
+- OCaml warns:
 
 ```
 Warning 11: this match case is unused.
 ```
 
-Always put more *specific* patterns first, and more *general*
-patterns last.
+- Rule: **specific patterns first**, *general* patterns last.
 
 :::
 
@@ -105,17 +106,16 @@ let first_only = function
 let _ = first_only (10, 20)
 ```
 
-`int = 10`. The second component is discarded; we use `_` to make
-that explicit.
+`int = 10`.
 
-If we'd written `(x, y)`, OCaml would warn that `y` is unused:
+- Second component discarded; `_` makes that explicit.
+- Writing `(x, y)` triggers a warning that `y` is unused:
 
 ```
 Warning 26: unused variable y.
 ```
 
-The `_` is "I know I'm ignoring this", which the compiler
-respects.
+- `_` says "I know I'm ignoring this"; the compiler respects it.
 
 :::
 
@@ -134,15 +134,16 @@ let _ = direction_label "n"
 let _ = direction_label "x"
 ```
 
-`"north"` and `"unknown"`. The wildcard catches every other string,
-without forcing us to give it a name.
+`"north"` and `"unknown"`.
+
+- The wildcard catches every other string.
+- No name needed for the catch-all case.
 
 :::slide
 
 ## `function` shorthand
 
-When the entire body of a one-argument function is a `match` on
-the argument, write `function` instead:
+- When a one-arg function's whole body is a `match` on the argument, use `function`.
 
 ```ocaml
 let classify = function
@@ -161,7 +162,7 @@ let classify n =
   | _ -> "many"
 ```
 
-You'll see `function` a lot in idiomatic OCaml.
+- Idiomatic OCaml uses `function` heavily.
 
 :::
 
@@ -169,16 +170,15 @@ You'll see `function` a lot in idiomatic OCaml.
 
 ## A pattern *is* an expression's structure
 
-Patterns aren't just for `match`. The `let` form also takes a
-pattern on the left:
+- Patterns aren't just for `match`.
+- `let` also takes a pattern on the left.
 
 ```ocaml
 let (x, y) = (3, 4)
 let _ = x + y
 ```
 
-`x` and `y` are bound by destructuring the pair. The "pattern"
-here is `(x, y)`.
+- `x` and `y` are bound by destructuring the pair.
 
 Function parameters can also be patterns:
 
@@ -209,9 +209,9 @@ Warning 8 [partial-match]: this pattern-matching is not exhaustive.
 Here is an example of a case that is not matched: 2
 ```
 
-The compiler tells you a sample of an input that no clause covers.
-You can fix by adding more clauses or a catch-all `_`. We'll cover
-exhaustiveness in detail in Lecture 4.
+- The compiler shows a sample input that no clause covers.
+- Fix: add more clauses or a catch-all `_`.
+- Lecture 4 covers exhaustiveness in detail.
 
 :::
 
@@ -236,12 +236,9 @@ let f = function
 
 ## Activity discussion
 
-The variable pattern `x` matches *any* integer, including `0`. It
-appears first, so it wins. The second clause is unreachable;
-OCaml issues warning 11.
-
-`f 0` returns `0` (matched the variable pattern with `x = 0`).
-`f 5` returns `5` (matched the variable pattern with `x = 5`).
+- Variable pattern `x` matches *any* integer, including `0`.
+- `x` appears first, so it wins; second clause is unreachable (warning 11).
+- `f 0` returns `0`; `f 5` returns `5`.
 
 The fix: put `0` first.
 
@@ -251,7 +248,7 @@ let f = function
   | x -> x
 ```
 
-Now `f 0` returns `99` and `f n` returns `n` for any other `n`.
+- Now `f 0` returns `99`; `f n` returns `n` otherwise.
 
 :::
 
@@ -259,9 +256,9 @@ Now `f 0` returns `99` and `f n` returns `n` for any other `n`.
 
 ## What's next
 
-Lecture 2: **nested patterns and or-patterns**. Patterns can
-contain other patterns; `|` inside a clause lets multiple shapes
-share a right-hand side.
+- Lecture 2: **nested patterns and or-patterns**.
+- Patterns can contain other patterns.
+- `|` inside a clause lets multiple shapes share a right-hand side.
 
 :::
 

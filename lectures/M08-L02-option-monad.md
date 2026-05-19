@@ -41,9 +41,11 @@ Two functions:
   option-shaped value through a function that returns another
   option-shaped value.
 
-And one operator alias: `let*` is just `bind`. The OCaml syntax
-sugar `let* x = e in rest` desugars to `( let* ) e (fun x -> rest)`,
-which is `bind e (fun x -> rest)`.
+And one operator alias:
+
+- `let*` is just `bind`.
+- The OCaml syntax sugar `let* x = e in rest` desugars to `( let* ) e (fun x -> rest)`.
+- Which is `bind e (fun x -> rest)`.
 
 :::
 
@@ -73,12 +75,11 @@ let _ = demo "200"
 
 `Some 10`, `None`, `None`.
 
-Read it top to bottom. Each `let* y = expr in` says "compute
-`expr`; if it was `None`, the whole thing is `None`; otherwise,
-bind `y` to the unwrapped value and continue".
-
-It looks like ordinary `let ... in ...` sequencing. The monad
-operator hides the failure-propagation plumbing.
+- Read it top to bottom.
+- Each `let* y = expr in` says: compute `expr`; if `None`, the whole thing is `None`.
+- Otherwise, bind `y` to the unwrapped value and continue.
+- Looks like ordinary `let ... in ...` sequencing.
+- The monad operator hides the failure-propagation plumbing.
 
 :::
 
@@ -96,12 +97,10 @@ let _ = Option.map (fun x -> x * 2) (Some 5)
 
 `Some 10`, `None`, `Some 10`.
 
-`Option.bind` is exactly the `bind` we defined. `Option.map` is a
-weaker form: it applies a *pure* function inside the option,
-without giving the function the chance to fail.
-
-When the next step might also fail (returns option), use `bind`.
-When the next step always produces a plain value, use `map`.
+- `Option.bind` is exactly the `bind` we defined.
+- `Option.map` is weaker: applies a *pure* function inside the option, without giving it the chance to fail.
+- Next step might fail (returns option): use `bind`.
+- Next step always produces a plain value: use `map`.
 
 :::
 
@@ -133,12 +132,10 @@ let _ = parse_pair "frog"
 
 `Some (3, 4)`, `None`, `None`.
 
-The two `int_of_string_opt` calls can each fail. We use `let*` to
-unwrap each one or short-circuit. After both succeed, we package
-into `Some (x, y)`.
-
-Without `let*`, this would be two nested `match` statements with
-`None` arms.
+- The two `int_of_string_opt` calls can each fail.
+- We use `let*` to unwrap each one or short-circuit.
+- After both succeed, we package into `Some (x, y)`.
+- Without `let*`, this would be two nested `match` statements with `None` arms.
 
 :::
 
@@ -158,13 +155,13 @@ let demo s =
 let _ = demo "5"
 ```
 
-`Some 11`. `let* x = parse_int s in` unwraps `x` from the parse;
-`let+ y = ... in y + 1` does both an unwrap and the final
-transformation. The final `+ 1` doesn't fail; `let+` is for that.
+`Some 11`.
 
-`let+` is a useful complement to `let*` when the last step is a
-pure transformation. (It's not in `Option` by default; you alias
-it where you want it.)
+- `let* x = parse_int s in` unwraps `x` from the parse.
+- `let+ y = ... in y + 1` does both an unwrap and the final transformation.
+- The final `+ 1` doesn't fail; `let+` is for that.
+- `let+` is a useful complement to `let*` when the last step is a pure transformation.
+- Not in `Option` by default; you alias it where you want it.
 
 :::
 
@@ -184,9 +181,9 @@ let _ =
 
 `int = 0`. Two cases, one `match`, three lines. No monad needed.
 
-Reach for `let*` when you have **three or more** sequential
-optional steps, where the failure handling is "give up, return
-`None`". Before three, the `match` is shorter and equally clear.
+- Reach for `let*` when you have **three or more** sequential optional steps.
+- Where the failure handling is "give up, return `None`".
+- Before three, the `match` is shorter and equally clear.
 
 :::
 
@@ -194,18 +191,12 @@ optional steps, where the failure handling is "give up, return
 
 ## A note on `let*` per-monad
 
-`let*` is *not* a fixed operator: it's a regular binding you
-define. Each monad has its own `let*`. If you `let open Opt in`,
-your `let*` becomes the option-flavoured `bind`. If you switch to
-the result monad, you redefine `let*` for that.
-
-The compiler doesn't know which monad you're in; you have to
-choose by `open`-ing the right module or aliasing the right
-function.
-
-This is a per-monad cost. Languages with built-in `do`-notation
-(Haskell) avoid the per-monad redefinition; OCaml's mechanism is
-more explicit, which trades elegance for clarity.
+- `let*` is *not* a fixed operator: it's a regular binding you define.
+- Each monad has its own `let*`.
+- `let open Opt in` makes `let*` option-flavoured; switching to result, you redefine `let*` for that.
+- The compiler doesn't know which monad you're in; you choose by `open`-ing the right module or aliasing.
+- Languages with built-in `do`-notation (Haskell) avoid this per-monad redefinition.
+- OCaml's mechanism is more explicit: trades elegance for clarity.
 
 :::
 
@@ -249,8 +240,8 @@ let _ = pipeline "200"
 
 `Some 10`, `None`, `None`.
 
-Three steps, three `let*`s. The same logic as the nested `match`
-version, but flat.
+- Three steps, three `let*`s.
+- The same logic as the nested `match` version, but flat.
 
 :::
 
@@ -258,9 +249,10 @@ version, but flat.
 
 ## What's next
 
-Lecture 3: **the result monad**. Like option, but the failure case
-carries information (an error message, an error code). Same
-`let*` pattern; richer information.
+Lecture 3: **the result monad**.
+
+- Like option, but the failure case carries information (error message, error code).
+- Same `let*` pattern; richer information.
 
 :::
 

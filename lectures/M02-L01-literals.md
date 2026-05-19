@@ -30,7 +30,7 @@ read for after you have watched.
 
 ## Four primitive kinds
 
-OCaml has four primitive value kinds we will use constantly:
+- Four primitive value kinds used constantly in OCaml:
 
 | Type | Example literal | What it represents |
 | --- | --- | --- |
@@ -39,9 +39,9 @@ OCaml has four primitive value kinds we will use constantly:
 | `bool` | `true`, `false` | A boolean |
 | `string` | `"hello"`, `""` | A byte string |
 
-Every literal has a *type* that the OCaml compiler infers
-automatically. You never write `int x = 5;` in OCaml. You write
-`let x = 5`, and the compiler figures out the type.
+- Every literal has a *type* the compiler **infers automatically**.
+- You never write `int x = 5;` in OCaml.
+- Just write `let x = 5`; the compiler figures out the type.
 
 :::
 
@@ -67,8 +67,8 @@ let oct = 0o377
 let bin = 0b11111111
 ```
 
-All four bindings have type `int` and value `255`. The base prefix is
-syntactic; under the hood they're the same number.
+- All four bindings: type `int`, value `255`.
+- Base prefix is **syntactic only**: same number under the hood.
 
 Underscores are allowed for readability:
 
@@ -76,6 +76,8 @@ Underscores are allowed for readability:
 let million = 1_000_000
 let mask    = 0xff_ff_ff_ff
 ```
+
+- `_` is purely visual; the compiler ignores it.
 
 :::
 
@@ -98,9 +100,9 @@ let _ = 17 / 5
 let _ = 17 mod 5
 ```
 
-`+`, `-`, `*` behave as you'd expect. `/` does **truncating integer
-division**: `17 / 5 = 3`, the remainder is dropped. `mod` gives the
-remainder: `17 mod 5 = 2`.
+- `+`, `-`, `*` behave as expected.
+- `/` does **truncating integer division**: `17 / 5 = 3` (remainder dropped).
+- `mod` gives the remainder: `17 mod 5 = 2`.
 
 Negative integer division truncates toward zero, not toward minus
 infinity:
@@ -109,8 +111,8 @@ infinity:
 let _ = (-17) / 5
 ```
 
-`int = -3`. Some languages (e.g., Python) round toward minus infinity
-and would give `-4`. Be aware.
+- Result: `int = -3`.
+- Python rounds toward minus infinity: gives `-4`. Be aware.
 
 :::
 
@@ -131,15 +133,16 @@ let e_neg = 2.71828e-1   (* scientific: 2.71828 × 10⁻¹ *)
 let tau   = 6.283185
 ```
 
-All `float`. The `e-1` is the exponent suffix. A number with **no
-decimal point** is an integer, not a float:
+- All `float`.
+- `e-1` is the exponent suffix.
+- A number with **no decimal point** is an `int`, not a `float`:
 
 ```ocaml
 let bad = 3
 ```
 
-`bad : int`, not `float`. If you wanted a float, write `3.0` or
-`3.` (the trailing zero is optional after a dot).
+- `bad : int`, not `float`.
+- For a float, write `3.0` or `3.` (trailing zero optional after the dot).
 
 :::
 
@@ -154,8 +157,8 @@ let _ = 4.0 *. 2.5
 let _ = 9.0 /. 4.0
 ```
 
-Each one is the float-version operator: `+.`, `-.`, `*.`, `/.`. The
-trailing `.` is part of the operator name.
+- Float operators: `+.`, `-.`, `*.`, `/.`.
+- The trailing `.` is **part of the operator name**.
 
 Mixing types is a compile-time error:
 
@@ -163,9 +166,9 @@ Mixing types is a compile-time error:
 let _ = 1 + 2.0
 ```
 
-OCaml will say `This expression has type float but an expression was
-expected of type int`. There is no implicit promotion. If you want
-to add an `int` to a `float`, you convert explicitly:
+- Error: `This expression has type float but an expression was expected of type int`.
+- **No implicit promotion** in OCaml.
+- To add `int` and `float`, convert explicitly:
 
 ```ocaml
 let _ = float_of_int 1 +. 2.0
@@ -202,8 +205,8 @@ let _ = not true
 let _ = 3 < 5 && 5 < 10
 ```
 
-`&&` and `||` *short-circuit* the same way they do in C and Java.
-`true || side_effect ()` does not call `side_effect`.
+- `&&` and `||` **short-circuit** (as in C and Java).
+- `true || side_effect ()` does **not** call `side_effect`.
 
 Equality uses **`=`**, not `==`:
 
@@ -211,10 +214,10 @@ Equality uses **`=`**, not `==`:
 let _ = "apple" = "apple"
 ```
 
-`=` is **structural** equality: it compares values by content, so it
-works for strings, lists, records, variants. `==` is **physical**
-equality (pointer comparison) and you almost never want it. Stick
-with `=`.
+- `=` is **structural** equality: compares by content.
+- Works for strings, lists, records, variants.
+- `==` is **physical** equality (pointer comparison): almost never what you want.
+- Stick with `=`.
 
 :::
 
@@ -241,15 +244,16 @@ let quote = "she said \"hi\""
 let path  = "C:\\Users\\kc"
 ```
 
-Escape sequences: `\n` newline, `\t` tab, `\\` backslash, `\"` quote,
-`\NNN` decimal byte, `\xHH` hex byte. Same as C.
+- Escape sequences (same as C):
+  - `\n` newline, `\t` tab, `\\` backslash, `\"` quote
+  - `\NNN` decimal byte, `\xHH` hex byte
 
 ```ocaml
 let s = "first" ^ " " ^ "second"
 ```
 
-`^` is concatenation. It is a separate operator from `+` because
-strings and numbers are genuinely different operations.
+- `^` is concatenation.
+- Separate from `+` because strings and numbers are different operations.
 
 :::
 
@@ -261,16 +265,17 @@ strings and numbers are genuinely different operations.
 let _ = String.length "OCaml"
 ```
 
-`int = 5`. The `String` module is the standard library's collection
-of string-manipulation functions.
+- Result: `int = 5`.
+- `String` is the stdlib module for string functions.
 
 ```ocaml
 let _ = String.get "OCaml" 0
 ```
 
-`char = 'O'`. (Single quotes for `char` literals: a single byte.)
-Indexing is zero-based. Out-of-bounds access raises
-`Invalid_argument`.
+- Result: `char = 'O'`.
+- Single quotes for `char` literals (a single byte).
+- Indexing is **zero-based**.
+- Out-of-bounds access raises `Invalid_argument`.
 
 :::
 
@@ -300,11 +305,10 @@ let temperature_label c =
 let _ = temperature_label 22.5
 ```
 
-A function with type `float -> string`. The body is one expression: a
-chain of `if`/`then`/`else`. We will spend a whole lecture on `if` in
-Module 2 Lecture 5; for now, notice that the same kind of literals
-we've seen (`0.0`, `18.0`, `"freezing"`) combine into a working
-function.
+- A function of type `float -> string`.
+- Body is **one expression**: a chain of `if`/`then`/`else`.
+- Full `if` lecture coming in Module 2 Lecture 5.
+- For now: the literals we've seen (`0.0`, `18.0`, `"freezing"`) combine into a working function.
 
 :::
 
@@ -325,12 +329,10 @@ Predict before running.
 
 ## Activity discussion
 
-- `3 / 2` : `int = 1`. Integer division truncates.
-- `3.0 /. 2.0` : `float = 1.5`. Float division does what you expect.
-
-If your background is Python 3, where `/` always does true division
-and `//` does floor division, this is the reverse: OCaml's `/`
-on integers truncates by default, and there is no implicit cast.
+- `3 / 2` : `int = 1`. Integer division **truncates**.
+- `3.0 /. 2.0` : `float = 1.5`. Float division as expected.
+- **Python 3 contrast**: there `/` is true division, `//` is floor.
+- OCaml is the reverse: `/` on `int` truncates, **no implicit cast**.
 
 :::
 
@@ -338,9 +340,9 @@ on integers truncates by default, and there is no implicit cast.
 
 ## What's next
 
-In the next lecture we look at **`let` bindings**: naming values,
-nested bindings, and shadowing. The piece that makes a program more
-than a one-liner.
+- Next: **`let` bindings**.
+- Naming values, nested bindings, shadowing.
+- The piece that makes a program more than a one-liner.
 
 :::
 

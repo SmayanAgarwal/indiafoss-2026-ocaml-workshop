@@ -33,10 +33,10 @@ let _ = twice (fun s -> "(" ^ s ^ ")") "x"
 
 `16` and `"((x))"`.
 
-`twice` has type `('a -> 'a) -> 'a -> 'a`. Read: takes a function
-of type `'a -> 'a` and a value of type `'a`, returns an `'a`. The
-function can operate on any type; both calls instantiate `'a`
-differently.
+- Type: `('a -> 'a) -> 'a -> 'a`.
+- Takes a function `'a -> 'a` and a value `'a`; returns an `'a`.
+- Works for **any** type `'a`.
+- Both calls above instantiate `'a` differently (`int`, `string`).
 
 :::
 
@@ -54,9 +54,11 @@ let _ = plus_five 1
 let _ = plus_ten 1
 ```
 
-`6` and `11`. `make_adder 5` produces *a new function* that adds
-5. The new function holds onto the `n` from the enclosing scope:
-this is the **closure** we saw in Module 3.
+`6` and `11`.
+
+- `make_adder 5` produces *a new function* that adds 5.
+- The new function holds onto `n` from the enclosing scope.
+- This is the **closure** we saw in Module 3.
 
 :::
 
@@ -64,8 +66,7 @@ this is the **closure** we saw in Module 3.
 
 ## Why it matters: extract the common shape
 
-Suppose you have several functions that all "do something for each
-element of a list":
+Several functions that all "do something for each element of a list":
 
 ```ocaml
 let rec all_doubled = function
@@ -85,9 +86,9 @@ let _ = all_squared [1; 2; 3]
 let _ = all_plus_one [1; 2; 3]
 ```
 
-Three functions; same shape; only the per-element work differs.
-With higher-order functions we can extract the *walking* from the
-*work*:
+- Three functions; same shape.
+- Only the per-element work differs.
+- Higher-order functions let us extract *the walk* from *the work*:
 
 ```ocaml
 let rec map f = function
@@ -99,8 +100,10 @@ let _ = map (fun x -> x * x) [1; 2; 3]
 let _ = map (fun x -> x + 1) [1; 2; 3]
 ```
 
-`[2; 4; 6]`, `[1; 4; 9]`, `[2; 3; 4]`. One function for the shape,
-three different per-element computations passed in.
+`[2; 4; 6]`, `[1; 4; 9]`, `[2; 3; 4]`.
+
+- One function captures the *shape* (walking the list).
+- Three different per-element computations are passed in.
 
 :::
 
@@ -114,8 +117,7 @@ nutshell.
 
 ## Callbacks: the GUI / event idiom
 
-You'll see higher-order functions all the time in GUI / network
-code, even outside FP-leaning languages:
+Higher-order functions show up everywhere in GUI / network code:
 
 ```ocaml
 let on_click handler =
@@ -127,13 +129,15 @@ let _ =
     print_endline ("got event: " ^ msg))
 ```
 
-`on_click` calls its argument `handler` with an event description.
-You pass a function that decides *what to do* with the event. That
-function is a **callback**.
+- `on_click` calls its argument `handler` with an event description.
+- You pass a function that decides *what to do* with the event.
+- That function is a **callback**.
 
-In Java, the same idiom needs an interface (`OnClickListener`).
-In JavaScript, you pass a lambda. In OCaml, you pass a function —
-because functions are values.
+Across languages:
+
+- **Java**: needs an interface (`OnClickListener`).
+- **JavaScript**: pass a lambda.
+- **OCaml**: pass a function (functions are values).
 
 :::
 
@@ -158,8 +162,10 @@ This is useful with higher-order functions:
 let _ = List.map ((+) 10) [1; 2; 3]
 ```
 
-`[11; 12; 13]`. Partial application of `(+)` to `10` gives a
-function `int -> int`; pass that to `map`.
+`[11; 12; 13]`.
+
+- Partial application of `(+)` to `10` gives a function `int -> int`.
+- Pass that function directly to `map`.
 
 :::
 
@@ -176,13 +182,13 @@ let dist3 (x, y, z) =
 let _ = curry3 dist3 3 4 12
 ```
 
-`13.0`. `curry3` takes a function expecting a triple, and turns it
-into a function of three arguments. We pass `dist3` (which wants a
-triple) and three numbers; `curry3` does the bundling.
+`13.0`.
 
-The point isn't `curry3` per se; it's that you can shape and reshape
-functions at will. They're not a fixed thing; they're values you
-manipulate.
+- `curry3` takes a function expecting a triple.
+- It turns that into a function of three arguments.
+- We pass `dist3` (wants a triple) plus three numbers; `curry3` bundles.
+
+The point: functions are values you can shape and reshape at will.
 
 :::
 
@@ -209,11 +215,10 @@ let _ = twice (List.cons 0) [1; 2; 3]
 
 `16`, `"wow!!"`, `[0; 0; 1; 2; 3]`.
 
-Three different types of `'a` (`int`, `string`, `int list`); the
-same `twice` works on all of them.
-
-The signature `('a -> 'a) -> 'a -> 'a` says exactly this: any type
-`'a`, as long as the function maps `'a` to `'a`, can be repeated.
+- Three different types of `'a` (`int`, `string`, `int list`).
+- Same `twice` works for all of them.
+- The signature `('a -> 'a) -> 'a -> 'a` says exactly this: any
+  `'a`, as long as the function maps `'a` to `'a`, can be repeated.
 
 :::
 
@@ -221,9 +226,11 @@ The signature `('a -> 'a) -> 'a -> 'a` says exactly this: any type
 
 ## What's next
 
-Lecture 2: **`map`** in detail. The canonical "do something to each
-element" operation; the most common higher-order function in
-practice; the prototype for everything in this module.
+Lecture 2: **`map`** in detail.
+
+- Canonical "do something to each element" operation.
+- The most common higher-order function in practice.
+- Prototype for everything in this module.
 
 :::
 

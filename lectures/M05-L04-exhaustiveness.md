@@ -39,8 +39,8 @@ Warning 8 [partial-match]: this pattern-matching is not exhaustive.
 Here is an example of a case that is not matched: Yellow
 ```
 
-The compiler tells you *which* case is missing. Add the missing
-clause:
+- The compiler tells you *which* case is missing.
+- Add the missing clause:
 
 ```ocaml skip
 let action = function
@@ -49,8 +49,8 @@ let action = function
   | Green -> "go"
 ```
 
-Warning gone. The function now handles every possible
-`traffic_light`.
+- Warning gone.
+- The function now handles every possible `traffic_light`.
 
 :::
 
@@ -58,17 +58,12 @@ Warning gone. The function now handles every possible
 
 ## Why this matters
 
-The compiler is *proving* that no value of type `traffic_light`
-will fall through unhandled at runtime. Without exhaustiveness
-checking, a missing case becomes a runtime crash:
-
-- In C with switch + enum: the missing case falls through; behaviour
-  depends on what's next.
-- In Java with switch: same, unless you've enabled a linter check.
-- In Python: no static checking; you get a runtime
-  `KeyError`/`AttributeError` if you forgot something.
-
-OCaml flags the problem before the program runs.
+- The compiler **proves** no `traffic_light` falls through at runtime.
+- Without exhaustiveness checking, a missing case becomes a runtime crash:
+  - **C** (switch + enum): missing case falls through; depends on what's next.
+  - **Java** (switch): same, unless a linter check is enabled.
+  - **Python**: no static checking; runtime `KeyError`/`AttributeError`.
+- OCaml flags the problem **before** the program runs.
 
 :::
 
@@ -80,8 +75,8 @@ OCaml flags the problem before the program runs.
 type traffic_light = Red | Yellow | Green | FlashingRed
 ```
 
-Suddenly every `match` on `traffic_light` warns about the new
-case. Add the clause to each:
+- Every `match` on `traffic_light` warns about the new case.
+- Add the clause to each:
 
 ```ocaml skip
 let action = function
@@ -91,8 +86,8 @@ let action = function
   | FlashingRed -> "stop, then proceed with caution"
 ```
 
-The compiler points at every site that needs updating. Refactoring
-goes from "grep and pray" to "compile and fix the warnings".
+- The compiler points at every site that needs updating.
+- Refactoring goes from "grep and pray" to "compile and fix the warnings".
 
 :::
 
@@ -107,7 +102,7 @@ case-coverage check.
 
 ## Redundant clauses
 
-The dual of "missing a case" is "duplicating a case":
+- Dual of "missing a case" is "duplicating a case".
 
 ```ocaml skip
 let action = function
@@ -119,8 +114,8 @@ let action = function
 let _ = action Red
 ```
 
-Warning 11: this match case is unused. The second `Red` clause is
-dead. The compiler catches this too.
+- Warning 11: this match case is unused.
+- The second `Red` clause is **dead**; the compiler catches it.
 
 :::
 
@@ -136,10 +131,10 @@ let label = function
 let _ = label 0
 ```
 
-The first clause is `n` (variable, matches anything). The second
-clause `0` is unreachable. Warning 11.
+- First clause `n` (variable) matches anything.
+- Second clause `0` is unreachable. Warning 11.
 
-The fix is to swap them:
+The fix: swap them.
 
 ```ocaml
 let label = function
@@ -149,7 +144,7 @@ let label = function
 let _ = label 0
 ```
 
-Always specific-first, general-last.
+- Rule: **specific-first, general-last**.
 
 :::
 
@@ -173,9 +168,8 @@ Warning 8: this pattern-matching is not exhaustive.
 Here is an example of a case that is not matched: (false, false)
 ```
 
-Even with a tuple of small types, the compiler enumerates the
-unhandled combinations. Add `(false, false) -> "neither"` (or a
-wildcard) to fix.
+- Even with a tuple of small types, the compiler enumerates unhandled combinations.
+- Fix: add `(false, false) -> "neither"` (or a wildcard).
 
 :::
 
@@ -183,8 +177,8 @@ wildcard) to fix.
 
 ## Treating warnings as errors
 
-In a real project you almost always want partial-match warnings to
-be errors. Add to your dune file:
+- In real projects, treat partial-match warnings as errors.
+- Add to your dune file:
 
 ```
 (executable
@@ -192,10 +186,9 @@ be errors. Add to your dune file:
  (flags (:standard -w +a-3-49)))
 ```
 
-(or `(env (_ (flags (:standard -w +a-3-49))))` workspace-wide.)
-`-w +a` makes all warnings errors; the `-3-49` disables a few
-benign ones. Module 7 covers dune configuration; for now, just know
-the option exists and is the default in any serious codebase.
+- Or workspace-wide: `(env (_ (flags (:standard -w +a-3-49))))`.
+- `-w +a` makes all warnings errors; `-3-49` disables benign ones.
+- Module 7 covers dune; for now, know this is the default in serious codebases.
 
 :::
 
@@ -216,18 +209,16 @@ what does it *not* help with?
 
 The compiler:
 
-- Issues warning 8 at *every* match expression on `color` that
-  doesn't handle `Yellow`. You get a punch list, one line per match.
+- Issues warning 8 at *every* match on `color` that misses `Yellow`. One punch-list line per match.
 - Tells you the missing case (`Yellow`) by example.
-- Does **not** tell you *what behaviour* `Yellow` should produce
-  (that's a design decision; the compiler can't read your mind).
+- Does **not** tell you *what behaviour* `Yellow` should produce (that's a design decision).
 
-So: the structural completeness is mechanically checked; the
-semantic correctness is up to you. The compiler answers
-"where?", but not "what?".
+Takeaways:
 
-This is the single biggest practical reason to model finite kinds
-as variants in OCaml. Strings can't give you this guarantee.
+- Structural completeness: mechanically checked.
+- Semantic correctness: up to you.
+- The compiler answers "where?", not "what?".
+- Biggest practical reason to use **variants** for finite kinds; strings can't give this guarantee.
 
 :::
 
@@ -235,9 +226,8 @@ as variants in OCaml. Strings can't give you this guarantee.
 
 ## What's next
 
-Lecture 5: **matching records and variants** in more depth. The
-syntax patterns you'll reach for daily: short forms, ignoring
-unrelated fields, deeply nested cases.
+- Lecture 5: **matching records and variants** in more depth.
+- Daily syntax: short forms, ignoring unrelated fields, deeply nested cases.
 
 :::
 

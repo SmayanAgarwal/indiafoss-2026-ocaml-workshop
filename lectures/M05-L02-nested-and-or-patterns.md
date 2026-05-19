@@ -39,8 +39,8 @@ let _ = describe { x = 1.0; y = 2.0 }
 
 `"origin"`, `"on the x-axis"`, `"somewhere else"`.
 
-The patterns inside the record-pattern are themselves patterns: a
-literal `0.0`, a wildcard `_`. Nested.
+- Patterns inside the record-pattern are themselves patterns.
+- A literal `0.0`, a wildcard `_`. **Nested**.
 
 :::
 
@@ -62,9 +62,11 @@ let _ = is_unit_circle (Circle 2.0)
 let _ = is_unit_circle (Rectangle (1.0, 1.0))
 ```
 
-`true`, `false`, `false`. The pattern `Circle 1.0` requires both
-the constructor to be `Circle` **and** its payload to be exactly
-`1.0`. Two checks in one pattern.
+`true`, `false`, `false`.
+
+- Pattern `Circle 1.0` requires the constructor to be `Circle`.
+- **And** its payload must be exactly `1.0`.
+- Two checks in one pattern.
 
 :::
 
@@ -81,10 +83,11 @@ let _ = head_first [(1, "a"); (2, "b"); (3, "c")]
 let _ = head_first []
 ```
 
-`Some 1`, `None`. The pattern `(x, _) :: _` matches a non-empty
-list whose head is a pair; binds the first component of that pair
-to `x`; ignores everything else. Three levels of nesting (list
-cons, tuple, then the inner positions) in one pattern.
+`Some 1`, `None`.
+
+- Pattern `(x, _) :: _` matches a non-empty list whose head is a pair.
+- Binds the first component of that pair to `x`; ignores the rest.
+- Three levels of nesting: list cons, tuple, inner positions.
 
 :::
 
@@ -106,12 +109,11 @@ let _ = is_vowel 'a'
 let _ = is_vowel 'b'
 ```
 
-`true`, `false`. The clause's pattern is `'a' | 'e' | 'i' | 'o' |
-'u'`: an *or* of five literal patterns. Any of them matching
-triggers the same right-hand side.
+`true`, `false`.
 
-Without or-patterns we'd write five clauses, each with the same
-`true`. Much noisier.
+- Pattern `'a' | 'e' | 'i' | 'o' | 'u'`: an *or* of five literal patterns.
+- Any match triggers the same right-hand side.
+- Without or-patterns: five clauses, all returning `true`. Noisy.
 
 :::
 
@@ -130,8 +132,10 @@ let _ = is_horizontal East
 let _ = is_horizontal North
 ```
 
-`true`, `false`. Two pairs, each sharing a right-hand side. The
-function reads almost like English.
+`true`, `false`.
+
+- Two pairs, each sharing a right-hand side.
+- Reads almost like English.
 
 :::
 
@@ -147,8 +151,9 @@ let _ =
   | A x | B y -> x   (* error: y not bound in left alternative *)
 ```
 
-OCaml rejects this: an or-pattern requires all alternatives to bind
-the same set of variables, with compatible types.
+- OCaml rejects this.
+- An or-pattern requires all alternatives to bind the **same set of variables**.
+- With **compatible types**.
 
 If both alternatives bind `x` with `int`, the right-hand side can
 use `x`:
@@ -163,8 +168,7 @@ let _ = to_int (A 5)
 let _ = to_int (B 7)
 ```
 
-`5` and `7`. Both alternatives bind a single `int` to `x`; the
-right-hand side returns `x`.
+`5` and `7`. Both alternatives bind a single `int` to `x`.
 
 :::
 
@@ -186,9 +190,9 @@ let _ = summary []
 
 `"starts with 0 or 1"`, `"starts with 0 or 1"`, `"starts with something else"`, `"empty"`.
 
-The pattern `(0 | 1) :: _` reads "either 0 or 1, followed by
-anything". Or-patterns can appear anywhere a pattern can: inside
-constructors, tuples, lists.
+- Pattern `(0 | 1) :: _` reads "either 0 or 1, followed by anything".
+- Or-patterns can appear **anywhere** a pattern can.
+- Inside constructors, tuples, lists.
 
 :::
 
@@ -196,8 +200,7 @@ constructors, tuples, lists.
 
 ## `as` patterns: name what you matched
 
-Sometimes you want to *both* destructure a value *and* keep a name
-for the whole thing:
+- Use `as` to *destructure* a value **and** keep a name for the whole.
 
 ```ocaml
 let head_and_full = function
@@ -207,12 +210,11 @@ let head_and_full = function
 let _ = head_and_full [10; 20; 30]
 ```
 
-`Some (10, 3)`. The pattern `(x :: _) as xs` destructures the
-non-empty list to get its head `x`, and also binds the *whole list*
-to `xs`.
+`Some (10, 3)`.
 
-`as` is rare in everyday code; reach for it when you find yourself
-about to write `match v with ... -> (something, v)`.
+- Pattern `(x :: _) as xs` destructures to get head `x`.
+- Also binds the *whole list* to `xs`.
+- Rare in everyday code; reach for it instead of `match v with ... -> (something, v)`.
 
 :::
 
@@ -239,14 +241,11 @@ let _ = first_of_pair_in_list [(10, 20); (30, 40)]
 let _ = first_of_pair_in_list []
 ```
 
-`Some 10`, `None`. The pattern `(x, _) :: _` is:
+`Some 10`, `None`. The pattern `(x, _) :: _`:
 
-- `_` on the left of `::` would be "the head"; here we want to
-  destructure that head, so we write `(x, _)` instead.
+- `_` on the left of `::` would be "the head"; we destructure that head with `(x, _)`.
 - `_` on the right of `::` is "the rest of the list, ignored".
-
-Read inside-out: a list whose head is a pair, whose first
-component is bound to `x`.
+- Read inside-out: a list whose head is a pair, whose first component is bound to `x`.
 
 :::
 
@@ -254,9 +253,9 @@ component is bound to `x`.
 
 ## What's next
 
-Lecture 3: **guards** (`when`-clauses). Patterns can be combined
-with arbitrary boolean tests, which lets you express conditions
-that pure patterns can't.
+- Lecture 3: **guards** (`when`-clauses).
+- Patterns can be combined with arbitrary boolean tests.
+- Lets you express conditions that pure patterns can't.
 
 :::
 

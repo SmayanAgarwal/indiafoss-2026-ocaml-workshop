@@ -24,15 +24,15 @@ data-flow order, left-to-right.
 
 ## The pipeline operator `|>`
 
-`x |> f` is *exactly* `f x`. It's defined in the standard library
-as:
+- `x |> f` is *exactly* `f x`.
+- Defined in the standard library as:
 
 ```ocaml
 let ( |> ) x f = f x
 ```
 
-The only reason it exists: it lets you write a chain of operations
-in the order they happen, instead of inside-out.
+- The only reason it exists: write chains in the order they happen,
+  instead of inside-out.
 
 ```ocaml
 let _ =
@@ -42,9 +42,12 @@ let _ =
   |> List.fold_left (+) 0
 ```
 
-`int = 50`. Squares of 1-5: [1;4;9;16;25]. Keep those > 5: [9;16;25]. Sum: 50.
+`int = 50`.
 
-Read top-to-bottom: start with a list, square, filter, sum.
+- Squares of 1-5: `[1;4;9;16;25]`.
+- Keep those > 5: `[9;16;25]`.
+- Sum: `50`.
+- Read top-to-bottom: start with a list, square, filter, sum.
 
 :::
 
@@ -61,12 +64,13 @@ let _ = List.fold_left (+) 0
                 [1; 2; 3; 4; 5]))
 ```
 
-`int = 50`. Same answer, but you have to mentally start at the
-*innermost* parens (the list `[1; 2; 3; 4; 5]`), then move
-outward. The reading direction is opposite to the dataflow.
+`int = 50`. Same answer, but:
 
-The `|>` version doesn't introduce new computation; it changes the
-visual order to match the conceptual order.
+- You start at the *innermost* parens (`[1; 2; 3; 4; 5]`).
+- Then move outward.
+- Reading direction is opposite to the dataflow.
+- `|>` doesn't introduce new computation: it aligns visual order
+  with conceptual order.
 
 :::
 
@@ -74,20 +78,21 @@ visual order to match the conceptual order.
 
 ## The application operator `@@`
 
-There's a dual: `f @@ x` is also `f x`. Used to avoid parens on
-the right:
+- Dual of `|>`: `f @@ x` is also `f x`.
+- Used to avoid parens on the right:
 
 ```ocaml
 let _ = print_endline @@ string_of_int 42
 let _ = print_endline (string_of_int 42)
 ```
 
-Same thing. `@@` is right-associative and low precedence, so
-`f @@ g @@ x` parses as `f (g x)`. It's the application
-counterpart of `|>` in the *other* direction.
+Same thing.
 
-You'll see `@@` mostly when the alternative is `(f x)` with
-parentheses around a long expression.
+- `@@` is right-associative and low precedence.
+- `f @@ g @@ x` parses as `f (g x)`.
+- It's the application counterpart of `|>` in the *other* direction.
+- Use `@@` when the alternative is `(f x)` with parens around a
+  long expression.
 
 :::
 
@@ -106,12 +111,10 @@ let _ = square_then_inc 4
 
 `int = 17`. `4 * 4 = 16`, then `+ 1 = 17`.
 
-`compose f g` is "do `g` first, then `f`". Mathematically this is
-function composition `f ∘ g`.
-
-The standard library doesn't ship a built-in composition operator
-(some projects define one as `(>>)` or `(<<)`); it's easy enough to
-write your own when you need it.
+- `compose f g` means "do `g` first, then `f`".
+- Mathematically: `f ∘ g`.
+- Standard library has no built-in composition operator.
+- Some projects define one as `(>>)` or `(<<)`; easy to write yourself.
 
 :::
 
@@ -119,8 +122,8 @@ write your own when you need it.
 
 ## Point-free style
 
-When you can express a function as a composition of others without
-naming the argument, that's called **point-free** style:
+- Express a function as a composition of others **without** naming
+  the argument: this is **point-free** style.
 
 ```ocaml
 let compose f g = fun x -> f (g x)
@@ -129,13 +132,13 @@ let process = compose (fun x -> x * 2) (fun x -> x + 1)
 let _ = process 5
 ```
 
-`12`. `process` doesn't mention its argument explicitly; it's
-defined entirely as a pipeline of two functions.
+`12`.
 
-Some people love point-free; some find it cryptic. The pragmatic
-rule: use it when the composition is *obvious* (`compose g f`
-clearly does `g` after `f`); name the argument when the chain has
-any twist (a condition, a destructuring).
+- `process` doesn't mention its argument explicitly.
+- It's defined entirely as a pipeline of two functions.
+- Some love point-free; some find it cryptic.
+- Pragmatic rule: use it when the composition is *obvious*; name
+  the argument when there's any twist (a condition, a destructuring).
 
 :::
 
@@ -154,14 +157,19 @@ let normalize_words text =
 let _ = normalize_words "  Hello World  "
 ```
 
-`["hello"; "world"]`. Each step is a clear transformation: lowercase
-the whole string; split on spaces; drop empty pieces; trim each
-piece.
+`["hello"; "world"]`.
 
-The argument `text` is named at the top, but inside the pipeline
-each function receives an *unnamed* value (the output of the
-previous step). This is the readable middle ground between "tons of
-lambdas" and "deep parens nesting".
+Each step is a clear transformation:
+
+- Lowercase the whole string.
+- Split on spaces.
+- Drop empty pieces.
+- Trim each piece.
+
+- `text` is named at the top.
+- Inside the pipeline, each function receives an *unnamed* value
+  (the previous step's output).
+- Readable middle ground between "tons of lambdas" and "deep parens".
 
 :::
 
@@ -169,7 +177,7 @@ lambdas" and "deep parens nesting".
 
 ## When to use composition / pipeline / explicit lambdas
 
-Three options for the same kind of code:
+Three options for the same code:
 
 ```ocaml
 (* (1) explicit *)
@@ -182,14 +190,12 @@ let f2 = List.map ((+) 1)
 let f3 xs = xs |> List.map ((+) 1)
 ```
 
-All three are `int list -> int list`. The differences:
+All three are `int list -> int list`.
 
-- `f1` is the most explicit; you see the lambda.
-- `f2` is point-free; clean for short functions.
-- `f3` is useful when there are *more* steps; otherwise it just
-  adds noise.
-
-Reach for `|>` when you have three or more steps in a row.
+- `f1`: most explicit; you see the lambda.
+- `f2`: point-free; clean for short functions.
+- `f3`: useful when there are *more* steps; otherwise just noise.
+- Reach for `|>` when you have **three or more** steps in a row.
 
 :::
 
@@ -222,10 +228,9 @@ let _ = f2 5
 
 `26`, `26`. Same answer.
 
-`f1` is direct: take `x`, square it, add 1. `f2` is constructed
-by composing `inc` with `square`: first do `square`, then do
-`inc`. Both forms have their place; pick whichever reads better in
-context.
+- `f1` is direct: take `x`, square it, add 1.
+- `f2` composes `inc` with `square`: first `square`, then `inc`.
+- Both forms have their place; pick whichever reads better in context.
 
 :::
 
@@ -233,9 +238,11 @@ context.
 
 ## What's next
 
-Lecture 6: the **tutorial** for Module 6. We rebuild small parts of
-the `List` module (`map`, `filter`, `fold`, `concat`) using only
-the techniques from this module.
+Lecture 6: the **tutorial** for Module 6.
+
+- Rebuild small parts of the `List` module.
+- (`map`, `filter`, `fold`, `concat`.)
+- Using only the techniques from this module.
 
 :::
 

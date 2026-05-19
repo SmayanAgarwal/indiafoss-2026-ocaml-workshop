@@ -31,18 +31,16 @@ type 'a list =
   | (::) of 'a * 'a list
 ```
 
-(This is the conceptual definition; the actual syntax in the
-standard library is the same idea with built-in sugar.)
+(Conceptual definition; the stdlib uses the same idea with built-in sugar.)
 
 A `'a list` is either:
 
 - `[]`: the empty list.
-- `x :: rest`: an element `x` of type `'a` *prepended to* another
-  `'a list` called `rest`.
+- `x :: rest`: an element `x : 'a` *prepended to* another `'a list` called `rest`.
 
-The recursive bit is the `'a list` inside the cons constructor.
-Lists are arbitrarily long because each node points to *another
-list* of any size, including empty.
+- Recursive bit: the `'a list` inside the cons constructor
+- Each node points to *another list* of any size (including empty)
+- Hence: arbitrarily long
 
 :::
 
@@ -56,15 +54,16 @@ let ys = 0 :: xs
 let _ = ys
 ```
 
-`int list = [0; 1; 2; 3]`. The `0 :: xs` notation prepends `0` to
-`xs`. The original `xs` is unchanged; `ys` is a fresh list that
-*shares* its tail with `xs`.
+- `int list = [0; 1; 2; 3]`
+- `0 :: xs` prepends `0` to `xs`
+- Original `xs` is **unchanged**
+- `ys` is a fresh list that *shares* its tail with `xs`
 
 ```ocaml
 let _ = xs
 ```
 
-`int list = [1; 2; 3]`. Still.
+- `int list = [1; 2; 3]`. Still.
 
 :::
 
@@ -86,13 +85,11 @@ let rec sum = function
 let _ = sum [1; 2; 3; 4; 5]
 ```
 
-`int = 15`. Two cases, matching the two constructors of `list`.
-Each case handles its constructor; the recursive case calls
-`sum` on the *smaller* tail.
-
-This is **structural recursion**: the function's recursion
-mirrors the data type's recursion. Every recursive variant gives
-you this pattern.
+- Result: `int = 15`
+- Two cases, matching the two constructors of `list`
+- Recursive case calls `sum` on the *smaller* tail
+- This is **structural recursion**: the function's recursion mirrors the data type's
+- Every recursive variant gives you this pattern
 
 :::
 
@@ -106,9 +103,9 @@ type 'a tree =
   | Node of 'a tree * 'a * 'a tree
 ```
 
-A tree is either a `Leaf` (empty) or a `Node` with a left subtree,
-a value, and a right subtree. Same shape as a list, but two
-recursive references instead of one.
+- `Leaf`: empty
+- `Node`: left subtree, value, right subtree
+- Same shape as a list, but **two** recursive references instead of one
 
 ```ocaml
 let example =
@@ -128,8 +125,8 @@ Drawing this:
             4
 ```
 
-The `Leaf` constructors are at the bottom (each empty subtree is
-`Leaf`). The shape is built bottom-up by nesting `Node`s.
+- `Leaf` constructors are at the bottom (each empty subtree is `Leaf`)
+- Shape is built **bottom-up** by nesting `Node`s
 
 :::
 
@@ -145,10 +142,11 @@ let rec size = function
 let _ = size example
 ```
 
-`int = 4`. We count the number of `Node` constructors. Base:
-`Leaf` is `0`. Recursive: `1 + size left + size right`. Two
-recursive calls per step, just like trees have two subtrees per
-node.
+- Result: `int = 4`
+- Counts the number of `Node` constructors
+- Base: `Leaf -> 0`
+- Recursive: `1 + size left + size right`
+- Two recursive calls per step (trees have two subtrees per node)
 
 ```ocaml
 let rec sum_tree = function
@@ -158,8 +156,8 @@ let rec sum_tree = function
 let _ = sum_tree example
 ```
 
-`int = 10`. Same shape; we add the node's value to the recursive
-sums of left and right.
+- Result: `int = 10`
+- Same shape; add the node's value to recursive sums of left and right
 
 :::
 
@@ -174,13 +172,11 @@ type 'a forest = 'a rose_tree list
 and  'a rose_tree = Rose of 'a * 'a forest
 ```
 
-A `rose_tree` has a value and a *forest* of children; a `forest`
-is a list of rose trees. Each definition refers to the other.
-The `and` keyword ties the two together, just like with mutual
-recursion at the value level.
-
-This is how you model a *node-labelled* tree where each node has
-an arbitrary number of children, not just two.
+- `rose_tree`: a value and a *forest* of children
+- `forest`: a list of rose trees
+- Each definition refers to the other
+- `and` ties them together (same as value-level mutual recursion)
+- Models a **node-labelled** tree with an arbitrary number of children per node
 
 :::
 
@@ -204,13 +200,12 @@ let rec eval = function
 let _ = eval e
 ```
 
-`int = 23`. We just defined an arithmetic expression mini-language
-and an evaluator for it. Each constructor is a piece of syntax; the
-evaluator pattern-matches and computes.
-
-This is the embryo of every interpreter and compiler. Same recipe
-for JSON values, regular expressions, configuration files, network
-protocols.
+- Result: `int = 23`
+- We've defined an arithmetic mini-language **and** its evaluator
+- Each constructor: a piece of syntax
+- Evaluator: pattern-matches and computes
+- The embryo of **every** interpreter and compiler
+- Same recipe for: JSON values, regular expressions, configuration files, network protocols
 
 :::
 
@@ -225,20 +220,15 @@ tree-shaped data and process it.
 
 The reason these walks "just work" is **structural induction**.
 
-To prove (or just convince yourself) that a function on a recursive
-type is correct, you need to show:
+To prove (or convince yourself) that a function on a recursive type is correct:
 
-1. It is correct on the base case (`Leaf`, `[]`, `Num n`).
-2. Assuming it is correct on the immediate substructures, it is
-   correct on each recursive case (`Node`, `::`, `Add`).
+1. Show correctness on the **base case** (`Leaf`, `[]`, `Num n`).
+2. Assuming correctness on immediate substructures, show correctness on each **recursive case** (`Node`, `::`, `Add`).
 
-This is the same induction principle from school math (`P(0)` and
-`P(n) ⇒ P(n+1)` give you `P(n)` for all `n`), applied to data
-shapes.
-
-When a function over a recursive type matches every constructor and
-delegates the recursive cases properly, structural induction
-basically *guarantees* the function is correct.
+- Same principle as school math: `P(0)` and `P(n) => P(n+1)` give `P(n)` for all `n`
+- Applied here to **data shapes**
+- If a function matches every constructor and delegates recursive cases properly:
+  - Structural induction basically *guarantees* correctness
 
 :::
 
@@ -268,12 +258,10 @@ let t = Node (Node (Leaf, 1, Leaf), 2, Leaf)
 let _ = size t
 ```
 
-`int = 2`. Two nodes in the tree (root `2`, left child `1`).
-
-The base case is `Leaf -> 0`; the recursive case adds 1 for the
-current node plus the size of each subtree. The pattern `Node (l,
-_, r)` ignores the value at the node (we just count, we don't read
-the data).
+- Result: `int = 2` (two nodes: root `2`, left child `1`)
+- Base case: `Leaf -> 0`
+- Recursive case: `1` + size of each subtree
+- Pattern `Node (l, _, r)` ignores the value (we count, not read)
 
 :::
 

@@ -42,13 +42,12 @@ That's the whole language.
 
 ## What can it compute?
 
-Surprisingly, *everything*. Three `subleq` instructions can implement
-addition. A few more, and you have copy, move, conditional, multiply.
-With enough patience, `subleq` is **Turing complete**: it expresses
-every program any other language expresses.
+- *Everything.*
+- Three `subleq` instructions implement addition.
+- A few more: copy, move, conditional, multiply.
+- `subleq` is **Turing complete** — same power as any other language.
 
-So if `subleq` can compute everything, why not just write everything
-in `subleq`?
+So why not write everything in `subleq`?
 
 :::
 
@@ -56,13 +55,10 @@ in `subleq`?
 
 ## Because language is about more than what you *can* compute
 
-Writing a Facebook clone in `subleq` is theoretically possible and
-practically catastrophic. Languages exist to let you **say what you
-mean**.
-
-The slogan, then: a programming language is for thinking, not just for
-running. The richer the abstractions, the closer the thinking aligns
-with the running.
+- A Facebook clone in `subleq`: theoretically possible, practically catastrophic.
+- Languages exist to let you **say what you mean.**
+- A programming language is for **thinking**, not just running.
+- Richer abstractions $\Rightarrow$ thinking closer to the running code.
 
 :::
 
@@ -70,15 +66,12 @@ with the running.
 
 ## The functional thesis
 
-Functional programming chooses two abstractions as load-bearing:
+Two load-bearing abstractions:
 
-1. **Functions as values.** You can pass functions around, return them,
-   store them. Functions are first-class.
-2. **Immutability.** Data is constructed, not mutated. New states are
-   new values; old states stay valid.
+1. **Functions as values.** Pass them around, return them, store them. First-class.
+2. **Immutability.** Data is constructed, not mutated. New states $=$ new values.
 
-These two together give you a way of thinking about programs as
-*compositions of values*, instead of *sequences of state changes*.
+Together: programs as **compositions of values**, not **sequences of state changes**.
 
 :::
 
@@ -105,20 +98,17 @@ twice, or never.
 
 ## Equational reasoning
 
-Pure functions let you reason about your code the way you reason about
-algebra. The expression `double 21` is *equal to* `42`. You can replace
-it by `42` anywhere and the meaning of your program is unchanged.
+- Pure functions $\Rightarrow$ reason about code like algebra.
+- `double 21` is *equal to* `42`.
+- Replace one with the other, anywhere — meaning unchanged.
 
 ```ocaml
 let total = double 21 + double 21
-(* same as *)
-let total = 42 + 42
-(* same as *)
-let total = 84
+(* same as *)  let total = 42 + 42
+(* same as *)  let total = 84
 ```
 
-This sounds modest. It is in fact a powerful tool for refactoring,
-testing, and proving.
+Sounds modest. Powerful tool for **refactoring, testing, proving**.
 
 :::
 
@@ -133,12 +123,10 @@ int next() {
 }
 ```
 
-`next()` is not `next()`. The first call returns `1`, the second
-returns `2`. Replacing one call by the next breaks meaning. Reordering
-two calls breaks meaning. Caching the result breaks meaning.
-
-Most of the work you do reading imperative code is reconstructing
-the implicit state. Pure code lets you stop doing that.
+- `next()` is **not** `next()`.
+- Reordering two calls: breaks meaning.
+- Caching the result: breaks meaning.
+- Reading imperative code = reconstructing implicit state.
 
 :::
 
@@ -152,12 +140,9 @@ let ys = 0 :: xs
 let _ = xs
 ```
 
-`ys` is a new list, `[0; 1; 2; 3]`. `xs` is **unchanged**. You can hold
-both at once. There is no version of the program where `xs` is in some
-"newer" state.
-
-The cost you might expect (copying the list) is not paid here; OCaml's
-runtime shares structure between `xs` and `ys`.
+- `ys` is `[0; 1; 2; 3]`. `xs` is **unchanged.**
+- Both live at once. No "newer" version of `xs`.
+- No copy cost: runtime shares the tail.
 
 :::
 
@@ -178,16 +163,11 @@ runtime shares structure between `xs` and `ys`.
 
 ## When functional doesn't (be honest)
 
-- **Hardware-level performance work.** Cache-aware algorithms sometimes
-  want mutation.
-- **Imperative APIs.** Anything talking to a database, a file system,
-  the network: side effects exist and you must engage with them.
-- **Idiom carry-over.** First few programs you write will fight your
-  intuition. That's normal.
+- **Hardware-level performance.** Cache-aware algorithms want mutation.
+- **Imperative APIs.** Database, file system, network — effects exist.
+- **Idiom carry-over.** Your first programs will fight your intuition. Normal.
 
-OCaml is a *functional-first* language with disciplined escape hatches
-for state and effects. We will use those escape hatches when they
-help, and only then.
+OCaml is **functional-first**: disciplined escape hatches, used only when they help.
 
 :::
 
@@ -195,17 +175,13 @@ help, and only then.
 
 ## Why OCaml specifically
 
-OCaml combines three things that don't often appear together:
+Three things that don't often appear together:
 
-- A serious type system that catches many errors at compile time.
-- Native-code performance close to C.
-- Pragmatic support for state, exceptions, and I/O when you actually
-  need them, with the type system making the boundary explicit.
+- A serious **type system** — compile-time errors, not runtime.
+- **Native-code performance** close to C.
+- **Pragmatic effects** — state, exceptions, I/O when you need them; types make the boundary explicit.
 
-That combination is what lets us, in the second half of this course,
-tackle **secure systems software**: runtime, memory safety, unikernels,
-concurrency. Most languages aren't a credible vehicle for that. OCaml
-is.
+That combination is what lets the second half of the course tackle **secure systems software**.
 
 :::
 
@@ -229,16 +205,18 @@ Think before peeking at the next slide.
 
 ## Activity discussion
 
-Only (a) is referentially transparent.
+Only **(a)** is referentially transparent.
 
 ```ocaml
 (* (a) is pure: f 5 is always 6 *)
 let f x = x + 1
 ```
 
-(b) is random; (c) reads and writes hidden state; (d) prints, which
-is an observable effect. Replacing any of those with their last
-result changes program behaviour.
+- **(b)** is random.
+- **(c)** reads and writes hidden state.
+- **(d)** prints — an observable effect.
+
+Replace any of these with a previous result: program behaviour changes.
 
 :::
 

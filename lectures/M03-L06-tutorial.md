@@ -30,13 +30,13 @@ let rec fib n =
 let _ = fib 20
 ```
 
-`int = 6765`. Two recursive calls per step. The call tree
-*branches*: `fib 20` calls `fib 19` and `fib 18`; each of those
-makes two more calls; and so on. The total number of calls is
-exponential in `n`.
-
-Try `fib 30`. It works, slowly. `fib 40` will take a while. `fib
-50` is impractical.
+- `int = 6765`.
+- Two recursive calls per step.
+- Call tree *branches*: `fib 20` calls `fib 19` and `fib 18`; each makes two more; etc.
+- Total calls: exponential in `n`.
+- `fib 30`: works, slowly.
+- `fib 40`: takes a while.
+- `fib 50`: impractical.
 
 :::
 
@@ -44,16 +44,12 @@ Try `fib 30`. It works, slowly. `fib 40` will take a while. `fib
 
 ## Why is naive Fibonacci so slow?
 
-`fib 5` computes `fib 4 + fib 3`. `fib 4` recomputes `fib 3 + fib
-2`. So `fib 3` is computed *twice*. Going down, `fib 2` is
-computed three times. `fib 1` is computed five times. `fib 0`,
-three.
+- `fib 5` computes `fib 4 + fib 3`.
+- `fib 4` recomputes `fib 3 + fib 2`. So `fib 3` is computed *twice*.
+- `fib 2`: three times. `fib 1`: five times. `fib 0`: three.
+- Work blows up: we keep recomputing overlapping sub-problems.
 
-The work blows up because we keep recomputing overlapping
-sub-problems.
-
-A faster fix: keep a *pair* `(a, b) = (fib (n-2), fib (n-1))` and
-update them iteratively:
+Faster fix: keep a *pair* `(a, b) = (fib (n-2), fib (n-1))` and update iteratively:
 
 ```ocaml
 let fib n =
@@ -66,8 +62,9 @@ let fib n =
 let _ = fib 50
 ```
 
-`int = 12586269025`. Constant work per step. Linear in `n`. The
-tail-recursive accumulator-pair pattern again.
+- `int = 12586269025`.
+- Constant work per step. Linear in `n`.
+- The tail-recursive accumulator-pair pattern again.
 
 :::
 
@@ -88,17 +85,16 @@ let rec gcd a b =
 let _ = gcd 48 18
 ```
 
-`int = 6`. The classic Euclidean algorithm. At each step, we
-replace `(a, b)` with `(b, a mod b)`. The base case is when `b =
-0`; then `a` is the GCD.
+- `int = 6`. Classic Euclidean algorithm.
+- Each step replaces `(a, b)` with `(b, a mod b)`.
+- Base case: `b = 0`; then `a` is the GCD.
 
-Termination: `a mod b < b` for positive `b`, so the second argument
-strictly decreases. The argument is always non-negative (`mod`
-returns a non-negative result for non-negative inputs in OCaml), so
-it reaches zero in finite steps.
+Termination:
 
-This is already tail-recursive: the recursive call is the final
-expression.
+- `a mod b < b` for positive `b`, so the second argument strictly decreases.
+- Always non-negative (OCaml's `mod` is non-negative for non-negative inputs).
+- Reaches zero in finite steps.
+- Already tail-recursive: the recursive call is the final expression.
 
 :::
 
@@ -115,14 +111,11 @@ let rec nth xs n =
 let _ = nth [10; 20; 30; 40] 2
 ```
 
-`int = 30`. The 0-indexed third element.
-
-This is *almost* tail-recursive: the recursive call `nth rest
-(n - 1)` is the final expression on the right branch of the `if`.
-The else-branch on the empty list raises, which is fine.
-
-For out-of-bounds, we use `failwith` which raises `Failure`. A
-nicer API would return `'a option`; we'll see that in Module 4.
+- `int = 30`. The 0-indexed third element.
+- *Almost* tail-recursive: `nth rest (n - 1)` is the final expression on the right branch.
+- Empty-list branch raises, which is fine.
+- For out-of-bounds we use `failwith` (raises `Failure`).
+- A nicer API would return `'a option`; we'll see that in Module 4.
 
 :::
 
@@ -141,11 +134,10 @@ let sum xs =
 let _ = sum [1; 2; 3; 4; 5]
 ```
 
-`int = 15`. Standard accumulator pattern. Works on lists of any
-length without overflowing the stack.
-
-The standard library's `List.fold_left` generalizes this pattern;
-we'll meet it in Module 6.
+- `int = 15`.
+- Standard accumulator pattern.
+- Works on lists of any length without stack overflow.
+- Stdlib's `List.fold_left` generalizes this; more in Module 6.
 
 :::
 
@@ -164,11 +156,10 @@ let reverse xs =
 let _ = reverse [1; 2; 3; 4]
 ```
 
-`int list = [4; 3; 2; 1]`. Each element is prepended to the
-accumulator. The first element of the input ends up *deepest* in
-the accumulator, which is what we want for a reverse.
-
-The standard library has this as `List.rev`.
+- `int list = [4; 3; 2; 1]`.
+- Each element prepended to the accumulator.
+- The first input element ends up *deepest* in the accumulator: what we want for reverse.
+- Stdlib has this as `List.rev`.
 
 :::
 
@@ -200,12 +191,10 @@ let rec count_digits n =
 let _ = count_digits 12345
 ```
 
-`int = 5`. Stripping one digit at a time; base case is a
-single-digit number.
-
-Negative inputs would loop forever (`-5 / 10` is `0` in some
-languages but `-1` rounded toward zero in OCaml, hmm; check). Add
-a guard for safety:
+- `int = 5`.
+- Strips one digit at a time; base case is a single-digit number.
+- Negative inputs would loop forever (OCaml's `/` rounds toward zero, so the recursion may not approach the base).
+- Add a guard for safety:
 
 ```ocaml
 let count_digits n =
@@ -216,7 +205,7 @@ let count_digits n =
   go (abs n)
 ```
 
-`abs` strips the sign before counting.
+- `abs` strips the sign before counting.
 
 :::
 
@@ -224,11 +213,11 @@ let count_digits n =
 
 ## Activity
 
-Write a function `last : 'a list -> 'a option` that returns the
-last element of a list, or `None` if the list is empty.
+Write `last : 'a list -> 'a option`:
 
-Make it tail-recursive (i.e., works on a one-million-element list
-without stack overflow).
+- Returns the last element of a list.
+- Returns `None` if the list is empty.
+- Must be tail-recursive (works on a one-million-element list without stack overflow).
 
 :::
 
@@ -249,14 +238,15 @@ Three cases:
 - `[x]`: single-element list, the only element is the last.
 - `_ :: rest`: throw away the head, recur on the rest.
 
-The recursive call `last rest` is the final expression in its case:
-this *is* tail-recursive. OCaml will optimize it; no stack overflow
-on million-element lists.
+- `last rest` is the final expression in its case: tail-recursive.
+- OCaml optimizes it: no stack overflow on million-element lists.
 
-Why `option`? Because there is no sensible "last element of an
-empty list" to return. `'a option` makes this explicit: the caller
-must handle both `Some x` and `None`. We'll see more of `option`
-in Module 4.
+Why `option`?
+
+- No sensible "last element of an empty list".
+- `'a option` makes this explicit.
+- Caller must handle both `Some x` and `None`.
+- More on `option` in Module 4.
 
 :::
 
