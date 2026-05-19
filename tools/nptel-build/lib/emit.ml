@@ -33,10 +33,10 @@ let head ~asset_root ~(fm : Frontmatter.t) =
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
     asset_root asset_root asset_root asset_root asset_root asset_root
 
-let header_bar ~(fm : Frontmatter.t) =
+let header_bar ~(fm : Frontmatter.t) ~running_lecture =
   let lecture_id =
-    match fm.lecture_no, fm.week with
-    | Some l, Some w -> Printf.sprintf "Module %d &middot; Lecture %d" w l
+    match fm.week, running_lecture with
+    | Some w, Some r -> Printf.sprintf "Module %d &middot; Lecture %d" w r
     | _ -> ""
   in
   let title = if fm.title = "" then "(untitled)" else Parse.html_escape fm.title in
@@ -883,9 +883,29 @@ let render_prev_next ~(manifest : Manifest.t option) =
       Buffer.contents buf
 
 let render_body ~html_body ~(fm : Frontmatter.t) ~manifest =
+  (* Look up the current lecture's running L number from the manifest
+     so the header shows "Lecture 24" instead of "Lecture 1" for
+     M05-L01 (the 24th lecture in the course). *)
+  let running_lecture =
+    match manifest with
+    | None -> None
+    | Some (m : Manifest.t) ->
+        let n = ref 0 in
+        let found = ref None in
+        List.iter
+          (fun (w : Manifest.week) ->
+            List.iter
+              (fun (e : Manifest.entry) ->
+                incr n;
+                if e.slug = m.current_slug && !found = None then
+                  found := Some !n)
+              w.lectures)
+          m.weeks;
+        !found
+  in
   let buf = Buffer.create (String.length html_body + 2048) in
   Buffer.add_string buf "<body class=\"mode-chapter\">\n";
-  Buffer.add_string buf (header_bar ~fm);
+  Buffer.add_string buf (header_bar ~fm ~running_lecture);
   Buffer.add_string buf "\n";
   Buffer.add_string buf (render_sidebar ~manifest);
   (* In chapter mode the article holds everything inline. In slide mode
