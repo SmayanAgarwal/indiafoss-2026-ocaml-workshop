@@ -129,7 +129,7 @@ does. That is fine for a CPU; it is murder for a human reader.
 - A Facebook clone in `subleq`: theoretically possible, practically catastrophic.
 - Languages exist to let you **say what you mean.**
 - A programming language is for **thinking**, not just running.
-- Richer abstractions $\Rightarrow$ thinking closer to the running code.
+- Richer abstractions ⇒ thinking closer to the running code.
 
 :::
 
@@ -262,7 +262,7 @@ functional programming as a discipline. We will use it constantly.
 
 ## Equational reasoning
 
-- Pure functions $\Rightarrow$ reason about code like algebra.
+- Pure functions ⇒ reason about code like algebra.
 - `double 21` is *equal to* `42`.
 - Replace one with the other, anywhere — meaning unchanged.
 

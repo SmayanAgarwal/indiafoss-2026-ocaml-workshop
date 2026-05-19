@@ -397,9 +397,7 @@ build a new function `fun x -> f (g x)` that runs `g` first and then
 `f`. This is *function composition*, and it is so common that it has
 its own name in mathematics:
 
-$$
-(f \circ g)(x) = f(g(x))
-$$
+> (f ∘ g)(x) = f(g(x))
 
 In OCaml, the standard library does *not* provide a composition
 operator by default (some projects define one as `(>>)` or `(<<)`),

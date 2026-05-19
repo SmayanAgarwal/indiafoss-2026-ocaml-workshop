@@ -15,6 +15,11 @@ body.mode-slides .chapter-only { display: none !important; }
    across mode toggles) but are not displayed in slide mode. */
 body.mode-slides .quiz { display: none !important; }
 
+/* Heading permalinks (the ¶ anchors injected by the runtime) are
+   useful in the chapter view for deep-linking, but on a slide
+   they are visual clutter that the recorded video should not show. */
+body.mode-slides .permalink { display: none !important; }
+
 body.mode-slides .reveal {
   display: block;
   position: fixed;
