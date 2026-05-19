@@ -14,6 +14,17 @@ body.mode-slides .reveal {
   display: block;
   position: fixed;
   inset: 0;
+  transition: opacity 0.18s ease-out;
+}
+/* While the cells are still settling their height after a refresh,
+   hide the slide area so the user does not see the ~100px reflow
+   that happens as x-ocaml replaces the cell's plain-text body with
+   a CodeMirror editor. The runtime script adds [slides-loading] on
+   entering slide mode and removes it once cell sizes have been
+   quiet for ~150ms (or after a 1500ms failsafe). */
+body.mode-slides.slides-loading .reveal {
+  opacity: 0;
+  pointer-events: none;
 }
 
 body.mode-slides .reveal .slides section.slide,

@@ -132,6 +132,72 @@ let runtime_script ~asset_root =
       return Array.from(document.querySelectorAll('x-ocaml'));
     }
 
+    // Hide slide area until x-ocaml has finished reflowing each
+    // cell. The cell starts at its plain-text height, briefly
+    // shrinks, then grows when CodeMirror takes over -- ~100px of
+    // motion roughly 250-400ms after page load. We don't get a
+    // reliable "ready" signal from x-ocaml, so we wait for cell
+    // heights to be unchanged across [quietMs] AND at least
+    // [minWaitMs] of elapsed time has passed (so the initial-stable
+    // phase before CodeMirror takes over does not count as settled).
+    // Find the cells on whichever slide we are about to land on
+    // (the saved one from sessionStorage, or slide 0 by default).
+    // Cells on other slides can reflow without the user noticing.
+    function cellsOnTargetSlide() {
+      let targetSection = null;
+      try {
+        const saved = sessionStorage.getItem('nptel-slide:' + location.pathname);
+        if (saved) {
+          const { h } = JSON.parse(saved);
+          const sections = document.querySelectorAll('section[data-slide]');
+          if (typeof h === 'number' && sections[h]) targetSection = sections[h];
+        }
+      } catch (_) {}
+      if (!targetSection) {
+        targetSection = document.querySelector('section[data-slide]');
+      }
+      return targetSection
+        ? Array.from(targetSection.querySelectorAll('x-ocaml'))
+        : [];
+    }
+
+    function waitForCellsToSettle() {
+      const cells = cellsOnTargetSlide();
+      // No cells on the target slide -> nothing can reflow there,
+      // fade in immediately.
+      if (cells.length === 0) {
+        document.body.classList.remove('slides-loading');
+        return;
+      }
+      const quietMs = 180;
+      const minWaitMs = 500;
+      const failsafeMs = 2000;
+      const startedAt = Date.now();
+      let quietTimer = null;
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(quietTimer);
+        clearTimeout(failsafe);
+        obs.disconnect();
+        document.body.classList.remove('slides-loading');
+        if (reveal) { reveal.sync(); reveal.layout(); }
+      };
+      const armQuiet = () => {
+        clearTimeout(quietTimer);
+        quietTimer = setTimeout(() => {
+          const elapsed = Date.now() - startedAt;
+          if (elapsed >= minWaitMs) finish();
+          else quietTimer = setTimeout(armQuiet, minWaitMs - elapsed);
+        }, quietMs);
+      };
+      const obs = new ResizeObserver(armQuiet);
+      for (const c of cells) obs.observe(c);
+      armQuiet();
+      const failsafe = setTimeout(finish, failsafeMs);
+    }
+
     // Click the cell's shadow-DOM "Run" button. x-ocaml's internal chain
     // automatically runs predecessors that aren't Run_ok yet.
     function clickRun(cell) {
@@ -351,6 +417,8 @@ let runtime_script ~asset_root =
       if (slide) {
         moveSlidesIntoReveal();
         if (!reveal) {
+          body.classList.add('slides-loading');
+          waitForCellsToSettle();
           reveal = new Reveal({
             embedded: false, hash: false, history: false,
             // Without this, arrow keys while typing in an x-ocaml cell
