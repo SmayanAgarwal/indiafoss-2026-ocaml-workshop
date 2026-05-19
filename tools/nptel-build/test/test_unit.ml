@@ -163,10 +163,13 @@ let parse_html_escape_in_cell () =
     (try ignore (Str.search_forward (Str.regexp_string "&lt;&amp;&gt;") html 0); true
      with Not_found -> false)
 
-let parse_ocaml_test_attr () =
+let parse_quiz_test_attr () =
+  (* The build's [Divs.preprocess] adds [quiz-test] to the info
+     string for the 2nd+ ocaml fence inside a [:::quiz code] block.
+     Here we simulate that rewrite directly. *)
   let doc =
     Cmarkit.Doc.of_string
-      "```ocaml test\nlet () = print_endline \"ok\"\n```\n"
+      "```ocaml skip quiz-test\nlet () = print_endline \"ok\"\n```\n"
   in
   let html = Cmarkit_html.of_doc ~safe:false (Parse.transform doc) in
   check_bool "data-quiz-test marker present" true
@@ -175,13 +178,14 @@ let parse_ocaml_test_attr () =
   check_bool "implicit hidden=true" true
     (try ignore (Str.search_forward (Str.regexp_string "hidden=\"true\"") html 0); true
      with Not_found -> false);
-  (* The test info-string flag must not leak into the rendered
-     element as a stand-alone attribute. The substring is sought
-     with a leading space; the dash in data-quiz-test then prevents
-     a false positive. *)
-  check_bool "test=true NOT emitted as own attribute" true
+  check_bool "quiz-test=true NOT emitted as own attribute" true
     (try
-       ignore (Str.search_forward (Str.regexp_string " test=\"") html 0);
+       ignore (Str.search_forward (Str.regexp_string " quiz-test=\"") html 0);
+       false
+     with Not_found -> true);
+  check_bool "skip NOT emitted as own attribute" true
+    (try
+       ignore (Str.search_forward (Str.regexp_string " skip=\"") html 0);
        false
      with Not_found -> true)
 
@@ -243,7 +247,7 @@ let () =
           Alcotest.test_case "attrs in info string" `Quick parse_ocaml_attrs;
           Alcotest.test_case "non-ocaml fence untouched" `Quick parse_non_ocaml_fence;
           Alcotest.test_case "html escape" `Quick parse_html_escape_in_cell;
-          Alcotest.test_case "ocaml test -> quiz test cell" `Quick parse_ocaml_test_attr;
+          Alcotest.test_case "ocaml skip quiz-test -> quiz test cell" `Quick parse_quiz_test_attr;
         ] );
       ( "quizzes",
         [

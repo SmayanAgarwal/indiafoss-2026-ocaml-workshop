@@ -15,10 +15,15 @@
      autorun     - run automatically on cell mount
      hidden      - present in DOM but not visually rendered
      non-deterministic - tolerated for ocaml-mdx CI parity
-     test        - this is the hidden assertion cell of a code quiz.
-                   Rendered as [hidden] + [data-quiz-test="true"]; the
-                   quiz runtime finds it via the data attribute and
-                   wires it to the visible student cell's Check button.
+     skip        - ocaml-mdx label; we treat it as "do not auto-run".
+     quiz-test   - synthesised by [Divs.preprocess] for the 2nd+
+                   ocaml fence inside a [:::quiz code] block. Rendered
+                   as [hidden] + [data-quiz-test="true"]; the quiz
+                   runtime finds it via the data attribute and wires
+                   it to the visible student cell's Check button.
+                   Authors do NOT write [quiz-test] themselves; they
+                   write [ocaml skip] for the assertion cell, and the
+                   build adds [quiz-test] based on position.
 *)
 
 let lang_is_ocaml info =
@@ -57,17 +62,21 @@ let html_escape s =
   Buffer.contents b
 
 let render_x_ocaml ~code ~attrs =
-  (* If [test] is present, treat the cell as the hidden assertion cell
-     of a quiz: emit [hidden] + [data-quiz-test="true"], drop the
-     [test] attribute itself (it's not a real x-ocaml attribute). *)
-  let is_quiz_test = List.mem_assoc "test" attrs in
+  (* If [quiz-test] is present (added by [Divs.preprocess] for the
+     2nd+ ocaml fence inside a [:::quiz code] block), treat the cell
+     as the hidden assertion cell of a quiz: emit [hidden] +
+     [data-quiz-test="true"], drop the [quiz-test] attribute itself
+     (it is not a real x-ocaml attribute). The author-written [skip]
+     label, if present, is also dropped here -- it exists only to
+     keep ocaml-mdx from running the cell. *)
+  let is_quiz_test = List.mem_assoc "quiz-test" attrs in
   let attrs =
     if is_quiz_test then
-      let attrs = List.remove_assoc "test" attrs in
-      (* [hidden] may already be present; that's fine, it's idempotent. *)
+      let attrs = List.remove_assoc "quiz-test" attrs in
+      let attrs = List.remove_assoc "skip" attrs in
       if List.mem_assoc "hidden" attrs then attrs
       else ("hidden", "true") :: attrs
-    else attrs
+    else List.remove_assoc "skip" attrs
   in
   let buf = Buffer.create 256 in
   Buffer.add_string buf "<x-ocaml";

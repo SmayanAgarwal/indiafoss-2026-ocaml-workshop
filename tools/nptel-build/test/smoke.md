@@ -74,9 +74,12 @@ let double x =
   failwith "not implemented"
 ```
 
-```ocaml test
-(* x-ocaml in the browser does not provide [Assert_failure], so quiz
-   tests use [failwith]-based checks instead of OCaml's [assert]. *)
+```ocaml skip
+(* x-ocaml in the browser does not provide Assert_failure, so quiz
+   tests use failwith-based checks instead of OCaml's assert. The
+   [skip] label tells ocaml-mdx not to validate this block; the
+   build's preprocessor recognises the position (2nd+ ocaml fence
+   inside a :::quiz code) and tags the cell as the assertion cell. *)
 let check b m = if not b then failwith m
 let () =
   check (double 3 = 6)    "double 3";

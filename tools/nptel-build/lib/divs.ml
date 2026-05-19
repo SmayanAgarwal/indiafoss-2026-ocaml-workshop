@@ -78,35 +78,106 @@ let close_tag = function
   | Notes -> "</aside>"
   | Quiz_mcq _ | Quiz_code _ -> "</div>"
 
+(* Inside [:::quiz code], the FIRST ocaml fence is the student cell
+   and any subsequent ones are test cells (hidden assertion code).
+   Authors write them as ```ocaml skip``` (skip is required by
+   ocaml-mdx, which would otherwise try to run the assertion code
+   against undefined names from the student cell).
+
+   For the build's own use, we rewrite a test cell's info string to
+   add the [quiz-test] marker. This rewriting happens only in the
+   output we feed to cmarkit -- the source file mdx reads is
+   untouched. Parse.ml looks for the [quiz-test] attribute. *)
+let is_ocaml_fence_open line =
+  let s = String.trim line in
+  String.length s >= 3
+  && String.sub s 0 3 = "```"
+  && (let rest = String.sub s 3 (String.length s - 3) |> String.trim in
+      match String.split_on_char ' ' rest with
+      | "ocaml" :: _ -> true
+      | _ -> false)
+
+let inject_quiz_test_marker line =
+  (* Find the [```ocaml] prefix and append [ quiz-test] after the
+     info string. Preserve leading whitespace and any existing labels
+     (notably [skip], which mdx needs). *)
+  let s = line in
+  let n = String.length s in
+  (* Find end of info string (end of line or end of trailing spaces). *)
+  let i = ref 0 in
+  while !i < n && (s.[!i] = ' ' || s.[!i] = '\t') do incr i done;
+  let prefix_len = !i in
+  let body = String.sub s prefix_len (n - prefix_len) in
+  let body_trimmed = String.trim body in
+  let leading = String.sub s 0 prefix_len in
+  leading ^ body_trimmed ^ " quiz-test"
+
 let preprocess src =
   let lines = String.split_on_char '\n' src in
   let buf = Buffer.create (String.length src) in
   let stack = ref [] in
   let quiz_counter = ref 0 in
+  (* Track, per active Quiz_code on the stack, how many ocaml fences
+     have appeared inside it so we know which is the student cell vs
+     the test cell(s). Map: a counter for the topmost Quiz_code. *)
+  let quiz_code_fence_count = ref 0 in
+  let in_quiz_code () =
+    List.exists (function Quiz_code _ -> true | _ -> false) !stack
+  in
+  let in_code_block = ref false in
   List.iter
     (fun line ->
+      (* Distinguish entering / leaving a fenced code block from the
+         opening of a fenced div ([:::]). Code-block fences start with
+         [```]; div opens / closes start with [:::]. *)
+      let is_fence_line =
+        let s = String.trim line in
+        String.length s >= 3 && String.sub s 0 3 = "```"
+      in
       match parse_open ~quiz_counter line with
       | Some k ->
           stack := k :: !stack;
+          (match k with
+           | Quiz_code _ -> quiz_code_fence_count := 0
+           | _ -> ());
           Buffer.add_string buf "\n";
           Buffer.add_string buf (open_tag k);
           Buffer.add_string buf "\n\n"
       | None when is_close line -> (
           match !stack with
           | [] ->
-              (* Stray :::; pass through verbatim to surface the problem. *)
               Buffer.add_string buf line;
               Buffer.add_char buf '\n'
           | k :: rest ->
               stack := rest;
+              (match k with
+               | Quiz_code _ -> quiz_code_fence_count := 0
+               | _ -> ());
               Buffer.add_string buf "\n";
               Buffer.add_string buf (close_tag k);
               Buffer.add_string buf "\n\n")
+      | None when is_fence_line && in_quiz_code () && not !in_code_block
+                  && is_ocaml_fence_open line ->
+          (* Opening an ocaml code block inside a quiz-code div.
+             Count it; the 2nd+ are test cells. *)
+          incr quiz_code_fence_count;
+          let n_inside = !quiz_code_fence_count in
+          in_code_block := true;
+          if n_inside >= 2 then begin
+            Buffer.add_string buf (inject_quiz_test_marker line);
+            Buffer.add_char buf '\n'
+          end else begin
+            Buffer.add_string buf line;
+            Buffer.add_char buf '\n'
+          end
+      | None when is_fence_line ->
+          in_code_block := not !in_code_block;
+          Buffer.add_string buf line;
+          Buffer.add_char buf '\n'
       | None ->
           Buffer.add_string buf line;
           Buffer.add_char buf '\n')
     lines;
-  (* Close any unclosed blocks defensively. *)
   List.iter
     (fun k ->
       Buffer.add_string buf "\n";
