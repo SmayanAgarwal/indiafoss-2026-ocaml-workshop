@@ -89,8 +89,10 @@ emit_index() {
 HEAD
 
     # Walk modules in order, then lectures in order. modules.txt
-    # holds "<Mnn>: <title>" lines.
+    # holds "<Mnn>: <title>" lines. Lecture numbers run continuously
+    # across modules: M01 holds L01-L05, M02 holds L06-L11, etc.
     local modules_file="$REPO_ROOT/lectures/modules.txt"
+    local running=0
     while IFS= read -r line; do
       line="${line%$'\r'}"
       case "$line" in
@@ -107,15 +109,10 @@ HEAD
         [ -f "$src" ] || continue
         local base ltitle
         base=$(basename "$src" .md)
-        # Pull the [title:] line out of the YAML frontmatter. Strip
-        # the [title: ] prefix and surrounding quotes; keep any colons
-        # that appear later in the title text.
         ltitle=$(awk '/^title:/ { sub(/^title: */, ""); sub(/^"/, ""); sub(/"$/, ""); print; exit }' "$src")
-        # Lecture number from filename: M01-L<NN>-...
-        local lnum
-        lnum=$(printf '%s' "$base" | sed -E 's/^M[0-9]+-L([0-9]+)-.*/\1/')
-        printf '        <li><span class="lec-no">L%s</span> <a href="%s.html">%s</a></li>\n' \
-          "$lnum" "$base" "$ltitle"
+        running=$((running + 1))
+        printf '        <li><span class="lec-no">L%02d</span> <a href="%s.html">%s</a></li>\n' \
+          "$running" "$base" "$ltitle"
       done
       printf '      </ul>\n'
       printf '    </section>\n'

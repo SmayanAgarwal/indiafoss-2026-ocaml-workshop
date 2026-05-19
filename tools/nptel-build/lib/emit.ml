@@ -43,6 +43,7 @@ let header_bar ~(fm : Frontmatter.t) =
   Printf.sprintf
     {|  <header class="page-header">
     <button class="sidebar-collapse chapter-only" type="button" title="Show or hide the course outline" aria-label="Toggle course outline">&#9776;</button>
+    <a class="home-link" href="index.html" title="Course landing page" aria-label="Course landing page">&#x21A9;&#xfe0e;</a>
     <div class="lecture-meta">%s</div>
     <h1 class="lecture-title">%s</h1>
     <div class="cell-controls">
@@ -755,6 +756,10 @@ let render_sidebar ~(manifest : Manifest.t option) =
         "  <nav class=\"sidebar-nav\" aria-label=\"Course outline\">\n";
       Buffer.add_string buf
         "    <div class=\"sidebar-title\">Course outline</div>\n";
+      (* Lecture numbering runs continuously across modules: M01 holds
+         L01-L05, M02 holds L06-L11, etc. The running counter is
+         incremented as we walk weeks in order. *)
+      let running = ref 0 in
       List.iter
         (fun (w : Manifest.week) ->
           let has_current =
@@ -771,6 +776,7 @@ let render_sidebar ~(manifest : Manifest.t option) =
           Buffer.add_string buf "      <ul class=\"sidebar-lectures\">\n";
           List.iter
             (fun (e : Manifest.entry) ->
+              incr running;
               let cls =
                 if e.slug = m.current_slug then " class=\"current\"" else ""
               in
@@ -778,7 +784,7 @@ let render_sidebar ~(manifest : Manifest.t option) =
                 (Printf.sprintf
                    "        <li%s><a href=\"%s.html\"><span \
                     class=\"lec-no\">L%02d</span> %s</a></li>\n"
-                   cls e.slug e.lecture (Parse.html_escape e.title)))
+                   cls e.slug !running (Parse.html_escape e.title)))
             w.lectures;
           Buffer.add_string buf "      </ul>\n";
           Buffer.add_string buf "    </details>\n")
@@ -792,6 +798,25 @@ let render_prev_next ~(manifest : Manifest.t option) =
   | None -> ""
   | Some m ->
       let prev, next = Manifest.neighbors m in
+      (* Build a (slug -> running-L-number) map by walking the weeks
+         in order, so the prev/next nav uses the same continuous
+         numbering as the sidebar and landing page. *)
+      let running_of_slug =
+        let tbl = Hashtbl.create 64 in
+        let n = ref 0 in
+        List.iter
+          (fun (w : Manifest.week) ->
+            List.iter
+              (fun (e : Manifest.entry) ->
+                incr n;
+                Hashtbl.replace tbl e.slug !n)
+              w.lectures)
+          m.weeks;
+        fun slug -> Hashtbl.find_opt tbl slug
+      in
+      let lnum_of e =
+        match running_of_slug e.Manifest.slug with Some n -> n | None -> e.lecture
+      in
       let buf = Buffer.create 256 in
       Buffer.add_string buf
         "<nav class=\"prev-next chapter-only\" aria-label=\"Lecture navigation\">\n";
@@ -801,17 +826,17 @@ let render_prev_next ~(manifest : Manifest.t option) =
              (Printf.sprintf
                 "  <a class=\"prev\" href=\"%s.html\">&larr; <span \
                  class=\"label\">Previous</span> <span \
-                 class=\"sub\">M%02d L%02d &middot; %s</span></a>\n"
-                e.slug e.week e.lecture (Parse.html_escape e.title))
+                 class=\"sub\">L%02d &middot; %s</span></a>\n"
+                e.slug (lnum_of e) (Parse.html_escape e.title))
        | None -> Buffer.add_string buf "  <span class=\"prev disabled\"></span>\n");
       (match next with
        | Some (e : Manifest.entry) ->
            Buffer.add_string buf
              (Printf.sprintf
                 "  <a class=\"next\" href=\"%s.html\"><span \
-                 class=\"label\">Next</span> <span class=\"sub\">W%02d \
-                 L%02d &middot; %s</span> &rarr;</a>\n"
-                e.slug e.week e.lecture (Parse.html_escape e.title))
+                 class=\"label\">Next</span> <span class=\"sub\">L%02d \
+                 &middot; %s</span> &rarr;</a>\n"
+                e.slug (lnum_of e) (Parse.html_escape e.title))
        | None -> Buffer.add_string buf "  <span class=\"next disabled\"></span>\n");
       Buffer.add_string buf "</nav>\n";
       Buffer.contents buf

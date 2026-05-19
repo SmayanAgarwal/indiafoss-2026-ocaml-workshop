@@ -187,6 +187,26 @@ body.sidebar-hidden .sidebar { display: none; }
 }
 .sidebar-collapse:hover { background: var(--code-bg); }
 
+/* Home / landing-page link in the header. Sits next to the sidebar
+   toggle so the reader can always escape back to the course index. */
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--accent);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 1.1rem;
+  line-height: 1;
+  text-decoration: none;
+  margin-right: 0.6rem;
+}
+.home-link:hover { background: var(--code-bg); }
+body.mode-slides .home-link { opacity: 0.6; }
+
 /* ---- Prev / Next ---- */
 
 .prev-next {
