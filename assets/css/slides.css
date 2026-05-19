@@ -88,11 +88,12 @@ body.mode-slides x-ocaml {
 /* The .cell-wrap is a block-level div around each cell. In slide
    mode reveal.js gives the section a fixed canvas width and the
    cell otherwise stretches to fill it, which puts the Run button
-   far to the right of the prose. Constraining the wrapper width
-   keeps the cell aligned with bullet text and headings. */
+   far to the right of the prose. Cap the wrapper width and align
+   it left so it sits flush with the headings and bullets, not
+   centred (which would create dead space on the left). */
 body.mode-slides .cell-wrap {
   max-width: 85%;
-  margin-left: auto;
+  margin-left: 0;
   margin-right: auto;
 }
 
