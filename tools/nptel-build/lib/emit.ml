@@ -385,6 +385,46 @@ let runtime_script ~asset_root =
 
     // After x-ocaml upgrades each cell (Run button appears in shadow),
     // wire persistence and restore any saved edits.
+    // x-ocaml warms up its worker by auto-evaluating the FIRST
+    // cell on the page once its runtime is ready. That auto-eval
+    // happens AFTER our initial clearAll(), so the first cell can
+    // show stale-looking output on a fresh page load. To suppress
+    // it without interfering with anything else, we watch only the
+    // first cell's shadow DOM for new output, and clear it once if
+    // it appears before the reader has interacted with any cell.
+    let userInteracted = false;
+    function watchRunButton(cell) {
+      const btn = cell.shadowRoot?.querySelector('.run_btn button');
+      if (!btn) return;
+      btn.addEventListener('click', () => { userInteracted = true; });
+    }
+    function suppressFirstCellAutoWarmup() {
+      const first = allCells()[0];
+      if (!first) return;
+      const sr = first.shadowRoot;
+      if (!sr) return;
+      let cleared = false;
+      const obs = new MutationObserver(() => {
+        if (cleared) return;
+        if (userInteracted) { obs.disconnect(); return; }
+        const hasOutput = sr.querySelector(
+          '.caml_meta, .caml_stdout, .caml_stderr, .caml_html');
+        if (hasOutput) {
+          // x-ocaml's auto-warmup output. Clear once.
+          const txt = first.textContent;
+          first.textContent = '';
+          first.textContent = txt;
+          cleared = true;
+          obs.disconnect();
+        }
+      });
+      obs.observe(sr, { childList: true, subtree: true });
+      // Safety: stop watching after 10s regardless. x-ocaml's
+      // warmup is much faster than this; if it hasn't fired by then
+      // it probably will not.
+      setTimeout(() => obs.disconnect(), 10000);
+    }
+
     async function whenCellsReady() {
       while (true) {
         const ready = allCells().every(c => c.shadowRoot?.querySelector('.cm-content'));
@@ -392,13 +432,14 @@ let runtime_script ~asset_root =
         await new Promise(r => setTimeout(r, 100));
       }
       restorePersistedCells();
-      for (const c of allCells()) watchCellForEdits(c);
-      // Start every load with all cell outputs cleared. The teaching
-      // setup: a freshly-loaded page shows source only, and the
-      // reader has to press Run to see what each cell prints. This
-      // prevents inline-quiz cells from accidentally revealing
-      // their own answers via stale output from a previous session.
+      for (const c of allCells()) {
+        watchCellForEdits(c);
+        watchRunButton(c);
+      }
+      // Wipe any stale output left over from previous sessions.
       clearAll();
+      // x-ocaml may then auto-warm the first cell; suppress that.
+      suppressFirstCellAutoWarmup();
       // Code quizzes can now find the test cell's shadow Run button.
       setupCodeQuizzes();
     }
