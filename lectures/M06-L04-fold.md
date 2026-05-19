@@ -8,21 +8,168 @@ keywords: [OCaml, fold, fold_left, fold_right, reduce, accumulator]
 activity_question: "Express [List.length xs] using [List.fold_left]. Express [List.rev xs] using [List.fold_left]. Why does [List.fold_left (fun a x -> x :: a) [] xs] produce the reverse and not the original?"
 think_about_this: "[fold_left] is tail-recursive and goes left-to-right; [fold_right] is not tail-recursive and goes right-to-left. When is each one the natural fit?"
 reading:
-  - title: "Cornell CS3110, fold"
-    url: https://cs3110.github.io/textbook/chapters/hop/index.html
+  - title: "Cornell CS3110, Fold"
+    url: https://cs3110.github.io/textbook/chapters/hop/fold.html
 ---
 
 # `fold`: reduce a list to a single value
 
-`fold` is the most general of the three canonical list higher-order
-functions. Where `map` returns a list and `filter` returns a list,
-`fold` returns *anything you want*: a number, a string, another
-list, a record. Anything that's computed by walking the elements
-and accumulating.
+`map` returns a list. `filter` returns a list. `fold` returns
+*anything*: a number, a string, a record, another list, a tree. If
+the answer to your problem is computed by walking the elements of a
+list and combining them somehow, `fold` is the tool. It is the most
+general of the three canonical higher-order list functions, and it
+subsumes both `map` and `filter`: as we will see by the end of the
+lecture, you can write both of them on top of `fold`.
+
+This lecture follows the same shape as the previous two: start from
+two concrete recursive functions that share a pattern, abstract the
+pattern, name the abstraction, then study the two flavours that
+arise (`fold_left` and `fold_right`). At the end we look at folds
+beyond lists.
+
+## From `sum` and `concat` to `fold`
+
+Two functions:
+
+```ocaml
+let rec sum = function
+  | [] -> 0
+  | h :: t -> h + sum t
+
+let rec join = function
+  | [] -> ""
+  | h :: t -> h ^ join t
+
+let _ = sum [1; 2; 3]
+let _ = join ["a"; "b"; "c"]
+```
+
+Same shape, two differences:
+
+- The base case returns a different value: `0` for sum, `""` for join.
+- The combining step uses a different operator: `+` for sum, `^` for join.
+
+Both differences need to be parameterised. The base case becomes an
+argument we will call `init` (the initial accumulator); the operator
+becomes a function we will call `f`. Putting them together:
+
+```ocaml
+let rec combine f init = function
+  | [] -> init
+  | h :: t -> f h (combine f init t)
+
+let sum    = combine (+)  0
+let join   = combine (^)  ""
+```
 
 :::slide
 
-## The shape
+## From sum and concat to fold
+
+```ocaml
+let rec sum = function
+  | [] -> 0
+  | h :: t -> h + sum t
+
+let rec join = function
+  | [] -> ""
+  | h :: t -> h ^ join t
+```
+
+- Same shape.
+- Base case differs: `0` vs `""`.
+- Combining step differs: `+` vs `^`.
+
+Factor both out:
+
+```ocaml
+let rec combine f init = function
+  | [] -> init
+  | h :: t -> f h (combine f init t)
+
+let sum  = combine (+)  0
+let join = combine (^)  ""
+```
+
+- One generic function captures the shape.
+- Two parameters: the combining function, the initial value.
+
+:::
+
+That little function `combine` is, with a tiny renaming, the
+standard library function `List.fold_right`. The renaming: people
+conventionally write `acc` instead of `init` for the accumulator
+argument, and put the list before the accumulator. So:
+
+```ocaml
+let rec fold_right f xs acc =
+  match xs with
+  | [] -> acc
+  | h :: t -> f h (fold_right f t acc)
+
+let _ = fold_right (+) [1; 2; 3] 0
+let _ = fold_right (^) ["a"; "b"; "c"] ""
+```
+
+That is the actual signature of `List.fold_right`. Read the type:
+
+```
+val fold_right : ('a -> 'acc -> 'acc) -> 'a list -> 'acc -> 'acc
+```
+
+`f` takes an element and an accumulator, produces a new accumulator.
+The function takes a list of `'a`, an initial accumulator of type
+`'acc`, and returns the final accumulator.
+
+## What `fold_right` computes
+
+The name "fold right" comes from how the operator gets associated.
+For `fold_right f [a; b; c] init`, the computation unfolds as:
+
+```
+f a (f b (f c init))
+```
+
+That is, the rightmost element is combined first with the initial
+accumulator, then that result with the next element, and so on
+inward. The parentheses associate to the right.
+
+A useful way to see this: every OCaml list `[a; b; c]` is shorthand
+for `a :: (b :: (c :: []))`. `fold_right f xs init` is what you get
+if you replace every `::` in this expression with `f` and the
+trailing `[]` with `init`. So `[1; 2; 3]` becomes `1 :: (2 :: (3 ::
+[]))`; with `f = (+)` and `init = 0`, that becomes `1 + (2 + (3 +
+0))`, which is `6`.
+
+That is also why this signature is so general: it lets you replace
+the list's "structure" with any operator and any initial value you
+like. Pick `+` and `0`: you get a sum. Pick `^` and `""`: you get a
+concatenation. Pick `::` and `[]`: you get back the original list
+(because we are replacing `::` with itself and `[]` with itself).
+Pick `(fun x acc -> 1 + acc)` and `0`: you get the length. Pick
+`(fun x acc -> f x :: acc)` and `[]` for some function `f`: you get
+`map`. Pick `(fun x acc -> if p x then x :: acc else acc)` and `[]`:
+you get `filter`. Folds are very general.
+
+## `fold_left`: the other direction
+
+There is a second flavour of fold, called `fold_left`, that combines
+elements from the *left* instead of the *right*. Where `fold_right`
+parenthesises rightward (`f a (f b (f c init))`), `fold_left`
+parenthesises leftward (`f (f (f init a) b) c`).
+
+```ocaml
+let rec fold_left f acc = function
+  | [] -> acc
+  | x :: rest -> fold_left f (f acc x) rest
+
+let _ = fold_left (+) 0 [1; 2; 3; 4]
+```
+
+:::slide
+
+## `fold_left` definition
 
 ```ocaml
 let rec fold_left f acc = function
@@ -34,12 +181,39 @@ let _ = fold_left (+) 0 [1; 2; 3; 4]
 
 `int = 10`.
 
-- Sum of the list: fold `+` over it with starting accumulator `0`.
 - Type: `('acc -> 'a -> 'acc) -> 'acc -> 'a list -> 'acc`.
-- The function combines running accumulator with each element to
-  produce the next accumulator.
+- The function combines the running accumulator with the next
+  element to produce the new accumulator.
+- Note: accumulator comes *first* in the function; element second.
 
 :::
+
+There are two differences from `fold_right`:
+
+1. **The argument order of the combining function is swapped.** In
+   `fold_right`, `f` takes `element` then `accumulator`. In
+   `fold_left`, `f` takes `accumulator` then `element`. Mnemonic:
+   the accumulator goes on the side suggested by the name. `fold_X`
+   has accumulator on the `X`.
+
+2. **The list argument is in a different position.** In `fold_right`
+   you write `fold_right f xs init`; in `fold_left` you write
+   `fold_left f init xs`. The accumulator comes before the list. This
+   is a small inconsistency in the standard library, but it has been
+   the convention since the early days of OCaml.
+
+## What `fold_left` computes, step by step
+
+For `fold_left f acc [x1; x2; x3]`, the computation is:
+
+```
+f (f (f acc x1) x2) x3
+```
+
+Read inside-out: apply `f` to the initial `acc` and `x1`; take that
+result and apply `f` to it and `x2`; take *that* result and apply
+`f` to it and `x3`. The accumulator threads through, getting
+updated by each element in turn.
 
 :::slide
 
@@ -67,41 +241,72 @@ For `fold_left (+) 0 [1; 2; 3]`:
 
 :::
 
+For `fold_left (+) 0 [1; 2; 3]`, the unfolding is `((0 + 1) + 2) +
+3`, which is `6`. For addition, this gives the same answer as
+`fold_right`: both produce `6`. That is because `+` is *associative*
+(the same result regardless of how you parenthesise) and the initial
+accumulator `0` is the *identity* (adding `0` does not change the
+result).
+
+For a non-associative operator, the two folds disagree. Subtraction
+is the textbook example:
+
+```ocaml
+let _ = List.fold_right (-) [3; 2; 1] 0      (* 3 - (2 - (1 - 0)) = 2 *)
+let _ = List.fold_left  (-) 0 [3; 2; 1]      (* ((0 - 3) - 2) - 1 = -6 *)
+```
+
+Same list, same operator, different answers. When this happens, you
+have to pick the fold direction that matches the meaning you want.
+
+## `fold_left` is tail-recursive
+
+The other big difference between `fold_left` and `fold_right` is
+where the recursive call sits.
+
+```ocaml
+let rec fold_left f acc = function
+  | [] -> acc
+  | x :: rest -> fold_left f (f acc x) rest
+```
+
+The recursive call to `fold_left` is in the tail position: nothing
+happens after it returns. OCaml will compile this to a loop. The
+function uses constant stack space regardless of list length: you
+can fold a list of millions of elements without trouble.
+
 :::slide
 
 ## `fold_left` is tail-recursive
 
-- The recursive call has nothing after it.
-- OCaml optimizes it to a loop.
+```ocaml
+let rec fold_left f acc = function
+  | [] -> acc
+  | x :: rest -> fold_left f (f acc x) rest
+```
+
+- Recursive call is the *last* thing the function does.
+- OCaml compiles it to a loop.
 - Constant stack space, regardless of list length.
-- Right choice when order doesn't matter, or the accumulator
+- Right choice when order doesn't matter, or when the accumulator
   naturally fits left-to-right folding.
 
 :::
 
-:::slide
-
-## `fold_right`: the other direction
-
-`fold_right f xs acc` evaluates to:
-
-```
-f x1 (f x2 (f x3 acc))
-```
-
-- Right-associative.
-- The function takes the **element first**, accumulator second.
+Contrast with `fold_right`:
 
 ```ocaml
-let _ = List.fold_right (fun x acc -> x :: acc) [1; 2; 3] []
+let rec fold_right f xs acc =
+  match xs with
+  | [] -> acc
+  | h :: t -> f h (fold_right f t acc)
 ```
 
-`[1; 2; 3]`.
-
-- With `::` as `f`, this rebuilds the list exactly.
-- Useful for "preserve order" computations.
-
-:::
+The recursive call is *inside* `f h (...)`: after it returns, we
+still have to apply `f` to its result and `h`. So the recursive call
+is not in tail position; each pending call lives on the stack until
+its callee returns. For a list of `n` elements, `fold_right` builds
+a stack of depth `n`. For lists in the millions, this overflows.
 
 :::slide
 
@@ -111,21 +316,48 @@ let _ = List.fold_right (fun x acc -> x :: acc) [1; 2; 3] []
 let rec fold_right f xs acc =
   match xs with
   | [] -> acc
-  | x :: rest -> f x (fold_right f rest acc)
+  | h :: t -> f h (fold_right f t acc)
 ```
 
-- `f x (...)` does work *after* the recursive call.
+- `f h (...)` does work *after* the recursive call.
 - Not tail-recursive: stack-overflow risk on long lists.
 - For very long lists, prefer `fold_left` with an accumulator tweak.
-- Or use `List.rev (fold_left ...)` for right-to-left semantics.
+- Or use `List.rev (List.fold_left ...)` for right-to-left semantics
+  on long lists.
 
 :::
+
+So when do you reach for which?
+
+- For tail-recursion and constant stack, use `fold_left`.
+- When the natural order is right-to-left (because the operation is
+  not associative, and the right grouping matches your meaning), use
+  `fold_right`. If the list is short, do not worry. If the list is
+  very long, use `List.rev` and switch to `fold_left`.
+- A useful identity: `fold_right f xs init = fold_left (fun acc x ->
+  f x acc) init (List.rev xs)`. This is the trick the standard
+  library actually uses internally for safe right folds on long
+  lists.
+
+In day-to-day OCaml, `fold_left` is by far the more common choice.
+
+## Implementing `map` and `filter` via fold
+
+We claimed `map` and `filter` can be expressed in terms of fold. The
+proofs are short.
+
+For `map`:
+
+```ocaml
+let map_via_fold f xs =
+  List.fold_right (fun x acc -> f x :: acc) xs []
+
+let _ = map_via_fold (fun n -> n * n) [1; 2; 3]
+```
 
 :::slide
 
 ## `map` in terms of `fold`
-
-`map` is `fold_right` with the right combining function:
 
 ```ocaml
 let map_via_fold f xs =
@@ -139,7 +371,7 @@ let _ = map_via_fold (fun n -> n * n) [1; 2; 3]
 - Accumulator starts as `[]`.
 - For each element (right-to-left) we cons `f x` onto it.
 
-Or with `fold_left` and a reverse:
+Tail-recursive variant with `fold_left + rev`:
 
 ```ocaml
 let map_via_fold_left f xs =
@@ -151,6 +383,23 @@ let _ = map_via_fold_left (fun n -> n * n) [1; 2; 3]
 Same result. Two passes (fold then rev), but tail-recursive.
 
 :::
+
+The combining function `(fun x acc -> f x :: acc)` says: at each
+step, apply `f` to the current element and cons the result onto the
+accumulator. With `fold_right`, the walk goes right-to-left, so the
+cons-order matches the original order of the list and we get the
+mapped list out.
+
+For `filter`:
+
+```ocaml
+let filter_via_fold p xs =
+  List.fold_right
+    (fun x acc -> if p x then x :: acc else acc)
+    xs []
+
+let _ = filter_via_fold (fun n -> n > 2) [1; 2; 3; 4]
+```
 
 :::slide
 
@@ -173,11 +422,39 @@ let _ = filter_via_fold (fun n -> n > 2) [1; 2; 3; 4]
 
 :::
 
-:::slide
+The combining function picks either `x :: acc` (keep) or `acc`
+(drop). Same general idea: walk the list, build the accumulator,
+hand it back at the end.
+
+`fold` is more general than both `map` and `filter`. If you ever
+forget the signature of either, you can derive it from `fold`. (We
+will not recommend you write `map_via_fold` instead of `map` in real
+code: the more specific functions express intent more clearly. But
+knowing they are all the same machinery is part of understanding the
+toolbox.)
 
 ## Beyond lists: fold any structure
 
-The fold idea generalizes to any recursive type. For trees:
+Fold generalises to anything recursive. Trees are the next-most-common
+example:
+
+```ocaml
+type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+
+let rec fold_tree f acc = function
+  | Leaf -> acc
+  | Node (l, v, r) ->
+      let acc = fold_tree f acc l in
+      let acc = f acc v in
+      fold_tree f acc r
+
+let _ = fold_tree (+) 0
+          (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
+```
+
+:::slide
+
+## Beyond lists: fold any structure
 
 ```ocaml
 type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
@@ -201,6 +478,25 @@ let _ = fold_tree (+) 0
   records-of-lists.
 
 :::
+
+For a `Leaf`, return the accumulator unchanged. For a `Node (l, v,
+r)`, fold the left subtree first, then combine with the value at the
+node, then fold the right subtree. The result is an *in-order* fold:
+left subtree, root, right subtree.
+
+The general technique: for any recursive data type, write a fold
+that takes one function argument per constructor (or per place the
+type recursively occurs), and at each constructor pass the appropriate
+combining function. This pattern generalises beyond trees to any
+algebraic data type, and it is the entry point to the abstract idea
+of a *catamorphism* (a fancy name for "generalised fold") that
+appears in category theory. We will see more of it in Module 8.
+
+## When `fold` is overkill
+
+Folds are powerful, but power has a cost: a non-trivial fold can be
+harder to read than the equivalent `map`/`filter` chain, because the
+reader has to decode the accumulator threading. The rule of thumb:
 
 :::slide
 
@@ -228,6 +524,100 @@ Both give `14`.
 - First is clearer for small steps; second is more efficient (one pass).
 
 :::
+
+`sum_squares_a` first squares each element with `map`, then folds
+with `+`. It builds an intermediate list of squares. `sum_squares_b`
+does the squaring and accumulation in a single fold, never allocating
+the intermediate list. Both produce `14`.
+
+For small inputs, prefer the clearer pipeline. For very long inputs
+or hot loops, the single-fold version may be measurably faster.
+Profile before "optimising" by fusing operations; readability is
+worth more than constant factors in most code.
+
+## A short subtlety: `fold_left` arguments and direction
+
+A common confusion: people remember "fold_left = tail-recursive" and
+then are surprised when `fold_left` produces a *reversed* result
+where they wanted the original order.
+
+```ocaml
+let _ = List.fold_left (fun acc x -> x :: acc) [] [1; 2; 3]
+```
+
+What does this return? It returns `[3; 2; 1]`, not `[1; 2; 3]`.
+
+Why? `fold_left` walks left to right. At each step, we cons the
+current element onto the accumulator. After the first element, `acc
+= [1]`. After the second, `acc = [2; 1]` (we prepended `2`). After
+the third, `acc = [3; 2; 1]`. So the first element ends up
+*deepest*, and the result is reversed.
+
+This is the same machinery as `List.rev`, and indeed:
+
+```ocaml
+let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
+```
+
+is a standard one-line definition of `rev`. If you want the original
+order, either fold right (`List.fold_right (fun x acc -> x :: acc)
+xs []`, which gets `[1; 2; 3]`) or `fold_left` then `List.rev`.
+
+## A quick check
+
+:::quiz mcq
+What is `List.fold_left (+) 0 [1; 2; 3; 4]`?
+
+- [ ] `0`
+- [ ] `4`
+- [x] `10`
+- [ ] `24`
+
+**Why:** `fold_left (+) 0 [1; 2; 3; 4]` evaluates to `(((0 + 1) +
+2) + 3) + 4 = 10`. Initial accumulator `0`, then `+1, +2, +3, +4`.
+:::
+
+:::quiz mcq
+Which of the following is *not* tail-recursive?
+
+- [ ] `List.fold_left`
+- [x] `List.fold_right`
+- [ ] `List.length`
+- [ ] `List.rev`
+
+**Why:** `List.fold_right` has work to do after the recursive call:
+applying `f` to the element and the recursive result. The other
+three are tail-recursive in the standard library (`length` and `rev`
+use `fold_left` or accumulator-based traversal internally).
+:::
+
+A code challenge:
+
+:::quiz code
+Express `List.length xs` using `List.fold_left`. Do not call
+`List.length` itself, and do not use a `let rec`.
+
+```ocaml
+let my_length xs =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (my_length [] = 0)                "empty";
+  check (my_length [42] = 1)              "singleton";
+  check (my_length [1; 2; 3; 4] = 4)      "four ints";
+  check (my_length ["a"; "b"; "c"] = 3)   "three strings";
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution: `let my_length xs = List.fold_left (fun n _ -> n
++ 1) 0 xs`. We ignore each element (the `_`) and just bump the
+counter. Tail-recursive, constant stack.
+
+## Activity
 
 :::slide
 
@@ -261,6 +651,12 @@ let _ = rev [1; 2; 3; 4]
 
 :::
 
+## What's next
+
+We have the three big higher-order list functions: `map`, `filter`,
+`fold`. Next lecture: the pipeline operator `|>`, which lets us
+chain these together cleanly and read the result top-to-bottom.
+
 :::slide
 
 ## What's next
@@ -274,5 +670,11 @@ Lecture 5: **function composition and pipelines**.
 
 ## Reading
 
-- **Cornell CS3110**, *fold*:
-  <https://cs3110.github.io/textbook/chapters/hop/index.html>
+- **Cornell CS3110**, *Fold*:
+  <https://cs3110.github.io/textbook/chapters/hop/fold.html>
+- **Real World OCaml**, *Lists and patterns*:
+  <https://dev.realworldocaml.org/lists-and-patterns.html>
+- Graham Hutton, *A tutorial on the universality and expressiveness
+  of fold*: a beautifully written paper showing how powerful `fold`
+  really is. Optional but enjoyable.
+  <https://www.cs.nott.ac.uk/~pszgmh/fold.pdf>

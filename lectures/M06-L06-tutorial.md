@@ -9,14 +9,42 @@ activity_question: "Write [maximum : 'a list -> 'a option] that returns the larg
 think_about_this: "Almost every concrete list function can be written in terms of [fold_left] or [fold_right]. Why aren't they written that way in the standard library? What would you lose if they were?"
 reading:
   - title: "Cornell CS3110, Re-implementing the List module"
-    url: https://cs3110.github.io/textbook/chapters/hop/index.html
+    url: https://cs3110.github.io/textbook/chapters/hop/fold.html
 ---
 
-# Tutorial for Module 6
+# Tutorial: rebuild parts of `List`
 
-We rebuild several functions from `List` using only `map`, `filter`,
-`fold_left`, `fold_right`, and the basic list constructors. The goal
-is to internalize how versatile a small higher-order toolkit is.
+This lecture is the worked-exercise capstone of Module 6. Across the
+previous five lectures we built up a small but powerful toolkit:
+higher-order functions, `map`, `filter`, `fold_left` and `fold_right`,
+the pipeline operator `|>`, and function composition. The thesis of
+this module has been that this small toolkit is enough to express a
+surprising amount of list processing without writing a single
+hand-coded recursion. In this tutorial we try to make good on that
+claim: pick a list function from the standard library, then build it
+from the toolkit.
+
+The point of the exercise is not that you should always re-derive
+standard library functions in real code; you should not. Use
+`List.length` rather than `List.fold_left (fun n _ -> n + 1) 0`,
+because the standard library version expresses intent more clearly
+and is usually faster. The point is to *see how versatile the
+toolkit is*: how few primitives you need before the rest follows. By
+the end of this lecture, if I asked you to write a new list-flavoured
+function on the spot, you should reach for `map`, `filter`, or
+`fold` first.
+
+We will work through eight problems, increasing in subtlety.
+
+## Problem 1: `length`
+
+Given a list, return how many elements it has.
+
+```ocaml
+let length xs = List.fold_left (fun n _ -> n + 1) 0 xs
+
+let _ = length [10; 20; 30; 40]
+```
 
 :::slide
 
@@ -34,6 +62,26 @@ let _ = length [10; 20; 30; 40]
 - Tail-recursive, constant stack.
 
 :::
+
+The fold's accumulator is the running count, starting at `0`. The
+combining function ignores the element (we wrote `_` to make that
+explicit) and adds one to the accumulator. Tail-recursive, constant
+stack.
+
+Notice we did not write `match xs with [] -> 0 | _ :: t -> 1 +
+length t`. The hand-written recursion works fine, but it is *not*
+tail-recursive and would overflow the stack on very long lists. The
+fold version is automatically tail-recursive. This is one of the
+small wins of using the higher-order toolkit: you get the safe
+recursion shape for free.
+
+## Problem 2: `sum` and `product`
+
+```ocaml
+let sum xs = List.fold_left (+) 0 xs
+
+let _ = sum [1; 2; 3; 4; 5]
+```
 
 :::slide
 
@@ -64,6 +112,28 @@ let _ = product [1; 2; 3; 4; 5]
 
 :::
 
+`sum` is the canonical fold: pass the operator `(+)` and the
+identity element for the operator (`0`). For `product`, the operator
+is `( * )` and the identity is `1`. The general pattern: any
+associative binary operator with an identity element gives you a
+one-line fold-based aggregation.
+
+(Why does the identity element matter? Because of the empty-list
+case. `fold_left (+) 0 []` returns `0`; `fold_left ( * ) 1 []`
+returns `1`. Picking the identity makes those answers consistent
+with the mathematical convention that an empty sum is zero and an
+empty product is one.)
+
+## Problem 3: `rev`
+
+Reverse a list.
+
+```ocaml
+let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
+
+let _ = rev [1; 2; 3; 4]
+```
+
 :::slide
 
 ## Problem 3: `rev`
@@ -81,6 +151,28 @@ let _ = rev [1; 2; 3; 4]
 - Result is reversed.
 
 :::
+
+The trick: walk the list left to right, but cons each element onto
+the *front* of the accumulator. The first element processed (`1`)
+ends up the deepest cons cell; the last (`4`) is on top. Reversed.
+
+This is the standard library's `List.rev`. The combining function is
+`fun acc x -> x :: acc`. If you want the original order back, use
+`List.fold_right (fun x acc -> x :: acc) xs []`, which walks
+right-to-left and rebuilds the list in order. (That is the identity
+fold we discussed in Lecture 4: replace `::` with `::` and `[]` with
+`[]`.)
+
+## Problem 4: `map` (via `fold_right`)
+
+Rebuild `map` itself.
+
+```ocaml
+let map f xs =
+  List.fold_right (fun x acc -> f x :: acc) xs []
+
+let _ = map (fun n -> n * n) [1; 2; 3; 4]
+```
 
 :::slide
 
@@ -112,6 +204,28 @@ Two passes, but tail-recursive.
 
 :::
 
+The `fold_right` version walks right-to-left, so consing onto the
+accumulator naturally preserves order. It is not tail-recursive,
+which is fine for small lists and matches the standard library's
+`List.map` behaviour. The `fold_left + rev` version is
+tail-recursive but makes two passes.
+
+It is worth pausing here: we have just rebuilt `map`, one of the
+three pillars of this module, from `fold_right`. This is a small
+but real piece of evidence for the claim that `fold` is the most
+general of the three: anything `map` does, `fold` can do too.
+
+## Problem 5: `filter` (via `fold_right`)
+
+```ocaml
+let filter p xs =
+  List.fold_right
+    (fun x acc -> if p x then x :: acc else acc)
+    xs []
+
+let _ = filter (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5; 6]
+```
+
 :::slide
 
 ## Problem 5: `filter` (via fold_right)
@@ -131,6 +245,24 @@ let _ = filter (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5; 6]
 - Combining function picks either `x :: acc` or `acc`.
 
 :::
+
+The combining function chooses, per element, whether to include `x`
+in the accumulator or to drop it. We have now rebuilt the second
+pillar from `fold`. We could keep going (concat, take, drop,
+zip, ...). Almost every list-shaped function in the standard library
+is some specialised fold.
+
+## Problem 6: `concat`
+
+Flatten a list of lists into a single list. (Also called `flatten`
+in some libraries.)
+
+```ocaml
+let concat xss =
+  List.fold_right (fun xs acc -> xs @ acc) xss []
+
+let _ = concat [[1; 2]; [3; 4; 5]; [6]]
+```
 
 :::slide
 
@@ -154,6 +286,32 @@ let _ = concat [[1; 2]; [3; 4; 5]; [6]]
   more efficient.
 
 :::
+
+The operator `@` is list-append. Each inner list is appended to the
+accumulator; the rightmost inner list ends up at the back, the
+leftmost at the front. Note the use of `fold_right` rather than
+`fold_left`: with `fold_left`, the accumulator would build up
+backwards because we would append the *first* inner list last.
+(Try it on paper if it is not obvious why.) `fold_right` walks
+right-to-left, so the leftmost inner list is the last one prepended,
+and ends up at the front of the result.
+
+The standard library's `List.concat` is similar but optimised for
+the common case.
+
+## Problem 7: `for_all` and `exists`
+
+Two list predicates.
+
+```ocaml
+let for_all p xs = List.fold_left (fun acc x -> acc && p x) true xs
+
+let exists p xs = List.fold_left (fun acc x -> acc || p x) false xs
+
+let _ = for_all (fun n -> n > 0) [1; 2; 3]
+let _ = for_all (fun n -> n > 0) [1; -2; 3]
+let _ = exists (fun n -> n < 0) [1; -2; 3]
+```
 
 :::slide
 
@@ -181,6 +339,32 @@ let _ = exists (fun n -> n < 0) [1; -2; 3]
 
 :::
 
+`for_all p xs` is `true` if every element satisfies `p`; `exists p
+xs` is `true` if at least one does. The two fold-based
+implementations use `&&` and `||` respectively, with the appropriate
+identity (`true` for AND, `false` for OR).
+
+A subtlety: these implementations *do not short-circuit*. The fold
+visits every element of the list, even if the answer is already
+determined. The standard library's `List.for_all` and `List.exists`
+are written directly and *do* short-circuit (returning `false` as
+soon as an element fails `for_all`, returning `true` as soon as one
+succeeds in `exists`). For long lists where failure or success
+arrives early, the standard library is faster. Another reason to
+prefer the library version over the home-rolled fold one in real
+code.
+
+## Problem 8: `count`
+
+Count how many elements satisfy a predicate.
+
+```ocaml
+let count p xs =
+  List.fold_left (fun n x -> if p x then n + 1 else n) 0 xs
+
+let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]
+```
+
 :::slide
 
 ## Problem 8: `count`
@@ -202,6 +386,132 @@ let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]
 - Fold version is one pass, no intermediate list.
 
 :::
+
+The result is `3` (the three strictly positive elements: `5`, `8`,
+`2`). We could have written this as `List.length (List.filter p
+xs)`: filter to keep the passing elements, then count. The
+two-step version is arguably clearer; the fold version makes one
+pass and never allocates the intermediate list. For short lists this
+does not matter; for long ones the fold version saves both time and
+garbage.
+
+## A wider example: word frequencies
+
+Let us combine pieces from across the module into a slightly larger
+example. We count how often each word appears in a piece of text.
+We will return the answer as an *association list* (a list of
+pairs); in Module 7 we will see proper hash tables and balanced
+maps.
+
+```ocaml
+let word_counts text =
+  text
+  |> String.lowercase_ascii
+  |> String.split_on_char ' '
+  |> List.filter (fun s -> s <> "")
+  |> List.fold_left (fun counts w ->
+       let n = try List.assoc w counts with Not_found -> 0 in
+       (w, n + 1) :: List.remove_assoc w counts
+     ) []
+
+let _ = word_counts "the quick brown fox jumps over the lazy dog the fox"
+```
+
+The result is something like `[("fox", 2); ("dog", 1); ("lazy", 1);
+("over", 1); ("jumps", 1); ("brown", 1); ("quick", 1); ("the", 3)]`
+(the exact ordering depends on the fold's traversal).
+
+The pipeline reads top-to-bottom: lowercase, split into words, drop
+empty pieces, then fold to build up a frequency table. The fold's
+accumulator is an association list of word/count pairs; for each
+word, we look up its current count (or 0 if absent), remove the old
+entry, and prepend a new one with the bumped count.
+
+This is the kind of code that, in Python or Java, would take a
+small loop with a hash table. In OCaml with the higher-order
+toolkit, it is a single pipeline. The trade-off is that this
+implementation is `O(n^2)` in the number of distinct words (each
+`List.assoc` and `List.remove_assoc` is linear); the proper solution
+uses `Map` or `Hashtbl`, which we will meet in Module 7. For now,
+the point is that the *shape* of the computation is captured
+cleanly.
+
+## A quick check
+
+:::quiz mcq
+Which of the following is *not* expressible as a fold over a single list?
+
+- [ ] `List.length`
+- [ ] `List.filter p`
+- [ ] `List.map f`
+- [x] `List.sort compare`
+
+**Why:** `length`, `filter`, and `map` are all linear walks of the
+list with an accumulator. They are folds. Sorting (`List.sort`) is
+`O(n log n)`: it cannot be expressed as a single left-to-right fold
+that examines each element once. A fold has to compare elements that
+are far apart, which a single linear pass cannot do. (You can
+*implement* a sorting algorithm using fold inside a more complex
+construction, but the sort itself is not a fold.)
+:::
+
+:::quiz mcq
+`List.fold_left (fun acc x -> x :: acc) [] [1; 2; 3]` is...
+
+- [ ] `[1; 2; 3]`
+- [x] `[3; 2; 1]`
+- [ ] `[]`
+- [ ] An error.
+
+**Why:** `fold_left` walks left to right. Initial `acc = []`. After
+`1`: `[1]`. After `2`: `[2; 1]`. After `3`: `[3; 2; 1]`. So this is
+the classic one-line `List.rev`. To get back the original order, use
+`fold_right` (which walks right-to-left).
+:::
+
+A code challenge:
+
+:::quiz code
+Write `maximum : 'a list -> 'a option` that returns the largest
+element of a list, or `None` for an empty list. Use `List.fold_left`
+with the `compare` function or `max`. (Hint: the accumulator is an
+`'a option`.)
+
+```ocaml
+let maximum xs =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (maximum [3; 7; 1; 9; 5]      = Some 9)   "ints";
+  check (maximum ([] : int list)      = None)     "empty";
+  check (maximum [42]                 = Some 42)  "singleton";
+  check (maximum [-5; -3; -1; -10]    = Some (-1)) "all negative";
+  check (maximum ["a"; "c"; "b"]      = Some "c") "strings";
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution:
+
+```
+let maximum xs =
+  List.fold_left
+    (fun acc x ->
+      match acc with
+      | None -> Some x
+      | Some m -> Some (max m x))
+    None xs
+```
+
+The accumulator is an `'a option`, starting at `None`. For each
+element: if the accumulator is `None`, take this element as the
+current best. If it is `Some m`, compare and keep the bigger. The
+result is `None` if the list was empty, `Some v` otherwise.
+
+## Activity
 
 :::slide
 
@@ -239,6 +549,23 @@ let _ = maximum ([] : int list)
 
 :::
 
+## What you should be able to do now
+
+By the end of Module 6 you should be able to:
+
+- Recognise a higher-order function (one that takes or returns a
+  function) and read its type fluently.
+- Reach for `List.map` whenever you have "transform each element of
+  a list."
+- Reach for `List.filter` whenever you have "drop elements that fail
+  a test," and for `List.filter_map` when you also want to transform.
+- Reach for `List.fold_left` / `List.fold_right` when the answer
+  is not a list, or when you need both summary and transformation in
+  one pass.
+- Chain operations with `|>` pipelines, top-to-bottom.
+- Recognise when the standard library already has a function for
+  the job (it almost always does).
+
 :::slide
 
 ## What you should be able to do now
@@ -261,7 +588,21 @@ What's coming up:
 
 :::
 
+## What's next
+
+Module 7 is a turn back toward the imperative side of OCaml:
+*side effects* (mutable references, exceptions, `Printf`), and
+*modules* (the OCaml language feature for organising code into
+named, type-bearing units). Higher-order functions remain in play
+throughout; we will see them again in Module 7 in the form of
+references that hold functions and in Module 8 in the form of
+monads, where the whole programming pattern is built on
+higher-order composition.
+
 ## Reading
 
-- **Cornell CS3110**, *Re-implementing the List module*:
-  <https://cs3110.github.io/textbook/chapters/hop/index.html>
+- **Cornell CS3110**, *Fold (re-implementing the List module)*:
+  <https://cs3110.github.io/textbook/chapters/hop/fold.html>
+- **John Hughes**, *Why Functional Programming Matters*: the
+  classic case for the higher-order style and how it scales:
+  <https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf>
