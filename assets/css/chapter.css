@@ -59,7 +59,16 @@ body.mode-slides  .lecture-meta-footer { display: none; }
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
-  flex: 1;
+  flex: 1 1 0;
+  /* Without [min-width: 0], a flex item's minimum size defaults to
+     its content's intrinsic width, which prevents the title from
+     shrinking and pushes the rightmost header buttons off-screen
+     on narrower viewports. Allow shrinking with an ellipsis when
+     space gets tight. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .mode-toggle,
 .cell-controls button {
