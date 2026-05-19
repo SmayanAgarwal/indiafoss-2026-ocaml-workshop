@@ -6,18 +6,59 @@ duration_target_min: 22
 concepts: [tuples, product types, pair, fst, snd, destructuring, tuple patterns]
 keywords: [OCaml, tuple, pair, product type, destructuring]
 activity_question: "Given [let p = (3, true, \"hi\")], what is the type of [p]? Write a function [first3 : 'a * 'b * 'c -> 'a] that returns the first component."
-think_about_this: "Tuples in OCaml are *fixed-arity* — a [(int, int)] and a [(int, int, int)] are different types. Compare that to Python tuples, which are variable-arity. What does the OCaml choice buy you, and what does it cost?"
+think_about_this: "Tuples in OCaml are *fixed-arity*: a [(int, int)] and a [(int, int, int)] are different types. Compare that to Python tuples, which are variable-arity. What does the OCaml choice buy you, and what does it cost?"
 reading:
-  - title: "Cornell CS3110, Tuples"
-    url: https://cs3110.github.io/textbook/chapters/data/tuples.html
+  - title: "Cornell CS3110, Records and Tuples"
+    url: https://cs3110.github.io/textbook/chapters/data/records_tuples.html
+  - title: "Real World OCaml, Lists and Patterns"
+    url: https://dev.realworldocaml.org/lists-and-patterns.html
 ---
 
 # Tuples
 
-A tuple groups several values into one. The shape `(1, "hello")`
-holds an `int` and a `string` together. Tuples are the simplest of
-the *compound data types* OCaml provides; this lecture covers their
-syntax, types, and how to take them apart.
+The first three modules of this course have been about computation:
+literals, bindings, conditionals, functions, recursion. We have
+moved a lot of `int`s and `string`s and `bool`s through the
+language, but always one at a time. Real programs rarely deal with
+single values. They deal with *aggregates*: a 2D point bundles an
+`x` and a `y`; a key-value entry bundles a key with its value; a
+return value from "divide with remainder" is a quotient *and* a
+remainder. Module 4 is about how OCaml lets you build, name, and
+take apart such aggregates.
+
+This first lecture covers the simplest aggregate the language
+offers: the *tuple*. A tuple is a fixed-size bundle of values,
+possibly of different types, identified by *position*. The pair
+`(3, "hello")` is a tuple of arity two; the triple `(1, 2.0, true)`
+is a tuple of arity three. The next two lectures cover *records*
+(aggregates with named fields) and *variants* (a different kind of
+aggregate: "one of several shapes" rather than "this and that").
+Together, tuples, records, and variants are the three building
+blocks of *every* data type you will design in OCaml.
+
+If you have used Python or Go, you have seen tuples before. OCaml
+tuples are similar in spirit but differ in one important way: their
+*arity is part of their type*. A pair and a triple are not just
+"tuples of different sizes"; they are different types entirely.
+That is a small detail with large consequences, and we will spend
+much of this lecture on what it buys you.
+
+## A tuple is several values bundled
+
+The syntax is what you would guess from any other language. Put
+several expressions inside parentheses, separated by commas, and
+you have a tuple.
+
+```ocaml
+let pair    = (3, true)
+let triple  = (1, "two", 3.0)
+let nested  = ((1, 2), (3, 4))
+```
+
+The toplevel reports the types as `int * bool`, `int * string *
+float`, and `(int * int) * (int * int)`. The `*` in a *type
+position* is read as "and": "an `int` *and* a `bool`," "an `int`
+*and* a `string` *and* a `float`."
 
 :::slide
 
@@ -32,34 +73,107 @@ let nested  = ((1, 2), (3, 4))
 - `pair : int * bool`
 - `triple : int * string * float`
 - `nested : (int * int) * (int * int)`
-- `*` in a type reads as "and": "an int *and* a bool"
-- This is the **type-level** `*`, not multiplication
+- `*` in a type position reads as "and": "an int *and* a bool".
+- The type-level `*`, not the multiplication operator.
 
 :::
 
-The product-type notation `int * bool` is a syntactic crime that
-trips up beginners, because in expression position `*` is
-multiplication. The compiler always knows which is which from
-context (a type position vs a value position), and you will get
-used to reading `int * bool` as "pair of int and bool".
+The product-type notation `int * bool` trips up beginners, because
+in expression position `*` is integer multiplication. There is no
+ambiguity for the compiler: the `*` between `int` and `bool` is in
+a *type position*, and the `*` in `3 * 4` is in a *value position*.
+Two different syntactic worlds, sharing one symbol. You will get
+used to reading `int * bool` as "pair of `int` and `bool`" quickly
+enough.
 
-:::slide
+The mathematical reason for the symbol is that *the set of values
+of type `int * bool` is the Cartesian product of the set of `int`s
+and the set of `bool`s*. Every pair is one `int` paired with one
+`bool`; the number of distinct pairs is `|int| * |bool|`. Hence the
+name *product type*, and hence the `*`. The next lecture covers
+records, which are also product types (just with named components
+instead of positional ones). The lecture after that covers variants,
+which are *sum types*: the dual notion.
 
-## Tuples have a *fixed* size as part of their type
+## Tuples have a fixed size as part of their type
+
+Here is the property that distinguishes OCaml tuples from Python
+tuples or JavaScript arrays:
 
 ```ocaml
 let _ : int * int       = (1, 2)
 let _ : int * int * int = (1, 2, 3)
 ```
 
-- These are *different types*
-- Can't pass an `int * int * int` where an `int * int` is expected
-- Each tuple type is its own thing
-- Contrast with Python: a 2-tuple and a 3-tuple are both just `tuple`
-- OCaml's choice: static checking ("exactly two coordinates")
-- Cost: a fresh type for each shape
+These two values have *different types*. You cannot pass an `int *
+int * int` where an `int * int` is expected, and vice versa. Each
+tuple shape is its own type, distinguished by both the arity and
+the types of the components.
+
+:::slide
+
+## Fixed arity is part of the type
+
+```ocaml
+let _ : int * int       = (1, 2)
+let _ : int * int * int = (1, 2, 3)
+```
+
+- These are *different types*.
+- Can't pass an `int * int * int` where an `int * int` is expected.
+- Each tuple shape is its own type.
+- Contrast Python: a 2-tuple and a 3-tuple are both just `tuple`.
+- OCaml's choice: static checking ("exactly two coordinates").
+- Cost: a fresh type for every shape.
 
 :::
+
+Compare this with Python: `(1, 2)` and `(1, 2, 3)` both have type
+`tuple`. A Python function that "takes a 2-tuple" cannot say so in
+its signature; it has to check at runtime that the length is 2 and
+raise an error otherwise. OCaml's choice is the opposite: a
+function that takes an `int * int` cannot even be *called* with a
+3-tuple. The compiler rejects the call site. The dividend is that
+you cannot accidentally hand a "point in 3D" to a function that
+expected a "point in 2D"; the type system rules out the bug before
+your test suite gets a chance.
+
+The cost is conceptual: each shape is its own type, so a function
+that "averages a tuple of numbers" cannot be written once and used
+on tuples of any size. If you genuinely need that, you reach for a
+list of numbers rather than a tuple. Tuples are for *small, fixed*
+groups where the shape is part of the type's identity.
+
+## Constructing and extracting
+
+Construction is just the literal you have already seen: write the
+components inside parentheses, separated by commas.
+
+```ocaml
+let p = (10, 20)
+```
+
+Extraction is the more interesting part. For pairs, OCaml's standard
+library gives you two convenience functions:
+
+```ocaml
+let p = (10, 20)
+let _ = fst p
+let _ = snd p
+```
+
+`fst` returns the first component of a pair; `snd` returns the
+second. Their types tell the story:
+
+```
+val fst : 'a * 'b -> 'a
+val snd : 'a * 'b -> 'b
+```
+
+They are *polymorphic*: they work on any pair, regardless of the
+types of the two components. But notice they are for *pairs only*.
+There is no `third` function in the standard library. For triples
+and larger, OCaml expects you to *destructure*.
 
 :::slide
 
@@ -71,9 +185,9 @@ let _ = fst p
 let _ = snd p
 ```
 
-- `fst : 'a * 'b -> 'a`, `snd : 'a * 'b -> 'b`
-- Work on **pairs only**
-- For triples (or larger) you **destructure**:
+- `fst : 'a * 'b -> 'a`, `snd : 'a * 'b -> 'b`.
+- Work on **pairs only**.
+- For triples (or larger), you **destructure**:
 
 ```ocaml
 let (x, y, z) = (1, 2, 3)
@@ -82,18 +196,56 @@ let _ = y
 let _ = z
 ```
 
-- `let (x, y, z) = ...` is a **pattern**
-- Names each component at once
+- `let (x, y, z) = ...` is a **pattern**.
+- Binds three names at once.
 
 :::
 
-This is the first time we've used `let` with anything more
-structured than a single name. The thing after `let` is a pattern.
-For tuples, the pattern is `(x, y)` or `(x, y, z)` etc., and OCaml
-matches the right-hand side against it, binding each name.
+This is the first time we have put anything more structured than a
+single name to the left of `let =`. The thing to the left is called
+a *pattern*. For tuples, the pattern is `(x, y)` or `(x, y, z)`,
+with one name (or `_`) per component. OCaml matches the right-hand
+side against this pattern and binds each name to the corresponding
+component.
 
-If the pattern doesn't fit (wrong arity), it's a *type* error, not
-a runtime crash. The compiler catches it.
+If the pattern's arity does not match the value's arity, the
+compiler complains *at compile time*, not at runtime. Writing `let
+(x, y) = (1, 2, 3)` is a type error: the pattern expects a pair,
+the value is a triple, and the two types do not match. You cannot
+get into a situation where the code compiles but then crashes
+because you destructured the wrong shape.
+
+The underscore `_` in a pattern means "match anything here, but do
+not bind a name to it." If you want only the first component of a
+triple, write:
+
+```ocaml
+let (x, _, _) = (1, "two", 3.0)
+```
+
+`x` is now `1`; the other two components are discarded. This is
+the standard way to project out a single component of a larger
+tuple.
+
+## Pattern matching in function arguments
+
+Patterns are not just for `let`. They can appear in function
+parameters too. Here is a function that computes Euclidean distance
+between two 2D points represented as pairs:
+
+```ocaml
+let distance (x1, y1) (x2, y2) =
+  let dx = x2 -. x1 in
+  let dy = y2 -. y1 in
+  sqrt (dx *. dx +. dy *. dy)
+
+let _ = distance (0.0, 0.0) (3.0, 4.0)
+```
+
+The two parameters are *patterns* `(x1, y1)` and `(x2, y2)`. When
+you call `distance (0.0, 0.0) (3.0, 4.0)`, OCaml matches the first
+argument against `(x1, y1)`, binding `x1 = 0.0` and `y1 = 0.0`,
+and similarly for the second.
 
 :::slide
 
@@ -108,41 +260,134 @@ let distance (x1, y1) (x2, y2) =
 let _ = distance (0.0, 0.0) (3.0, 4.0)
 ```
 
-- Result: `float = 5.0`
-- Each parameter is a *pattern* `(x1, y1)`
-- OCaml binds `x1`, `y1` from arg 1; `x2`, `y2` from arg 2
-- Inferred type: `float * float -> float * float -> float`
-- Two pairs in, one float out
+- Result: `float = 5.0`.
+- Each parameter is a *pattern* `(x1, y1)`.
+- OCaml binds `x1`, `y1` from arg 1; `x2`, `y2` from arg 2.
+- Inferred type: `float * float -> float * float -> float`.
+- Two pairs in, one float out.
 
 :::
 
+The inferred type is `float * float -> float * float -> float`. The
+function takes two arguments, each a pair of floats, and returns a
+float. We did not write a single type annotation; the body forced
+all components to be floats (because of `-.`), and the parameter
+shape forced each argument to be a pair.
+
+A subtle point: the *function* `distance` takes two arguments, each
+of which happens to be a pair. It is *not* a function of one
+argument that is a 4-tuple. The difference shows up in the type:
+`float * float -> float * float -> float` vs `float * float * float
+* float -> float`. We will see in M04-L06 and again in Module 6
+that the choice matters when partial application enters the
+picture.
+
+## Argument lists versus tuples: a common confusion
+
+This is worth pausing on, because it is the single largest source
+of confusion for students arriving in OCaml from C-family languages.
+Consider these three function definitions:
+
+```ocaml
+let add_curried x y    = x + y
+let add_tupled (x, y)  = x + y
+let _ = add_curried 3 4
+let _ = add_tupled (3, 4)
+```
+
+Both compute `7`, but the function signatures are different:
+
+- `add_curried : int -> int -> int`
+- `add_tupled  : int * int -> int`
+
+`add_curried` takes *two* arguments, applied one at a time (this is
+the curried form we saw in M03-L01 and will study in M03-L03). It
+can be partially applied: `add_curried 3` is a meaningful value of
+type `int -> int`.
+
+`add_tupled` takes *one* argument, which happens to be a pair. It
+cannot be "partially applied to the first component"; the whole
+pair must be supplied at once.
+
 :::slide
 
-## Tuples are for *heterogeneous* data, *known shape*
+## Argument list vs tuple
+
+```ocaml
+let add_curried x y    = x + y
+let add_tupled (x, y)  = x + y
+```
+
+- `add_curried : int -> int -> int`. Two arguments.
+- `add_tupled  : int * int -> int`. One argument: a pair.
+- Call sites:
+  - `add_curried 3 4` (two args, no parens).
+  - `add_tupled (3, 4)` (one arg, the pair).
+- C and Python instinct says these are the same. They are not.
+- Idiomatic OCaml prefers the curried form for arguments you may
+  want to partially apply, the tuple form when you want to say
+  "these belong together."
+
+:::
+
+If you have C or Python reflexes, you may want to write `f(x, y)`
+for every two-argument function. In OCaml, `f (x, y)` calls a
+function that takes a *single pair* as its argument. The curried
+call is `f x y`, with arguments separated by spaces, no parens.
+Mixing these up is the most common syntax mistake of the first
+week. The error message you get is usually some variant of "this
+expression has type `int * int` but an expression was expected of
+type `int`," and at first it is mysterious; once you have seen it
+twice, the cause is obvious.
+
+The idiomatic rule: use curried arguments (`f x y`) by default,
+because they allow partial application and read more naturally in
+the higher-order style we will lean on in Module 6. Use a tuple
+argument only when the two values *genuinely belong together as one
+unit* (a coordinate pair, a key-value entry) and never make sense
+in isolation.
+
+## Tuples are for heterogeneous data of known shape
+
+A short summary of when to reach for a tuple:
+
+:::slide
+
+## When to use a tuple
 
 Use a tuple when:
 
-- You have a small, fixed number of values to bundle (2, 3, 4).
+- You have a small, fixed number of values to bundle (2, 3, maybe 4).
 - The values may have different types.
-- The shape is *obvious from context*: a point is a pair `(x, y)`,
+- The shape is *obvious from context*: a point is a pair `(x, y)`;
   a key-value entry is a pair `(key, value)`.
+- Bundle is short-lived: built, used, destructured.
 
 Don't use a tuple when:
 
-- You'd want to access fields by *name* (use a record; next lecture).
-- You'd have ten fields (use a record).
+- You'd want to access components by *name* (use a record; next
+  lecture).
+- You'd have ten components (use a record).
 - The number of values varies (use a list).
 
 **Rule of thumb:** two or three of something, positions speak for themselves.
 
 :::
 
-:::slide
+The "rule of thumb" is informal but practical. A 2D point is a
+pair: `(x, y)`. Nobody confuses which is the abscissa. A key-value
+entry is a pair: `(key, value)`. The convention is universal
+enough that the position is self-documenting. But a "person" with
+a `first_name`, `last_name`, `age`, `phone`, `email`, `address` is
+*not* a 6-tuple, even though you could technically write it that
+way. Code that consumes such a tuple would start asking, "wait,
+was the email index 4 or 5?" and the bugs follow. Records are for
+that case; we will see them in the next lecture.
 
 ## Returning multiple values
 
-- OCaml functions return a **single** value
-- That value can be a tuple
+OCaml functions always return *one* value. But that value can be a
+tuple, which is the standard way to return multiple results.
 
 ```ocaml
 let divmod a b =
@@ -151,32 +396,65 @@ let divmod a b =
 let _ = divmod 17 5
 ```
 
-- Result: `(int * int) = (3, 2)`
-- Caller destructures:
+The function returns a pair `(quotient, remainder)`. The toplevel
+reports `(int * int) = (3, 2)`. The caller destructures:
 
 ```ocaml
+let divmod a b = (a / b, a mod b)
 let (q, r) = divmod 17 5
+let _ = q + r
 ```
-
-- OCaml idiom for what Python or Go do with multiple return values
-
-:::
 
 :::slide
 
+## Returning multiple values
+
+OCaml functions return a **single** value. That value can be a tuple.
+
+```ocaml
+let divmod a b =
+  (a / b, a mod b)
+
+let _ = divmod 17 5
+```
+
+- Result: `(int * int) = (3, 2)`.
+- Caller destructures:
+
+```ocaml
+let divmod a b = (a / b, a mod b)
+let (q, r) = divmod 17 5
+```
+
+- OCaml idiom for what Python and Go do with multiple return values.
+
+:::
+
+Python has `return q, r`. Go has named return values and `return q,
+r`. C does not have anything good (people pass output pointers).
+OCaml's mechanism is a tuple return, which is the same answer
+Python is implicitly giving (Python's "multiple return values"
+build a tuple under the hood). The only difference is that OCaml
+makes the tuple explicit, which is exactly the trade we have seen
+the language make many times: more visible syntax, less hidden
+machinery.
+
 ## Tuples in collections
 
-You'll often see lists of tuples (each tuple a "row"):
+You will often see *lists of tuples*. Each tuple is a "row" in a
+small table.
 
 ```ocaml
 let pairs = [(1, "one"); (2, "two"); (3, "three")]
 ```
 
-- Type: `(int * string) list`: a list of `int * string` pairs
-
-To search this for a key:
+The type of `pairs` is `(int * string) list`: a list of `int *
+string` pairs. To find a value by key, you walk the list and check
+each pair:
 
 ```ocaml
+let pairs = [(1, "one"); (2, "two"); (3, "three")]
+
 let rec lookup key = function
   | [] -> None
   | (k, v) :: rest ->
@@ -185,26 +463,197 @@ let rec lookup key = function
 let _ = lookup 2 pairs
 ```
 
-- Result: `string option = Some "two"`
-- Pattern `(k, v) :: rest` destructures the head pair, binds `k` and `v` at once
-- Preview: `option` in lecture 5, more on lists in Module 5
+:::slide
+
+## Tuples in collections
+
+You'll see lists of tuples constantly (each tuple a "row"):
+
+```ocaml
+let pairs = [(1, "one"); (2, "two"); (3, "three")]
+```
+
+- Type: `(int * string) list`.
+
+To search:
+
+```ocaml
+let pairs = [(1, "one"); (2, "two"); (3, "three")]
+let rec lookup key = function
+  | [] -> None
+  | (k, v) :: rest ->
+      if k = key then Some v else lookup key rest
+
+let _ = lookup 2 pairs
+```
+
+- Result: `string option = Some "two"`.
+- Pattern `(k, v) :: rest` destructures the head pair, binds both names.
+- `option` in lecture 5; more on `function` in Module 5.
 
 :::
 
-:::slide
+The pattern `(k, v) :: rest` is a *nested pattern*: it matches a
+non-empty list whose head is a pair, binding the head's two
+components and the tail in one go. Module 5 is largely about how
+patterns nest like this; for now, just notice that you can destructure
+several layers at once.
 
-## Tuples as keys / values in higher-order code
+The standard library has a function with this exact shape:
+`List.assoc_opt`. We will reach for it in M04-L05, when we have
+introduced `option` properly.
+
+## Tuples and higher-order functions
+
+A small preview of what is coming in Module 6. Suppose you want to
+build a table of squares for `1` through `5`. You can use
+`List.map` with an anonymous function that returns a pair:
 
 ```ocaml
 let nums = [1; 2; 3; 4; 5]
 let _ = List.map (fun x -> (x, x * x)) nums
 ```
 
-- Result: `(int * int) list = [(1,1); (2,4); (3,9); (4,16); (5,25)]`
-- Each input maps to a pair `(input, square)`
-- Pattern: map a list into pairs to build a small table from a computation
+The result is `[(1,1); (2,4); (3,9); (4,16); (5,25)]`. Each input
+maps to a pair of `(input, square)`. This idiom: *map a list into
+pairs* to build a small lookup table from a computation, is everywhere
+in OCaml code.
+
+:::slide
+
+## Tuples and higher-order functions
+
+```ocaml
+let nums = [1; 2; 3; 4; 5]
+let _ = List.map (fun x -> (x, x * x)) nums
+```
+
+- Result: `[(1,1); (2,4); (3,9); (4,16); (5,25)]`.
+- Each input maps to a pair `(input, square)`.
+- Common pattern: build a table from a computation.
 
 :::
+
+## A common pitfall: tuples and operator precedence
+
+The comma operator binds *looser* than most things. When you write
+a tuple inside a more complex expression, the parentheses are not
+just for show:
+
+```ocaml
+let f x = (x, x + 1)
+```
+
+Without parens, `f x = x, x + 1` would still parse (commas at the
+top of a `let` body are tuple constructors), so you sometimes see
+it. But the moment you have anything around the tuple, you need
+the parens.
+
+```ocaml
+let xs = [1, 2]
+```
+
+This is the booby trap. You expect `xs` to be a list of two
+integers. It is *not*. It is a list of *one element*, that element
+being the pair `(1, 2)`. The type is `(int * int) list`, not `int
+list`. The compiler does not warn you; it is a perfectly valid
+list literal, just not the one you meant.
+
+:::slide
+
+## Pitfall: `[1, 2]` is not what you think
+
+```ocaml
+let xs = [1, 2]
+```
+
+- Type: `(int * int) list`.
+- A list with *one* element: the pair `(1, 2)`.
+- For a list of two integers, separator is `;`, not `,`:
+
+```ocaml
+let xs = [1; 2]
+```
+
+- Lists use `;`. Tuples use `,`.
+- The comma in `[1, 2]` builds a tuple; the brackets wrap it as a
+  one-element list.
+- Compiler does not warn. Be careful.
+
+:::
+
+The right separator for lists is `;`. The right separator inside
+tuples (or between fields in a record) is `,`. Confusing the two
+gives you valid-looking code that means something different. The
+first time you write `[1, 2]` instead of `[1; 2]`, the compiler
+will give you a strange error somewhere downstream (typically when
+you try to add the elements: it complains that the elements are
+`int * int`, not `int`). That stranger error is your hint that the
+list literal misparsed.
+
+## Pattern matching in `let`: a small check
+
+:::quiz mcq
+What is the type of the function below?
+
+```ocaml
+let swap (x, y) = (y, x)
+```
+
+- [ ] `'a -> 'a -> 'a * 'a`
+- [x] `'a * 'b -> 'b * 'a`
+- [ ] `'a * 'a -> 'a * 'a`
+- [ ] `'a -> 'b -> 'b * 'a`
+
+**Why:** the function takes *one* argument, a pair, and returns a
+pair with the components swapped. The two components can have
+*different* types, so the type variables for input and output are
+`'a` and `'b`. The output is a pair `(y, x)` of types `'b * 'a`. So
+the whole thing is `'a * 'b -> 'b * 'a`. The `'a -> 'a -> ...`
+options would mean a curried function of two arguments, which is
+not what the pattern `(x, y)` does.
+:::
+
+:::quiz mcq
+Which of these expressions has type `int list`?
+
+- [ ] `[1, 2, 3]`
+- [x] `[1; 2; 3]`
+- [ ] `(1, 2, 3)`
+- [ ] `[(1, 2, 3)]`
+
+**Why:** lists separate elements with `;`. The expression `[1, 2,
+3]` is a one-element list whose element is the triple `(1, 2, 3)`,
+so its type is `(int * int * int) list`. `(1, 2, 3)` is a triple,
+not a list. `[(1, 2, 3)]` is a one-element list of triples.
+:::
+
+A small code task:
+
+:::quiz code
+Write `pair_max : int * int -> int` that returns the larger of the
+two components.
+
+```ocaml
+let pair_max p =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (pair_max (3, 7) = 7) "3,7";
+  check (pair_max (10, 2) = 10) "10,2";
+  check (pair_max (5, 5) = 5) "equal";
+  check (pair_max (-1, -8) = -1) "negative";
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution: `let pair_max (x, y) = if x > y then x else y`.
+Pattern destructure in the argument; one `if`-expression body.
+
+## Activity
 
 :::slide
 
@@ -213,8 +662,8 @@ let _ = List.map (fun x -> (x, x * x)) nums
 Given `let p = (3, true, "hi")`, predict:
 
 1. The type of `p`.
-2. A function `first3 : 'a * 'b * 'c -> 'a` returning the first
-   component.
+2. The body of a function `first3 : 'a * 'b * 'c -> 'a` that returns
+   the first component.
 
 Write the function.
 
@@ -231,30 +680,46 @@ Write the function.
 let first3 (x, _, _) = x
 ```
 
-- Type: `val first3 : 'a * 'b * 'c -> 'a = <fun>`
-- The `_` means "ignore this component"; we only care about the first
+- Type: `val first3 : 'a * 'b * 'c -> 'a = <fun>`.
+- The `_` means "ignore this component"; we only care about the first.
 
-Try `first3 p`:
+Try it:
 
 ```ocaml
+let first3 (x, _, _) = x
 let _ = first3 (3, true, "hi")
 ```
 
-- Result: `int = 3`
+- Result: `int = 3`.
 
 :::
+
+The function works on any triple, regardless of the types of the
+three components. That is *parametric polymorphism* at work: we did
+not constrain `'a`, `'b`, or `'c`, so the function can be called on
+a triple of any types and will return whatever was in the first
+slot.
+
+## What's next
 
 :::slide
 
 ## What's next
 
-Lecture 2: **records**. Same idea as tuples but with *named*
-fields. When your bundle has more than three things, records are
-clearer.
+Lecture 2: **records**. Same idea as tuples, but components have
+*names*. When your bundle has more than three things, or when the
+positions are not self-evident, records are clearer.
 
 :::
 
+We have seen how to bundle a small fixed number of values by
+position. The next lecture extends this to *named* fields, which
+is the right tool for any bundle larger than three components or
+where the positions do not tell their own story.
+
 ## Reading
 
-- **Cornell CS3110**, *Tuples*:
-  <https://cs3110.github.io/textbook/chapters/data/tuples.html>
+- **Cornell CS3110**, *Records and Tuples*:
+  <https://cs3110.github.io/textbook/chapters/data/records_tuples.html>
+- **Real World OCaml**, *Lists and Patterns* (tuple section):
+  <https://dev.realworldocaml.org/lists-and-patterns.html>

@@ -8,15 +8,62 @@ keywords: [OCaml, ADT, JSON, recursive variant, structural recursion, tutorial]
 activity_question: "Extend the [json] type with a [Null] constructor. Update [pretty] and [depth] to handle it. What does the compiler tell you to do?"
 think_about_this: "If [pretty] returned a different output for [JNumber 3] vs [JNumber 3.0], would the round-trip [parse (pretty x) = x] still hold? What does that say about the design of [JNumber]?"
 reading:
-  - title: "Cornell CS3110, Algebraic data types and pattern matching"
-    url: https://cs3110.github.io/textbook/chapters/data/intro.html
+  - title: "Cornell CS3110, Algebraic data types"
+    url: https://cs3110.github.io/textbook/chapters/data/algebraic_data_types.html
+  - title: "Real World OCaml, Variants"
+    url: https://dev.realworldocaml.org/variants.html
 ---
 
 # Tutorial for Module 4
 
-We design a small recursive ADT (a JSON-like value type), build
-two operations on it, and use the full Module 4 toolkit:
-variants, records, recursion, `option`.
+The five preceding lectures introduced the pieces: tuples,
+records, variants, recursive variants, `option`, and type
+abbreviations. This tutorial puts them all together by walking
+through the design of a small algebraic data type, building a
+handful of operations on it, and showing the rhythm of writing
+data-driven OCaml code.
+
+The example is a *JSON-like value type*: a single OCaml type that
+represents arbitrary JSON values (numbers, strings, booleans,
+arrays, objects, null). [JSON](https://www.json.org/) is a small
+enough format to fit in one lecture but rich enough to exercise
+every piece of Module 4. We will define the type, write three
+operations (`depth`, `lookup`, `pretty`), and then experience the
+"add a constructor, follow the compiler's warnings" workflow.
+
+If you have not yet written non-trivial recursive code on a
+recursive variant, this is the lecture to slow down on and try
+the examples in a top-level. Module 5 will rely heavily on the
+pattern matching idioms we use here.
+
+## The type
+
+A JSON value is one of: `null`, a boolean, a number, a string, an
+array of JSON values, or an object (a map from strings to JSON
+values). In OCaml that maps directly to a variant with six
+constructors:
+
+```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+```
+
+Notice the recursion: `JArray` carries a `json list`, and
+`JObject` carries a `(string * json) list`. Both refer back to
+`json`. That self-reference is what allows JSON values to nest
+arbitrarily.
+
+Notice also the *tuple* `(string * json)` for object entries:
+each entry is a key (string) and a value (json). We could have
+defined a small record `type field = { key : string; value : json }`
+instead; the tuple is more concise for this short-lived pair, and
+matches the standard library's *association list* convention used
+by `List.assoc_opt`.
 
 :::slide
 
@@ -32,14 +79,19 @@ type json =
   | JObject of (string * json) list
 ```
 
-- Six constructors: the standard JSON kinds
-- Recursive cases:
-  - `JArray`: a list of `json`s
-  - `JObject`: a list of key-value pairs, each value a `json`
+- Six constructors: the standard JSON kinds.
+- Recursive cases: `JArray` carries a `json list`; `JObject` a list of `(string * json)` pairs.
 
 A small example:
 
 ```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
 let value =
   JObject [
     "name", JString "Alice";
@@ -51,15 +103,38 @@ let value =
 
 :::
 
-:::slide
+The example value, modelled as a JSON object, has four fields. One
+of those fields (`"pets"`) is itself a `JArray` of `JString`s. The
+type lets all of these nest naturally; the constructors carry the
+structure.
+
+The "make illegal states unrepresentable" slogan from M04-L03
+applies here. There is no way to build a `json` that has, say, a
+"key" without a "value": each object entry is a pair, and a pair
+must have both components. There is no way to use a value where a
+key is expected: the type forces strings as keys. The compiler
+enforces all of this at construction time.
 
 ## Operation 1: depth
 
-- Maximum nesting depth
-- Scalars (`JNull`/`JBool`/`JNumber`/`JString`): depth 1
-- `JArray` or `JObject`: 1 + max depth of contents
+The maximum nesting depth of a JSON value: a scalar has depth 1; a
+`JArray` or `JObject` has depth `1 + max depth of contents`.
 
 ```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let value =
+  JObject [
+    "name", JString "Alice";
+    "age",  JNumber 30.0;
+    "pets", JArray [JString "cat"; JString "dog"];
+    "alive", JBool true
+  ]
 let rec depth = function
   | JNull | JBool _ | JNumber _ | JString _ -> 1
   | JArray xs ->
@@ -70,12 +145,103 @@ let rec depth = function
 let _ = depth value
 ```
 
-- Result: `int = 2`
-- Deepest field is `pets`: a `JArray` of strings (depth 1), array adds 1, total 2
-- `JNull | JBool _ | ...` is an **or-pattern**: matches any listed constructor
-- Compiler treats it as one case
+The result for `value` is `3`: the outer object adds 1, the `pets`
+array adds another 1, the inner strings give 1. Total 3.
+
+:::slide
+
+## Operation 1: depth
+
+```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let value =
+  JObject [
+    "name", JString "Alice";
+    "age",  JNumber 30.0;
+    "pets", JArray [JString "cat"; JString "dog"];
+    "alive", JBool true
+  ]
+let rec depth = function
+  | JNull | JBool _ | JNumber _ | JString _ -> 1
+  | JArray xs ->
+      1 + List.fold_left max 0 (List.map depth xs)
+  | JObject fields ->
+      1 + List.fold_left max 0 (List.map (fun (_, v) -> depth v) fields)
+
+let _ = depth value
+```
+
+- Scalars (`JNull`/`JBool`/`JNumber`/`JString`): depth 1.
+- `JArray` or `JObject`: 1 + max depth of contents.
+- `JNull | JBool _ | ...` is an **or-pattern**: matches any listed constructor.
 
 :::
+
+Two pieces of new syntax to note:
+
+**Or-patterns.** The clause `JNull | JBool _ | JNumber _ | JString
+_ -> 1` matches *any* of the four listed constructors and produces
+the same result. This is OCaml's way to say "all of these cases
+get the same treatment." The vertical bar inside a single clause
+plays the same role as `|` between top-level constructors in a type
+declaration. Module 5 covers or-patterns in detail.
+
+**`List.fold_left`.** This is a higher-order function we will see
+in Module 6; for now, read `List.fold_left max 0 xs` as "the
+maximum of `xs`, with `0` as the answer for the empty list." The
+combination `List.fold_left max 0 (List.map depth xs)` computes
+the maximum depth of `xs`, or `0` if `xs` is empty. If you have not
+seen `fold_left` yet, you can write this with explicit recursion
+instead:
+
+```ocaml
+let rec max_in = function
+  | [] -> 0
+  | x :: rest -> max x (max_in rest)
+```
+
+and call `1 + max_in (List.map depth xs)`. The two versions
+compute the same value; `fold_left` is the idiomatic OCaml
+phrasing.
+
+## Operation 2: lookup
+
+A function that finds a top-level field in a `JObject`, returning
+the value or `None`. The signature is `lookup : string -> json ->
+json option`.
+
+```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let value =
+  JObject [
+    "name", JString "Alice";
+    "age",  JNumber 30.0;
+  ]
+
+let lookup key = function
+  | JObject fields -> List.assoc_opt key fields
+  | _ -> None
+
+let _ = lookup "name" value
+let _ = lookup "phone" value
+let _ = lookup "name" (JString "not an object")
+```
+
+The function returns `Some (JString "Alice")` for `lookup "name"
+value`, `None` for the missing key, and `None` for "input isn't an
+object."
 
 :::slide
 
@@ -84,10 +250,20 @@ let _ = depth value
 A function that finds a top-level field in a `JObject`:
 
 ```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let value =
+  JObject [
+    "name", JString "Alice";
+    "age",  JNumber 30.0;
+  ]
 let lookup key = function
-  | JObject fields ->
-      (try Some (List.assoc key fields)
-       with Not_found -> None)
+  | JObject fields -> List.assoc_opt key fields
   | _ -> None
 
 let _ = lookup "name" value
@@ -95,34 +271,45 @@ let _ = lookup "phone" value
 let _ = lookup "name" (JString "not an object")
 ```
 
-- Results: `Some (JString "Alice")`, `None`, `None`
-- Returns `json option`
-- `None` when: input isn't a `JObject` **or** the key isn't present
-- `List.assoc` raises `Not_found`; we catch it and turn it into `None`
+- Results: `Some (JString "Alice")`, `None`, `None`.
+- Returns `json option`.
+- `None` when input isn't a `JObject` **or** the key isn't present.
+- `List.assoc_opt`: stdlib helper that does the association-list lookup.
 
 :::
 
-We are using a try/with here for the first time. Module 7 covers
-exceptions properly. For now, read it as "if `List.assoc` raises
-`Not_found`, the whole expression is `None`; otherwise wrap the
-result in `Some`."
+`List.assoc_opt` is the version of `List.assoc` that returns an
+option instead of raising `Not_found`. It is the idiomatic choice
+for any code that wants to handle the "key missing" case
+explicitly, rather than catch an exception.
 
-The cleaner OCaml idiom is `List.assoc_opt`, which returns an
-option directly:
-
-```ocaml
-let lookup key = function
-  | JObject fields -> List.assoc_opt key fields
-  | _ -> None
-```
-
-We'll prefer this style going forward.
-
-:::slide
+The `_ -> None` wildcard case captures any non-`JObject` input.
+Here it is appropriate: the meaning is "lookup on a non-object
+returns `None`," which is a stable contract that does not depend
+on which other constructors `json` has. If we ever add a new
+constructor like `JBinary of bytes`, the wildcard still matches
+it sensibly.
 
 ## Operation 3: a pretty printer
 
+Now a function that turns a `json` value into a string. The
+signature is `pretty : json -> string`.
+
 ```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let value =
+  JObject [
+    "name", JString "Alice";
+    "age",  JNumber 30.0;
+    "pets", JArray [JString "cat"; JString "dog"];
+    "alive", JBool true
+  ]
 let rec pretty = function
   | JNull -> "null"
   | JBool true -> "true"
@@ -138,27 +325,89 @@ let rec pretty = function
 let _ = pretty value
 ```
 
-A long string like:
+The output for `value` is something like:
 
 ```
 {"name": "Alice", "age": 30., "pets": ["cat", "dog"], "alive": true}
 ```
 
-- Each constructor gets a case
-- Arrays and objects **recurse**
-- We *didn't* handle string escaping (a real printer escapes `\`, `"`, control chars)
-- For a toy ADT, this is the spine
+:::slide
+
+## Operation 3: a pretty printer
+
+```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let rec pretty = function
+  | JNull -> "null"
+  | JBool true -> "true"
+  | JBool false -> "false"
+  | JNumber n -> string_of_float n
+  | JString s -> "\"" ^ s ^ "\""
+  | JArray xs ->
+      "[" ^ String.concat ", " (List.map pretty xs) ^ "]"
+  | JObject fields ->
+      let one (k, v) = "\"" ^ k ^ "\": " ^ pretty v in
+      "{" ^ String.concat ", " (List.map one fields) ^ "}"
+```
+
+- Each constructor: one clause.
+- Arrays and objects **recurse**.
+- We didn't handle string escaping (a real printer escapes `\`, `"`, control chars).
+- For a toy ADT, this is the spine.
 
 :::
 
-:::slide
+Two further pattern-matching idioms appear here:
+
+**Matching constants inside a constructor.** The clauses `JBool
+true -> "true"` and `JBool false -> "false"` pattern-match on the
+*payload* as well as the constructor. The pattern `JBool true`
+matches only `JBool true`, not `JBool false`. Patterns nest in this
+way; Module 5 covers nested patterns in detail.
+
+**Local functions.** Inside the `JObject` case, we define a local
+function `one` that converts a key-value pair to a string. This is
+the M03-L05 idiom of using `let` to give a name to a small helper
+that is only used here. The alternative is to inline an anonymous
+function: `List.map (fun (k, v) -> "\"" ^ k ^ "\": " ^ pretty v)
+fields`. Either form is fine.
+
+A real JSON printer would also handle escaping: a backslash in a
+string should be output as `\\`, a double quote as `\"`, etc. We
+have skipped that for clarity. A toy ADT is enough to demonstrate
+the recursion pattern; production printers handle dozens of
+edge cases that are not the point of this lecture.
 
 ## Operation 4: shallow update
 
-- Replace a field if it exists; add it if not
-- Returns a new `json` value (**immutable** update)
+A function that produces a *new* JSON value with a top-level field
+either replaced (if it exists) or added (if it does not). This is
+a "functional update" operation, mirroring what we did with
+records but for an association list.
 
 ```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let value =
+  JObject [
+    "name", JString "Alice";
+    "age",  JNumber 30.0;
+  ]
+let lookup key = function
+  | JObject fields -> List.assoc_opt key fields
+  | _ -> None
+
 let set_field key new_value = function
   | JObject fields ->
       let rec go = function
@@ -174,15 +423,70 @@ let with_phone = set_field "phone" (JString "555-1234") value
 let _ = lookup "phone" with_phone
 ```
 
-- Result: `Some (JString "555-1234")`
-- Original `value` is **unchanged**
-- `with_phone` is a fresh value with the field added
-- Structural recursion over the list of fields
-- `when k = key`: a **when-clause**, a runtime guard on the pattern
-- Distinguishes "found the key" from "different key"
-- When-clauses are covered properly in Module 5
+The original `value` is unchanged; `with_phone` is a fresh value
+with the `phone` field added.
+
+:::slide
+
+## Operation 4: shallow update
+
+```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+let value = JObject [ "name", JString "Alice"; "age", JNumber 30.0 ]
+let lookup key = function
+  | JObject fields -> List.assoc_opt key fields
+  | _ -> None
+let set_field key new_value = function
+  | JObject fields ->
+      let rec go = function
+        | [] -> [(key, new_value)]
+        | (k, _) :: rest when k = key ->
+            (key, new_value) :: rest
+        | pair :: rest -> pair :: go rest
+      in
+      JObject (go fields)
+  | other -> other
+```
+
+- Returns a new `json` value (**immutable** update).
+- Structural recursion over the list of fields.
+- `when k = key`: a **when-clause**, a runtime guard on the pattern.
+- Distinguishes "found the key" from "different key".
+- When-clauses are covered properly in Module 5.
 
 :::
+
+This brings in two more pieces of pattern-matching machinery:
+
+**Inner recursion.** The local function `go` walks the
+association list, looking for a key match. It is itself
+structurally recursive on the list.
+
+**Guards (`when` clauses).** The pattern `(k, _) :: rest when k =
+key` matches a non-empty list whose head pair has a key equal to
+`key`. The `when` clause is a runtime check that further filters
+the pattern. Without it, both the "match the first pair" and the
+"match any other pair" cases would have the same pattern shape,
+and OCaml would not be able to distinguish them. Module 5 will
+cover when-clauses in full.
+
+The structure of `go` is:
+
+- Empty list: the key is not in the list. Add it.
+- Head is the right key: replace.
+- Head is a different key: keep it; recurse on the rest.
+
+That covers all three sub-cases of "what to do at each step."
+
+## The shape of Module 4
+
+This tutorial used every piece introduced in the module:
 
 :::slide
 
@@ -192,29 +496,97 @@ This tutorial used everything:
 
 - **Variants** (`json` itself).
 - **Recursive types** (`json` contains `json list`).
-- **Records** (none here, but `JObject` carries a list of
-  key-value pairs; if we wanted named fields we'd use a record).
-- **Tuples** (key-value pairs in `JObject`).
+- **Tuples** ((string * json) for object entries).
 - **`option`** (return type of `lookup`).
 - **Pattern matching** (every operation).
-- **Recursion** (every operation on the recursive constructors).
-
-- The everyday Module 4 toolkit
-- You'll reach for these pieces in nearly every OCaml program
+- **Recursion** (every operation on recursive constructors).
 
 :::
+
+You will reach for some subset of these pieces in nearly every
+OCaml program you write. Some programs use one heavily and another
+lightly: a parser is mostly variants and recursion; a configuration
+loader is mostly records; a search algorithm is mostly tuples and
+lists. The Module 4 toolkit is broad on purpose; the rest of the
+course uses these pieces in different combinations.
+
+## A short check
+
+:::quiz mcq
+What does `pretty (JArray [])` evaluate to?
+
+- [ ] `""`
+- [ ] `"null"`
+- [x] `"[]"`
+- [ ] A runtime error.
+
+**Why:** the `JArray` branch is `"[" ^ String.concat ", " (List.map
+pretty xs) ^ "]"`. With `xs = []`, `List.map pretty xs = []` and
+`String.concat ", " []` is `""`. So we get `"[" ^ "" ^ "]"` = `"[]"`.
+:::
+
+:::quiz code
+Write `count_nulls : json -> int` that returns the number of `JNull`
+constructors anywhere inside a `json` value (including nested
+inside arrays and object values).
+
+```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+
+let rec count_nulls = function
+  | _ -> failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (count_nulls JNull = 1) "single null";
+  check (count_nulls (JBool true) = 0) "bool";
+  check (count_nulls (JArray [JNull; JNumber 1.0; JNull]) = 2) "array of two";
+  check (count_nulls (JObject ["a", JNull; "b", JArray [JNull; JNull]]) = 3) "nested";
+  check (count_nulls (JArray []) = 0) "empty array";
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution:
+
+```ocaml
+type json =
+  | JNull
+  | JBool of bool
+  | JNumber of float
+  | JString of string
+  | JArray of json list
+  | JObject of (string * json) list
+
+let rec count_nulls = function
+  | JNull -> 1
+  | JBool _ | JNumber _ | JString _ -> 0
+  | JArray xs -> List.fold_left (fun acc x -> acc + count_nulls x) 0 xs
+  | JObject fields ->
+      List.fold_left (fun acc (_, v) -> acc + count_nulls v) 0 fields
+```
+
+Each constructor gets one clause; the recursive ones sum the
+counts from their children using `List.fold_left`.
+
+## Activity: extending the type
 
 :::slide
 
 ## Activity
 
-Add a `Null` constructor to `json`... wait, we already have
-`JNull`.
-
-Try this instead: extend `json` with a `JFloat of float` (keep
+Extend `json` with a new constructor `JFloat of float` (keep
 `JNumber of float` for the existing case; pretend the format used
 to be loose and you're tightening it). Update `pretty` and `depth`
-to handle the new case.
+to handle it.
 
 What does the compiler tell you about every other function on
 `json`?
@@ -227,7 +599,7 @@ What does the compiler tell you about every other function on
 
 Adding a new constructor:
 
-```ocaml
+```ocaml skip
 type json =
   | JNull
   | JBool of bool
@@ -238,14 +610,29 @@ type json =
   | JObject of (string * json) list
 ```
 
-- Compiler now warns *every match* on `json` that doesn't handle `JFloat`
-- Affected: `depth`, `pretty`, `set_field`, etc.
-- Go down the list, add a `| JFloat f -> ...` clause to each
-- This is the **refactor-with-the-compiler** property
-- You don't find call sites by reading; the compiler finds them
-- It won't be quiet until they're all handled
+- Compiler now warns **every match** on `json` that doesn't handle `JFloat`.
+- Affected: `depth`, `pretty`, `set_field`, `count_nulls`, etc.
+- Go down the list, add a `| JFloat f -> ...` clause to each.
+- This is the **refactor-with-the-compiler** property.
+- You don't find call sites by reading; the compiler finds them.
 
 :::
+
+This is the experience M04-L03 promised: a "punch list" of every
+function that touched the variant, served up by the compiler. Each
+function that pattern-matched explicitly on `json` will now get a
+warning pointing at the missing `JFloat` case. You add the case
+to each, recompile, repeat. When the warnings stop, the refactor
+is complete.
+
+The functions that did *not* use a wildcard catch-all get the
+warnings; the ones that did (like `lookup`'s `_ -> None`) silently
+absorb the new constructor under their wildcard. The wildcard is
+sometimes what you want (here, "any non-object input gives None"
+is a stable contract), but it does hide refactor sites. The
+trade-off is real.
+
+## What you should be able to do now
 
 :::slide
 
@@ -263,17 +650,24 @@ After Module 4 you can:
 
 Module 5 zooms in on **pattern matching** itself:
 
-- The syntax features we've been sketching:
-  - or-patterns
-  - when-clauses
-  - exhaustiveness checking
-  - nested patterns
-  - the `function` shorthand
-- And how they fit together
+- Or-patterns.
+- When-clauses.
+- Exhaustiveness checking in more depth.
+- Nested patterns.
+- The `function` shorthand.
 
 :::
 
+You now have the full vocabulary for modelling data in OCaml. The
+combination of records, variants, tuples, and recursion is enough
+to express essentially any data shape you encounter. Module 5
+sharpens the *consumption* side: pattern matching has more features
+than we have used in this module, and they are the everyday tools
+for writing concise code on these data types.
+
 ## Reading
 
-- **Cornell CS3110**, *Algebraic data types and pattern matching*:
-  <https://cs3110.github.io/textbook/chapters/data/intro.html>
+- **Cornell CS3110**, *Algebraic data types*:
+  <https://cs3110.github.io/textbook/chapters/data/algebraic_data_types.html>
+- **Real World OCaml**, *Variants*:
+  <https://dev.realworldocaml.org/variants.html>

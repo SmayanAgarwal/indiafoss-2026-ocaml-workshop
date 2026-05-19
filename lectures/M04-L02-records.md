@@ -8,23 +8,39 @@ keywords: [OCaml, record, named fields, record type, functional update]
 activity_question: "Define a record type [book] with fields [title : string], [author : string], [year : int]. Create one. Define a function that returns the title."
 think_about_this: "Records have *named* fields where tuples have *positional* components. Which is better for a function that takes both a 'first name' and a 'last name'? Which is better for a 2D point?"
 reading:
-  - title: "Cornell CS3110, Records"
-    url: https://cs3110.github.io/textbook/chapters/data/records_and_tuples.html
+  - title: "Cornell CS3110, Records and Tuples"
+    url: https://cs3110.github.io/textbook/chapters/data/records_tuples.html
+  - title: "Real World OCaml, Records"
+    url: https://dev.realworldocaml.org/records.html
 ---
 
 # Records
 
-A record is like a tuple, but each field has a *name*. When your
-data has more than a couple of components or when the components
-are at risk of being mixed up (which is the first, x or y?), a
-record is clearer.
+A record is a bundle, like a tuple, but with each component
+identified by *name* instead of position. The last lecture argued
+that tuples are the right tool for two or three values whose
+positions are self-evident: a 2D point, a key-value entry, a
+quotient-remainder pair. The moment you want more than that, or
+the positions stop telling their own story, you reach for a
+record.
 
-:::slide
+A record in OCaml plays the same role that a `struct` plays in C
+or a class with only data members plays in Java. The syntax is
+similar in spirit. The semantics has two differences worth
+internalising up front: records are *immutable by default*, and
+they are *structurally compared*. Both of those make a record
+behave more like a value (an `int`, a `string`) than like an object.
+
+If you have not built a data-modelling habit before, this is the
+lecture where it starts. Most of the data structures you will
+design over the rest of the course are records, variants, or
+combinations of the two.
 
 ## Declaring a record type
 
-- Records are *nominally* typed in OCaml
-- Declare the type first, then construct values of that type
+Unlike tuples, records require a *type declaration* before you can
+construct one. You declare the type, with each field's name and
+type; then you construct values of that type.
 
 ```ocaml
 type point = { x : float; y : float }
@@ -33,10 +49,68 @@ let origin = { x = 0.0; y = 0.0 }
 let p      = { x = 3.0; y = 4.0 }
 ```
 
-- `point` is a type; `origin` and `p` are values of type `point`
-- Construction syntax: braces, `field = value`, semicolons between
+The declaration `type point = { x : float; y : float }` introduces
+a new type named `point`. It has two fields, `x` and `y`, both of
+type `float`. Then `origin` and `p` are values of type `point`,
+built with the record-literal syntax `{ field = value; field = value }`.
+
+:::slide
+
+## Declaring a record type
+
+Records are *nominally* typed in OCaml. Declare the type first,
+then construct values.
+
+```ocaml
+type point = { x : float; y : float }
+
+let origin = { x = 0.0; y = 0.0 }
+let p      = { x = 3.0; y = 4.0 }
+```
+
+- `point` is a type; `origin` and `p` are values of type `point`.
+- Construction syntax: braces, `field = value`, semicolons between.
+- The order of fields in a literal doesn't matter (`{ y = 4.0; x = 3.0 }` is the same).
 
 :::
+
+Note the small syntactic detail: inside the *type* declaration, the
+separator between fields is `;` and the punctuation between a name
+and its type is `:`. Inside an *expression* that builds a record,
+the separator is also `;` (not `,`!) and the punctuation between a
+name and its value is `=`. This mirrors the difference between type
+syntax and expression syntax we have already seen elsewhere.
+
+The order of fields in an expression literal is irrelevant. `{ x =
+3.0; y = 4.0 }` and `{ y = 4.0; x = 3.0 }` are the same value. The
+type declaration gives the *canonical* order; the compiler does not
+care how you list them when constructing.
+
+OCaml's records are *nominally* typed: two record types with the
+same fields are not interchangeable. If you declare `type a = { x :
+int }` and `type b = { x : int }`, then an `a` value cannot be
+passed where a `b` is expected, even though they have the same
+shape. This is the opposite of Go's structural records or
+TypeScript's structural object types, and it is a deliberate choice
+to make types more meaningful identifiers.
+
+## Accessing fields
+
+Two ways to get a value out of a record: *dot syntax* (like Java or
+Python), and *destructuring* (like patterns).
+
+```ocaml
+type point = { x : float; y : float }
+let p = { x = 3.0; y = 4.0 }
+let _ = p.x
+let _ = p.y
+```
+
+`p.x` and `p.y` are *field-access expressions*. The result of
+`p.x` is `3.0`; the result of `p.y` is `4.0`. The field name is
+syntactically restricted: you cannot write `p.(some_expression)`.
+The thing after the dot must be a literal field name, not a
+computed value.
 
 :::slide
 
@@ -45,34 +119,63 @@ let p      = { x = 3.0; y = 4.0 }
 Two ways: dot syntax, or destructuring.
 
 ```ocaml
+type point = { x : float; y : float }
+let p = { x = 3.0; y = 4.0 }
 let _ = p.x
 let _ = p.y
 ```
 
-- `p.x` returns `3.0`, `p.y` returns `4.0`
-- Reads like Java or Python
+- `p.x` returns `3.0`, `p.y` returns `4.0`.
+- Reads like Java or Python.
 
 ```ocaml
+type point = { x : float; y : float }
+let p = { x = 3.0; y = 4.0 }
 let { x; y } = p
 let _ = x
 let _ = y
 ```
 
-- Destructuring pattern: introduces `x`, `y` as local names
-- Bound to `p.x`, `p.y` respectively
-- Short form `{ x; y }` is sugar for `{ x = x; y = y }`
+- Destructuring pattern: introduces `x`, `y` as local names.
+- Bound to `p.x`, `p.y` respectively.
+- Short form `{ x; y }` is sugar for `{ x = x; y = y }`.
 
 :::
 
-The short-form binding (`{ x; y }` ≡ `{ x = x; y = y }`) is
-exactly the same as ES6 / TypeScript's destructuring shorthand:
-`const { x, y } = p`. Same idea, different sigil.
+The destructuring form `let { x; y } = p` works the same way as
+the tuple destructuring `let (x, y) = pair` from last lecture. It
+matches the record against the pattern and binds each name. The
+shorthand `{ x; y }` desugars to `{ x = x; y = y }`: the field name
+on the left, the new local name on the right, with the convention
+that they match when no rename is needed.
 
-:::slide
+If you have used [JavaScript ES6](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
+or TypeScript, this is exactly the destructuring-assignment
+shorthand: `const { x, y } = p;`. Same idea, slightly different
+sigil. The shorthand makes code that pulls several fields out of a
+record cleaner, especially when the names line up with what you
+want to call the locals.
+
+You can rename while destructuring:
+
+```ocaml
+type point = { x : float; y : float }
+let p = { x = 3.0; y = 4.0 }
+let { x = ax; y = ay } = p
+```
+
+Now the locals are called `ax` and `ay`. This is useful when you
+are pulling fields from two records in the same scope and need
+to distinguish them.
 
 ## Records in function parameters
 
+A function that takes a record can access fields either by dot or
+by destructuring in the parameter pattern.
+
 ```ocaml
+type point = { x : float; y : float }
+
 let distance p q =
   let dx = q.x -. p.x in
   let dy = q.y -. p.y in
@@ -81,59 +184,126 @@ let distance p q =
 let _ = distance { x = 0.0; y = 0.0 } { x = 3.0; y = 4.0 }
 ```
 
-- Result: `float = 5.0`
-- Function takes two records
-- Body accesses their fields by name
-
-Or, with destructuring in the parameters:
+The body uses `p.x`, `q.x`, etc. The same function, written with
+destructured parameters:
 
 ```ocaml
+type point = { x : float; y : float }
+
 let distance { x = x1; y = y1 } { x = x2; y = y2 } =
   let dx = x2 -. x1 in
   let dy = y2 -. y1 in
   sqrt (dx *. dx +. dy *. dy)
 ```
 
-- Same function, fields pulled out as named locals up front
-- Choose whichever reads better
-- Second form is common when you destructure heavily
+:::slide
+
+## Records in function parameters
+
+```ocaml
+type point = { x : float; y : float }
+let distance p q =
+  let dx = q.x -. p.x in
+  let dy = q.y -. p.y in
+  sqrt (dx *. dx +. dy *. dy)
+```
+
+Or, with destructuring in the parameters:
+
+```ocaml
+type point = { x : float; y : float }
+let distance { x = x1; y = y1 } { x = x2; y = y2 } =
+  let dx = x2 -. x1 in
+  let dy = y2 -. y1 in
+  sqrt (dx *. dx +. dy *. dy)
+```
+
+- Same function, fields pulled out as named locals up front.
+- Choose whichever reads better.
+- Destructuring form common when you use many fields.
 
 :::
+
+There is no functional difference between the two styles. The
+destructuring form is denser at the top of the function and looser
+in the body; the dot-syntax form is the reverse. Use whichever
+makes the function read more clearly. For functions that touch
+two or three fields of a five-field record, dot syntax is usually
+cleaner; for functions that use every field, destructuring is
+nicer.
+
+## Functional update
+
+Records are immutable by default. To "modify" a field, you build a
+*new* record that differs from the old one in just that field.
+OCaml gives you a syntactic shortcut for this, called *functional
+update*:
+
+```ocaml
+type point = { x : float; y : float }
+let p = { x = 3.0; y = 4.0 }
+let p2 = { p with y = 10.0 }
+```
+
+The expression `{ p with y = 10.0 }` produces a new record whose
+fields are the same as `p`'s, except `y` is `10.0`. The original
+`p` is unchanged.
 
 :::slide
 
 ## Functional update
 
-- Records are **immutable by default**: can't modify in place
-- To get a record that *differs* from another in one field:
+Records are **immutable by default**. To get a record that
+*differs* from another in one field:
 
 ```ocaml
+type point = { x : float; y : float }
+let p = { x = 3.0; y = 4.0 }
 let p2 = { p with y = 10.0 }
 ```
 
-- `with` produces a *new* record, identical to `p` except `y = 10.0`
-- `p` is **unchanged**
+- `with` produces a *new* record, identical to `p` except `y = 10.0`.
+- `p` is **unchanged**.
 
 ```ocaml
+type point = { x : float; y : float }
+let p = { x = 3.0; y = 4.0 }
+let p2 = { p with y = 10.0 }
 let _ = p.y
 let _ = p2.y
 ```
 
-- Results: `4.0` and `10.0`
-- Immutable equivalent of "mutate this field"
-- You get a new value with the change; you don't edit the old one
+- Results: `4.0` and `10.0`.
+- Immutable equivalent of "mutate this field".
+- You get a new value with the change; you don't edit the old one.
 
 :::
 
 Functional update is a quiet but important feature. In any program
-that needs to "modify" a record (the user's profile, a piece of
-state), you write a new version with the changed field and pass
-that around. The old version is still valid; nothing observable
-changed about it.
+that needs to "modify" a record (a user's profile, a piece of
+state, a configuration), you write a new version with the changed
+field and pass that new version forward. The old version is still
+valid; nothing observable about it has changed.
 
-This buys you the same property we discussed in Module 2: equational
-reasoning. The value `p` *is* what it is forever; nothing later in
-the program can have changed `p.y` underneath you.
+This buys you the same property we discussed for shadowing in
+M02-L02: *equational reasoning*. The value `p` is what it is
+forever. Nothing later in the program can have changed `p.y`
+underneath you. Once you have a record, you can reason about it
+without worrying that some other code path mutated it.
+
+For records with many fields, the `with` syntax is essential.
+Writing out a 19-field literal to change one value would be silly;
+`{ r with that_one_field = new_value }` is exactly what you want.
+
+The mechanism is *not* free: under the hood, OCaml allocates a new
+record and copies the unchanged fields. For most records this is
+imperceptible; for performance-critical inner loops on large
+records, you may eventually want mutable fields, which we cover at
+the end of this lecture.
+
+## Records vs tuples: when to use which
+
+We have now seen both compound types. Here is the practical guidance:
 
 :::slide
 
@@ -153,39 +323,83 @@ Use a **tuple** when:
   self-evident (`(x, y)`, `(key, value)`).
 - The tuple is short-lived (you destructure it right after building
   it).
-
-- `(string, string)` for "first_name, last_name" is OK if local and obvious
-- `make_full_name "John" "Doe"` is fine as a producer
-- But code that *consumes* such a tuple starts wishing for names: which one was first?
+- The shape is "obvious" by convention.
 
 :::
+
+A worked example. Suppose you want to model "a person."
+
+- *Tuple version:* `("Alice", "Smith", 30, "alice@example.com")`.
+  Type: `string * string * int * string`. Which `string` was the
+  email again? Which was the last name?
+- *Record version:* `{ first_name = "Alice"; last_name = "Smith";
+  age = 30; email = "alice@example.com" }`. Type: `person`. Every
+  access site says what it wants.
+
+The record version costs you a type declaration but pays you back
+every time you read or write a field. For anything more than two
+or three components, this trade is overwhelmingly worth it.
+
+A counter-example: a 2D point. Both options work. `(x, y)` is fine
+and brief. `{ x; y }` is more explicit but verbose. Most OCaml
+code uses records for points too, because once you have a *named*
+type `point`, every function signature that takes or returns one
+says so unambiguously. A function that accepts `float * float` is
+ambiguous: it could be a point, a vector, a rectangle's
+dimensions, anything.
+
+## Records compare structurally
+
+Like all values in OCaml, records support the structural equality
+operator `=`. Two records are equal if and only if all their
+corresponding fields are equal.
+
+```ocaml
+type point = { x : float; y : float }
+let p1 = { x = 1.0; y = 2.0 }
+let p2 = { x = 1.0; y = 2.0 }
+let _ = p1 = p2
+```
+
+The expression `p1 = p2` is `true`, because both records have
+identical field values. This is the *same* `=` we have been using
+for ints and strings throughout. No special "equals" method to
+define, no `equals()` override; the compiler handles it.
 
 :::slide
 
 ## Records compare structurally
 
 ```ocaml
+type point = { x : float; y : float }
 let p1 = { x = 1.0; y = 2.0 }
 let p2 = { x = 1.0; y = 2.0 }
 let _ = p1 = p2
 ```
 
-- Result: `true`
-- **Structural equality**: compares field by field
-- Two records with the same values are equal even in different memory
-- Same `=` we use for ints and strings; works on records out of the box
+- Result: `true`.
+- **Structural equality**: compares field by field.
+- Two records with the same values are equal regardless of memory.
+- Same `=` we use for ints and strings; works on records out of the box.
 
 :::
 
-:::slide
+Contrast Java, where `==` is reference equality (almost always not
+what you want) and you have to write `.equals()`, taking care to
+make it consistent with `hashCode()`. Contrast C, where struct
+equality is, on most compilers, simply not defined (or, worse,
+compares the entire memory block including padding bytes). OCaml's
+`=` does the right thing on records and gives you correct equality
+"for free."
 
 ## Type inference for records is brittle
 
-- Tuples: inference handles them gracefully
-- Records: inference needs the type declaration *in scope*
-- It uses field names to know what `{ x; y }` refers to
-
-If two record types have a field `x`:
+There is one wrinkle that catches people, related to how the
+compiler infers the *type* of a record literal. Tuples are
+straightforward: `(3, true)` is unambiguously `int * bool` because
+of the inferred types of its components. Records are different:
+the compiler needs to know which record type a literal refers to,
+and the way it figures that out is by looking at the field names.
 
 ```ocaml
 type point2 = { x : float; y : float }
@@ -194,19 +408,47 @@ type point3 = { x : float; y : float; z : float }
 let p = { x = 1.0; y = 2.0 }
 ```
 
-- Inferred type of `p` is `point2`: the **most recently declared** matching type
-- For `point3` you'd need `{ x = 1.0; y = 2.0; z = 0.0 }` (forced by `z`)
-- Rarely a problem in practice
-- Just remember: record types live in a flat namespace by *field name*
-
-:::
+What is the type of `p`? Both `point2` and `point3` have an `x`
+and a `y` field. OCaml resolves this by preferring the *most
+recently declared* matching type. Here, `point3` was declared
+second, but `p` only has two fields, so `point3` cannot match (a
+`point3` literal needs all three fields). The compiler falls back
+to `point2`, the next match, and `p` gets type `point2`.
 
 :::slide
 
+## Type inference for records is brittle
+
+```ocaml
+type point2 = { x : float; y : float }
+type point3 = { x : float; y : float; z : float }
+
+let p = { x = 1.0; y = 2.0 }
+```
+
+- Inferred type of `p` is `point2`: the **most recently declared** matching type.
+- For `point3` you'd need `{ x = 1.0; y = 2.0; z = 0.0 }` (forced by `z`).
+- Rarely a problem in practice.
+- Record types live in a flat namespace by *field name*.
+
+:::
+
+In practice this rarely surfaces, because most files declare each
+field name in exactly one record type. When it does come up,
+add a type annotation: `let p : point2 = { x = 1.0; y = 2.0 }`,
+and the ambiguity is resolved.
+
+A consequence to be aware of: if you have two record types in the
+same scope with overlapping field names, dot-access expressions
+become ambiguous in the same way. We will see in Module 7 how
+modules let you put each record type in its own namespace, which
+sidesteps the problem entirely.
+
 ## Mutable record fields
 
-- Records are immutable *by default*
-- You can opt in to mutability **per field**:
+Records are immutable *by default*. You can opt in to mutability
+on a per-field basis with the `mutable` keyword in the type
+declaration.
 
 ```ocaml
 type counter = { mutable n : int }
@@ -216,14 +458,97 @@ let () = c.n <- c.n + 1
 let _ = c.n
 ```
 
-- Result: `int = 1`
-- `mutable` on `n` allows `c.n <- new_value` assignment
-- `<-` is OCaml's assignment operator for mutable record fields
-- Preview only; full mutation coverage in Module 7
-- For now, prefer immutable records
-- Reach for `mutable` for: counters, caches, long-running state machines
+The `mutable` annotation on `n` permits the assignment syntax `c.n
+<- new_value`. The arrow `<-` is OCaml's assignment operator for
+mutable record fields; it is a *statement* (well, a `unit`-typed
+expression), not an expression with a value.
+
+:::slide
+
+## Mutable record fields
+
+```ocaml
+type counter = { mutable n : int }
+
+let c = { n = 0 }
+let () = c.n <- c.n + 1
+let _ = c.n
+```
+
+- Result: `int = 1`.
+- `mutable` on `n` allows `c.n <- new_value` assignment.
+- `<-` is the assignment operator for mutable record fields.
+- Preview only; full mutation coverage in Module 7.
+- Default: prefer immutable records.
+- Reach for `mutable` for: counters, caches, long-running state machines.
 
 :::
+
+Mutability is a separate Pandora's box that we open carefully in
+Module 7. For now, the rule is: *prefer immutable records, by
+default*. Use `mutable` only when you specifically need the
+in-place update semantics (typically for a counter, a cache, or a
+piece of long-lived state that conceptually has identity).
+
+The default-immutable choice is deliberate. Immutable records
+support equational reasoning, can be shared across threads without
+locks (a property we will lean on heavily in Module 6 and beyond),
+and avoid an entire class of bugs where one piece of code modifies
+a value another piece is still depending on. The cost is one extra
+allocation per "update"; OCaml's garbage collector is well-tuned
+for the resulting allocation pattern.
+
+## A small check
+
+:::quiz mcq
+Given:
+
+```ocaml
+type rgb = { r : int; g : int; b : int }
+let red = { r = 255; g = 0; b = 0 }
+```
+
+What does `{ red with g = 128 }` evaluate to?
+
+- [ ] `{ r = 0; g = 128; b = 0 }`
+- [x] `{ r = 255; g = 128; b = 0 }`
+- [ ] `{ r = 255; g = 0; b = 0 }` (and `red.g` becomes 128)
+- [ ] A type error.
+
+**Why:** functional update produces a *new* record that copies the
+fields of `red` and overrides `g` with `128`. `red` is unchanged.
+The result has the same `r` and `b` as `red`, plus the new `g`.
+:::
+
+:::quiz code
+Define a record `circle` with fields `cx : float`, `cy : float`,
+`radius : float`, and write a function `circle_area : circle ->
+float` that returns the area. Use `Float.pi`.
+
+```ocaml
+type circle = { cx : float; cy : float; radius : float }
+
+let circle_area c =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let approx_eq a b = abs_float (a -. b) < 1e-6
+let () =
+  check (approx_eq (circle_area { cx = 0.0; cy = 0.0; radius = 1.0 }) Float.pi) "unit";
+  check (approx_eq (circle_area { cx = 5.0; cy = 5.0; radius = 2.0 }) (4.0 *. Float.pi)) "r=2";
+  check (approx_eq (circle_area { cx = 0.0; cy = 0.0; radius = 0.0 }) 0.0) "zero";
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution: `let circle_area c = Float.pi *. c.radius *.
+c.radius`, or with destructuring `let circle_area { radius; _ } =
+Float.pi *. radius *. radius`. Either works; the second ignores
+the centre fields explicitly.
+
+## Activity
 
 :::slide
 
@@ -252,20 +577,28 @@ let book_title b = b.title
 let _ = book_title real_world_ocaml
 ```
 
-- Result: `string = "Real World OCaml"`
-- Three fields, named access, simple function
+- Result: `string = "Real World OCaml"`.
 
 More idiomatic: destructure in the parameter.
 
 ```ocaml
+type book = { title : string; author : string; year : int }
 let book_title { title; _ } = title
 ```
 
-- `_` says "and ignore the other fields"
-- `let { title; _ } = b in title` is exactly what `b.title` is
-- Destructuring form just makes that explicit
+- `_` says "and ignore the other fields".
+- `let { title; _ } = b in title` is exactly what `b.title` is.
 
 :::
+
+The `_` at the end of `{ title; _ }` is important. Without it, the
+pattern `{ title }` would be incomplete: it would mean "a record
+with *only* the `title` field," and the compiler would warn that
+the other fields are not mentioned. The trailing `_` says
+explicitly "yes, I know there are other fields; I do not care
+about them." Use it whenever you destructure a subset of fields.
+
+## What's next
 
 :::slide
 
@@ -278,7 +611,16 @@ OCaml.
 
 :::
 
+Tuples and records are both *product types*: a value of one has a
+*piece of each* of several types. The next lecture introduces the
+dual notion, *sum types*: a value that is *one of* several
+alternatives. Once you have both products and sums, you have the
+full algebra of *algebraic data types*, and you can model
+essentially any data shape you encounter.
+
 ## Reading
 
-- **Cornell CS3110**, *Records*:
-  <https://cs3110.github.io/textbook/chapters/data/records_and_tuples.html>
+- **Cornell CS3110**, *Records and Tuples*:
+  <https://cs3110.github.io/textbook/chapters/data/records_tuples.html>
+- **Real World OCaml**, *Records*:
+  <https://dev.realworldocaml.org/records.html>
