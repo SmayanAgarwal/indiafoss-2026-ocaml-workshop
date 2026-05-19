@@ -37,7 +37,12 @@ body.mode-slides  .lecture-meta-footer { display: none; }
   padding: 0.6rem 1rem;
   display: flex;
   align-items: baseline;
-  gap: 1.2rem;
+  /* Uniform spacing between all header items: the same 0.4rem used
+     by the inner cell-controls. The lecture-title has [flex: 1] so
+     it absorbs the wide gap between the left cluster (sidebar
+     toggle + home + meta) and the right cluster (cell controls +
+     mode toggle); other adjacent items stay at 0.4rem. */
+  gap: 0.4rem;
   /* Sits above x-ocaml's shadow-DOM Run button (z-index 999), so
      a cell scrolling under the sticky header is hidden by it
      instead of painting its Run over the banner. */
@@ -183,7 +188,6 @@ body.sidebar-hidden .sidebar { display: none; }
   color: var(--accent);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 0.95rem;
-  margin-right: 0.6rem;
 }
 .sidebar-collapse:hover { background: var(--code-bg); }
 
@@ -202,7 +206,6 @@ body.sidebar-hidden .sidebar { display: none; }
   font-size: 1.1rem;
   line-height: 1;
   text-decoration: none;
-  margin-right: 0.6rem;
 }
 .home-link:hover { background: var(--code-bg); }
 body.mode-slides .home-link { opacity: 0.6; }
