@@ -64,6 +64,18 @@ body.mode-slides x-ocaml {
   margin: 0.6rem 0;
 }
 
+/* Images in slide mode: fill horizontal space, sized to the slide
+   rather than the image's intrinsic dimensions. Diagrams (SVGs from
+   the TikZ pipeline) otherwise look tiny relative to slide real
+   estate. */
+body.mode-slides .reveal .slides section img {
+  display: block;
+  margin: 0.8rem auto;
+  max-width: 100%;
+  width: min(100%, 980px);
+  height: auto;
+}
+
 /* Header bar shrinks in slide mode to free vertical space. */
 body.mode-slides .page-header {
   position: absolute;
