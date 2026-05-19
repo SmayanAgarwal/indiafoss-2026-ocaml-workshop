@@ -16,13 +16,41 @@ let write_file path s =
   output_string oc s;
   close_out oc
 
+(* Rewrite [src="/assets/...] and [href="/assets/...] attributes so
+   they pick up the [asset_root] prefix that lecture-page CSS and JS
+   already use. This lets ![alt](/assets/diagrams/foo.svg) in lecture
+   markdown resolve to the right URL in both local preview and
+   production. *)
+let rewrite_asset_urls ~asset_root html =
+  if asset_root = "" then html
+  else
+    let buf = Buffer.create (String.length html) in
+    let needle = "\"/assets/" in
+    let replacement = "\"" ^ asset_root ^ "/assets/" in
+    let n = String.length html in
+    let needle_len = String.length needle in
+    let i = ref 0 in
+    while !i < n do
+      if !i + needle_len <= n && String.sub html !i needle_len = needle then begin
+        Buffer.add_string buf replacement;
+        i := !i + needle_len
+      end else begin
+        Buffer.add_char buf html.[!i];
+        incr i
+      end
+    done;
+    Buffer.contents buf
+
 let render_one ~src ~dst ~asset_root =
   let raw = read_file src in
   let fm, body = Nptel_build.Frontmatter.parse raw in
   let preprocessed = Nptel_build.Divs.preprocess body in
   let doc = Cmarkit.Doc.of_string preprocessed in
   let doc' = Nptel_build.Parse.transform doc in
-  let html_body = Cmarkit_html.of_doc ~safe:false doc' in
+  let html_body =
+    Cmarkit_html.of_doc ~safe:false doc'
+    |> rewrite_asset_urls ~asset_root
+  in
   (* The manifest scan looks at siblings of [src]: every
      [W<nn>-L<nn>-<rest>.md] file in the same directory becomes an
      entry. The current page is identified by its filename slug. *)

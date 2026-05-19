@@ -1,0 +1,46 @@
+% 12-module course roadmap. Edit this file (not the .svg) and rerun
+% tools/build-diagrams.sh to regenerate.
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,decorations.pathreplacing,calligraphy}
+\definecolor{fpfill}{HTML}{E8F0E6}
+\definecolor{fpedge}{HTML}{3A6C52}
+\definecolor{secfill}{HTML}{FBEED2}
+\definecolor{secedge}{HTML}{B97A18}
+\definecolor{labelgrey}{HTML}{444444}
+\begin{document}
+\begin{tikzpicture}[
+  font=\sffamily,
+  every node/.style={inner sep=0pt},
+  tile/.style={
+    rounded corners=2.5pt,
+    minimum width=10mm, minimum height=10mm,
+    align=center, line width=0.4pt
+  },
+  fp/.style={tile, fill=fpfill, draw=fpedge, text=fpedge!80!black},
+  sec/.style={tile, fill=secfill, draw=secedge, text=secedge!80!black},
+  bracket/.style={decorate, decoration={calligraphic brace, raise=1.5mm, amplitude=1.5mm}, draw=labelgrey!80, line width=0.5pt},
+]
+
+\node[fp] (m1) at (0,0)   {\textbf{M1}\\\scriptsize Intro};
+\node[fp] (m2) at (1.1,0) {\textbf{M2}\\\scriptsize Expressions};
+\node[fp] (m3) at (2.2,0) {\textbf{M3}\\\scriptsize Functions};
+\node[fp] (m4) at (3.3,0) {\textbf{M4}\\\scriptsize Data types};
+\node[fp] (m5) at (4.4,0) {\textbf{M5}\\\scriptsize Pattern\\\scriptsize match};
+\node[fp] (m6) at (5.5,0) {\textbf{M6}\\\scriptsize Higher-\\\scriptsize order};
+\node[fp] (m7) at (6.6,0) {\textbf{M7}\\\scriptsize Side fx,\\\scriptsize modules};
+\node[fp] (m8) at (7.7,0) {\textbf{M8}\\\scriptsize Monads,\\\scriptsize GADTs};
+
+\node[sec] (m9)  at (9.0,0)  {\textbf{M9}\\\scriptsize Runtime,\\\scriptsize GC, UB};
+\node[sec] (m10) at (10.1,0) {\textbf{M10}\\\scriptsize Memory\\\scriptsize safety, FFI};
+\node[sec] (m11) at (11.2,0) {\textbf{M11}\\\scriptsize Unikernel\\\scriptsize OS};
+\node[sec] (m12) at (12.3,0) {\textbf{M12}\\\scriptsize Concurrency,\\\scriptsize capability};
+
+\draw[bracket] ([yshift=2mm]m1.north west) -- ([yshift=2mm]m8.north east)
+  node[midway, above=2.5mm, color=labelgrey] {\small 8 modules: functional programming in OCaml};
+
+\draw[bracket] ([yshift=2mm]m9.north west) -- ([yshift=2mm]m12.north east)
+  node[midway, above=2.5mm, color=labelgrey] {\small 4 modules: secure systems};
+
+\end{tikzpicture}
+\end{document}
