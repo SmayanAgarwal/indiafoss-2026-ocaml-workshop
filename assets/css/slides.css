@@ -75,15 +75,16 @@ body.mode-slides x-ocaml {
   margin: 0.6rem 0;
 }
 
-/* Images in slide mode: fill horizontal space, sized to the slide
-   rather than the image's intrinsic dimensions. Diagrams (SVGs from
-   the TikZ pipeline) otherwise look tiny relative to slide real
-   estate. */
+/* Images in slide mode: size to fit comfortably without pushing
+   following content off the slide. We cap both width and height so
+   a tall diagram does not run into the lower bullets, and a wide
+   diagram does not touch the slide borders. */
 body.mode-slides .reveal .slides section img {
   display: block;
-  margin: 0.8rem auto;
-  max-width: 100%;
-  width: min(100%, 980px);
+  margin: 0.6rem auto;
+  max-width: min(85%, 820px);
+  max-height: 48vh;
+  width: auto;
   height: auto;
 }
 

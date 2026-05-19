@@ -45,7 +45,10 @@ let render_one ~src ~dst ~asset_root =
   let raw = read_file src in
   let fm, body = Nptel_build.Frontmatter.parse raw in
   let preprocessed = Nptel_build.Divs.preprocess body in
-  let doc = Cmarkit.Doc.of_string preprocessed in
+  (* [strict:false] enables cmarkit's extensions: tables, strikethrough,
+     LaTeX math, footnotes, task list items. We need tables for the
+     primitive-types summary in M02-L01 and other survey lectures. *)
+  let doc = Cmarkit.Doc.of_string ~strict:false preprocessed in
   let doc' = Nptel_build.Parse.transform doc in
   let html_body =
     Cmarkit_html.of_doc ~safe:false doc'

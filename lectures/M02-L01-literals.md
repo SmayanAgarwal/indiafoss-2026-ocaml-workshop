@@ -16,15 +16,36 @@ reading:
 
 # Literals
 
-A literal is an expression that *is* its own value: `42`, `3.14`,
-`true`, `"hello"`. Every program starts from literals and combines
-them with operators and function calls. This lecture covers the four
-primitive literal kinds in OCaml, the operators that go with each,
-and a few gotchas that catch beginners.
+Every program in OCaml is, in the end, an *expression*: a piece of
+syntax that the language can *evaluate* down to a *value*. The
+distinction between expression and value is worth pausing on, because
+it shapes everything that follows. An expression like `2 + 3` is not
+a value: it still has computation left to do. The expression `5`, on
+the other hand, *is* its own value: there is nothing to evaluate. We
+call such self-evaluating expressions *literals*.
 
-The chapter prose elaborates on each slide. If you are watching the
-video, the slides are the spine; the prose here is the longer-form
-read for after you have watched.
+This first content lecture of the course is a short tour of the
+four primitive literal kinds in OCaml: integers, floating-point
+numbers, booleans, and strings. The choice of "primitive" is the
+language designer's: these are the kinds the compiler knows about
+intrinsically, with dedicated syntax and built-in operators. Every
+other value in the language, from a list of pairs to a record of
+records, is ultimately built up out of literals like these.
+
+It is tempting to skip past this material as obvious; you have
+written `int`s and `string`s in five other languages already. Resist
+that urge. OCaml makes a number of deliberate choices in this corner
+of the language that are different from what C, Python, or Java do,
+and the reasons behind those choices reveal a lot about how the rest
+of OCaml works. Why does `1 + 2.0` fail to compile? Why is there a
+separate `^` for string concatenation when `+` was right there? Why
+does `=` mean something different from `==`? Each of these has an
+answer that we will use again, in much heavier form, when we look
+at functions, modules, and the type system.
+
+If you are watching the video, the slides are the spine; the prose
+below is what you read once the video is over, the way you would
+read a textbook chapter on the same material.
 
 :::slide
 
@@ -45,16 +66,45 @@ read for after you have watched.
 
 :::
 
+The first row of that table, `int`, deserves a longer look. The
+others are mostly variations on what you already expect, but OCaml's
+integers come with one small surprise that explains a lot of design
+choices later in the language.
+
 ## Integers
 
-OCaml integers are *machine* integers, sized to fit a word minus one
-bit. On a 64-bit machine that is 63 bits, range roughly
--4.6 × 10^18 to 4.6 × 10^18. The "missing" bit is reserved by the
-runtime for tagging values (the same mechanism the garbage collector
-uses to distinguish pointers from immediate integers).
+OCaml's `int` is a *machine integer*: a fixed-width signed integer
+that fits in a single register on whatever CPU you are running. On
+the 64-bit machines that essentially every student has today, that
+register is 64 bits wide. You might therefore expect OCaml's `int`
+to give you the full 64-bit range, from `-2^63` up to `2^63 - 1`.
+It does not. OCaml's `int` is 63 bits wide, with a range of about
+`-4.6 × 10^18` to `4.6 × 10^18`.
 
-You can write integer literals as decimal, hexadecimal (`0x`), octal
-(`0o`), or binary (`0b`):
+Where did the missing bit go? The runtime stole it. OCaml needs a
+way, at runtime, to tell an immediate integer apart from a pointer
+to a heap-allocated object. The garbage collector, in particular,
+has to walk every value the program is holding and decide whether
+to follow it as a pointer or treat it as an inline scalar. The
+trick OCaml uses is to set the low bit of every immediate integer
+to `1`, and arrange the heap so that every pointer is even (its low
+bit is `0`). One bit-test then suffices to classify any word in
+memory. That stolen low bit costs us one bit of integer range, but
+it makes the GC fast and predictable, and it is part of why OCaml
+programs can run within a small constant factor of equivalent C
+code.
+
+You will not see this tagging in your code: it happens entirely at
+the runtime level. The only place it surfaces for the programmer
+is the slightly narrower `int` range. If you really need a true
+64-bit integer, the standard library has a separate `Int64` module;
+for arbitrary-precision integers, there is the `Zarith` library.
+For the first half of this course we will not need either.
+
+OCaml lets you write integer literals in four bases. The default is
+decimal, but a `0x` prefix denotes hexadecimal, `0o` denotes octal,
+and `0b` denotes binary. The compiler reads all four and produces
+the same `int` value.
 
 :::slide
 
@@ -81,12 +131,19 @@ let mask    = 0xff_ff_ff_ff
 
 :::
 
-The `_` is purely visual; the compiler ignores it. This is the same
-convention you may have seen in Rust, Java, or Python 3.6+.
+The underscore in `1_000_000` is a small but worthwhile convention:
+it is purely visual, the compiler discards it entirely, and it
+makes large numeric constants enormously easier to read. The same
+convention exists in Java 7+, Python 3.6+, and Rust. You can place
+the underscores wherever you like; `1_0_0_0_0_0_0` is also a million,
+just an unkind one to your reader. The most common groupings are by
+three digits for decimal numbers and by bytes for hex masks.
 
-For numbers that don't fit in 63 bits, OCaml has `Int64`, `Int32`, and
-the `Zarith` library for arbitrary-precision integers. We won't need
-them for the first half of the course.
+The four integer operators that come built in are `+`, `-`, `*`,
+`/`, and `mod`. The first three behave exactly as you expect. The
+last two, `/` and `mod`, have one subtlety worth understanding now,
+because it differs from Python (the language students most often
+arrive in OCaml from).
 
 :::slide
 
@@ -116,11 +173,45 @@ let _ = (-17) / 5
 
 :::
 
-## Floats
+The `/` operator on `int` is *truncating integer division*: it
+divides exactly and then throws the fractional part away. So
+`17 / 5` is `3`, with the `0.4` discarded. The companion `mod`
+operator returns what was discarded, scaled to an integer: `17 mod 5`
+is `2`, because `17 = 3 * 5 + 2`. The identity `a = (a / b) * b + (a mod b)`
+holds for any positive `a` and `b`.
 
-Floating-point numbers in OCaml are IEEE-754 double precision, 64
-bits, same as JavaScript's only number type and C's `double`. They
-have a decimal point in their literal syntax:
+For negative operands, OCaml truncates *toward zero*, not toward
+minus infinity. So `(-17) / 5` is `-3` in OCaml. Python, in
+contrast, rounds toward minus infinity, so the same division in
+Python gives `-4`. There is no universal right answer here; both
+languages picked a convention and stuck with it. The OCaml
+convention matches C and Java; the Python convention is mathematically
+cleaner for some applications. The practical advice is: if you find
+yourself doing arithmetic on signed integers near zero, write the
+answer out for a couple of inputs and check that you have the
+convention you wanted.
+
+Integer overflow in OCaml is silent. `max_int + 1` does not raise
+an exception or produce a runtime error; it just wraps around. This
+is the same behaviour as C on 64-bit integers, and is a deliberate
+choice for performance. If you are doing arithmetic where overflow
+might happen and would matter, the discipline is the same as in C:
+use a wider type (`Int64`) or check explicitly.
+
+## Floating-point numbers
+
+OCaml's `float` is exactly IEEE 754 double precision: 64 bits, with
+1 sign bit, 11 exponent bits, and 52 fraction bits. This is the same
+representation that C calls `double`, that JavaScript uses for *all*
+numbers, and that almost every modern language uses for its default
+floating-point type. The range is roughly `±10^308`, with about 15
+to 17 significant decimal digits of precision.
+
+There is one small but very firm syntactic rule: a `float` literal
+must contain a decimal point. Without it, the compiler reads the
+number as an `int`. So `3.` and `3.0` and `3.14` are all floats;
+`3` is an integer. The trailing dot after `3.` is enough, even
+without a digit after it.
 
 :::slide
 
@@ -145,6 +236,24 @@ let bad = 3
 - For a float, write `3.0` or `3.` (trailing zero optional after the dot).
 
 :::
+
+Scientific notation works as it does in every other language:
+`2.71828e-1` is `2.71828 × 10^(-1)`, which is `0.271828`. You can
+write the exponent with a sign (`e-1`, `e+5`) or without (`e10`).
+The mantissa must still contain a decimal point, even when followed
+by an exponent. `1e10` is *not* legal OCaml; you have to write
+`1.0e10` or `1e10` is... actually, let me correct myself: `1e10` is
+read as a float in OCaml, the exponent makes it unambiguous. The
+strict rule is that *either* a decimal point *or* an exponent suffix
+is enough to mark a literal as `float`. In practice, prefer the
+decimal point: it makes the code easier to read.
+
+Now to the design choice that catches every new OCaml programmer at
+least once: the arithmetic operators on `float` are *different
+symbols* from the ones on `int`. Floating-point addition is `+.`,
+not `+`. Subtraction is `-.`. Multiplication is `*.`. Division is
+`/.`. The trailing dot is part of the operator name, just like the
+underscore in `let_binding` would be part of an identifier name.
 
 :::slide
 
@@ -176,23 +285,79 @@ let _ = float_of_int 1 +. 2.0
 
 :::
 
-Beginners often find the separate operators annoying. They are
-deliberate. In languages with implicit numeric promotion (C, Java,
-Python), the *same* `+` does six or seven different things depending
-on operand types: integer add, floating-point add, string concat,
-overloaded user-defined operators, etc. Reading code in those
-languages requires knowing the types of all operands to know what
-the operator means. OCaml separates them so that reading code is
-unambiguous: when you see `+`, both sides are `int`.
+This is the design choice that, in my experience, catches the
+greatest number of students. After ten minutes of writing OCaml,
+someone will try to write `let area r = 3.14 * r * r` and the
+compiler will refuse: `This expression has type float but an
+expression was expected of type int`. The fix is to write
+`3.14 *. r *. r` instead.
 
-This same design principle (different operators for genuinely different
-operations) is also why string concatenation uses `^`, not `+`.
+Why? Why not let `+` do the obvious thing depending on its
+operands, the way Python and Java and JavaScript do? The answer
+has two parts, one practical and one principled, and both worth
+holding onto.
+
+The practical part is that *operator overloading is genuinely
+expensive*. In C++, when the compiler sees `a + b`, it has to
+search for an `operator+` that takes the types of `a` and `b`. If
+several such operators are in scope, it has to apply overload
+resolution rules to pick one. This makes both compilation slower
+and error messages worse: a misplaced `+` can produce error
+messages that talk about candidate overloads in libraries the
+programmer has never heard of. Languages with simpler type systems,
+like C and Java, get around this by *baking the overloads into the
+compiler*: the compiler knows that `+` on two `int`s is one
+instruction, on two `double`s is a different one, and on a `String`
+and anything is yet another. That is a workable design, but it
+means you cannot decide for yourself, in your own code, what `+`
+means on a new type you have written. OCaml takes the opposite
+position: every operator has *one* meaning, fixed in the language,
+and that meaning is determined by the operator symbol alone, not
+by the types of its operands.
+
+The principled part is *reasoning*. When you read OCaml code and
+see `a + b`, you know, without checking anything else, that both
+`a` and `b` are integers, and that the result is an integer add.
+When you see `a +. b`, you know both are floats. That is one less
+thing to verify in your head as you read code. We will come back
+to this principle several times in the course: OCaml repeatedly
+chooses *more syntax, less ambiguity*, and the dividend shows up
+when you have to read someone else's code six months later.
+
+The cost of this choice is that mixing numeric types requires an
+explicit conversion. The function `float_of_int` turns an `int`
+into a `float`; `int_of_float` does the reverse, truncating. The
+opposite-direction conversion is so common in numerical code that
+the standard library also exposes them as `Float.of_int` and
+`Float.to_int`, with friendlier names.
+
+One more property of `float` that is worth flagging now, because
+students rediscover it the hard way: floating-point arithmetic is
+*approximate*. The number `0.1` cannot be represented exactly in
+binary floating point; neither can `0.2`. So `0.1 +. 0.2` does
+not give `0.3`; it gives `0.30000000000000004`. This is not
+a bug in OCaml; it is a fundamental property of IEEE 754, and
+the same anomaly appears in Python, Java, JavaScript, and
+essentially every mainstream language. If you have not yet
+encountered the basics of floating-point representation, the
+classic short guide is *What Every Computer Scientist Should
+Know About Floating-Point Arithmetic*; we will not need it
+again in this course, but it is worth knowing it exists.
 
 ## Booleans
 
-There are exactly two boolean values: `true` and `false`. The
-relevant operators are `&&` (and), `||` (or), `not`, and the
-comparisons `=`, `<>`, `<`, `<=`, `>`, `>=`.
+The `bool` type has exactly two values: `true` and `false`. There
+is no concept of "truthy" values like Python's `0` or `""`; an `if`
+or `&&` or `||` expects a `bool`, full stop. A `0` is an `int`, not
+a `bool`, and the compiler will reject `if 0 then ...` outright. As
+with the numeric operators, this is OCaml again preferring more
+syntax over more ambiguity: when you read `if e then ...`, you know
+`e` evaluates to one of two values, not to an arbitrarily-typed
+value with one of seven possible truthiness rules.
+
+The boolean operators are `&&` for conjunction, `||` for disjunction,
+and `not` for negation. The familiar comparison operators `=`, `<>`,
+`<`, `<=`, `>`, `>=` all return `bool`.
 
 :::slide
 
@@ -221,16 +386,65 @@ let _ = "apple" = "apple"
 
 :::
 
-The structural-vs-physical distinction is a real trap if you come
-from Java or JavaScript, where `==` is the everyday equality
-operator. In OCaml, `==` is for the rare case when you specifically
-need to test whether two references point to the *same* allocation.
-The compiler will let you use `==` on values for which it makes no
-sense; it just won't do what you want.
+Both `&&` and `||` *short-circuit*, exactly as in C and Java:
+`&&` evaluates its right argument only if the left was `true`, and
+`||` evaluates its right only if the left was `false`. This lets
+you safely write things like `x <> 0 && y / x > 1`: the division
+is only attempted when `x` is nonzero. We will lean on this
+behaviour later when we want to guard expensive computations.
+
+Now, the equality operator. OCaml has two of them, written `=` and
+`==`, and they mean *different things*. This is the largest single
+source of confusion for students arriving from Java or JavaScript,
+where `==` is the everyday equality operator, so let me put it as
+strongly as I can: **in OCaml, the everyday equality operator is
+`=`, with one equals sign.** The other one, `==`, is a low-level
+operator that compares whether two values are at the same memory
+address. Almost no OCaml code wants that.
+
+The reason `=` is different from `==` is that OCaml has *structural*
+equality, which inspects values by their content. Two strings are
+`=` if they contain the same bytes. Two lists are `=` if they have
+the same length and their corresponding elements are `=`. Two
+records are `=` if all their corresponding fields are `=`. The
+relation is defined recursively on the structure of the value,
+hence the name. The operator `==`, by contrast, only checks whether
+two values refer to the same allocation in memory; for immutable
+data, this is almost always not the question you wanted to ask.
+
+```ocaml
+let _ = "apple" = "apple"
+```
+
+The expression above is `true`, because both strings have the same
+content. But `"apple" == "apple"` could be either `true` or `false`
+depending on whether the compiler decided to allocate two separate
+string literals or share one. That is the kind of detail you should
+never have to think about; use `=` and the question never comes up.
+
+The corresponding *inequality* operators are `<>` for structural and
+`!=` for physical. Again: stick with `<>`. If you find yourself
+reaching for `==` or `!=`, ask whether you really mean to compare
+identities, not contents.
 
 ## Strings
 
-Strings in OCaml are sequences of bytes, written with double quotes.
+Strings in OCaml are sequences of bytes, written between double
+quotes. They are *immutable*: once you have built a string, you
+cannot modify a byte of it without explicitly converting through
+the related type `bytes`. Most code never needs to do that, and so
+treats strings as values, like integers: you build new ones from
+old ones rather than mutating them in place.
+
+A "byte string" is exactly that, a sequence of 8-bit bytes. OCaml's
+`string` does not know about Unicode code points, or about encoding
+in general. If your string contains the bytes that encode "café" in
+UTF-8, then `String.length` reports 5 (the four ASCII letters plus
+the two bytes that encode the accented "é"), not 4. For
+Unicode-aware work the standard library is not enough; you reach
+for an external library like `uutf` or `uucp`. Most code that just
+concatenates, slices, or searches byte content does not need any of
+that, and is perfectly happy with the byte view.
 
 :::slide
 
@@ -257,6 +471,23 @@ let s = "first" ^ " " ^ "second"
 
 :::
 
+The escape sequences inside string literals are the same family
+you have seen in C: `\n` for newline, `\t` for tab, `\\` for a
+literal backslash, `\"` for a literal double quote. There are also
+two ways to write an arbitrary byte: `\NNN`, where `NNN` is a
+three-digit decimal number, or `\xHH`, where `HH` is two hex digits.
+You will not need these often, but they are how you embed raw bytes
+in a literal.
+
+String concatenation uses the operator `^`, not `+`. The reason is
+the same reason `+` does not work between `int` and `float`: in
+OCaml, an operator has one meaning, fixed by the symbol. Numeric
+addition is one operation; string concatenation is a different one;
+they get different symbols. So `"foo" ^ "bar"` is `"foobar"`. If
+you want to build up a string from many pieces, the standard library
+has `String.concat`, which takes a separator and a list of pieces
+and is much faster for many small parts.
+
 :::slide
 
 ## String length and access
@@ -279,17 +510,53 @@ let _ = String.get "OCaml" 0
 
 :::
 
-OCaml's `string` is a sequence of *bytes*, not Unicode characters.
-For Unicode-aware work you reach for the `uutf` library; the standard
-library's `String` only sees the raw bytes. Most code that just
-needs to concatenate, slice, or search byte strings is happy with
-plain `String`.
+`String.length` takes a string and returns the number of bytes in
+it. `String.get` takes a string and an index and returns the byte
+at that index, as a value of type `char`. Indexing is zero-based,
+as in essentially every modern language. There is shorthand syntax
+for the same access: `s.[i]` is sugar for `String.get s i`. You may
+see it in code, especially older code; both forms produce the same
+result.
 
-The chapter mode keeps showing this kind of "by the way" detail; in
-the slides we keep it tighter. The point is the *primitive kinds*;
-the libraries come later.
+The `char` type is a separate primitive type we have not given its
+own slide. It is exactly one byte, 0 through 255. Character
+literals are written with single quotes (`'a'`, `'0'`, `'\n'`), to
+distinguish them from one-character strings. So `'a'` is a `char`;
+`"a"` is a `string` of length one. The two types are different and
+not implicitly convertible. To turn a `char` into a one-character
+string, use `String.make 1 c`; to extract a `char` from a string,
+use `String.get` as above or the `.[i]` syntax.
+
+Out-of-bounds access raises an exception, `Invalid_argument`. We
+will see how to handle exceptions properly in Module 7; for now,
+just know that `String.get s i` for an `i` outside `0 .. length - 1`
+is a runtime error.
+
+## Conversions between types
+
+OCaml will not auto-convert between numeric types, between `bool`
+and `int`, or between `char` and `string`. The standard library
+provides explicit conversion functions wherever they make sense:
+
+```ocaml
+let _ = string_of_int 42
+let _ = float_of_int 7
+let _ = int_of_float 3.7      (* truncates toward zero -> 3 *)
+let _ = int_of_string "123"
+let _ = string_of_bool true
+```
+
+These names follow a predictable pattern: `xxx_of_yyy` returns an
+`xxx` given a `yyy`. The functions that parse from a string,
+`int_of_string` and `float_of_string`, raise an exception if the
+string does not represent a number of that type. There is no
+`bool_of_string` of the parsing variety in the older standard
+library; check the docs for your stdlib version.
 
 ## Putting it together
+
+Here is a function that uses three of the four primitive types we
+have seen:
 
 :::slide
 
@@ -311,6 +578,63 @@ let _ = temperature_label 22.5
 - For now: the literals we've seen (`0.0`, `18.0`, `"freezing"`) combine into a working function.
 
 :::
+
+Notice three things. First, the function takes a `float` (the
+temperature in Celsius) and returns a `string` (the label). The
+compiler figured this out automatically from the function body,
+because the comparisons are against `float` literals and the `then`
+and `else` branches return `string` literals. We did not have to
+write a single type. Second, the body is a chain of nested
+`if`-`then`-`else` expressions, and the whole chain is *one
+expression*. This is the same point we made earlier about OCaml
+being expression-based: even something that looks like a multi-way
+branch is a value-producing expression you can pass to a function
+or bind to a name. Third, every comparison is against the same
+type: `c < 0.0`, where `c` is `float` and `0.0` is `float`, never
+mixing `int` and `float`.
+
+A C programmer reading this might object that the `if`s could be
+rewritten as a `switch`. In OCaml, the equivalent of `switch` is
+`match`, which we will see in Module 5 (it is the central tool of
+the language). But `match` is overkill for a chain of *threshold
+comparisons* like this one; the right tool here is a nested `if`,
+the same as in any other language.
+
+## Common pitfalls
+
+A short collection of mistakes I see beginners make on every cohort
+of this course. None are deep, but each costs about half an hour to
+recover from if you make it for the first time mid-assignment.
+
+**Pitfall 1: mixing `int` and `float`.** The error message
+`This expression has type float but an expression was expected of type int`
+(or its mirror) is the most common compile error in week 1. Look
+at the surrounding code and figure out which side is supposed to
+be a `float`. Insert a `float_of_int` (or `int_of_float`) as needed.
+Resist the urge to "fix" this by sprinkling dots randomly; understand
+which side wanted which type.
+
+**Pitfall 2: using `==` for equality.** It looks like the Java
+operator; it is not. Use `=`. The compiler will not warn you;
+`==` is a valid operator with a perfectly valid (just unhelpful)
+meaning, so your code compiles and runs and produces wrong answers.
+This is a habit you have to drill out from day one.
+
+**Pitfall 3: forgetting the decimal point.** `let pi = 3` does
+not produce a `float`; it produces an `int` named `pi` with value
+3. Then later, when you write `2.0 *. pi`, the compiler complains
+about a type mismatch and you wonder why. Always write floating
+constants with at least a trailing `.`: `let pi = 3.14159`,
+not `let pi = 3.14159`. (Better still: use `Float.pi` from the
+standard library.)
+
+**Pitfall 4: assuming string-on-string `=` is expensive.** It is
+linear in the length of the shorter string, the same as `strcmp`
+in C, and the compiler is good about not doing redundant work.
+You do not need to micro-optimise by comparing string lengths
+first.
+
+## Activity
 
 :::slide
 
@@ -336,6 +660,29 @@ Predict before running.
 
 :::
 
+The activity is a single question with two parts. Before reading
+on, try it: predict the type and value of `3 / 2` and `3.0 /. 2.0`.
+
+The first, `3 / 2`, has type `int` and value `1`. Both operands
+are `int`, so `/` is integer division. Integer division truncates,
+so the answer is `1`, not `1.5`. Python 3 contrasts: there `/`
+performs *true* division and would produce `1.5`, even on integer
+operands; you would have to write `3 // 2` to get the truncated
+answer. So if you arrive in OCaml from Python 3, the convention is
+flipped relative to what you are used to. In Python *2*, by the
+way, the convention is the same as OCaml's.
+
+The second, `3.0 /. 2.0`, has type `float` and value `1.5`. Both
+operands are `float`, the operator is the float-division operator,
+and the answer is what you expect.
+
+If you tried to write `3 /. 2`, OCaml would refuse: the operator
+`/.` expects `float` on both sides. If you tried `3.0 / 2.0`, OCaml
+would also refuse: the operator `/` expects `int`. There is no
+operator that takes mixed types in OCaml.
+
+## What's next
+
 :::slide
 
 ## What's next
@@ -345,6 +692,13 @@ Predict before running.
 - The piece that makes a program more than a one-liner.
 
 :::
+
+Once you have literals, the immediate next question is: how do I
+give them names? Repeatedly writing `3.14159` in code is not a
+sustainable plan. The next lecture covers `let` bindings, which
+let you name a value and reuse it. They will also let us write
+local definitions inside an expression, the first step toward
+structuring real programs.
 
 ## Reading
 
