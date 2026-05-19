@@ -76,6 +76,12 @@ body.mode-slides .reveal .slides section img {
   height: auto;
 }
 
+/* Per-cell reset (↺) is positioned for the 720px chapter article;
+   in slide mode it ends up floating at the section's far right
+   edge, disconnected from its cell. Just hide it in slide mode;
+   you can use "Reset all cells" from the header if needed. */
+body.mode-slides .reset-cell { display: none; }
+
 /* Header bar shrinks in slide mode to free vertical space. */
 body.mode-slides .page-header {
   position: absolute;
