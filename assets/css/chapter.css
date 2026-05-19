@@ -168,26 +168,37 @@ body.mode-slides  .when-chapter { display: none; }
   font-size: 0.85em;
 }
 
-/* Collapse: shift the article right when the sidebar is visible. */
+/* Shift the article right when the sidebar is visible. The sidebar
+   is var(--sidebar-width) wide; we leave 2.5rem of breathing room
+   between the sidebar's right edge and the start of the chapter
+   prose so the text is not flush against the rule. */
 @media (min-width: 900px) {
   body.mode-chapter:not(.sidebar-hidden) .chapter,
-  body.mode-chapter:not(.sidebar-hidden) .prev-next {
-    margin-left: calc(var(--sidebar-width) + 1rem);
-    margin-right: 1rem;
+  body.mode-chapter:not(.sidebar-hidden) .prev-next,
+  body.mode-chapter:not(.sidebar-hidden) .lecture-meta-footer {
+    margin-left: calc(var(--sidebar-width) + 2.5rem);
+    margin-right: 1.5rem;
   }
 }
 body.sidebar-hidden .sidebar { display: none; }
 
 /* The toggle lives in the header bar; hide it in slide mode. */
 .sidebar-collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   border: 1px solid var(--rule);
   background: transparent;
-  padding: 0.35rem 0.55rem;
   border-radius: 4px;
   cursor: pointer;
   color: var(--accent);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  box-sizing: border-box;
 }
 .sidebar-collapse:hover { background: var(--code-bg); }
 
@@ -206,6 +217,7 @@ body.sidebar-hidden .sidebar { display: none; }
   font-size: 1.1rem;
   line-height: 1;
   text-decoration: none;
+  box-sizing: border-box;
 }
 .home-link:hover { background: var(--code-bg); }
 body.mode-slides .home-link { opacity: 0.6; }

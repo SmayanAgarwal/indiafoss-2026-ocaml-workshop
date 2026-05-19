@@ -43,7 +43,7 @@ let header_bar ~(fm : Frontmatter.t) =
   Printf.sprintf
     {|  <header class="page-header">
     <button class="sidebar-collapse chapter-only" type="button" title="Show or hide the course outline" aria-label="Toggle course outline">&#9776;</button>
-    <a class="home-link" href="index.html" title="Course landing page" aria-label="Course landing page">&#x21A9;&#xfe0e;</a>
+    <a class="home-link" href="index.html" title="Course landing page" aria-label="Course landing page">&#x2302;</a>
     <div class="lecture-meta">%s</div>
     <h1 class="lecture-title">%s</h1>
     <div class="cell-controls">
