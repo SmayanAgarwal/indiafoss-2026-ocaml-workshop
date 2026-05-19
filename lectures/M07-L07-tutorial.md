@@ -14,15 +14,87 @@ reading:
 
 # Tutorial for Module 7
 
-We build a small functional queue using the two-stack trick: keep
-two lists, one for the front (in normal order) and one for the
-back (in reverse). `enqueue` pushes onto the back; `dequeue` peels
-off the front, refilling the front from the (reversed) back when
-the front runs out.
+This tutorial pulls together the machinery from the rest of the
+module. We build a small *functional queue* (FIFO: first-in,
+first-out) using the classic two-stack trick. We package it as a
+module with a signature that hides the representation. Then we
+turn it into a functor parameterised by the element type, with a
+printer attached. By the end of the lecture you will have used
+every piece of vocabulary from Module 7 in one worked example.
 
-We package it as a module with a signature that hides the
-implementation, then turn it into a functor parameterized by the
-element type.
+The two-stack queue is a small classic of functional programming.
+A queue is a FIFO: you push onto one end and pop from the other.
+If you implement it naively as a single list, *push* and *pop*
+can't both be O(1): one of them has to walk to the far end. The
+trick is to keep *two* lists, one for the front (in normal order)
+and one for the back (in reverse order). `enqueue` conses onto
+the back; `dequeue` pulls from the head of the front; when the
+front runs out, we reverse the back to become the new front.
+
+This is the same trick that backs many real-world queue
+implementations in functional languages. It is the kind of small,
+elegant data structure that is exactly the sort of thing a module
+system is designed for: a few operations on an abstract type,
+maintaining an invariant we do not want callers to see or break.
+
+## The implementation, unsealed
+
+We start with the raw implementation, with no signature attached.
+
+```ocaml
+type 'a queue = { front : 'a list; back : 'a list }
+
+let empty = { front = []; back = [] }
+
+let is_empty q = q.front = [] && q.back = []
+
+let enqueue x q = { q with back = x :: q.back }
+
+let rec dequeue q =
+  match q.front, q.back with
+  | [], [] -> None
+  | x :: rest, _ -> Some (x, { q with front = rest })
+  | [], back -> dequeue { front = List.rev back; back = [] }
+
+let q = enqueue 3 (enqueue 2 (enqueue 1 empty))
+let _ = dequeue q
+```
+
+The toplevel reports `Some (1, ...)`. Let's walk through each
+piece.
+
+The type `'a queue` is a record with two fields, both `'a list`.
+The *invariant* (a property the implementation maintains and the
+caller relies on) is: if there is anything in the queue, the
+front list is the oldest elements in FIFO order, and the back
+list is the newest elements in *reverse* FIFO order. Equivalently,
+the conceptual queue is `front @ List.rev back`.
+
+`empty` is the queue with both lists empty.
+
+`is_empty` checks both lists. A queue is empty only if both are
+empty: if the front is empty but the back is not, there are still
+elements waiting (they will get moved to the front on the next
+dequeue).
+
+`enqueue x q` adds `x` to the new end: it conses onto the back.
+This is O(1).
+
+`dequeue` is the interesting one. Three cases:
+
+- `[], []`: the queue is empty; return `None`.
+- `x :: rest, _`: the front has at least one element; return it,
+  and the rest of the queue is `{ front = rest; back = q.back }`.
+- `[], back`: the front is empty but the back is not; reverse the
+  back into a fresh front and recurse.
+
+The third case is where the *amortised* analysis kicks in. A
+single `List.rev` is O(n), so in the worst case a single
+`dequeue` takes O(n). But each element is only reversed *once* in
+its lifetime in the queue: it gets pushed onto the back, sits
+there, then is reversed onto the front exactly once. Over the
+total lifetime of the queue, each element pays O(1) of reversal
+cost. *Amortised*, `dequeue` is O(1). Worst-case, it is O(n).
 
 :::slide
 
@@ -55,6 +127,56 @@ let _ = dequeue q
 - The next dequeue is O(1).
 
 :::
+
+## The signature
+
+We have a working queue, but the representation is exposed. A
+caller can construct a record `{ front = [1; 2]; back = [3; 4] }`
+directly, possibly violating our invariant. Even worse, a caller
+can come to *rely on* the two-list shape, so that any future
+change to the representation breaks their code.
+
+The fix from M07-L05: a signature with an abstract type.
+
+```ocaml
+module type QUEUE = sig
+  type 'a t
+  val empty : 'a t
+  val is_empty : 'a t -> bool
+  val enqueue : 'a -> 'a t -> 'a t
+  val dequeue : 'a t -> ('a * 'a t) option
+end
+
+module Queue : QUEUE = struct
+  type 'a t = { front : 'a list; back : 'a list }
+
+  let empty = { front = []; back = [] }
+
+  let is_empty q = q.front = [] && q.back = []
+
+  let enqueue x q = { q with back = x :: q.back }
+
+  let rec dequeue q =
+    match q.front, q.back with
+    | [], [] -> None
+    | x :: rest, _ -> Some (x, { q with front = rest })
+    | [], back -> dequeue { front = List.rev back; back = [] }
+end
+
+let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty))
+let _ = Queue.dequeue q
+let _ = Queue.is_empty Queue.empty
+```
+
+The toplevel reports `Some (1, <abstr>)` for the dequeue and
+`true` for `is_empty Queue.empty`.
+
+The `QUEUE` signature lists exactly the operations callers can
+use. The type `'a t` is abstract: outside `Queue`, you cannot see
+that it is a two-list record. The constructors `empty` and
+`enqueue` are how you build queues; `dequeue` is how you take
+them apart; `is_empty` lets you check. That is the entire
+surface.
 
 :::slide
 
@@ -102,6 +224,10 @@ let _ = Queue.is_empty Queue.empty
 
 :::
 
+## Why hide the representation?
+
+The two reasons from M07-L05, applied here.
+
 :::slide
 
 ## Why hide the representation?
@@ -115,6 +241,69 @@ Two reasons we've seen before:
   Dynarray, a linked structure), no caller breaks.
 
 :::
+
+**Invariants.** Our queue depends on `front` containing the
+elements in FIFO order and `back` containing them in reverse. If
+callers could write `{ front = [3; 2]; back = [1] }` directly,
+they could create a queue that violates the invariant; subsequent
+operations would return elements in the wrong order. The
+signature prevents this: the only way to make a queue is to start
+from `Queue.empty` and use `Queue.enqueue`, which maintain the
+invariant.
+
+**Change.** Maybe later we want to switch to a different
+implementation: a `Dynarray`, a doubly-linked list, an array
+ring buffer. As long as the new implementation provides `empty`,
+`is_empty`, `enqueue`, `dequeue` with the same types, no caller
+needs to change. The signature is the contract; we are free to
+change anything below it.
+
+## Turning it into a functor
+
+Suppose now we want a queue parameterised by the *element type*,
+with a typed printer attached. (Maybe we want a debugger view, or
+a logger that prints queue contents.) The element type can no
+longer be free: we need a way to turn an element into a string.
+
+The mechanism from M07-L06: a functor. We start by writing a
+signature describing what we need from the element type.
+
+```ocaml
+module type ELT = sig
+  type t
+  val to_string : t -> string
+end
+
+module Make (E : ELT) = struct
+  type elt = E.t
+  type t = { front : elt list; back : elt list }
+
+  let empty = { front = []; back = [] }
+  let is_empty q = q.front = [] && q.back = []
+  let enqueue x q = { q with back = x :: q.back }
+  let rec dequeue q =
+    match q.front, q.back with
+    | [], [] -> None
+    | x :: rest, _ -> Some (x, { q with front = rest })
+    | [], back -> dequeue { front = List.rev back; back = [] }
+
+  let print q =
+    let f = String.concat ", " (List.map E.to_string q.front) in
+    let b = String.concat ", " (List.map E.to_string (List.rev q.back)) in
+    print_endline ("[" ^ f ^ " | " ^ b ^ "]")
+end
+
+module IQ = Make (struct type t = int let to_string = string_of_int end)
+
+let q = IQ.enqueue 3 (IQ.enqueue 2 (IQ.enqueue 1 IQ.empty))
+let () = IQ.print q
+```
+
+This prints `[ | 3, 2, 1]`. Inside the queue, `front` is empty,
+and `back` is `[3; 2; 1]` (because we conses in reverse, with `3`
+the most recently added). The print function reverses `back` for
+display, so the output reads "back contains, in FIFO order, 1
+then 2 then 3."
 
 :::slide
 
@@ -156,14 +345,26 @@ let q = IQ.enqueue 3 (IQ.enqueue 2 (IQ.enqueue 1 IQ.empty))
 let () = IQ.print q
 ```
 
-Prints `[ | 3, 2, 1]` (front is empty; back is `[3; 2; 1]`,
-reversed for display gives `1, 2, 3`).
+Prints `[ | 3, 2, 1]`.
 
 - The functor expects an element type with a `to_string`.
 - We pass an inline module providing `int` and `string_of_int`.
 - We get out a fully working int-queue with print capability.
 
 :::
+
+A few things to read out of this. The `Make` functor takes a
+parameter `E` of signature `ELT`: any module with a type `t` and
+a `to_string : t -> string`. Inside `Make`, we reference `E.t`
+(the element type) and `E.to_string` (the printer). The resulting
+module type fixes `elt = E.t`, so `IQ.elt` is `int` once we
+instantiate with the `int` module.
+
+This is the same shape as `Map.Make`: a constraint on the element
+type (via the parameter signature), and a generic implementation
+parameterised by that constraint.
+
+## What is notable about the functor
 
 :::slide
 
@@ -175,17 +376,73 @@ reversed for display gives `1, 2, 3`).
   type. We wrote it once.
 - **Composable**: a `String_queue` is one line:
 
-```ocaml
-module Q = struct end  (* dummy *)
+```ocaml skip
+module String_queue = Make (struct
+  type t = string
+  let to_string s = s
+end)
 ```
-
-(actually `module String_queue = Make(struct type t = string let to_string s = s end)`)
 
 - This is how `Map.Make`, `Set.Make`, `Hashtbl.Make` work in the
   standard library.
 - **One implementation, many specialisations.**
 
 :::
+
+The functor is *specialised once you apply it*: `IQ.elt` is
+exactly `int`. Trying to enqueue a string into `IQ` is a type
+error caught at compile time, the same way trying to add a string
+to an `int list` is. But the *implementation* of the queue
+operations is written once: the body of `Make` does not know or
+care what the element type is, except through `E.to_string`.
+
+To build a string queue you write one line:
+
+```ocaml skip
+module String_queue = Make (struct
+  type t = string
+  let to_string s = s
+end)
+```
+
+This is exactly how `Map.Make`, `Set.Make`, and `Hashtbl.Make` in
+the standard library work: one implementation, many specialised
+instantiations. You write the data structure once and reuse it
+forever.
+
+## A quick check
+
+:::quiz mcq
+In the two-stack queue, what is the worst-case time complexity of
+a single `dequeue` operation?
+
+- [ ] O(1)
+- [x] O(n)
+- [ ] O(log n)
+- [ ] O(n^2)
+
+**Why:** when the front list is empty and the back has n
+elements, `dequeue` calls `List.rev` on the back, which is O(n).
+Amortised across many operations the cost is O(1) per element
+(each element is reversed only once), but a *single* dequeue can
+be O(n).
+:::
+
+:::quiz mcq
+Given `module Make (E : ELT) = struct ... end`, what happens if
+we try `Make (struct type t = int end)` (forgetting `to_string`)?
+
+- [ ] Returns a partial module.
+- [ ] Sets `to_string` to `string_of_int` automatically.
+- [x] Compile error: signature mismatch, `to_string` not provided.
+- [ ] Runtime error when `to_string` is called.
+
+**Why:** the functor argument must satisfy `ELT`, which requires
+both `t` and `to_string`. Missing one is rejected at the
+functor application, at compile time, before any code runs.
+:::
+
+## Activity
 
 :::slide
 
@@ -195,6 +452,77 @@ Add `length : 'a t -> int` to the queue. Update the signature.
 What does the compiler require?
 
 :::
+
+:::quiz code
+Add a `length` operation to the queue. Both the signature and the
+struct need updating. The starter has the unsealed version; your
+job is to add `length` everywhere.
+
+```ocaml
+module type QUEUE = sig
+  type 'a t
+  val empty : 'a t
+  val is_empty : 'a t -> bool
+  val enqueue : 'a -> 'a t -> 'a t
+  val dequeue : 'a t -> ('a * 'a t) option
+end
+
+module Queue : QUEUE = struct
+  type 'a t = { front : 'a list; back : 'a list }
+  let empty = { front = []; back = [] }
+  let is_empty q = q.front = [] && q.back = []
+  let enqueue x q = { q with back = x :: q.back }
+  let rec dequeue q =
+    match q.front, q.back with
+    | [], [] -> None
+    | x :: rest, _ -> Some (x, { q with front = rest })
+    | [], back -> dequeue { front = List.rev back; back = [] }
+end
+
+let queue_length _q : int = failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty)) in
+  check (queue_length q = 3) "three elements";
+  check (queue_length Queue.empty = 0) "empty";
+  (match Queue.dequeue q with
+   | Some (_, q') -> check (queue_length q' = 2) "after dequeue"
+   | None -> failwith "expected non-empty");
+  print_endline "all tests passed"
+```
+:::
+
+Reference solution: extend the signature to add `length` and the
+implementation alongside.
+
+```ocaml skip
+module type QUEUE = sig
+  type 'a t
+  val empty : 'a t
+  val is_empty : 'a t -> bool
+  val length : 'a t -> int
+  val enqueue : 'a -> 'a t -> 'a t
+  val dequeue : 'a t -> ('a * 'a t) option
+end
+
+module Queue : QUEUE = struct
+  type 'a t = { front : 'a list; back : 'a list }
+  let empty = { front = []; back = [] }
+  let is_empty q = q.front = [] && q.back = []
+  let length q = List.length q.front + List.length q.back
+  let enqueue x q = { q with back = x :: q.back }
+  let rec dequeue q =
+    match q.front, q.back with
+    | [], [] -> None
+    | x :: rest, _ -> Some (x, { q with front = rest })
+    | [], back -> dequeue { front = List.rev back; back = [] }
+end
+
+let queue_length = Queue.length
+```
 
 :::slide
 
@@ -239,6 +567,26 @@ let _ = Queue.length q
 
 :::
 
+This is the value of the signature in action. Adding a feature
+requires touching both files (or both halves of an inline
+declaration): the signature gets a `val`, the implementation gets
+a `let`. The compiler checks both directions. If you add to the
+signature but forget the implementation, you get `Signature
+mismatch: missing value 'length'`. If you add to the implementation
+but forget the signature, the new function exists but is
+inaccessible from outside. The compiler keeps the contract
+between interface and implementation consistent.
+
+The implementation `length q = List.length q.front + List.length
+q.back` is itself O(n) (each `List.length` walks its list). For a
+queue that you query often, you might cache the length in a third
+field of the record, updated by each `enqueue` and `dequeue`. The
+signature would not change; only the implementation would. This
+is the kind of optimisation the abstract type lets you do
+silently.
+
+## What you should be able to do now
+
 :::slide
 
 ## What you should be able to do now
@@ -262,7 +610,26 @@ Module 8 covers **monads and GADTs**:
 
 :::
 
+You have now seen every piece of the imperative and modular OCaml
+toolkit. Refs and arrays for mutation when the algorithm wants
+it. Exceptions for unexpected failures, alongside `option` and
+`result` for predictable ones. Modules for grouping and
+namespacing. Signatures for hiding internals. Functors for
+writing generic data structures parameterised by element
+operations. Together they are enough to structure a real OCaml
+project at scale.
+
+Module 8 turns to two more advanced abstractions: *monads*, which
+sequence computations cleanly across effects (option, result,
+state, exceptions, IO), and *GADTs*, generalized algebraic data
+types, which let you encode richer constraints in the type
+system. Both are common in serious OCaml code; both reward the
+groundwork we have laid through Modules 1 through 7.
+
 ## Reading
 
-- **Cornell CS3110**, *A functional queue*:
+- **Cornell CS3110**, *Functors* (the functional queue is a
+  worked example late in the chapter):
   <https://cs3110.github.io/textbook/chapters/modules/functors.html>
+- **Real World OCaml**, *Functors*:
+  <https://dev.realworldocaml.org/functors.html>
