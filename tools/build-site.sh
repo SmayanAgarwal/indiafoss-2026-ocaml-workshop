@@ -415,11 +415,10 @@ emit_dashboard() {
     .dash h2 { margin-top: 2.2rem; font-size: 1.2rem; }
     .dash .note {
       margin: 0.8rem 0 1.4rem;
-      padding: 0.6rem 0.9rem;
+      padding: 0.7rem 1rem;
       background: var(--code-bg);
       border-left: 3px solid var(--accent);
-      font-size: 0.92em;
-      color: var(--muted);
+      color: var(--fg);
     }
     .dash .cards {
       display: grid;
