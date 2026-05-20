@@ -594,7 +594,7 @@ match is shorter, clearer, and faster than any data structure.
 
 ## Two checks
 
-:::quiz mcq
+:::quiz mcq id=M05-L01-q3
 What does this evaluate to?
 
 ```ocaml
@@ -611,7 +611,7 @@ let result = f 0
 - [ ] Compile error
 :::
 
-:::quiz mcq
+:::quiz mcq id=M05-L01-q2
 What does this evaluate to?
 
 ```ocaml skip
@@ -637,7 +637,7 @@ runs.
 
 A code task:
 
-:::quiz code
+:::quiz code id=M05-L01-q1
 Write `traffic_action : string -> string` that returns:
 
 - `"stop"` when the input is `"red"`,

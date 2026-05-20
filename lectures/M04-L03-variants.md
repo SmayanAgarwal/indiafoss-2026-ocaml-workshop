@@ -656,7 +656,7 @@ discuss API design.
 
 ## A small check
 
-:::quiz mcq
+:::quiz mcq id=M04-L03-q2
 Given:
 
 ```ocaml
@@ -677,7 +677,7 @@ It matches `Ok _` (any `Ok`), and it matches `Ok n` (any `Ok`,
 binding the payload to `n`). It does *not* match `Err _`.
 :::
 
-:::quiz code
+:::quiz code id=M04-L03-q1
 Define the variant `coin` and write `value : coin -> int` returning
 the value in paise: `Paisa1` is `1`, `Paisa5` is `5`, `Paisa10` is
 `10`, `Rupee` is `100`.

@@ -447,7 +447,7 @@ returns a module is called a *functor*, and we cover it in
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M07-L04-q3
 Given this module:
 
 ```ocaml
@@ -470,7 +470,7 @@ What is the value of `M.succ M.zero`?
 both values and types: `M.t` is the type, `M.zero` is the value.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M07-L04-q2
 Why does the convention `type t` (not `type color`, `type stack`,
 etc.) exist?
 
@@ -497,7 +497,7 @@ Define a module `Stack` with a mutable integer stack: `push : int
 
 :::
 
-:::quiz code
+:::quiz code id=M07-L04-q1
 Define a `Stack` module holding integer state.
 
 ```ocaml

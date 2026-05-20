@@ -432,7 +432,7 @@ Compare what changed between the two.
 
 Try this one yourself before reading on.
 
-:::quiz code
+:::quiz code id=M02-L06-q2
 Write `signum : int -> int` that returns `-1` for negative inputs,
 `0` for zero, and `1` for positive inputs.
 
@@ -452,7 +452,7 @@ let () =
 ```
 :::
 
-:::quiz code
+:::quiz code id=M02-L06-q1
 Now write the float version: `signum_f : float -> float`
 returning `-1.0`, `0.0`, `1.0`.
 

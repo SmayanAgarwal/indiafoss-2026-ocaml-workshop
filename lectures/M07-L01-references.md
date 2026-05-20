@@ -438,7 +438,7 @@ Otherwise the difference is cosmetic.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M07-L01-q3
 What is the type of `ref "hello"`?
 
 - [ ] `string`
@@ -452,7 +452,7 @@ contents are `"hello"`; the reference is a fresh cell holding that
 string.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M07-L01-q2
 What does this print?
 
 ```ocaml
@@ -576,7 +576,7 @@ second `2`, third `3`, and so on.
 
 :::
 
-:::quiz code
+:::quiz code id=M07-L01-q1
 Write `make_counter : unit -> (unit -> int)` that returns a closure
 yielding the next integer on each call.
 

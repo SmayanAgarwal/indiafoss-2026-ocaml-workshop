@@ -440,7 +440,7 @@ uses `Map` or `Hashtbl`, which we will meet in
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M06-L06-q3
 Which of the following is *not* expressible as a fold over a single list?
 
 - [ ] `List.length`
@@ -457,7 +457,7 @@ are far apart, which a single linear pass cannot do. (You can
 construction, but the sort itself is not a fold.)
 :::
 
-:::quiz mcq
+:::quiz mcq id=M06-L06-q2
 `List.fold_left (fun acc x -> x :: acc) [] [1; 2; 3]` is...
 
 - [ ] `[1; 2; 3]`
@@ -473,7 +473,7 @@ the classic one-line `List.rev`. To get back the original order, use
 
 A code challenge:
 
-:::quiz code
+:::quiz code id=M06-L06-q1
 Write `maximum : 'a list -> 'a option` that returns the largest
 element of a list, or `None` for an empty list. Use `List.fold_left`
 with the `compare` function or `max`. (Hint: the accumulator is an

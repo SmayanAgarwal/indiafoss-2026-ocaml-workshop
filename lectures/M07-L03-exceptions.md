@@ -481,7 +481,7 @@ exceptions for things that "should not normally happen."
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M07-L03-q3
 What is the type of `raise (Failure "oops")`?
 
 - [ ] `unit`
@@ -496,7 +496,7 @@ itself (`Failure "oops"`) has type `exn`, but the *raise
 expression* has type `'a`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M07-L03-q2
 What does this evaluate to?
 
 ```ocaml
@@ -530,7 +530,7 @@ none does. Then write `find_first_opt` returning `None` instead.
 
 :::
 
-:::quiz code
+:::quiz code id=M07-L03-q1
 Write `find_first` raising `Not_found`, then wrap it to give
 `find_first_opt`.
 

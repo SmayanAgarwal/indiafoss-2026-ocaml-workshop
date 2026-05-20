@@ -397,7 +397,7 @@ call it from the guard. Keeps the `match` readable.
 
 ## Two checks
 
-:::quiz mcq
+:::quiz mcq id=M05-L03-q3
 What does this evaluate to?
 
 ```ocaml
@@ -418,7 +418,7 @@ the clause does not fire. The wildcard catches everything else
 and returns `"non-positive"`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M05-L03-q2
 Why does the compiler warn about this match as non-exhaustive?
 
 ```ocaml skip
@@ -440,7 +440,7 @@ facts. The fix is an unguarded `| _ -> ...` to close the match.
 
 A code task:
 
-:::quiz code
+:::quiz code id=M05-L03-q1
 Write `sign : int -> string` returning `"negative"`, `"zero"`, or
 `"positive"`. Use a single `function` with `when`-guards; no
 `if`/`else`. Make sure the match is exhaustive (no warning 8).

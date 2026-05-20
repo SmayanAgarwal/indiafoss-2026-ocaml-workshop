@@ -525,7 +525,7 @@ course uses these pieces in different combinations.
 
 ## A short check
 
-:::quiz mcq
+:::quiz mcq id=M04-L06-q2
 What does `pretty (JArray [])` evaluate to?
 
 - [ ] `""`
@@ -538,7 +538,7 @@ pretty xs) ^ "]"`. With `xs = []`, `List.map pretty xs = []` and
 `String.concat ", " []` is `""`. So we get `"[" ^ "" ^ "]"` = `"[]"`.
 :::
 
-:::quiz code
+:::quiz code id=M04-L06-q1
 Write `count_nulls : json -> int` that returns the number of `JNull`
 constructors anywhere inside a `json` value (including nested
 inside arrays and object values).

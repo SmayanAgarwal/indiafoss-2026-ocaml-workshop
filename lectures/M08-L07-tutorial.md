@@ -476,7 +476,7 @@ need ordering witnesses or other extensions.
 
 A code quiz to put it together:
 
-:::quiz code
+:::quiz code id=M08-L07-q3
 Add a `Neg : int expr * int expr -> int expr` constructor that
 represents subtraction (despite its name; let us call it `Sub`).
 Write the evaluator that handles `Int_lit`, `Add`, and `Sub`.
@@ -520,7 +520,7 @@ arithmetic.
 
 ## A check
 
-:::quiz mcq
+:::quiz mcq id=M08-L07-q2
 We pattern-match on a GADT inside `eval`. Why is the `type a.
 ...` annotation usually needed?
 
@@ -538,7 +538,7 @@ branch's `a` independently. This is the standard idiom for
 writing functions on GADTs.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M08-L07-q1
 Why does combining GADTs with the option monad in `eval_safe`
 make sense?
 

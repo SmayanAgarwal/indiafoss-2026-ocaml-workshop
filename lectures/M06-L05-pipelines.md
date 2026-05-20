@@ -476,7 +476,7 @@ Module 6 is preparing you to write fluently.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M06-L05-q3
 What is `[1; 2; 3] |> List.map ((+) 10)`?
 
 - [ ] `[10; 11; 12]`
@@ -490,7 +490,7 @@ What is `[1; 2; 3] |> List.map ((+) 10)`?
 it changes the writing order.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M06-L05-q2
 What does `compose f g x` compute, where `let compose f g = fun x ->
 f (g x)`?
 
@@ -507,7 +507,7 @@ libraries reverse this convention; check before relying on it.
 
 A code challenge:
 
-:::quiz code
+:::quiz code id=M06-L05-q1
 Write `sum_of_even_squares : int list -> int` that returns the sum
 of the squares of the even elements of a list. Use `|>` and at
 least two of `List.map`, `List.filter`, `List.fold_left`.

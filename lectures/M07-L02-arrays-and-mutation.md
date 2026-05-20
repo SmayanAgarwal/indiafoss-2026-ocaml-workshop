@@ -489,7 +489,7 @@ the algorithm wants random-access mutation. If your algorithm is
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M07-L02-q3
 What does the following expression evaluate to?
 
 ```ocaml
@@ -507,7 +507,7 @@ a.(0) + a.(2) + a.(4)
 sum is `1 + 99 + 5 = 105`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M07-L02-q2
 What is the type of `Array.make 5 0.0`?
 
 - [ ] `int array`
@@ -532,7 +532,7 @@ in place. After calling it, the array's contents are reversed.
 
 :::
 
-:::quiz code
+:::quiz code id=M07-L02-q1
 Write `reverse_in_place` that reverses an array in place.
 
 ```ocaml

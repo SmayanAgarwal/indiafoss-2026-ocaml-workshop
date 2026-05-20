@@ -524,7 +524,7 @@ inserting "and given an X, produces" between each arrow.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M03-L01-q3
 What is the type of `fun x -> x +. 1.0`?
 
 - [ ] `int -> int`
@@ -538,7 +538,7 @@ left operand (the parameter `x`) to be `float`, and the result is
 ambiguity here: the operator pins both ends.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M03-L01-q2
 What does `apply_twice (fun x -> x + 1) 5` evaluate to?
 
 - [ ] `5`
@@ -552,7 +552,7 @@ and `x = 5`: the inner `f 5` is `6`; the outer `f 6` is `7`.
 
 A code challenge:
 
-:::quiz code
+:::quiz code id=M03-L01-q1
 Define `compose : ('b -> 'c) -> ('a -> 'b) -> ('a -> 'c)` that
 takes two functions `g` and `f` and returns the composed function
 `fun x -> g (f x)`.

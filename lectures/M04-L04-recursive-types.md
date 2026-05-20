@@ -514,7 +514,7 @@ structural induction enforces the "trust the recursive call" part.
 
 ## A short check
 
-:::quiz mcq
+:::quiz mcq id=M04-L04-q2
 For the function below, what is its type?
 
 ```ocaml
@@ -537,7 +537,7 @@ type `'b`. The function takes `f` first, then the tree, so the
 argument order is `('a -> 'b) -> 'a tree -> 'b tree`.
 :::
 
-:::quiz code
+:::quiz code id=M04-L04-q1
 Define `height : 'a tree -> int` for the binary tree type. The
 height of a `Leaf` is `0`; the height of a `Node` is `1` plus the
 maximum of its two subtree heights.

@@ -518,7 +518,7 @@ form many times in signatures, use an abbreviation.
 
 ## Mini check
 
-:::quiz mcq
+:::quiz mcq id=M04-L05-q3
 What is the type of the following function?
 
 ```ocaml
@@ -539,7 +539,7 @@ or `x` (the first list element). For both to have the same type,
 list is `'a list`, the default is `'a`, and the result is `'a`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M04-L05-q2
 Given:
 
 ```ocaml
@@ -562,7 +562,7 @@ forcing `'b = string`. So the function is `'a -> ('a * string)
 list -> string`.
 :::
 
-:::quiz code
+:::quiz code id=M04-L05-q1
 Write `find_first : ('a -> bool) -> 'a list -> 'a option` that
 returns the first element of the list satisfying the predicate,
 or `None` if none does.

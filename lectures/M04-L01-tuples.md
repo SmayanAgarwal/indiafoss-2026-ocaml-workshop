@@ -606,7 +606,7 @@ list literal misparsed.
 
 ## Pattern matching in `let`: a small check
 
-:::quiz mcq
+:::quiz mcq id=M04-L01-q3
 What is the type of the function below?
 
 ```ocaml
@@ -627,7 +627,7 @@ options would mean a curried function of two arguments, which is
 not what the pattern `(x, y)` does.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M04-L01-q2
 Which of these expressions has type `int list`?
 
 - [ ] `[1, 2, 3]`
@@ -643,7 +643,7 @@ not a list. `[(1, 2, 3)]` is a one-element list of triples.
 
 A small code task:
 
-:::quiz code
+:::quiz code id=M04-L01-q1
 Write `pair_max : int * int -> int` that returns the larger of the
 two components.
 

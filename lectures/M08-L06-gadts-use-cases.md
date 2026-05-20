@@ -295,7 +295,7 @@ GADTs the default.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M08-L06-q3
 In the `show` function with a GADT witness, why does
 `show (T_pair (T_int, T_string)) (3, "hi")` type-check while
 `show T_int (3, "hi")` does not?
@@ -314,7 +314,7 @@ string) ty`, so the second argument must be `int * string`. `T_int
 not match `int`, hence the type error in the second case.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M08-L06-q2
 Why is a heterogeneous list (`'a hlist`) different from a tuple
 like `int * string * bool`?
 
@@ -374,7 +374,7 @@ let _ = convert String_t "hello"
 
 A code quiz:
 
-:::quiz code
+:::quiz code id=M08-L06-q1
 Extend the witness GADT with a `Bool_t : bool t` constructor and
 write `convert3 : type a. a t -> a -> string` that handles all
 three.

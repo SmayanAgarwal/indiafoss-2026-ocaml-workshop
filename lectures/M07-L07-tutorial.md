@@ -416,7 +416,7 @@ forever.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M07-L07-q3
 In the two-stack queue, what is the worst-case time complexity of
 a single `dequeue` operation?
 
@@ -432,7 +432,7 @@ Amortised across many operations the cost is O(1) per element
 be O(n).
 :::
 
-:::quiz mcq
+:::quiz mcq id=M07-L07-q2
 Given `module Make (E : ELT) = struct ... end`, what happens if
 we try `Make (struct type t = int end)` (forgetting `to_string`)?
 
@@ -457,7 +457,7 @@ What does the compiler require?
 
 :::
 
-:::quiz code
+:::quiz code id=M07-L07-q1
 Add a `length` operation to the queue. Both the signature and the
 struct need updating. The starter has the unsealed version; your
 job is to add `length` everywhere.

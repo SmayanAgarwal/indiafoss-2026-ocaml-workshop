@@ -693,7 +693,7 @@ a value.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M01-L03-q3
 What does the toplevel print for `let pi = 3.14`?
 
 - [ ] `pi : float = 3.14`
@@ -709,7 +709,7 @@ toplevel itself, not part of the OCaml source.
 
 Now a small code challenge. Try to make this pass:
 
-:::quiz code
+:::quiz code id=M01-L03-q2
 Define a function `fahrenheit_of_celsius : float -> float` that
 converts Celsius to Fahrenheit using the formula `F = C * 9/5 + 32`.
 Watch the operators: you are working with floats.
@@ -752,7 +752,7 @@ Take a moment, then peek.
 
 :::
 
-:::quiz mcq
+:::quiz mcq id=M01-L03-q1
 What is the type of `let f x = x +. 1.0` in OCaml?
 
 - [ ] `int -> int`

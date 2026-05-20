@@ -502,7 +502,7 @@ end
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M07-L05-q3
 Given this module:
 
 ```ocaml
@@ -528,7 +528,7 @@ Which of the following compiles?
 `Unbound value M.y`); `M.z` never existed at all.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M07-L05-q2
 Given the `STACK` module with abstract `type 'a t`, what happens
 if you try `Stack.empty :: [1]`?
 
@@ -557,7 +557,7 @@ the internal ref directly.
 
 :::
 
-:::quiz code
+:::quiz code id=M07-L05-q1
 Define a sealed `Counter` module. The signature has been written
 for you; fill in the implementation.
 

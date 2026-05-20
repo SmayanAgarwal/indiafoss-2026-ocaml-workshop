@@ -491,7 +491,7 @@ What is the final value? Predict, then run.
 
 :::
 
-:::quiz mcq
+:::quiz mcq id=M02-L02-q2
 What is the result of this nested expression?
 
 ```ocaml
@@ -543,7 +543,7 @@ half of the course (Module 9).
 
 ## A small code challenge
 
-:::quiz code
+:::quiz code id=M02-L02-q1
 Define a function `four_step : int -> int` that, given input `n`,
 returns `((n + 1) * 2 - 3) * 5`. Use shadowing (rebind a single
 name `x` four times) so the code reads step by step.

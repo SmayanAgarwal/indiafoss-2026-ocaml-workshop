@@ -504,7 +504,7 @@ for the resulting allocation pattern.
 
 ## A small check
 
-:::quiz mcq
+:::quiz mcq id=M04-L02-q2
 Given:
 
 ```ocaml
@@ -524,7 +524,7 @@ fields of `red` and overrides `g` with `128`. `red` is unchanged.
 The result has the same `r` and `b` as `red`, plus the new `g`.
 :::
 
-:::quiz code
+:::quiz code id=M04-L02-q1
 Define a record `circle` with fields `cx : float`, `cy : float`,
 `radius : float`, and write a function `circle_area : circle ->
 float` that returns the area. Use `Float.pi`.

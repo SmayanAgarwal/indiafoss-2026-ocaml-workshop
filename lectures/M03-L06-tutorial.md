@@ -545,7 +545,7 @@ will see `option` in detail in
 
 ## A small code challenge
 
-:::quiz code
+:::quiz code id=M03-L06-q1
 Write `take : int -> 'a list -> 'a list` that returns the first `n`
 elements of a list. If the list has fewer than `n` elements, return
 the whole list. If `n <= 0`, return `[]`.

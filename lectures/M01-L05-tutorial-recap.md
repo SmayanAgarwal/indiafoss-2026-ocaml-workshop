@@ -438,7 +438,7 @@ Test it with `bmi 70.0 1.75`. Expected answer: about `22.86`.
 
 :::
 
-:::quiz code
+:::quiz code id=M01-L05-q2
 Write `bmi : float -> float -> float` that returns mass divided by
 height squared.
 
@@ -520,7 +520,7 @@ and read short OCaml functions involving `int`, `float`, `string`,
 and `bool`, and you can interpret a type error well enough to fix
 it, you are ready.
 
-:::quiz mcq
+:::quiz mcq id=M01-L05-q1
 You write `let twice n = n + n` and the toplevel reports the type as
 `int -> int`. You then try `twice 3.5`. What does OCaml do?
 

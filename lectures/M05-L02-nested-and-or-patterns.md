@@ -552,7 +552,7 @@ right-hand sides express *what to do*.
 
 ## Two checks
 
-:::quiz mcq
+:::quiz mcq id=M05-L02-q3
 What does `head_and_second [1; 2; 3]` return, given:
 
 ```ocaml
@@ -571,7 +571,7 @@ two elements. `a` is the head (`1`), `b` is the next element
 (`2`), and the tail (`[3]`) is discarded.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M05-L02-q2
 The compiler rejects this with an error. Why?
 
 ```ocaml skip
@@ -595,7 +595,7 @@ is rejected.
 
 A code task:
 
-:::quiz code
+:::quiz code id=M05-L02-q1
 Write `first_of_pair_in_list : (int * int) list -> int option`
 returning the first component of the first pair, or `None` if
 the list is empty. Use a single clause with a nested pattern for

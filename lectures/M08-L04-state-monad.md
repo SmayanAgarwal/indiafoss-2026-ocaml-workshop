@@ -361,7 +361,7 @@ plumbing does not.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M08-L04-q3
 After running `run program 1` in the gensym example, the result is
 `(("x_1", "x_2", "y_3"), 4)`. Why does the state end at `4` and
 not at `3`?
@@ -379,7 +379,7 @@ would produce `_4` and set the state to `5`. The final state is
 the "next available", not the "last used".
 :::
 
-:::quiz mcq
+:::quiz mcq id=M08-L04-q2
 What is the type of `get` in our state monad?
 
 - [ ] `int -> int`
@@ -441,7 +441,7 @@ let _ = run program 0
 
 A code quiz to consolidate:
 
-:::quiz code
+:::quiz code id=M08-L04-q1
 Write `incr_state : unit state` that increments the state by 1
 and produces `()`. Use `get` and `put`.
 

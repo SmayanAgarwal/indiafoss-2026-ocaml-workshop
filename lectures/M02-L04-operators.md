@@ -569,7 +569,7 @@ quickly.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M02-L04-q2
 What is the value of this OCaml expression?
 
 ```ocaml
@@ -621,7 +621,7 @@ Parse with precedence:
 
 A code challenge to close out:
 
-:::quiz code
+:::quiz code id=M02-L04-q1
 Write `clamp : int -> int -> int -> int` that takes a value and a
 range `[lo, hi]` and clamps the value to the range: if `x` is
 below `lo`, return `lo`; if above `hi`, return `hi`; otherwise

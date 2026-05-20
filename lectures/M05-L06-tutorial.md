@@ -451,7 +451,7 @@ this should be muscle memory.
 
 ## A small quiz
 
-:::quiz mcq
+:::quiz mcq id=M05-L06-q3
 Suppose we extend the `expr` type with a new constructor `Neg of
 expr` (unary minus). What does the compiler do to `eval`,
 `pretty`, `depth`, and `fold` as written above?
@@ -468,7 +468,7 @@ exactly the refactoring-with-the-compiler pattern from
 [Lecture 4](M05-L04-exhaustiveness.html#the-big-payoff-refactoring-with-the-compiler).
 :::
 
-:::quiz mcq
+:::quiz mcq id=M05-L06-q2
 Why is the `depth` function above written with an or-pattern
 across `Add`, `Sub`, `Mul`, `Div`?
 
@@ -487,7 +487,7 @@ types, which is what the or-pattern constraint requires.
 A code task. Extend the type with a constant negate, and write
 the new clause for `pretty`:
 
-:::quiz code
+:::quiz code id=M05-L06-q1
 Given:
 
 ```ocaml

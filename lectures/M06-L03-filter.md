@@ -458,7 +458,7 @@ elements.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M06-L03-q3
 What is the type of `List.filter (fun x -> x > 0)`?
 
 - [ ] `int list -> int`
@@ -472,7 +472,7 @@ specialised type `int list -> int list`. Note the predicate is
 `(>) 0`-like, and once supplied, only the list argument is left.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M06-L03-q2
 Which of these are equivalent to `List.filter p xs`?
 
 - [x] `List.filter_map (fun x -> if p x then Some x else None) xs`
@@ -491,7 +491,7 @@ sublist.
 
 A code challenge:
 
-:::quiz code
+:::quiz code id=M06-L03-q1
 Write `unique : 'a list -> 'a list` that returns the list with
 duplicates removed, keeping the first occurrence of each value. Use
 `List.mem : 'a -> 'a list -> bool` (returns `true` if the value

@@ -389,7 +389,7 @@ but day-to-day OCaml usage rarely turns on them.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M08-L02-q3
 You have a chain `let* x = e1 in let* y = e2 in let* z = e3 in Some
 (x, y, z)`, where `e1` evaluates to `Some 1`, `e2` evaluates to
 `None`, and `e3` is some expression you do not have to evaluate.
@@ -408,7 +408,7 @@ useful efficiency property: failure is detected as soon as it
 happens, and downstream code is skipped.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M08-L02-q2
 When should you reach for `let+` instead of `let*`?
 
 - [x] When the right-hand side cannot itself fail; only a pure transformation is happening.
@@ -471,7 +471,7 @@ let _ = pipeline "200"
 
 A small code quiz:
 
-:::quiz code
+:::quiz code id=M08-L02-q1
 Write `lookup_chain : (string * int) list -> string -> string ->
 int option` that looks up two keys in an association list, adds
 their values if both are present, and returns `Some (sum)` or

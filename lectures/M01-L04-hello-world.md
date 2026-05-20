@@ -181,7 +181,7 @@ which is the way OCaml handles "this function might or might not
 return a useful value." `Option` is *not* the same as `unit`; the
 two answer different questions.
 
-:::quiz mcq
+:::quiz mcq id=M01-L04-q3
 Which of these expressions has type `unit`?
 
 - [ ] `42`
@@ -469,7 +469,7 @@ will not use it.
 
 ## A small code challenge
 
-:::quiz code
+:::quiz code id=M01-L04-q2
 Define `greet : string -> unit` that prints `hello, NAME!` where
 `NAME` is the function's argument. Each greeting on its own line.
 
@@ -515,7 +515,7 @@ Predict before pressing Run.
 
 :::
 
-:::quiz mcq
+:::quiz mcq id=M01-L04-q1
 What does the following OCaml program print?
 
 ```ocaml

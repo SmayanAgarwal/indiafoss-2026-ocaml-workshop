@@ -491,7 +491,7 @@ same `map`; only the per-element function differs.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M06-L02-q3
 What is the result of `List.map String.length ["hi"; "hello"; ""]`?
 
 - [ ] `["2"; "5"; "0"]`
@@ -505,7 +505,7 @@ length `0`, so it is not dropped (that would be filtering).
 `List.map` always preserves length.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M06-L02-q2
 What is the type of `List.map fst`?
 
 - [ ] `('a * 'b) -> 'a`
@@ -521,7 +521,7 @@ returns `[1; 2]`.
 
 Now a code challenge:
 
-:::quiz code
+:::quiz code id=M06-L02-q1
 Write `zip_with : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list`
 that pairs two lists element-wise using the given combining
 function. Stop when the shorter list runs out.

@@ -357,7 +357,7 @@ no universal right answer.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M08-L03-q3
 Given `let pipeline () = let* _ = (Error "first") in let* _ =
 (Error "second") in Ok 42` (with `let*` bound to `Result.bind`),
 what does `pipeline ()` evaluate to?
@@ -373,7 +373,7 @@ first line is returned unchanged. "Collect all errors" requires
 the validation pattern, not the monad pattern.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M08-L03-q2
 Which is the right tool for "this function might return one of
 five distinct kinds of error and callers should be able to react
 differently to each"?
@@ -441,7 +441,7 @@ let _ = parse_pair_r "frog"
 
 A small code quiz to put it together:
 
-:::quiz code
+:::quiz code id=M08-L03-q1
 Write `safe_div_chain : int -> int -> int -> (int, string) result`
 that computes `((a / b) / c)` using `Result.bind`, returning
 `Error "div by zero"` if either division would fail.

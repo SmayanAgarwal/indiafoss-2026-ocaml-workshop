@@ -457,7 +457,7 @@ enumerate the cases explicitly*. Save the wildcard for `int`,
 
 ## Two checks
 
-:::quiz mcq
+:::quiz mcq id=M05-L04-q3
 Which of the following is the **strongest** reason to use a
 variant type instead of a string when representing the set
 `{"red", "yellow", "green"}`?
@@ -476,7 +476,7 @@ check, and surfaces every place that needs updating when the
 type grows.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M05-L04-q2
 After adding `FlashingRed` to the type below, what does the
 compiler do for an existing function
 
@@ -500,7 +500,7 @@ aids.
 
 A code task:
 
-:::quiz code
+:::quiz code id=M05-L04-q1
 Write `is_weekend : day -> bool` exhaustively, where:
 
 ```ocaml

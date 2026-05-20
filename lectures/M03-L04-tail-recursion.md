@@ -625,7 +625,7 @@ end of Module 6, you will rarely write it by hand, because
 
 ## A small code challenge
 
-:::quiz code
+:::quiz code id=M03-L04-q2
 Write a tail-recursive `product : int list -> int` that multiplies
 all elements of a list. Empty list product is `1`.
 
@@ -650,7 +650,7 @@ The shape: outer `product xs` calls `let rec go acc = function | []
 accumulator is `1` (the identity for multiplication); per-step work
 multiplies `x` into the accumulator.
 
-:::quiz mcq
+:::quiz mcq id=M03-L04-q1
 Which of these recursive calls is in tail position?
 
 ```ocaml

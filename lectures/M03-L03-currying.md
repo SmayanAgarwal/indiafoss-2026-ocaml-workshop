@@ -472,7 +472,7 @@ when we get to product types in
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M03-L03-q3
 Given `let add x y = x + y`, what is the type of `add 5`?
 
 - [ ] `int`
@@ -486,7 +486,7 @@ Given `let add x y = x + y`, what is the type of `add 5`?
 second `int`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M03-L03-q2
 Which of these is *not* an idiomatic use of partial application?
 
 - [ ] `List.map ((+) 1) [1; 2; 3]`
@@ -503,7 +503,7 @@ left-hand side of `<` to 0, giving the predicate "is greater than
 zero."
 :::
 
-:::quiz code
+:::quiz code id=M03-L03-q1
 Define `compose3` that takes three functions `h`, `g`, `f` and
 returns the composed function `fun x -> h (g (f x))`.
 

@@ -504,7 +504,7 @@ language puts no special restrictions on what you can do.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M06-L01-q3
 What is the type of `twice`, where `let twice f x = f (f x)`?
 
 - [ ] `('a -> 'b) -> 'a -> 'b`
@@ -518,7 +518,7 @@ types must coincide. Calling that type `'a`, `f` is `'a -> 'a`, `x`
 is `'a`, and the result is `'a`. So `twice : ('a -> 'a) -> 'a -> 'a`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M06-L01-q2
 Which of these is *not* a higher-order function?
 
 - [ ] `let apply f x = f x`
@@ -541,7 +541,7 @@ reserves the term for functions that take or return functions
 
 A small code challenge:
 
-:::quiz code
+:::quiz code id=M06-L01-q1
 Write `apply_n : int -> ('a -> 'a) -> 'a -> 'a` that applies `f` to
 `x`, `n` times. So `apply_n 3 f x` is `f (f (f x))`, and `apply_n 0
 f x` is just `x`.

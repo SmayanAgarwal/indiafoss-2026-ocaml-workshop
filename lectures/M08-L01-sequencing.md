@@ -336,7 +336,7 @@ you will notice the pattern far more often than you would expect.
 
 Two small comprehension checks before the activity.
 
-:::quiz mcq
+:::quiz mcq id=M08-L01-q3
 In the pyramid-of-doom version of `demo`, how many times does the
 text `None -> None` appear in the source?
 
@@ -353,7 +353,7 @@ intermediate `match`es, each contributing one `None -> None` arm.
 The pyramid grows linearly with the number of intermediate steps.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M08-L01-q2
 What is the type of the helper `bind` we defined?
 
 - [ ] `'a option -> 'a option -> 'a option`
@@ -409,7 +409,7 @@ let _ = pipeline "-3"
 
 A code-quiz to consolidate:
 
-:::quiz code
+:::quiz code id=M08-L01-q1
 Define `bind_opt : 'a option -> ('a -> 'b option) -> 'b option`
 that captures the "short-circuit on `None`, otherwise unwrap and
 continue" pattern.

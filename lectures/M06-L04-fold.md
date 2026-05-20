@@ -572,7 +572,7 @@ xs []`, which gets `[1; 2; 3]`) or `fold_left` then `List.rev`.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M06-L04-q3
 What is `List.fold_left (+) 0 [1; 2; 3; 4]`?
 
 - [ ] `0`
@@ -584,7 +584,7 @@ What is `List.fold_left (+) 0 [1; 2; 3; 4]`?
 2) + 3) + 4 = 10`. Initial accumulator `0`, then `+1, +2, +3, +4`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M06-L04-q2
 Which of the following is *not* tail-recursive?
 
 - [ ] `List.fold_left`
@@ -600,7 +600,7 @@ use `fold_left` or accumulator-based traversal internally).
 
 A code challenge:
 
-:::quiz code
+:::quiz code id=M06-L04-q1
 Express `List.length xs` using `List.fold_left`. Do not call
 `List.length` itself, and do not use a `let rec`.
 

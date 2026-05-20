@@ -535,7 +535,7 @@ case, fall back to separate clauses.
 
 ## Two checks
 
-:::quiz mcq
+:::quiz mcq id=M05-L05-q3
 What does `summary { name = "Alice"; age = 30; admin = false }`
 evaluate to, given:
 
@@ -556,7 +556,7 @@ says "ignore other fields." The function returns
 `"Hello, Alice"`.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M05-L05-q2
 Which of the following correctly extracts the `url` from any
 constructor of:
 
@@ -582,7 +582,7 @@ parenthesisation).
 
 A code task:
 
-:::quiz code
+:::quiz code id=M05-L05-q1
 Given the type below, write `describe : event -> string`:
 
 - A `Click { x; y }` becomes `"click at (x, y)"`, e.g. `"click at (50, 75)"`.

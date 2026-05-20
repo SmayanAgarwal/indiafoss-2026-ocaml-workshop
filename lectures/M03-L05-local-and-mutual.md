@@ -533,7 +533,7 @@ hand off to each other.
 
 ## A code challenge
 
-:::quiz code
+:::quiz code id=M03-L05-q1
 Define `count_evens` and `count_odds` using mutual recursion. Each
 takes an `int list` and returns the count of even (or odd) values.
 Treat negative numbers correctly: `-4` is even, `-3` is odd. Use

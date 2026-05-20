@@ -548,7 +548,7 @@ both linked above) are excellent and complement this course well.
 Before we move on, a small comprehension check on what we just
 covered. Use it to see whether the logistics are clear.
 
-:::quiz mcq
+:::quiz mcq id=M01-L01-q1
 The certificate grade for this course is computed as:
 
 - [ ] 50% weekly assignments + 50% final exam

@@ -491,7 +491,7 @@ When you see `'a`, `'b`, `'c` in inferred types, those are type
 variables; the function is polymorphic in them. The names start at
 `'a` and go alphabetically.
 
-:::quiz mcq
+:::quiz mcq id=M02-L03-q2
 What type does OCaml infer for this function?
 
 ```ocaml
@@ -641,7 +641,7 @@ Predict, then run.
 
 :::
 
-:::quiz mcq
+:::quiz mcq id=M02-L03-q1
 What type does OCaml infer for `let f x y = x +. y *. 2.0`?
 
 - [ ] `int -> int -> int`

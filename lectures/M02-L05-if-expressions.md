@@ -480,7 +480,7 @@ modules conditionally.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M02-L05-q3
 Which of the following OCaml expressions has type `string`?
 
 - [x] `if x > 0 then "positive" else "non-positive"`
@@ -498,7 +498,7 @@ which compares `string` to `int`: type error.
 
 A code challenge:
 
-:::quiz code
+:::quiz code id=M02-L05-q2
 Define `sign : int -> int` that returns 1 for positive inputs, -1
 for negative inputs, and 0 for zero.
 
@@ -538,7 +538,7 @@ let label x =
 
 :::
 
-:::quiz mcq
+:::quiz mcq id=M02-L05-q1
 Why does OCaml reject this?
 
 ```ocaml skip

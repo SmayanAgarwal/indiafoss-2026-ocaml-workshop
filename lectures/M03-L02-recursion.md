@@ -572,7 +572,7 @@ in the [Module 3 tutorial](M03-L06-tutorial.html#why-is-naive-fibonacci-so-slow)
 
 ## A small code challenge
 
-:::quiz code
+:::quiz code id=M03-L02-q2
 Write a recursive function `sum_list : int list -> int` that
 returns the sum of a list of integers. Empty list sums to 0.
 
@@ -608,7 +608,7 @@ case?
 
 :::
 
-:::quiz mcq
+:::quiz mcq id=M03-L02-q1
 For the function below, what is the base case?
 
 ```ocaml

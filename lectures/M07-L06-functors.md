@@ -477,7 +477,7 @@ real OCaml codebases.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M07-L06-q3
 Why is the standard library's `Set` module a functor (`Set.Make`)
 rather than a plain `Set` type parameterized by `'a`?
 
@@ -495,7 +495,7 @@ argument module, fixing the element type and the ordering in one
 go.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M07-L06-q2
 What is the result of this snippet, supposing `Stdlib.compare`
 gives the usual lexicographic ordering on strings?
 
@@ -529,7 +529,7 @@ both results.
 
 :::
 
-:::quiz code
+:::quiz code id=M07-L06-q1
 Build a string-keyed map of ages. Fill in `lookup_known` to return
 the age of an existing key and `lookup_missing` to return `None`
 for a missing one.

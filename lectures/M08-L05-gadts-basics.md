@@ -384,7 +384,7 @@ GADT machinery behind `Printf`.
 
 ## A quick check
 
-:::quiz mcq
+:::quiz mcq id=M08-L05-q3
 What is the type of `Add (Int_lit 1, Int_lit 2)`?
 
 - [x] `int expr`
@@ -397,7 +397,7 @@ What is the type of `Add (Int_lit 1, Int_lit 2)`?
 `int expr`. The compiler refuses to apply `Add` to anything else.
 :::
 
-:::quiz mcq
+:::quiz mcq id=M08-L05-q2
 Why does the `eval` function need the annotation `type a. a expr
 -> a`?
 
@@ -467,7 +467,7 @@ Error: This expression has type int expr but an expression was
 
 A code quiz:
 
-:::quiz code
+:::quiz code id=M08-L05-q1
 Define a GADT `type _ value` with two constructors `VInt : int ->
 int value` and `VBool : bool -> bool value`. Write `unwrap : type
 a. a value -> a` that returns the underlying value.
