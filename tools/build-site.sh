@@ -656,16 +656,25 @@ emit_dashboard() {
       const noHtml = noFrag.replace(/\.html$/, '.md');
       return 'lectures/' + noHtml;
     }
+    // A git sha is 7-40 hex chars. Anything else (empty, "unknown",
+    // a malformed seed value like "abb9145d" that includes a stray
+    // letter) we treat as missing and fall back to the main branch
+    // so the link still resolves, even if it then shows the file
+    // as it is in HEAD rather than at the original commit.
+    const SHA_RE = /^[a-f0-9]{7,40}$/i;
     function quizLink(quizId, latestSha) {
       const cleaned = quizId.replace(/^\/?_site\//, '').replace(/^\/+/, '');
       const fileMd = lectureFileFromQuizId(quizId);
-      const sha = (latestSha && latestSha.length >= 7) ? latestSha : 'main';
-      const href = REPO_BLOB_BASE + '/' + encodeURIComponent(sha) + '/' + fileMd;
-      const shaShort = sha === 'main' ? 'main' : sha.slice(0, 7);
+      const validSha = (typeof latestSha === 'string' && SHA_RE.test(latestSha))
+        ? latestSha : null;
+      const ref = validSha || 'main';
+      const href = REPO_BLOB_BASE + '/' + encodeURIComponent(ref) + '/' + fileMd;
+      const pill = validSha ? validSha.slice(0, 7) : 'main';
+      const pillClass = validSha ? 'sha-pill' : 'sha-pill sha-fallback';
       return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener" '
            + 'title="View the lecture source at the commit these responses were collected against">'
            + escapeHtml(cleaned)
-           + ' <span class="sha-pill">' + escapeHtml(shaShort) + '</span></a>';
+           + ' <span class="' + pillClass + '">' + escapeHtml(pill) + '</span></a>';
     }
 
     function accClass(a) {
