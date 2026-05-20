@@ -192,11 +192,16 @@ respectively, both written in OCaml),
 [Ahrefs](https://ahrefs.com) (one of the world's largest web
 crawlers and SEO platforms, with a backend in OCaml),
 [Semgrep](https://semgrep.dev) (a static-analysis tool for finding
-bugs and security issues, written in OCaml),
-the [Rocq theorem prover](https://rocq-prover.org) (formerly Coq),
-the [Tezos blockchain](https://tezos.com), and across academia.
-"Practical" here means: people use it to ship things that other
-people depend on. This is not a research curiosity.
+bugs and security issues, written in OCaml). It powers
+the [WebAssembly reference interpreter](https://github.com/WebAssembly/spec/tree/main/interpreter)
+that defines the WebAssembly standard, and the
+[CompCert](https://compcert.org) verified C compiler.
+[Rust's first compiler](https://github.com/rust-lang/rust/tree/ef75860a0a72f79f97216f8aaa5b388d98da6480/src/boot)
+was written in OCaml. So is the [Rocq theorem prover](https://rocq-prover.org)
+(formerly Coq), and the [Tezos blockchain](https://tezos.com).
+Beyond industry, OCaml is widely used across academia. "Practical"
+here means: people use it to ship things that other people depend
+on. This is not a research curiosity.
 
 Third, OCaml is *fast*. The native-code compiler produces binaries
 that run within a small constant factor of C for most workloads.
@@ -215,7 +220,9 @@ the counterexample.
 
 - A **functional-first** language with a serious type system.
 - **Practical:** used at Tarides, Jane Street, Bloomberg, Facebook (Hack/Flow),
-  Docker, Ahrefs, Semgrep, and across academia.
+  Docker, Ahrefs, Semgrep. Powers the WebAssembly reference
+  interpreter and the CompCert verified C compiler. Rust's first
+  compiler was OCaml.
 - **Fast:** native code performance close to C, with garbage collection
   and no undefined behaviour in the safe fragment.
 - **A great teaching language** for ideas you will see again in Rust,
