@@ -222,6 +222,41 @@ let divs_quiz_ids_sequential () =
     (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q2\"") out 0); true
      with Not_found -> false)
 
+let divs_quiz_explicit_id () =
+  (* Author-pinned id wins over the positional fallback. *)
+  let src = ":::quiz mcq id=cons-immutability\n- [x] yes\n:::\n" in
+  let out = Divs.preprocess src in
+  check_bool "uses author id" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"cons-immutability\"") out 0); true
+     with Not_found -> false);
+  check_bool "no q1 fallback when explicit id given" true
+    (try
+       ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q1\"") out 0);
+       false
+     with Not_found -> true)
+
+let divs_quiz_id_slugged () =
+  (* Author id is sanitised: lowercased, weird chars dropped. *)
+  let src = ":::quiz mcq id=Cons & Immutability!\n- [x] yes\n:::\n" in
+  let out = Divs.preprocess src in
+  check_bool "slugified" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"cons-immutability\"") out 0); true
+     with Not_found -> false)
+
+let divs_quiz_mix_ids () =
+  (* Mixed: one explicit, one fallback. The fallback counter still
+     advances past every quiz, so the second quiz here is q2. *)
+  let src =
+    ":::quiz mcq id=alpha\n- [x] a\n:::\n\n:::quiz code\n```ocaml\nlet _ = 1\n```\n:::\n"
+  in
+  let out = Divs.preprocess src in
+  check_bool "first quiz keeps explicit id" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"alpha\"") out 0); true
+     with Not_found -> false);
+  check_bool "second quiz is q2 (positional counter advanced)" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q2\"") out 0); true
+     with Not_found -> false)
+
 (* ---- Run ----------------------------------------------------------- *)
 
 let () =
@@ -254,5 +289,8 @@ let () =
           Alcotest.test_case "quiz mcq div" `Quick divs_quiz_mcq;
           Alcotest.test_case "quiz code div" `Quick divs_quiz_code;
           Alcotest.test_case "ids sequential" `Quick divs_quiz_ids_sequential;
+          Alcotest.test_case "explicit id wins" `Quick divs_quiz_explicit_id;
+          Alcotest.test_case "id is slugified" `Quick divs_quiz_id_slugged;
+          Alcotest.test_case "mix explicit + fallback" `Quick divs_quiz_mix_ids;
         ] );
     ]

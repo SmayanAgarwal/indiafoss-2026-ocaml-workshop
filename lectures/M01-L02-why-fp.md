@@ -432,7 +432,7 @@ admission that the language defaults are wrong.
 
 Let's make this concrete with a quiz before moving on.
 
-:::quiz mcq
+:::quiz mcq id=cons-immutability
 Predict the answer before pressing Run on the cell above (the
 cell starts with its output cleared so the answer is not visible
 on the page). Look at this OCaml code:
@@ -634,7 +634,7 @@ Think before peeking at the next slide.
 Before you read on, try the activity yourself. Predict the answer.
 Then check it against the discussion below.
 
-:::quiz mcq
+:::quiz mcq id=referential-transparency
 Which of these functions is referentially transparent (i.e. a call
 `f arg` can be replaced by its return value without changing the
 meaning of the surrounding program)?

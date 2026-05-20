@@ -30,15 +30,79 @@
    that wraps markdown content.
 *)
 
+(* Quiz blocks carry an id string that becomes the data-quiz-id
+   attribute on the rendered div. Authors may pin an explicit
+   stable id with [:::quiz mcq id=cons-immutability]; without it,
+   the build assigns a positional fallback ["q1", "q2", ...]. The
+   stable id matters because the quiz_id is the persistent key in
+   the analytics database; reordering quizzes within a lecture
+   would otherwise silently re-attach old responses to the wrong
+   question. *)
 type kind =
   | Slide
   | Subslide
   | Fragment
   | Notes
-  | Quiz_mcq of int
-  | Quiz_code of int
+  | Quiz_mcq of string
+  | Quiz_code of string
 
-(* Quiz state is threaded through preprocess as a mutable counter. *)
+(* Sanitise an author-supplied id to a slug shape that survives in
+   URL fragments. Lowercase, [a-z0-9-] only, collapse repeats,
+   trim leading/trailing dashes, length-capped. *)
+let slugify_id s =
+  let buf = Buffer.create (String.length s) in
+  let last_dash = ref true in
+  String.iter
+    (fun c ->
+      let c = Char.lowercase_ascii c in
+      if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') then begin
+        Buffer.add_char buf c;
+        last_dash := false
+      end else if not !last_dash then begin
+        Buffer.add_char buf '-';
+        last_dash := true
+      end)
+    s;
+  let raw = Buffer.contents buf in
+  let n = String.length raw in
+  let lo = if n > 0 && raw.[0] = '-' then 1 else 0 in
+  let hi = if n > lo && raw.[n - 1] = '-' then n - 1 else n in
+  let cleaned = if hi > lo then String.sub raw lo (hi - lo) else "" in
+  let max_len = 64 in
+  if String.length cleaned > max_len then String.sub cleaned 0 max_len
+  else cleaned
+
+(* Parse "quiz mcq [id=foo]" or "quiz code [id=foo]". The id, if
+   present, must follow the keyword. We accept whitespace between
+   the tokens but nothing else. *)
+let parse_quiz_kind rest =
+  let trimmed = String.trim rest in
+  let starts_with prefix s =
+    String.length s >= String.length prefix
+    && String.sub s 0 (String.length prefix) = prefix
+  in
+  let after_prefix prefix s =
+    String.sub s (String.length prefix) (String.length s - String.length prefix)
+  in
+  let parse_optional_id tail =
+    let t = String.trim tail in
+    if t = "" then None
+    else if starts_with "id=" t then
+      let v = after_prefix "id=" t |> String.trim in
+      let slug = slugify_id v in
+      if slug = "" then None else Some slug
+    else None
+  in
+  if starts_with "quiz mcq" trimmed then
+    let tail = after_prefix "quiz mcq" trimmed in
+    Some (`Mcq, parse_optional_id tail)
+  else if starts_with "quiz code" trimmed then
+    let tail = after_prefix "quiz code" trimmed in
+    Some (`Code, parse_optional_id tail)
+  else None
+
+(* Quiz state is threaded through preprocess as a mutable counter
+   used only for positional fallback ids. *)
 let parse_open ~quiz_counter line =
   let s = String.trim line in
   if String.length s < 3 || String.sub s 0 3 <> ":::" then None
@@ -50,13 +114,18 @@ let parse_open ~quiz_counter line =
     | "subslide" -> Some Subslide
     | "fragment" -> Some Fragment
     | "notes" -> Some Notes
-    | "quiz mcq" ->
-        incr quiz_counter;
-        Some (Quiz_mcq !quiz_counter)
-    | "quiz code" ->
-        incr quiz_counter;
-        Some (Quiz_code !quiz_counter)
-    | _ -> None
+    | _ ->
+      (match parse_quiz_kind rest with
+       | Some (kind, explicit_id) ->
+         incr quiz_counter;
+         let id = match explicit_id with
+           | Some s -> s
+           | None -> Printf.sprintf "q%d" !quiz_counter
+         in
+         (match kind with
+          | `Mcq -> Some (Quiz_mcq id)
+          | `Code -> Some (Quiz_code id))
+       | None -> None)
 
 let is_close line =
   let s = String.trim line in
@@ -67,10 +136,10 @@ let open_tag = function
   | Subslide -> "<section class=\"slide subslide\" data-subslide>"
   | Fragment -> "<div class=\"fragment\">"
   | Notes -> "<aside class=\"notes\">"
-  | Quiz_mcq n ->
-      Printf.sprintf "<div class=\"quiz quiz-mcq\" data-quiz-id=\"q%d\">" n
-  | Quiz_code n ->
-      Printf.sprintf "<div class=\"quiz quiz-code\" data-quiz-id=\"q%d\">" n
+  | Quiz_mcq id ->
+      Printf.sprintf "<div class=\"quiz quiz-mcq\" data-quiz-id=\"%s\">" id
+  | Quiz_code id ->
+      Printf.sprintf "<div class=\"quiz quiz-code\" data-quiz-id=\"%s\">" id
 
 let close_tag = function
   | Slide | Subslide -> "</section>"
