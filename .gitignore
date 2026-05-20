@@ -28,6 +28,11 @@ _references/cs3100_m25/
 # reveal.js: we only use the dist/ subdir. The plugins are not loaded.
 assets/reveal/plugin/
 
+# x-oxcaml bundle (~85 MB): too big to commit. Lifted from
+# KC's ~/websites/kcsrk.info/assets/x-ocaml-ox/ for M11 lectures.
+# Deployment story (CI build or release-time copy) is a separate task.
+assets/x-oxcaml/
+
 # OS junk
 .DS_Store
 
