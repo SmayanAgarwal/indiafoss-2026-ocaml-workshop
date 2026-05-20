@@ -133,6 +133,8 @@ HEAD
     cat <<FOOT
     <p style="margin-top: 3rem; font-size: 0.88rem; color: var(--muted);">
       <a href="privacy.html">Privacy &amp; data collection</a>
+      &nbsp;&middot;&nbsp;
+      <a href="dashboard.html">Quiz analytics dashboard</a>
     </p>
   </article>
 </body>
@@ -222,7 +224,9 @@ emit_privacy() {
     <h2>Who has access</h2>
     <p>The course staff at IIT Madras (KC Sivaramakrishnan and
     teaching assistants). Aggregated dashboards may appear publicly;
-    individual response rows do not.</p>
+    individual response rows do not. The public aggregate view lives
+    at <a href="dashboard.html">dashboard.html</a> and shows only
+    counts, accuracies, and option pick distributions.</p>
 
     <h2>Opt out</h2>
     <p>You can disable analytics at any time. The setting is stored
@@ -303,3 +307,485 @@ PRIVACY
   printf 'built _site/privacy.html\n'
 }
 emit_privacy
+
+# Public analytics dashboard. Renders aggregated stats from the
+# Cloudflare Worker at /quiz/agg and /quiz/agg/readers. Plain-JS;
+# no build step. The page only ever displays counts and option-pick
+# distributions; no individual response rows are shown.
+emit_dashboard() {
+  local out="$REPO_ROOT/_site/dashboard.html"
+  cat > "$out" <<'DASHBOARD'
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="quiz-api" content="https://nptel-quiz.kc-7c7.workers.dev">
+  <title>Quiz analytics &middot; Functional Programming with OCaml</title>
+  <link rel="stylesheet" href="/assets/css/chapter.css">
+  <style>
+    .dash { max-width: 980px; margin: 2rem auto; padding: 0 1rem 4rem; }
+    .dash h1 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 1.8rem; }
+    .dash h2 { margin-top: 2.2rem; font-size: 1.2rem; }
+    .dash .note {
+      margin: 0.8rem 0 1.4rem;
+      padding: 0.6rem 0.9rem;
+      background: var(--code-bg);
+      border-left: 3px solid var(--accent);
+      font-size: 0.92em;
+      color: var(--muted);
+    }
+    .dash .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.8rem;
+      margin: 0.6rem 0 1.4rem;
+    }
+    .dash .card {
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 0.7rem 0.9rem;
+      background: #fafafa;
+    }
+    .dash .card .label {
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .dash .card .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 0.2rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .dash table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92em;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .dash th, .dash td {
+      text-align: left;
+      padding: 0.4rem 0.6rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: middle;
+    }
+    .dash th {
+      background: var(--code-bg);
+      cursor: pointer;
+      user-select: none;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .dash th .arrow { color: var(--muted); font-size: 0.78em; margin-left: 0.2em; }
+    .dash th[aria-sort="ascending"] .arrow::after { content: "\25B2"; }
+    .dash th[aria-sort="descending"] .arrow::after { content: "\25BC"; }
+    .dash td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .dash td.code {
+      font-family: ui-monospace, "JetBrains Mono", Menlo, monospace;
+      font-size: 0.88em;
+    }
+    .dash tr.difficult td { background: #faecec; }
+    .dash tr.difficult td:first-child { border-left: 3px solid #b35858; }
+
+    /* CSS-only horizontal accuracy bar. */
+    .acc-bar {
+      position: relative;
+      display: inline-block;
+      width: 110px;
+      height: 0.7rem;
+      background: var(--code-bg);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+      overflow: hidden;
+    }
+    .acc-bar > span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+    .acc-bar.low > span { background: #b35858; }
+    .acc-bar.mid > span { background: #c4923a; }
+
+    .dash .empty {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--rule);
+      border-radius: 4px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .dash .err {
+      padding: 0.9rem 1rem;
+      border: 1px solid #c98a8a;
+      background: #f8e2e2;
+      border-radius: 4px;
+      color: #7a2929;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.92em;
+    }
+    .dash .legend {
+      font-size: 0.85em;
+      color: var(--muted);
+      margin-top: 0.4rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .dash .legend .swatch {
+      display: inline-block;
+      width: 0.7em;
+      height: 0.7em;
+      border-radius: 2px;
+      margin-right: 0.3em;
+      vertical-align: -0.05em;
+    }
+    .dash .legend .swatch.low { background: #b35858; }
+    .dash .legend .swatch.mid { background: #c4923a; }
+    .dash .legend .swatch.hi  { background: var(--accent); }
+    .dash .lecture-best  { color: #2e6e3a; font-weight: 600; }
+    .dash .lecture-worst { color: #b35858; font-weight: 600; }
+    .dash .distractor    { color: #b35858; }
+  </style>
+</head>
+<body class="mode-chapter">
+  <article class="dash">
+    <p><a href="index.html">&larr; Course landing page</a> &middot;
+       <a href="privacy.html">Privacy</a></p>
+    <h1>Quiz analytics</h1>
+    <p class="note">This dashboard shows only aggregated data;
+      individual responses are not displayed and cannot be
+      reconstructed from this view.</p>
+
+    <div id="status" class="empty">Loading aggregated stats&hellip;</div>
+
+    <section id="cards-section" hidden>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section id="lectures-section" hidden>
+      <h2>Per-lecture summary</h2>
+      <p class="legend">
+        Highest aggregate accuracy:
+        <span class="lecture-best" id="best-lecture">n/a</span>.
+        Lowest aggregate accuracy:
+        <span class="lecture-worst" id="worst-lecture">n/a</span>.
+      </p>
+      <table id="lectures-table">
+        <thead>
+          <tr>
+            <th data-sort="lecture">Lecture <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Quizzes <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Attempts <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Avg accuracy <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="per-quiz-section" hidden>
+      <h2>Per-quiz accuracy</h2>
+      <p class="legend">
+        Rows where accuracy is below 30% are highlighted; these are
+        TRPL-style &ldquo;difficult questions&rdquo; worth revisiting.
+        <span class="swatch low"></span>&lt; 30%
+        &nbsp;<span class="swatch mid"></span>30 to 70%
+        &nbsp;<span class="swatch hi"></span>&gt; 70%
+      </p>
+      <table id="per-quiz-table">
+        <thead>
+          <tr>
+            <th data-sort="quiz_id">Quiz <span class="arrow"></span></th>
+            <th data-sort="kind">Kind <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Attempts <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Correct <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Accuracy <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="distractor-section" hidden>
+      <h2>MCQ top distractors</h2>
+      <p class="legend">For each MCQ, the most popular <em>wrong</em>
+        answer and how many readers picked it. Following Crichton et
+        al., a high-pick distractor on a low-accuracy question is a
+        signal that the wording is confusing.</p>
+      <table id="distractor-table">
+        <thead>
+          <tr>
+            <th data-sort="quiz_id">Quiz <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Accuracy <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Top distractor (option) <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Picks <span class="arrow"></span></th>
+            <th data-sort="num" class="num">Share of wrong <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </article>
+
+  <script>
+    const API = document.querySelector('meta[name="quiz-api"]')?.content || '';
+
+    const fmtPct = (x) => (x == null) ? 'n/a' : (Math.round(x * 1000) / 10).toFixed(1) + '%';
+    const fmtInt = (x) => (x == null) ? 'n/a' : Number(x).toLocaleString();
+
+    // Lecture slug = the page slug stripped of the [#qN] suffix.
+    // quiz_id values are emitted by parse.ml as "<page>#<auto-id>",
+    // where <page> is the basename of the rendered HTML.
+    function lectureKey(quizId) {
+      const hash = quizId.indexOf('#');
+      return hash >= 0 ? quizId.slice(0, hash) : quizId;
+    }
+
+    function accClass(a) {
+      if (a == null) return '';
+      if (a < 0.30) return 'low';
+      if (a < 0.70) return 'mid';
+      return 'hi';
+    }
+
+    function accBar(a) {
+      const cls = accClass(a);
+      const pct = (a == null) ? 0 : Math.max(0, Math.min(1, a)) * 100;
+      return '<span class="acc-bar ' + cls + '"><span style="width:' + pct + '%"></span></span>'
+           + fmtPct(a);
+    }
+
+    async function load() {
+      const status = document.getElementById('status');
+      let agg, readersInfo;
+      try {
+        const r1 = await fetch(API + '/quiz/agg');
+        if (!r1.ok) throw new Error('HTTP ' + r1.status);
+        agg = await r1.json();
+      } catch (e) {
+        status.className = 'err';
+        status.textContent = 'Could not reach the analytics backend: ' + (e.message || e);
+        return;
+      }
+      // Reader count is best-effort; if the endpoint is not deployed
+      // yet, fall back to "unknown" rather than blocking the page.
+      try {
+        const r2 = await fetch(API + '/quiz/agg/readers');
+        if (r2.ok) readersInfo = await r2.json();
+      } catch (_) { /* ignore */ }
+
+      const perQuiz = agg.per_quiz || [];
+      const mcqOpts = agg.mcq_options || [];
+
+      if (perQuiz.length === 0) {
+        status.className = 'empty';
+        status.textContent =
+          'No quiz responses yet. Once readers start answering quizzes, '
+          + 'aggregate statistics will appear here.';
+        return;
+      }
+
+      // Reveal the dashboard now that we know there is data.
+      status.hidden = true;
+      ['cards-section', 'lectures-section', 'per-quiz-section', 'distractor-section']
+        .forEach((id) => { document.getElementById(id).hidden = false; });
+
+      renderCards(perQuiz, readersInfo);
+      renderLectures(perQuiz);
+      renderPerQuiz(perQuiz);
+      renderDistractors(perQuiz, mcqOpts);
+    }
+
+    function renderCards(perQuiz, readersInfo) {
+      const totalAttempts = perQuiz.reduce((a, r) => a + (r.attempts_total || 0), 0);
+      const totalCorrect  = perQuiz.reduce((a, r) => a + (r.correct_total  || 0), 0);
+      const overallAcc    = totalAttempts > 0 ? totalCorrect / totalAttempts : null;
+      const mcqQuizzes    = perQuiz.filter((r) => r.kind === 'mcq').length;
+      const codeQuizzes   = perQuiz.filter((r) => r.kind === 'code').length;
+
+      const cards = [
+        { label: 'Total responses',  value: fmtInt(totalAttempts) },
+        { label: 'Distinct readers', value: readersInfo ? fmtInt(readersInfo.readers) : 'n/a' },
+        { label: 'Quizzes seen',     value: fmtInt(perQuiz.length) },
+        { label: 'MCQ / code',       value: fmtInt(mcqQuizzes) + ' / ' + fmtInt(codeQuizzes) },
+        { label: 'Overall accuracy', value: fmtPct(overallAcc) },
+      ];
+      const el = document.getElementById('cards');
+      el.innerHTML = cards.map(
+        (c) => '<div class="card"><div class="label">' + c.label
+             + '</div><div class="value">' + c.value + '</div></div>'
+      ).join('');
+    }
+
+    function renderLectures(perQuiz) {
+      const by = new Map();
+      for (const r of perQuiz) {
+        const key = lectureKey(r.quiz_id);
+        let g = by.get(key);
+        if (!g) { g = { lecture: key, quizzes: 0, attempts: 0, correct: 0 }; by.set(key, g); }
+        g.quizzes  += 1;
+        g.attempts += r.attempts_total || 0;
+        g.correct  += r.correct_total  || 0;
+      }
+      const rows = Array.from(by.values()).map((g) => ({
+        lecture:  g.lecture,
+        quizzes:  g.quizzes,
+        attempts: g.attempts,
+        accuracy: g.attempts > 0 ? g.correct / g.attempts : null,
+      }));
+
+      // Best / worst by aggregate accuracy, ignoring lectures with no
+      // attempts. Ties are broken by attempt count (more attempts wins).
+      const withData = rows.filter((r) => r.accuracy != null && r.attempts > 0);
+      if (withData.length > 0) {
+        const sorted = withData.slice().sort((a, b) =>
+          (b.accuracy - a.accuracy) || (b.attempts - a.attempts));
+        document.getElementById('best-lecture').textContent =
+          sorted[0].lecture + ' (' + fmtPct(sorted[0].accuracy) + ')';
+        const last = sorted[sorted.length - 1];
+        document.getElementById('worst-lecture').textContent =
+          last.lecture + ' (' + fmtPct(last.accuracy) + ')';
+      }
+
+      const tbody = document.querySelector('#lectures-table tbody');
+      rows.sort((a, b) => a.lecture.localeCompare(b.lecture));
+      tbody.innerHTML = rows.map((r) => '<tr>'
+        + '<td class="code">' + escapeHtml(r.lecture) + '</td>'
+        + '<td class="num">' + fmtInt(r.quizzes) + '</td>'
+        + '<td class="num">' + fmtInt(r.attempts) + '</td>'
+        + '<td class="num">' + accBar(r.accuracy) + '</td>'
+      + '</tr>').join('');
+
+      attachSorter(document.getElementById('lectures-table'), [
+        (r) => r.cells[0].textContent,
+        (r) => Number(r.cells[1].textContent.replace(/,/g, '')),
+        (r) => Number(r.cells[2].textContent.replace(/,/g, '')),
+        (r) => parseFloat(r.cells[3].textContent.replace('%', '')) || -1,
+      ]);
+    }
+
+    function renderPerQuiz(perQuiz) {
+      const rows = perQuiz.slice().sort((a, b) => a.quiz_id.localeCompare(b.quiz_id));
+      const tbody = document.querySelector('#per-quiz-table tbody');
+      tbody.innerHTML = rows.map((r) => {
+        const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
+        return '<tr' + difficult + '>'
+          + '<td class="code">' + escapeHtml(r.quiz_id) + '</td>'
+          + '<td>' + escapeHtml(r.kind) + '</td>'
+          + '<td class="num">' + fmtInt(r.attempts_total) + '</td>'
+          + '<td class="num">' + fmtInt(r.correct_total)  + '</td>'
+          + '<td class="num">' + accBar(r.accuracy) + '</td>'
+        + '</tr>';
+      }).join('');
+
+      attachSorter(document.getElementById('per-quiz-table'), [
+        (r) => r.cells[0].textContent,
+        (r) => r.cells[1].textContent,
+        (r) => Number(r.cells[2].textContent.replace(/,/g, '')),
+        (r) => Number(r.cells[3].textContent.replace(/,/g, '')),
+        (r) => parseFloat(r.cells[4].textContent.replace('%', '')) || -1,
+      ]);
+    }
+
+    function renderDistractors(perQuiz, mcqOpts) {
+      const byQuiz = new Map(perQuiz.map((r) => [r.quiz_id, r]));
+      // Group option picks by quiz_id.
+      const picksByQuiz = new Map();
+      for (const o of mcqOpts) {
+        let m = picksByQuiz.get(o.quiz_id);
+        if (!m) { m = []; picksByQuiz.set(o.quiz_id, m); }
+        m.push({ selected: o.selected, picks: o.picks });
+      }
+
+      const rows = [];
+      for (const [quizId, picks] of picksByQuiz) {
+        const meta = byQuiz.get(quizId);
+        if (!meta || meta.kind !== 'mcq') continue;
+        // The schema does not record which option index is canonical,
+        // but every wrong selection is a distractor. Infer the correct
+        // option as the one whose pick count exactly matches the
+        // per-quiz [correct_total]. The remaining picks are all wrong.
+        let correctIdx = null;
+        for (const p of picks) {
+          if (p.picks === meta.correct_total) { correctIdx = p.selected; break; }
+        }
+        const wrongOptions = picks.filter((p) => p.selected !== correctIdx);
+        if (wrongOptions.length === 0) continue;
+        wrongOptions.sort((a, b) => b.picks - a.picks);
+        const top = wrongOptions[0];
+        const wrongPicks = wrongOptions.reduce((a, p) => a + p.picks, 0);
+        rows.push({
+          quiz_id:    quizId,
+          accuracy:   meta.accuracy,
+          option:     top.selected,
+          picks:      top.picks,
+          wrongShare: wrongPicks > 0 ? top.picks / wrongPicks : null,
+        });
+      }
+
+      const section = document.getElementById('distractor-section');
+      if (rows.length === 0) {
+        section.hidden = true;
+        return;
+      }
+      rows.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1));
+
+      const tbody = document.querySelector('#distractor-table tbody');
+      tbody.innerHTML = rows.map((r) => {
+        const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
+        return '<tr' + difficult + '>'
+          + '<td class="code">' + escapeHtml(r.quiz_id) + '</td>'
+          + '<td class="num">' + accBar(r.accuracy) + '</td>'
+          + '<td class="num distractor">option ' + fmtInt(r.option) + '</td>'
+          + '<td class="num">' + fmtInt(r.picks) + '</td>'
+          + '<td class="num">' + fmtPct(r.wrongShare) + '</td>'
+        + '</tr>';
+      }).join('');
+
+      attachSorter(document.getElementById('distractor-table'), [
+        (r) => r.cells[0].textContent,
+        (r) => parseFloat(r.cells[1].textContent.replace('%', '')) || -1,
+        (r) => Number((r.cells[2].textContent.match(/-?\d+/) || [0])[0]),
+        (r) => Number(r.cells[3].textContent.replace(/,/g, '')),
+        (r) => parseFloat(r.cells[4].textContent.replace('%', '')) || -1,
+      ]);
+    }
+
+    // Click a column header to sort ascending; click again to flip.
+    function attachSorter(table, accessors) {
+      const ths = table.querySelectorAll('thead th');
+      ths.forEach((th, i) => {
+        th.addEventListener('click', () => {
+          const tbody = table.querySelector('tbody');
+          const rows  = Array.from(tbody.querySelectorAll('tr'));
+          const dir   = th.getAttribute('aria-sort') === 'ascending' ? -1 : 1;
+          ths.forEach((t) => t.removeAttribute('aria-sort'));
+          th.setAttribute('aria-sort', dir === 1 ? 'ascending' : 'descending');
+          rows.sort((a, b) => {
+            const av = accessors[i](a);
+            const bv = accessors[i](b);
+            if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+            return String(av).localeCompare(String(bv)) * dir;
+          });
+          rows.forEach((r) => tbody.appendChild(r));
+        });
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    load();
+  </script>
+</body>
+</html>
+DASHBOARD
+  printf 'built _site/dashboard.html\n'
+}
+emit_dashboard

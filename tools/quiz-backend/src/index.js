@@ -1,18 +1,23 @@
 // Cloudflare Worker for the NPTEL OCaml course quiz analytics.
 //
-// Three routes, all CORS-permissive (the lecture pages are served
+// Four routes, all CORS-permissive (the lecture pages are served
 // from a different origin: GitHub Pages):
 //
-//   POST /quiz         body: { reader_uuid, quiz_id, page, kind,
-//                              selected?, passed?, correct, commit_sha }
-//                      Inserts one row into quiz_response.
+//   POST /quiz             body: { reader_uuid, quiz_id, page, kind,
+//                                  selected?, passed?, correct, commit_sha }
+//                          Inserts one row into quiz_response.
 //
-//   GET  /quiz/agg     Aggregated stats per quiz_id (count, accuracy).
-//                      Public, used by the dashboard page later.
+//   GET  /quiz/agg         Aggregated stats per quiz_id (count, accuracy).
+//                          Public, used by the dashboard page.
 //
-//   POST /quiz/forget  body: { reader_uuid }
-//                      DPDPA right-to-erasure: scrub all rows
-//                      belonging to the given UUID.
+//   GET  /quiz/agg/readers Distinct reader_uuid count plus total response
+//                          count. Public, used by the dashboard. Split
+//                          from /quiz/agg so the heavier DISTINCT scan
+//                          does not slow the per-quiz query.
+//
+//   POST /quiz/forget      body: { reader_uuid }
+//                          DPDPA right-to-erasure: scrub all rows
+//                          belonging to the given UUID.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +42,9 @@ export default {
       }
       if (url.pathname === '/quiz/agg' && request.method === 'GET') {
         return await handleQuizAgg(env);
+      }
+      if (url.pathname === '/quiz/agg/readers' && request.method === 'GET') {
+        return await handleQuizAggReaders(env);
       }
       if (url.pathname === '/quiz/forget' && request.method === 'POST') {
         return await handleQuizForget(request, env);
@@ -122,6 +130,21 @@ async function handleQuizAgg(env) {
   return new Response(JSON.stringify({
     per_quiz:    per_quiz.results,
     mcq_options: mcq_options.results,
+  }), { status: 200, headers: JSON_HEADERS });
+}
+
+async function handleQuizAggReaders(env) {
+  // Two scalars: count of distinct reader UUIDs, and the total
+  // response count. The dashboard uses both for the headline cards.
+  const row = await env.DB.prepare(
+    `SELECT COUNT(DISTINCT reader_uuid) AS readers,
+            COUNT(*)                    AS responses
+       FROM quiz_response`
+  ).first();
+
+  return new Response(JSON.stringify({
+    readers:   row?.readers   ?? 0,
+    responses: row?.responses ?? 0,
   }), { status: 200, headers: JSON_HEADERS });
 }
 

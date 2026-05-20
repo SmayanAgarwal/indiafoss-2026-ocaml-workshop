@@ -34,6 +34,10 @@ assets/reveal/plugin/
 # Node artifacts (if any tooling pulls them)
 node_modules/
 
+# Playwright MCP scratch directory: snapshots and console logs from
+# the browser tool. Re-created on every run; do not commit.
+.playwright-mcp/
+
 # Reference textbooks: cloned/downloaded for source material, not vendored
 # into the repo. Re-clone or re-download if needed.
 _references/textbooks/
