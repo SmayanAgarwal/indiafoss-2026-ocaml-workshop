@@ -118,14 +118,24 @@ async function handleQuizPost(request, env) {
 async function handleQuizAgg(env) {
   // Per-quiz aggregate: total responses, accuracy, plus per-option
   // breakdown for MCQ (helps spot the most popular distractor).
+  // [latest_sha] is the commit_sha attached to the most recent
+  // response for this quiz; the dashboard uses it to build a
+  // permanent GitHub link to the lecture source at that commit,
+  // which works even if the quiz has since been edited or
+  // removed from HEAD.
   const per_quiz = await env.DB.prepare(
-    `SELECT quiz_id, kind,
-            COUNT(*)                          AS attempts_total,
-            SUM(COALESCE(correct, 0))         AS correct_total,
-            AVG(COALESCE(correct, 0) * 1.0)   AS accuracy
-       FROM quiz_response
-      GROUP BY quiz_id, kind
-      ORDER BY quiz_id`
+    `SELECT q.quiz_id, q.kind,
+            COUNT(*)                            AS attempts_total,
+            SUM(COALESCE(q.correct, 0))         AS correct_total,
+            AVG(COALESCE(q.correct, 0) * 1.0)   AS accuracy,
+            (SELECT q2.commit_sha
+               FROM quiz_response q2
+              WHERE q2.quiz_id = q.quiz_id
+              ORDER BY q2.ts DESC
+              LIMIT 1)                          AS latest_sha
+       FROM quiz_response q
+      GROUP BY q.quiz_id, q.kind
+      ORDER BY q.quiz_id`
   ).all();
 
   const mcq_options = await env.DB.prepare(

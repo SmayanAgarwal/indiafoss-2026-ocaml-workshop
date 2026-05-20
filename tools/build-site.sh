@@ -534,6 +534,13 @@ emit_dashboard() {
     .dash .lecture-best  { color: #2e6e3a; font-weight: 600; }
     .dash .lecture-worst { color: #b35858; font-weight: 600; }
     .dash .distractor    { color: #b35858; }
+    .dash .sha-pill      {
+      display: inline-block; margin-left: 0.4em;
+      padding: 0.05em 0.4em;
+      font-family: ui-monospace, monospace; font-size: 0.78em;
+      background: var(--code-bg); color: var(--muted);
+      border-radius: 3px; vertical-align: 0.05em;
+    }
   </style>
 </head>
 <body class="mode-chapter">
@@ -633,14 +640,32 @@ emit_dashboard() {
       key = key.replace(/^\/?_site\//, '').replace(/^\/+/, '');
       return key;
     }
-    // Turn a quiz_id like "/_site/M02-L01-literals.html#q1" into a
-    // clickable link to the lecture, pointing at the quiz's anchor.
-    // The reader follows it to see exactly what was asked.
-    function quizLink(quizId) {
+    // Pin every dashboard link to the commit_sha of the response,
+    // not the current HEAD of the website. This way deleted or
+    // renamed questions stay reachable: GitHub keeps every old
+    // file at every old sha, so the reader sees the question text
+    // exactly as it was when those responses were collected.
+    // [latest_sha] comes from /quiz/agg (most recent response's
+    // commit_sha for this quiz_id).
+    const REPO_BLOB_BASE = 'https://github.com/fplaunchpad/ocaml_nptel/blob';
+    function lectureFileFromQuizId(quizId) {
+      // "/_site/M01-L02-why-fp.html#cons-immutability"
+      //  -> "lectures/M01-L02-why-fp.md"
+      const noSite = quizId.replace(/^\/?_site\//, '').replace(/^\/+/, '');
+      const noFrag = noSite.split('#')[0];
+      const noHtml = noFrag.replace(/\.html$/, '.md');
+      return 'lectures/' + noHtml;
+    }
+    function quizLink(quizId, latestSha) {
       const cleaned = quizId.replace(/^\/?_site\//, '').replace(/^\/+/, '');
-      return '<a href="' + escapeHtml(cleaned) + '" target="_blank" rel="noopener">'
+      const fileMd = lectureFileFromQuizId(quizId);
+      const sha = (latestSha && latestSha.length >= 7) ? latestSha : 'main';
+      const href = REPO_BLOB_BASE + '/' + encodeURIComponent(sha) + '/' + fileMd;
+      const shaShort = sha === 'main' ? 'main' : sha.slice(0, 7);
+      return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener" '
+           + 'title="View the lecture source at the commit these responses were collected against">'
            + escapeHtml(cleaned)
-           + '</a>';
+           + ' <span class="sha-pill">' + escapeHtml(shaShort) + '</span></a>';
     }
 
     function accClass(a) {
@@ -772,7 +797,7 @@ emit_dashboard() {
       tbody.innerHTML = rows.map((r) => {
         const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
         return '<tr' + difficult + '>'
-          + '<td class="code">' + quizLink(r.quiz_id) + '</td>'
+          + '<td class="code">' + quizLink(r.quiz_id, r.latest_sha) + '</td>'
           + '<td>' + escapeHtml(r.kind) + '</td>'
           + '<td class="num">' + fmtInt(r.attempts_total) + '</td>'
           + '<td class="num">' + fmtInt(r.correct_total)  + '</td>'
@@ -822,6 +847,7 @@ emit_dashboard() {
           option:     top.selected,
           picks:      top.picks,
           wrongShare: wrongPicks > 0 ? top.picks / wrongPicks : null,
+          latest_sha: meta.latest_sha,
         });
       }
 
@@ -836,7 +862,7 @@ emit_dashboard() {
       tbody.innerHTML = rows.map((r) => {
         const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
         return '<tr' + difficult + '>'
-          + '<td class="code">' + quizLink(r.quiz_id) + '</td>'
+          + '<td class="code">' + quizLink(r.quiz_id, r.latest_sha) + '</td>'
           + '<td class="num">' + accBar(r.accuracy) + '</td>'
           + '<td class="num distractor">option ' + fmtInt(r.option) + '</td>'
           + '<td class="num">' + fmtInt(r.picks) + '</td>'
