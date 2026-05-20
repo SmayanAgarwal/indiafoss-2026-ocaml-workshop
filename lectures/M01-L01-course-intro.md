@@ -26,11 +26,11 @@ technical content begins.
 I want to spend this opening session on framing rather than on syntax,
 because the choices a course makes about what to teach are themselves
 worth understanding. There are dozens of programming language courses
-on NPTEL and elsewhere, and they make very different choices about
-which language to use, which features to emphasise, and how much
-mathematical content to include. By the end of this lecture you
-should know what *kind* of course this is, and whether it is the
-right one for what you want to learn next.
+on [NPTEL](https://nptel.ac.in/) and elsewhere, and they make very
+different choices about which language to use, which features to
+emphasise, and how much mathematical content to include. By the end
+of this lecture you should know what *kind* of course this is, and
+whether it is the right one for what you want to learn next.
 
 A quick note on the format. Every lecture in this course comes as
 both a 20-30 minute recorded video, where I work through slides
@@ -74,9 +74,12 @@ language designed for something else.
 It is *not* a first programming course. We will not pause to explain
 what a variable is or what a function call does. If those concepts
 are still wobbly for you, work through any introductory programming
-text first, then come back. The course also assumes you can read C
-syntax casually, because we will draw comparisons against C and C++
-throughout, especially in the secure-systems half.
+text first, then come back. The functional-programming half makes
+occasional cross-language asides (Python, Java, C, Rust, and the
+odd JavaScript) where they help orient the reader. The
+secure-systems half (Modules 9 to 12) leans on C and C++ heavily as
+the canonical "what unsafe languages do" baseline, so by then you
+will want to be able to read C syntax casually.
 
 :::slide
 
@@ -142,7 +145,7 @@ largely about getting you to the second state.
 
 **You will reason equationally about your code.** This is shorthand
 for a habit of mind that functional programming makes possible. When
-every function is pure (returns a value, has no side effects), you
+a function is pure (returns a value, has no side effects), you
 can substitute equals for equals: replace any expression with its
 value, replace any call with its body. This sounds like a small thing
 and is in fact one of the more profound differences between FP and
@@ -152,11 +155,15 @@ it.
 
 **You will understand the safety story.** OCaml is one of a small
 number of mainstream languages where memory safety is provided by
-construction in the type system, without sacrificing C-level
-performance. The way OCaml achieves this is *not* by being slow,
-or by being garbage-collected (though it is). It is by being
-careful about which language constructs admit undefined behaviour
-in the first place. The secure-systems half of the course makes
+construction in the type system while staying within a small
+constant factor of C and C++ in performance. Idiomatic OCaml is
+often very close to C on tight code, sits in the same league as
+Java or Go on typical workloads, and is dramatically faster than
+dynamic languages like Python or Ruby. The safety is not paid for
+with slowness: it comes from the type system ruling out, at
+compile time, classes of undefined behaviour that C programs hit
+at runtime. Garbage collection helps on top, but the load-bearing
+safety is in the types. The secure-systems half of the course makes
 this concrete: you will see what *defined* and *undefined* behaviour
 mean, where the OCaml runtime draws the line, and how to interface
 safely with C code that does not.
@@ -173,18 +180,23 @@ First, OCaml is *functional-first* with a *serious* type system.
 "Functional-first" means immutability, expressions, recursion,
 and higher-order functions are the natural way to write programs,
 the same way classes and inheritance are natural in Java. "Serious"
-means the type system is sound: if your program type-checks, certain
-classes of bugs simply cannot happen. Sound type systems are
-uncommon. JavaScript and Python have no real static types. Java
-and C++ have type systems that they let you escape from too easily.
-Rust is the closest sibling to OCaml in this respect, and a lot of
-Rust's design is directly inherited from ML (the family OCaml
+means the type system is sound: if your program type-checks,
+certain classes of bugs simply cannot happen. Sound, expressive
+type systems are uncommon. JavaScript and Python have no real
+static types. C++ has a type system that lets you escape too
+easily, via `reinterpret_cast`, `void*`, and pointer arithmetic.
+Java's type system is sound, but its vocabulary forces you to
+express optionality through nullable references and tagged unions
+through class hierarchies, which means a lot of "did you remember
+to handle this case?" lives at runtime instead of compile time.
+Rust is the closest sibling to OCaml in this respect, and a lot
+of Rust's design is directly inherited from ML (the family OCaml
 belongs to).
 
 Second, OCaml is *practical*. It is used in production at
-[Tarides](https://tarides.com),
 [Jane Street](https://www.janestreet.com) (whose internal systems
-are millions of lines of OCaml), [Bloomberg](https://www.bloomberg.com/company/values/tech-at-bloomberg/)
+are millions of lines of OCaml),
+[Bloomberg](https://www.bloomberg.com/company/values/tech-at-bloomberg/)
 (financial infrastructure), Facebook (the [Hack](https://hacklang.org)
 and [Flow](https://flow.org) type checkers for PHP and JavaScript
 respectively, both written in OCaml),
@@ -192,7 +204,9 @@ respectively, both written in OCaml),
 [Ahrefs](https://ahrefs.com) (one of the world's largest web
 crawlers and SEO platforms, with a backend in OCaml),
 [Semgrep](https://semgrep.dev) (a static-analysis tool for finding
-bugs and security issues, written in OCaml). It powers
+bugs and security issues, written in OCaml), and
+[Tarides](https://tarides.com) (the OCaml platform company, builder
+of MirageOS and the Multicore OCaml runtime). It powers
 the [WebAssembly reference interpreter](https://github.com/WebAssembly/spec/tree/main/interpreter)
 that defines the WebAssembly standard, and the
 [CompCert](https://compcert.org) verified C compiler.
@@ -209,10 +223,10 @@ The garbage collector is incremental and concurrent in recent
 versions. There is no virtual machine, no JIT warmup, no
 interpretation overhead. When you write a tight loop in OCaml and
 compile it to native code, you get something close to what you
-would get from a C compiler. This matters because functional
-programming has a reputation for being slow that comes from
-JavaScript and Python and from Haskell's lazy evaluation. OCaml is
-the counterexample.
+would get from a C compiler. Functional programming has picked up
+a reputation in some circles for being slow, often by association
+with interpreted languages that happen to support functional
+idioms; OCaml is the counterexample.
 
 :::slide
 
@@ -233,10 +247,11 @@ the counterexample.
 A fourth reason worth listing separately: OCaml is *small*. The core
 language fits in a long afternoon: a handful of expression forms, a
 handful of type constructors, a module system, a few sugar
-constructs. Compare that to C++, where the full language is large
-enough that no single human knows all of it. The smallness lets us
-spend lecture time on *why* things are the way they are, rather than
-on enumerating syntax.
+constructs. Larger industrial languages (C++ is the classic example,
+but Scala and modern Java are not far behind) accumulate so many
+features over time that the surface area for surprise grows with
+them. OCaml's smallness lets us spend lecture time on *why* things
+are the way they are, rather than on enumerating syntax.
 
 You will also be re-using almost everything you learn here in other
 languages. Type inference, sum types (also called variants or
