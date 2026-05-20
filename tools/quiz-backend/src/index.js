@@ -1,6 +1,6 @@
 // Cloudflare Worker for the NPTEL OCaml course quiz analytics.
 //
-// Four routes, all CORS-permissive (the lecture pages are served
+// Five routes, all CORS-permissive (the lecture pages are served
 // from a different origin: GitHub Pages):
 //
 //   POST /quiz             body: { reader_uuid, quiz_id, page, kind,
@@ -14,6 +14,12 @@
 //                          count. Public, used by the dashboard. Split
 //                          from /quiz/agg so the heavier DISTINCT scan
 //                          does not slow the per-quiz query.
+//
+//   POST /quiz/export      body: { reader_uuid }
+//                          DPDPA right-to-access: return every row
+//                          tied to the given UUID as JSON. The reader
+//                          UUID is a secret the requester already has
+//                          locally; no auth required.
 //
 //   POST /quiz/forget      body: { reader_uuid }
 //                          DPDPA right-to-erasure: scrub all rows
@@ -45,6 +51,9 @@ export default {
       }
       if (url.pathname === '/quiz/agg/readers' && request.method === 'GET') {
         return await handleQuizAggReaders(env);
+      }
+      if (url.pathname === '/quiz/export' && request.method === 'POST') {
+        return await handleQuizExport(request, env);
       }
       if (url.pathname === '/quiz/forget' && request.method === 'POST') {
         return await handleQuizForget(request, env);
@@ -145,6 +154,34 @@ async function handleQuizAggReaders(env) {
   return new Response(JSON.stringify({
     readers:   row?.readers   ?? 0,
     responses: row?.responses ?? 0,
+  }), { status: 200, headers: JSON_HEADERS });
+}
+
+async function handleQuizExport(request, env) {
+  // DPDPA right-to-access. Returns every row for the given UUID
+  // as JSON. The requester must supply the UUID, which they have
+  // in their browser's localStorage; no auth flow needed because
+  // the UUID is itself the credential.
+  let body;
+  try { body = await request.json(); }
+  catch { return new Response('Bad JSON', { status: 400, headers: CORS }); }
+
+  const { reader_uuid } = body || {};
+  if (!reader_uuid) {
+    return new Response('Missing reader_uuid', { status: 400, headers: CORS });
+  }
+  const r = await env.DB.prepare(
+    `SELECT quiz_id, page, kind, selected, passed, attempts,
+            correct, commit_sha, ts
+       FROM quiz_response
+      WHERE reader_uuid = ?
+      ORDER BY ts ASC`
+  ).bind(cap(reader_uuid, 64)).all();
+
+  return new Response(JSON.stringify({
+    reader_uuid: cap(reader_uuid, 64),
+    rows: r.results,
+    count: r.results.length,
   }), { status: 200, headers: JSON_HEADERS });
 }
 

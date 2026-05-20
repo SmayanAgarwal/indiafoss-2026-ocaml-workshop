@@ -181,10 +181,18 @@ emit_privacy() {
     <p><a href="index.html">← Course landing page</a></p>
     <h1>Privacy</h1>
 
-    <p>The site records <strong>anonymous</strong> quiz responses to
-    help improve the course. This page explains exactly what is
-    collected, what is not, and how to opt out or delete prior
-    responses.</p>
+    <p>The site can record <strong>anonymous</strong> responses to
+    the inline quizzes if you opt in. This page explains exactly what
+    is collected, what is not, who has access, how long we keep it,
+    and how to opt in / out / export / delete at any time.</p>
+
+    <p><strong>Default:</strong> opt-in. Nothing is sent until you
+    explicitly click <em>Allow</em> in the consent banner. No login
+    or account is involved either way.</p>
+
+    <p><strong>Course audience:</strong> this material is intended
+    for students 18 and older. We do not knowingly collect data
+    from anyone under 18.</p>
 
     <h2>What we collect, per quiz answer</h2>
     <ul>
@@ -228,55 +236,133 @@ emit_privacy() {
     at <a href="dashboard.html">dashboard.html</a> and shows only
     counts, accuracies, and option pick distributions.</p>
 
-    <h2>Opt out</h2>
-    <p>You can disable analytics at any time. The setting is stored
-    in your browser, so it is per-device.</p>
+    <h2>Where the data lives, and cross-border transfer</h2>
+    <p>Responses are stored in a single SQLite database hosted on
+    <a href="https://developers.cloudflare.com/d1/">Cloudflare D1</a>,
+    region-pinned to Asia-Pacific (APAC). Cloudflare may replicate
+    data to other regions within its global network for resilience,
+    governed by their
+    <a href="https://www.cloudflare.com/cloudflare-customer-dpa/">Data
+    Processing Addendum</a>. By opting in you consent to this
+    cross-border transfer.</p>
+
+    <h2>How long we keep it</h2>
+    <p>Raw response rows are retained until the course completes a
+    full delivery cycle (each NPTEL run is one semester) and the
+    rows have been aggregated into the dashboard and any
+    accompanying research dataset. After that, the raw rows are
+    deleted; only the aggregate (no per-reader rows) is kept. You
+    can also delete every row tied to your device immediately from
+    this page using the buttons below.</p>
+
+    <h2>Your choice on this device</h2>
+    <p>Each setting is stored in your browser's localStorage, so
+    it is per-device.</p>
     <div class="toggle-row">
       <button type="button" id="opt-toggle">Loading…</button>
       <span class="state" id="opt-state"></span>
     </div>
 
+    <h2>Export your data</h2>
+    <p>Download every response tied to your reader UUID, as JSON.
+    Useful for transparency: see exactly what we have on you.</p>
+    <p><button type="button" id="export-btn">Download my data</button>
+       <span class="state" id="export-state"></span></p>
+
     <h2>Delete prior responses</h2>
-    <p>If you have already answered quizzes and want every response
-    associated with your browser's reader UUID to be removed from the
-    database, click below. This is final and cannot be undone.</p>
+    <p>Remove every response tied to your reader UUID. This is final
+    and cannot be undone.</p>
     <p><button type="button" class="danger" id="forget-btn">Delete my data</button>
        <span class="state" id="forget-state"></span></p>
 
-    <h2>Contact</h2>
-    <p>Questions about this policy: KC Sivaramakrishnan, <code>kc@tarides.com</code>,
-    Dept. of Computer Science and Engineering, IIT Madras.</p>
+    <h2>Grievance redress</h2>
+    <p>Per India's Digital Personal Data Protection Act, 2023, the
+    contact for any complaint, correction request, or grievance
+    related to this data collection is:</p>
+    <p>KC Sivaramakrishnan,
+       Assistant Professor, Dept. of Computer Science and Engineering,
+       IIT Madras.<br>
+       Email: <code>kc@tarides.com</code>.<br>
+       Grievances are acknowledged within 7 days and addressed within
+       30 days.</p>
 
-    <p style="margin-top:3rem; color: var(--muted); font-size: 0.85em;">
-      Data layer: a single SQLite database (Cloudflare D1) in the
-      Asia-Pacific region. Source code at
+    <h2>Source and policy version</h2>
+    <p>This policy is version <strong>2026-05-20</strong>. If we
+    materially change what is collected, the version bumps and the
+    consent banner reappears so you can re-confirm.</p>
+    <p>The Worker source is at
       <a href="https://github.com/fplaunchpad/ocaml_nptel/tree/main/tools/quiz-backend">github.com/fplaunchpad/ocaml_nptel/tools/quiz-backend</a>.
-    </p>
+    The schema is one table; you can read it
+      <a href="https://github.com/fplaunchpad/ocaml_nptel/blob/main/tools/quiz-backend/migrations/0001_init.sql">here</a>.</p>
   </article>
 
   <script>
     const API = document.querySelector('meta[name="quiz-api"]')?.content || '';
-    const OPT_KEY = 'nptel-analytics-opt-out';
+    const POLICY_VERSION = '2026-05-20';
+    const CONSENT_KEY = 'nptel-analytics-consent';
+    const CONSENT_VER_KEY = 'nptel-analytics-consent-version';
+    const CONSENT_TS_KEY = 'nptel-analytics-consent-ts';
     const UUID_KEY = 'nptel-reader-uuid';
 
-    function isOptOut() { return localStorage.getItem(OPT_KEY) === '1'; }
+    function consentValue() {
+      const v = localStorage.getItem(CONSENT_KEY);
+      const ver = localStorage.getItem(CONSENT_VER_KEY);
+      if ((v === 'yes' || v === 'no') && ver === POLICY_VERSION) return v;
+      return 'pending';
+    }
+    function setConsent(v) {
+      localStorage.setItem(CONSENT_KEY, v);
+      localStorage.setItem(CONSENT_VER_KEY, POLICY_VERSION);
+      localStorage.setItem(CONSENT_TS_KEY, new Date().toISOString());
+    }
     function renderToggle() {
       const btn = document.getElementById('opt-toggle');
       const st  = document.getElementById('opt-state');
-      if (isOptOut()) {
-        btn.textContent = 'Re-enable analytics';
+      const c = consentValue();
+      if (c === 'yes') {
+        btn.textContent = 'Opt out';
+        const ts = localStorage.getItem(CONSENT_TS_KEY) || '';
+        st.textContent  = 'Analytics is currently ON. Consent given at ' + ts + '.';
+      } else if (c === 'no') {
+        btn.textContent = 'Opt in';
         st.textContent  = 'Analytics is currently OFF on this device.';
       } else {
-        btn.textContent = 'Opt out of analytics';
-        st.textContent  = 'Analytics is currently ON on this device.';
+        btn.textContent = 'Opt in';
+        st.textContent  = 'Analytics is currently OFF (you have not chosen yet).';
       }
     }
     document.getElementById('opt-toggle').addEventListener('click', () => {
-      if (isOptOut()) localStorage.removeItem(OPT_KEY);
-      else            localStorage.setItem(OPT_KEY, '1');
+      setConsent(consentValue() === 'yes' ? 'no' : 'yes');
       renderToggle();
     });
     renderToggle();
+
+    document.getElementById('export-btn').addEventListener('click', async () => {
+      const st = document.getElementById('export-state');
+      const uuid = localStorage.getItem(UUID_KEY);
+      if (!uuid) {
+        st.textContent = 'No reader UUID found on this device; nothing to export.';
+        return;
+      }
+      st.textContent = 'Fetching…';
+      try {
+        const r = await fetch(API + '/quiz/export', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ reader_uuid: uuid }),
+        });
+        const j = await r.json();
+        const blob = new Blob([JSON.stringify(j, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'nptel-quiz-data.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        st.textContent = 'Downloaded ' + (j.count ?? 0) + ' response(s).';
+      } catch (e) {
+        st.textContent = 'Could not reach the server. Try again later.';
+      }
+    });
 
     document.getElementById('forget-btn').addEventListener('click', async () => {
       const st = document.getElementById('forget-state');

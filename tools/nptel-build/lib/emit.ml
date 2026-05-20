@@ -463,18 +463,43 @@ let runtime_script ~asset_root =
     document.querySelector('.clear-all')?.addEventListener('click', clearAll);
     document.querySelector('.reset-all')?.addEventListener('click', resetAll);
 
-    // ---------- Quiz analytics (anonymous, opt-out) ----------
-    // Anonymous UUID minted on first visit and stored locally. Every
-    // quiz answer fires a fire-and-forget POST to the Worker unless
-    // the reader has flipped the opt-out toggle on the privacy page.
-    // No personal data; only what the privacy page documents.
+    // ---------- Quiz analytics (anonymous, opt-in) ----------
+    // Default: NO data is sent until the reader explicitly opts in
+    // via the consent banner on first visit. Following Crichton et
+    // al.'s methodology in the TRPL inline-quiz study (which used
+    // opt-in consent and still collected 62k+ responses), we ask
+    // up front and respect the answer. The opt-in choice is stored
+    // in localStorage as [nptel-analytics-consent] = "yes" | "no";
+    // any other value (including missing) is treated as "not yet
+    // decided" and reportQuiz() is a no-op.
+    //
+    // The privacy page (privacy.html) lets the reader flip the
+    // choice at any time, export everything we have for their
+    // UUID, or delete it all.
+    //
+    // POLICY_VERSION bumps if we materially change what is
+    // collected; readers re-consent at the next bump.
+    const POLICY_VERSION = '2026-05-20';
+
     const QUIZ_API = document.querySelector(
       'meta[name="quiz-api"]')?.getAttribute('content') || '';
     const COMMIT_SHA = document.querySelector(
       'meta[name="commit-sha"]')?.getAttribute('content') || '';
-    function analyticsEnabled() {
-      return !!QUIZ_API
-        && localStorage.getItem('nptel-analytics-opt-out') !== '1';
+
+    function analyticsConsent() {
+      if (!QUIZ_API) return 'no-api';
+      const v = localStorage.getItem('nptel-analytics-consent');
+      const at = localStorage.getItem('nptel-analytics-consent-version');
+      if (v !== 'yes' && v !== 'no') return 'pending';
+      if (at !== POLICY_VERSION) return 'pending';
+      return v;
+    }
+    function setConsent(v) {
+      try {
+        localStorage.setItem('nptel-analytics-consent', v);
+        localStorage.setItem('nptel-analytics-consent-version', POLICY_VERSION);
+        localStorage.setItem('nptel-analytics-consent-ts', new Date().toISOString());
+      } catch (_) {}
     }
     function readerUuid() {
       let id = localStorage.getItem('nptel-reader-uuid');
@@ -485,7 +510,9 @@ let runtime_script ~asset_root =
       return id;
     }
     function reportQuiz(payload) {
-      if (!analyticsEnabled()) return;
+      // Opt-in: only post when the reader has explicitly said yes
+      // for the current policy version.
+      if (analyticsConsent() !== 'yes') return;
       try {
         fetch(QUIZ_API + '/quiz', {
           method: 'POST',
@@ -501,27 +528,34 @@ let runtime_script ~asset_root =
       } catch (_) {}
     }
 
-    // First-visit privacy banner. Sticky at bottom-right until the
-    // reader clicks OK; sets a localStorage flag that prevents
-    // re-display. Bypassed entirely if the page has no quiz-api
-    // configured.
-    function showPrivacyBannerIfNew() {
-      if (!QUIZ_API) return;
-      if (localStorage.getItem('nptel-analytics-seen') === '1') return;
+    // First-visit consent banner (opt-in). Stays visible until the
+    // reader explicitly picks Allow or Decline; can be summoned
+    // again from the privacy page if dismissed accidentally.
+    // Bypassed entirely if the page has no quiz-api configured.
+    function showConsentIfPending() {
+      if (analyticsConsent() !== 'pending') return;
       const banner = document.createElement('div');
       banner.className = 'privacy-banner';
       banner.innerHTML =
-        '<p>This site records <strong>anonymous</strong> quiz responses ' +
-        'to improve the course. No personal data, no tracking. ' +
-        '<a href="privacy.html">Learn more, or opt out</a>.</p>' +
-        '<button type="button" class="privacy-ok">Got it</button>';
+        '<p><strong>Help improve this course?</strong></p>' +
+        '<p>With your consent, the site records <strong>anonymous</strong> ' +
+        'responses to the inline quizzes so we can see which questions ' +
+        'are hardest and revise the surrounding material. No name, ' +
+        'no email, no IP address. ' +
+        '<a href="privacy.html">What we collect</a>.</p>' +
+        '<div class="privacy-actions">' +
+        '<button type="button" class="privacy-allow">Allow</button> ' +
+        '<button type="button" class="privacy-decline">Not now</button>' +
+        '</div>';
       document.body.appendChild(banner);
-      banner.querySelector('.privacy-ok')?.addEventListener('click', () => {
-        try { localStorage.setItem('nptel-analytics-seen', '1'); } catch (_) {}
-        banner.remove();
+      banner.querySelector('.privacy-allow')?.addEventListener('click', () => {
+        setConsent('yes'); banner.remove();
+      });
+      banner.querySelector('.privacy-decline')?.addEventListener('click', () => {
+        setConsent('no'); banner.remove();
       });
     }
-    showPrivacyBannerIfNew();
+    showConsentIfPending();
 
     // ---------- Inline quizzes ----------
     // Two kinds: [.quiz-mcq] and [.quiz-code]. Authored as

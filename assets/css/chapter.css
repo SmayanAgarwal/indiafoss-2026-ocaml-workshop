@@ -332,16 +332,29 @@ body.mode-slides .home-link { opacity: 0.6; }
 .privacy-banner a {
   color: var(--accent);
 }
-.privacy-banner .privacy-ok {
-  padding: 0.3rem 0.9rem;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: #fff;
+.privacy-banner .privacy-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.privacy-banner button {
+  padding: 0.35rem 0.9rem;
   border-radius: 4px;
   cursor: pointer;
   font: inherit;
 }
-.privacy-banner .privacy-ok:hover { filter: brightness(1.1); }
+.privacy-banner .privacy-allow {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+.privacy-banner .privacy-allow:hover { filter: brightness(1.1); }
+.privacy-banner .privacy-decline {
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+}
+.privacy-banner .privacy-decline:hover { background: var(--code-bg); }
 body.mode-slides .privacy-banner { display: none; }
 
 .chapter p { margin: 0.9rem 0; }
