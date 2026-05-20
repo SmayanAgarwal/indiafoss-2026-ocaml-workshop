@@ -631,11 +631,13 @@ let runtime_script ~asset_root =
           localStorage.setItem(QUIZ_PREFIX + id,
             JSON.stringify({ kind: 'mcq', selected: idx, correct: isCorrect }));
         } catch (_) {}
+        const line = parseInt(quiz.dataset.quizLine || '', 10);
         reportQuiz({
           quiz_id: location.pathname + '#' + id,
           kind: 'mcq',
           selected: idx,
           correct: isCorrect,
+          line: Number.isFinite(line) ? line : null,
         });
       });
       // Restore prior attempt.
@@ -724,10 +726,14 @@ let runtime_script ~asset_root =
                 localStorage.setItem(QUIZ_PREFIX + id,
                   JSON.stringify({ kind: 'code', passed: true }));
               } catch (_) {}
-              reportQuiz({
-                quiz_id: location.pathname + '#' + id,
-                kind: 'code', passed: true, correct: true,
-              });
+              {
+                const line = parseInt(quiz.dataset.quizLine || '', 10);
+                reportQuiz({
+                  quiz_id: location.pathname + '#' + id,
+                  kind: 'code', passed: true, correct: true,
+                  line: Number.isFinite(line) ? line : null,
+                });
+              }
             } else if (s === 'fail') {
               status.textContent = '✗ Some assertions failed';
               status.className = 'quiz-status fail';
@@ -739,10 +745,14 @@ let runtime_script ~asset_root =
                 localStorage.setItem(QUIZ_PREFIX + id,
                   JSON.stringify({ kind: 'code', passed: false }));
               } catch (_) {}
-              reportQuiz({
-                quiz_id: location.pathname + '#' + id,
-                kind: 'code', passed: false, correct: false,
-              });
+              {
+                const line = parseInt(quiz.dataset.quizLine || '', 10);
+                reportQuiz({
+                  quiz_id: location.pathname + '#' + id,
+                  kind: 'code', passed: false, correct: false,
+                  line: Number.isFinite(line) ? line : null,
+                });
+              }
             } else {
               status.textContent = 'Timed out';
               status.className = 'quiz-status fail';

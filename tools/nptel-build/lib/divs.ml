@@ -43,8 +43,8 @@ type kind =
   | Subslide
   | Fragment
   | Notes
-  | Quiz_mcq of string
-  | Quiz_code of string
+  | Quiz_mcq of string * int  (* id, 1-based source line of the opening ::: *)
+  | Quiz_code of string * int
 
 (* Sanitise an author-supplied id to a slug shape that survives in
    URL fragments. Lowercase, [a-z0-9-] only, collapse repeats,
@@ -102,8 +102,11 @@ let parse_quiz_kind rest =
   else None
 
 (* Quiz state is threaded through preprocess as a mutable counter
-   used only for positional fallback ids. *)
-let parse_open ~quiz_counter line =
+   used only for positional fallback ids. [line_no] is 1-based and
+   refers to the input line of the opening [:::] marker; we stamp
+   it onto the rendered div so the dashboard can deep-link to the
+   exact line of the markdown source. *)
+let parse_open ~quiz_counter ~line_no line =
   let s = String.trim line in
   if String.length s < 3 || String.sub s 0 3 <> ":::" then None
   else
@@ -123,8 +126,8 @@ let parse_open ~quiz_counter line =
            | None -> Printf.sprintf "q%d" !quiz_counter
          in
          (match kind with
-          | `Mcq -> Some (Quiz_mcq id)
-          | `Code -> Some (Quiz_code id))
+          | `Mcq -> Some (Quiz_mcq (id, line_no))
+          | `Code -> Some (Quiz_code (id, line_no)))
        | None -> None)
 
 let is_close line =
@@ -136,10 +139,14 @@ let open_tag = function
   | Subslide -> "<section class=\"slide subslide\" data-subslide>"
   | Fragment -> "<div class=\"fragment\">"
   | Notes -> "<aside class=\"notes\">"
-  | Quiz_mcq id ->
-      Printf.sprintf "<div class=\"quiz quiz-mcq\" data-quiz-id=\"%s\">" id
-  | Quiz_code id ->
-      Printf.sprintf "<div class=\"quiz quiz-code\" data-quiz-id=\"%s\">" id
+  | Quiz_mcq (id, line) ->
+      Printf.sprintf
+        "<div class=\"quiz quiz-mcq\" data-quiz-id=\"%s\" data-quiz-line=\"%d\">"
+        id line
+  | Quiz_code (id, line) ->
+      Printf.sprintf
+        "<div class=\"quiz quiz-code\" data-quiz-id=\"%s\" data-quiz-line=\"%d\">"
+        id line
 
 let close_tag = function
   | Slide | Subslide -> "</section>"
@@ -181,7 +188,12 @@ let inject_quiz_test_marker line =
   let leading = String.sub s 0 prefix_len in
   leading ^ body_trimmed ^ " quiz-test"
 
-let preprocess src =
+(* [line_offset] shifts the recorded source-line numbers up so they
+   match the original file's line numbering (the body the caller
+   hands us has already had the YAML frontmatter stripped off). It
+   is added to every emitted [data-quiz-line] attribute. Pass 0 if
+   you are processing a whole file already including frontmatter. *)
+let preprocess ?(line_offset = 0) src =
   let lines = String.split_on_char '\n' src in
   let buf = Buffer.create (String.length src) in
   let stack = ref [] in
@@ -194,8 +206,9 @@ let preprocess src =
     List.exists (function Quiz_code _ -> true | _ -> false) !stack
   in
   let in_code_block = ref false in
-  List.iter
-    (fun line ->
+  List.iteri
+    (fun i line ->
+      let line_no = i + 1 + line_offset in
       (* Distinguish entering / leaving a fenced code block from the
          opening of a fenced div ([:::]). Code-block fences start with
          [```]; div opens / closes start with [:::]. *)
@@ -203,7 +216,7 @@ let preprocess src =
         let s = String.trim line in
         String.length s >= 3 && String.sub s 0 3 = "```"
       in
-      match parse_open ~quiz_counter line with
+      match parse_open ~quiz_counter ~line_no line with
       | Some k ->
           stack := k :: !stack;
           (match k with

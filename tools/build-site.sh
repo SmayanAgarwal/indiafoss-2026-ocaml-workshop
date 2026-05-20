@@ -662,13 +662,21 @@ emit_dashboard() {
     // so the link still resolves, even if it then shows the file
     // as it is in HEAD rather than at the original commit.
     const SHA_RE = /^[a-f0-9]{7,40}$/i;
-    function quizLink(quizId, latestSha) {
+    function quizLink(quizId, latestSha, latestLine) {
       const cleaned = quizId.replace(/^\/?_site\//, '').replace(/^\/+/, '');
       const fileMd = lectureFileFromQuizId(quizId);
       const validSha = (typeof latestSha === 'string' && SHA_RE.test(latestSha))
         ? latestSha : null;
       const ref = validSha || 'main';
-      const href = REPO_BLOB_BASE + '/' + encodeURIComponent(ref) + '/' + fileMd;
+      // GitHub's [?plain=1] toggles the source view (with line
+      // numbers) instead of the rendered markdown; [#L<n>] jumps
+      // to a specific line. Together they put the reader on the
+      // exact quiz block.
+      let href = REPO_BLOB_BASE + '/' + encodeURIComponent(ref) + '/' + fileMd;
+      const validLine = Number.isInteger(latestLine) && latestLine > 0;
+      if (validLine) {
+        href += '?plain=1#L' + latestLine;
+      }
       const pill = validSha ? validSha.slice(0, 7) : 'main';
       const pillClass = validSha ? 'sha-pill' : 'sha-pill sha-fallback';
       return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener" '
@@ -806,7 +814,7 @@ emit_dashboard() {
       tbody.innerHTML = rows.map((r) => {
         const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
         return '<tr' + difficult + '>'
-          + '<td class="code">' + quizLink(r.quiz_id, r.latest_sha) + '</td>'
+          + '<td class="code">' + quizLink(r.quiz_id, r.latest_sha, r.latest_line) + '</td>'
           + '<td>' + escapeHtml(r.kind) + '</td>'
           + '<td class="num">' + fmtInt(r.attempts_total) + '</td>'
           + '<td class="num">' + fmtInt(r.correct_total)  + '</td>'
@@ -851,12 +859,13 @@ emit_dashboard() {
         const top = wrongOptions[0];
         const wrongPicks = wrongOptions.reduce((a, p) => a + p.picks, 0);
         rows.push({
-          quiz_id:    quizId,
-          accuracy:   meta.accuracy,
-          option:     top.selected,
-          picks:      top.picks,
-          wrongShare: wrongPicks > 0 ? top.picks / wrongPicks : null,
-          latest_sha: meta.latest_sha,
+          quiz_id:     quizId,
+          accuracy:    meta.accuracy,
+          option:      top.selected,
+          picks:       top.picks,
+          wrongShare:  wrongPicks > 0 ? top.picks / wrongPicks : null,
+          latest_sha:  meta.latest_sha,
+          latest_line: meta.latest_line,
         });
       }
 
@@ -871,7 +880,7 @@ emit_dashboard() {
       tbody.innerHTML = rows.map((r) => {
         const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
         return '<tr' + difficult + '>'
-          + '<td class="code">' + quizLink(r.quiz_id, r.latest_sha) + '</td>'
+          + '<td class="code">' + quizLink(r.quiz_id, r.latest_sha, r.latest_line) + '</td>'
           + '<td class="num">' + accBar(r.accuracy) + '</td>'
           + '<td class="num distractor">option ' + fmtInt(r.option) + '</td>'
           + '<td class="num">' + fmtInt(r.picks) + '</td>'

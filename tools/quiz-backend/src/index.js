@@ -85,7 +85,7 @@ async function handleQuizPost(request, env) {
   }
 
   const { reader_uuid, quiz_id, page, kind, selected, passed, attempts,
-          correct, commit_sha } = body || {};
+          correct, commit_sha, line } = body || {};
 
   if (!reader_uuid || !quiz_id || !page || !kind) {
     return new Response('Missing required fields', {
@@ -104,13 +104,18 @@ async function handleQuizPost(request, env) {
   const att    = Number.isInteger(attempts) ? attempts : 1;
   const corr   = boolToInt(correct);
   const sha    = cap(commit_sha, 64);
+  // [line] is the 1-based markdown line of the quiz block; the
+  // dashboard uses it to build a github.com/.../blob/<sha>/<file>
+  // ?plain=1#L<line> deep link.
+  const ln     = (Number.isInteger(line) && line > 0 && line < 1000000)
+                   ? line : null;
   const ts     = new Date().toISOString();
 
   await env.DB.prepare(
     `INSERT INTO quiz_response
-       (reader_uuid, quiz_id, page, kind, selected, passed, attempts, correct, commit_sha, ts)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(reader, qid, pg, kind, sel, pass, att, corr, sha, ts).run();
+       (reader_uuid, quiz_id, page, kind, selected, passed, attempts, correct, commit_sha, line, ts)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(reader, qid, pg, kind, sel, pass, att, corr, sha, ln, ts).run();
 
   return new Response('OK', { status: 200, headers: CORS });
 }
@@ -132,7 +137,13 @@ async function handleQuizAgg(env) {
                FROM quiz_response q2
               WHERE q2.quiz_id = q.quiz_id
               ORDER BY q2.ts DESC
-              LIMIT 1)                          AS latest_sha
+              LIMIT 1)                          AS latest_sha,
+            (SELECT q3.line
+               FROM quiz_response q3
+              WHERE q3.quiz_id = q.quiz_id
+                AND q3.line IS NOT NULL
+              ORDER BY q3.ts DESC
+              LIMIT 1)                          AS latest_line
        FROM quiz_response q
       GROUP BY q.quiz_id, q.kind
       ORDER BY q.quiz_id`
@@ -182,7 +193,7 @@ async function handleQuizExport(request, env) {
   }
   const r = await env.DB.prepare(
     `SELECT quiz_id, page, kind, selected, passed, attempts,
-            correct, commit_sha, ts
+            correct, commit_sha, line, ts
        FROM quiz_response
       WHERE reader_uuid = ?
       ORDER BY ts ASC`

@@ -44,7 +44,18 @@ let rewrite_asset_urls ~asset_root html =
 let render_one ~src ~dst ~asset_root =
   let raw = read_file src in
   let fm, body = Nptel_build.Frontmatter.parse raw in
-  let preprocessed = Nptel_build.Divs.preprocess body in
+  (* The body has had the YAML frontmatter stripped off; shift the
+     line numbers we record in [data-quiz-line] back up to match
+     the original file. The offset is (lines in raw) - (lines in body). *)
+  let line_offset =
+    let count_nl s =
+      let n = ref 0 in
+      String.iter (fun c -> if c = '\n' then incr n) s;
+      !n
+    in
+    count_nl raw - count_nl body
+  in
+  let preprocessed = Nptel_build.Divs.preprocess ~line_offset body in
   (* [strict:false] enables cmarkit's extensions: tables, strikethrough,
      LaTeX math, footnotes, task list items. We need tables for the
      primitive-types summary in M02-L01 and other survey lectures. *)
