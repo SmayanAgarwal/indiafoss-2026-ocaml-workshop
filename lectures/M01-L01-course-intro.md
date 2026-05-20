@@ -189,6 +189,10 @@ are millions of lines of OCaml), [Bloomberg](https://www.bloomberg.com/company/v
 and [Flow](https://flow.org) type checkers for PHP and JavaScript
 respectively, both written in OCaml),
 [Docker](https://www.docker.com) (their virtualization toolkit),
+[Ahrefs](https://ahrefs.com) (one of the world's largest web
+crawlers and SEO platforms, with a backend in OCaml),
+[Semgrep](https://semgrep.dev) (a static-analysis tool for finding
+bugs and security issues, written in OCaml),
 the [Rocq theorem prover](https://rocq-prover.org) (formerly Coq),
 the [Tezos blockchain](https://tezos.com), and across academia.
 "Practical" here means: people use it to ship things that other
@@ -211,7 +215,7 @@ the counterexample.
 
 - A **functional-first** language with a serious type system.
 - **Practical:** used at Tarides, Jane Street, Bloomberg, Facebook (Hack/Flow),
-  Docker, Mozilla, and across academia.
+  Docker, Ahrefs, Semgrep, and across academia.
 - **Fast:** native code performance close to C, with garbage collection
   and no undefined behaviour in the safe fragment.
 - **A great teaching language** for ideas you will see again in Rust,
