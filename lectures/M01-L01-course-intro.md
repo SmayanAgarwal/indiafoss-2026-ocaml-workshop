@@ -132,14 +132,13 @@ By the end:
 Three skills you will leave with, in increasing order of generality:
 
 **You will write idiomatic OCaml.** Not just OCaml that compiles, but
-OCaml that an experienced reviewer at [Jane Street](https://www.janestreet.com)
-or [Tarides](https://tarides.com) would glance at and nod. Idiomatic
-means *the natural way* to express an idea in this language: when to
-reach for a record instead of a tuple, when a variant beats a class
-hierarchy, when pattern matching is clearer than `if`, when a fold is
-clearer than a loop. Each of these choices feels arbitrary at first
-and obvious in retrospect; the course is largely about getting you
-to the second state.
+OCaml that an experienced reviewer would glance at and nod.
+Idiomatic means *the natural way* to express an idea in this
+language: when to reach for a record instead of a tuple, when a
+variant beats a class hierarchy, when pattern matching is clearer
+than `if`, when a fold is clearer than a loop. Each of these choices
+feels arbitrary at first and obvious in retrospect; the course is
+largely about getting you to the second state.
 
 **You will reason equationally about your code.** This is shorthand
 for a habit of mind that functional programming makes possible. When
