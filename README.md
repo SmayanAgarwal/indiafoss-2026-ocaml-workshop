@@ -154,6 +154,23 @@ every push to `main`. After the first push:
 The workflow does not build `vendor/x-ocaml`; it uses the prebuilt
 bundles already committed under `assets/x-ocaml/`.
 
+## Quiz analytics
+
+The site records anonymous quiz responses via a small Cloudflare
+Worker (`tools/quiz-backend/`). Per response we store: an anonymous
+reader UUID minted in localStorage on first visit, the quiz id, the
+page slug, the MCQ option selected (or pass/fail for code quizzes),
+correctness, a server-side timestamp, and the lecture commit SHA.
+**No PII**: no name, email, IP, demographic data, or code text. The
+backend is a single Worker file plus a D1 (SQLite) schema; deploy
+runs from `.github/workflows/quiz-backend.yml` on push to main. The
+disclosure surfaces in three places: a first-visit banner on every
+lecture, the [`/privacy.html`](https://fplaunchpad.github.io/ocaml_nptel/privacy.html)
+page (with an opt-out toggle and a "delete my data" button that
+exercises `POST /quiz/forget` for DPDPA right-to-erasure), and the
+opening paragraph of M01-L01. Analytics is opt-out by default; see
+the privacy page for the rationale.
+
 ## Acknowledgements
 
 - [`art-w/x-ocaml`](https://github.com/art-w/x-ocaml) by Arthur

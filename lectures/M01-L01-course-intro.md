@@ -298,6 +298,25 @@ get it inline without running anything. When you are reading
 unfamiliar code, the hover is the fastest way to find out what a
 particular sub-expression has type.
 
+## Anonymous quiz analytics
+
+A small operational note. The site records *anonymous* responses to
+the inline quizzes, so I can see which questions are hardest and
+revise the surrounding material. No personal data is collected; no
+account exists; no IP address is retained. A random reader
+identifier is stored in your browser to associate your answers with
+each other (so I can tell two responses came from the same reader)
+and that identifier is the only thing tying responses together. The
+methodology mirrors the [Brown PLT TRPL quiz study](https://rust-book.cs.brown.edu/)
+that motivated the inline-quiz design.
+
+If you would prefer to opt out, the [Privacy page](privacy.html) has
+a one-click toggle and a "delete my data" button that scrubs every
+response associated with your browser. The toggle is per-device, so
+turning it off on your laptop does not affect your phone. Opting
+out has no effect on grading or on your ability to use the cells
+and quizzes locally.
+
 Below the cell, look for inline quizzes (which I will show you in
 later lectures). They come in two flavours: multiple-choice questions
 with explanations, and code-completion challenges where you fill in

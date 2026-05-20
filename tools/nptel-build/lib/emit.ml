@@ -9,18 +9,27 @@
    [_site/test/smoke.html] the depth is 2 as well. We just pass
    [relative_root] as a string like ["../.."]. *)
 
+let quiz_api_url = "https://nptel-quiz.kc-7c7.workers.dev"
+
 let head ~asset_root ~(fm : Frontmatter.t) =
   (* [asset_root] is the prefix used in front of each asset path. For
      production we use root-relative paths like ["/assets/..."], so
      callers pass [""] and the leading slash comes from each href.
      For previewing inside a subdirectory (e.g. when assets live under
      [/_site/]), the caller can pass that prefix instead. *)
+  let commit_sha =
+    match Sys.getenv_opt "NPTEL_COMMIT_SHA" with
+    | Some s when String.trim s <> "" -> s
+    | _ -> "unknown"
+  in
   Printf.sprintf
     {|<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="commit-sha" content="%s">
+  <meta name="quiz-api" content="%s">
   <title>%s</title>
   <link rel="stylesheet" href="%s/assets/reveal/dist/reveal.css">
   <link rel="stylesheet" href="%s/assets/reveal/dist/theme/white.css" id="reveal-theme">
@@ -30,6 +39,8 @@ let head ~asset_root ~(fm : Frontmatter.t) =
     src="%s/assets/x-ocaml/x-ocaml.js"
     src-worker="%s/assets/x-ocaml/x-ocaml.worker.js"></script>
 </head>|}
+    (Parse.html_escape commit_sha)
+    (Parse.html_escape quiz_api_url)
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
     asset_root asset_root asset_root asset_root asset_root asset_root
 
@@ -88,6 +99,8 @@ let footer_meta ~(fm : Frontmatter.t) =
       fm.reading;
     Buffer.add_string buf "    </ul></div>\n"
   end;
+  Buffer.add_string buf
+    "    <div class=\"meta-line\"><a href=\"privacy.html\">Privacy &amp; data collection</a></div>\n";
   Buffer.add_string buf "  </footer>\n";
   Buffer.contents buf
 
@@ -450,6 +463,66 @@ let runtime_script ~asset_root =
     document.querySelector('.clear-all')?.addEventListener('click', clearAll);
     document.querySelector('.reset-all')?.addEventListener('click', resetAll);
 
+    // ---------- Quiz analytics (anonymous, opt-out) ----------
+    // Anonymous UUID minted on first visit and stored locally. Every
+    // quiz answer fires a fire-and-forget POST to the Worker unless
+    // the reader has flipped the opt-out toggle on the privacy page.
+    // No personal data; only what the privacy page documents.
+    const QUIZ_API = document.querySelector(
+      'meta[name="quiz-api"]')?.getAttribute('content') || '';
+    const COMMIT_SHA = document.querySelector(
+      'meta[name="commit-sha"]')?.getAttribute('content') || '';
+    function analyticsEnabled() {
+      return !!QUIZ_API
+        && localStorage.getItem('nptel-analytics-opt-out') !== '1';
+    }
+    function readerUuid() {
+      let id = localStorage.getItem('nptel-reader-uuid');
+      if (!id) {
+        id = (crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+        localStorage.setItem('nptel-reader-uuid', id);
+      }
+      return id;
+    }
+    function reportQuiz(payload) {
+      if (!analyticsEnabled()) return;
+      try {
+        fetch(QUIZ_API + '/quiz', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reader_uuid: readerUuid(),
+            commit_sha: COMMIT_SHA,
+            page: location.pathname,
+            ...payload,
+          }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    // First-visit privacy banner. Sticky at bottom-right until the
+    // reader clicks OK; sets a localStorage flag that prevents
+    // re-display. Bypassed entirely if the page has no quiz-api
+    // configured.
+    function showPrivacyBannerIfNew() {
+      if (!QUIZ_API) return;
+      if (localStorage.getItem('nptel-analytics-seen') === '1') return;
+      const banner = document.createElement('div');
+      banner.className = 'privacy-banner';
+      banner.innerHTML =
+        '<p>This site records <strong>anonymous</strong> quiz responses ' +
+        'to improve the course. No personal data, no tracking. ' +
+        '<a href="privacy.html">Learn more, or opt out</a>.</p>' +
+        '<button type="button" class="privacy-ok">Got it</button>';
+      document.body.appendChild(banner);
+      banner.querySelector('.privacy-ok')?.addEventListener('click', () => {
+        try { localStorage.setItem('nptel-analytics-seen', '1'); } catch (_) {}
+        banner.remove();
+      });
+    }
+    showPrivacyBannerIfNew();
+
     // ---------- Inline quizzes ----------
     // Two kinds: [.quiz-mcq] and [.quiz-code]. Authored as
     // [:::quiz mcq] / [:::quiz code] fenced divs; the build emits the
@@ -524,6 +597,12 @@ let runtime_script ~asset_root =
           localStorage.setItem(QUIZ_PREFIX + id,
             JSON.stringify({ kind: 'mcq', selected: idx, correct: isCorrect }));
         } catch (_) {}
+        reportQuiz({
+          quiz_id: location.pathname + '#' + id,
+          kind: 'mcq',
+          selected: idx,
+          correct: isCorrect,
+        });
       });
       // Restore prior attempt.
       try {
@@ -611,6 +690,10 @@ let runtime_script ~asset_root =
                 localStorage.setItem(QUIZ_PREFIX + id,
                   JSON.stringify({ kind: 'code', passed: true }));
               } catch (_) {}
+              reportQuiz({
+                quiz_id: location.pathname + '#' + id,
+                kind: 'code', passed: true, correct: true,
+              });
             } else if (s === 'fail') {
               status.textContent = '✗ Some assertions failed';
               status.className = 'quiz-status fail';
@@ -622,6 +705,10 @@ let runtime_script ~asset_root =
                 localStorage.setItem(QUIZ_PREFIX + id,
                   JSON.stringify({ kind: 'code', passed: false }));
               } catch (_) {}
+              reportQuiz({
+                quiz_id: location.pathname + '#' + id,
+                kind: 'code', passed: false, correct: false,
+              });
             } else {
               status.textContent = 'Timed out';
               status.className = 'quiz-status fail';
