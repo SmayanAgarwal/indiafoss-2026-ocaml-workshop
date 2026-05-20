@@ -640,3 +640,11 @@ all of it together.
   <https://cs3110.github.io/textbook/chapters/data/lists.html>
 - **Cornell CS3110**, *Trees*:
   <https://cs3110.github.io/textbook/chapters/data/trees.html>
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

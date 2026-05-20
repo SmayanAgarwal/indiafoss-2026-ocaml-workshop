@@ -642,3 +642,11 @@ Lecture 2: **`map`** in detail.
   classic paper arguing that higher-order functions and lazy evaluation
   are the glue of modular functional programs.
   <https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf>
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

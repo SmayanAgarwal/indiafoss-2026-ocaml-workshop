@@ -97,7 +97,11 @@ emit_index() {
   <article class="landing">
     <h1>Functional Programming with OCaml</h1>
     <p>A 12-week NPTEL course. Pick a lecture below, or start at
-    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.</p>
+    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.
+    New to OCaml as a language? See
+    <a href="https://ocaml.org">ocaml.org</a> for the language home
+    page, install instructions, and the ecosystem of libraries and
+    tools.</p>
 HEAD
 
     # Walk modules in order, then lectures in order. modules.txt

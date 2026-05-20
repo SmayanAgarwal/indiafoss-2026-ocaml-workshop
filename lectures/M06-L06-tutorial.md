@@ -607,3 +607,11 @@ the whole programming pattern is built on higher-order composition.
 - **John Hughes**, *Why Functional Programming Matters*: the
   classic case for the higher-order style and how it scales:
   <https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf>
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

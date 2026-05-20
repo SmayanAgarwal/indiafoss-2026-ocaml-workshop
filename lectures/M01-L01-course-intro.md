@@ -584,6 +584,9 @@ easier to read instead.
 
 ## Reading
 
+- The OCaml language home page: <https://ocaml.org/>. Install
+  instructions, the [language manual](https://ocaml.org/manual/),
+  and a tour of the ecosystem live here.
 - Cornell **CS3110** textbook, Preface and Chapter 1:
   <https://cs3110.github.io/textbook/>
 - **Real World OCaml**, Prologue:
@@ -592,3 +595,11 @@ easier to read instead.
 - John Whitington, *OCaml from the Very Beginning* (book) -- a
   gentler pace, useful as a parallel read if you find this course
   moving too quickly.
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

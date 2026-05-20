@@ -647,3 +647,11 @@ Lecture 3: **exceptions**.
   <https://cs3110.github.io/textbook/chapters/mut/arrays.html>
 - **Cornell CS3110**, *Mutable fields*:
   <https://cs3110.github.io/textbook/chapters/mut/mutable_fields.html>
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

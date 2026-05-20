@@ -702,3 +702,11 @@ each other, which uses a related piece of syntax.
   procedure call implementations considered harmful, or, LAMBDA:
   The Ultimate GOTO* (1977): the original tail-call optimisation
   paper.
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

@@ -686,3 +686,11 @@ Lecture 5: **function composition and pipelines**.
   of fold*: a beautifully written paper showing how powerful `fold`
   really is. Optional but enjoyable.
   <https://www.cs.nott.ac.uk/~pszgmh/fold.pdf>
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

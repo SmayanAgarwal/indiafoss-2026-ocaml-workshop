@@ -819,3 +819,11 @@ programs.
   <https://cs3110.github.io/textbook/chapters/basics/basics.html>
 - John Whitington, *OCaml from the Very Beginning*, Chapter 1:
   even gentler pace if you want a step-by-step introduction.
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

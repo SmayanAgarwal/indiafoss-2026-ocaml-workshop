@@ -171,6 +171,12 @@ exercises `POST /quiz/forget` for DPDPA right-to-erasure), and the
 opening paragraph of M01-L01. Analytics is opt-out by default; see
 the privacy page for the rationale.
 
+## Learn more about OCaml
+
+- The OCaml language home page: <https://ocaml.org/>. Install
+  instructions, the language manual, and the ecosystem of libraries
+  and tools.
+
 ## Acknowledgements
 
 - [`art-w/x-ocaml`](https://github.com/art-w/x-ocaml) by Arthur

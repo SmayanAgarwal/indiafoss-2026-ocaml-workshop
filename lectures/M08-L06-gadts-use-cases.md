@@ -444,3 +444,11 @@ cannot be constructed), and an evaluator that returns `'a option`
 
 - **Real World OCaml**, *More GADTs*:
   <https://dev.realworldocaml.org/gadts.html>
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

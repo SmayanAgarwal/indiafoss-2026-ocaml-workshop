@@ -655,3 +655,11 @@ Lecture 2: **recursion**.
   <https://dev.realworldocaml.org/variables-and-functions.html>
 - John Whitington, *OCaml from the Very Beginning*, Chapter 3:
   for a gentler pace.
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.
