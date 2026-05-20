@@ -624,10 +624,23 @@ emit_dashboard() {
 
     // Lecture slug = the page slug stripped of the [#qN] suffix.
     // quiz_id values are emitted by parse.ml as "<page>#<auto-id>",
-    // where <page> is the basename of the rendered HTML.
+    // where <page> is the basename of the rendered HTML. The reader
+    // POSTs them including the leading "/_site/" path prefix, so we
+    // strip that for a clean lecture display name.
     function lectureKey(quizId) {
       const hash = quizId.indexOf('#');
-      return hash >= 0 ? quizId.slice(0, hash) : quizId;
+      let key = hash >= 0 ? quizId.slice(0, hash) : quizId;
+      key = key.replace(/^\/?_site\//, '').replace(/^\/+/, '');
+      return key;
+    }
+    // Turn a quiz_id like "/_site/M02-L01-literals.html#q1" into a
+    // clickable link to the lecture, pointing at the quiz's anchor.
+    // The reader follows it to see exactly what was asked.
+    function quizLink(quizId) {
+      const cleaned = quizId.replace(/^\/?_site\//, '').replace(/^\/+/, '');
+      return '<a href="' + escapeHtml(cleaned) + '" target="_blank" rel="noopener">'
+           + escapeHtml(cleaned)
+           + '</a>';
     }
 
     function accClass(a) {
@@ -759,7 +772,7 @@ emit_dashboard() {
       tbody.innerHTML = rows.map((r) => {
         const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
         return '<tr' + difficult + '>'
-          + '<td class="code">' + escapeHtml(r.quiz_id) + '</td>'
+          + '<td class="code">' + quizLink(r.quiz_id) + '</td>'
           + '<td>' + escapeHtml(r.kind) + '</td>'
           + '<td class="num">' + fmtInt(r.attempts_total) + '</td>'
           + '<td class="num">' + fmtInt(r.correct_total)  + '</td>'
@@ -823,7 +836,7 @@ emit_dashboard() {
       tbody.innerHTML = rows.map((r) => {
         const difficult = (r.accuracy != null && r.accuracy < 0.30) ? ' class="difficult"' : '';
         return '<tr' + difficult + '>'
-          + '<td class="code">' + escapeHtml(r.quiz_id) + '</td>'
+          + '<td class="code">' + quizLink(r.quiz_id) + '</td>'
           + '<td class="num">' + accBar(r.accuracy) + '</td>'
           + '<td class="num distractor">option ' + fmtInt(r.option) + '</td>'
           + '<td class="num">' + fmtInt(r.picks) + '</td>'
