@@ -1,0 +1,35 @@
+Functional Programming with OCaml -- NPTEL MOOC course content
+Copyright (c) 2026 KC Sivaramakrishnan, IIT Madras
+
+The course content under `lectures/`, `_site/` (generated), `assets/css/`,
+and the README is licensed under the Creative Commons Attribution
+NonCommercial ShareAlike 4.0 International License (CC BY-NC-SA 4.0).
+To view a copy of this license, visit:
+
+    https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+You are free to:
+
+  Share   copy and redistribute the material in any medium or format.
+  Adapt   remix, transform, and build upon the material.
+
+Under the following terms:
+
+  Attribution     You must give appropriate credit, provide a link to
+                  the license, and indicate if changes were made.
+  NonCommercial   You may not use the material for commercial purposes.
+  ShareAlike      If you remix, transform, or build upon the material,
+                  you must distribute your contributions under the
+                  same license as the original.
+
+The course toolchain in `tools/nptel-build/` and `tools/quiz-backend/`
+is licensed under the ISC License; see `tools/LICENSE` if present, or
+treat as ISC.
+
+The vendored x-ocaml component in `vendor/x-ocaml/` retains its
+upstream license; see `vendor/x-ocaml/LICENSE`.
+
+Third-party reference material consulted during preparation (cs3110,
+Real World OCaml, Whitington's OCaml from the Very Beginning, others)
+retains its original license. See `LICENSES.md` for the full list and
+`LICENSING_AUDIT.md` for the per-lecture audit.
