@@ -183,7 +183,7 @@ Rust's design is directly inherited from ML (the family OCaml
 belongs to).
 
 Second, OCaml is *practical*. It is used in production at
-[Tarides](https://tarides.com) (where I work),
+[Tarides](https://tarides.com),
 [Jane Street](https://www.janestreet.com) (whose internal systems
 are millions of lines of OCaml), [Bloomberg](https://www.bloomberg.com/company/values/tech-at-bloomberg/)
 (financial infrastructure), Facebook (the [Hack](https://hacklang.org)
