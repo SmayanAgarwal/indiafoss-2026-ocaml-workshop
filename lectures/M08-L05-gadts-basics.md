@@ -160,12 +160,13 @@ let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
 
 :::
 
-This is the slogan of GADTs: "make illegal states unrepresentable
-at the type level". With ordinary variants you would have to
-write an interpreter, walk the AST, and check at every node that
-the children have compatible types. With a GADT, the compiler
-refuses to even build a tree with incompatible children. The
-runtime check vanishes.
+This is the GADT design payoff: programs that would otherwise crash
+an interpreter become type errors. Yaron Minsky's phrase for the
+same idea is "making illegal states unrepresentable". With ordinary
+variants you would have to write an interpreter, walk the AST, and
+check at every node that the children have compatible types. With a
+GADT, the compiler refuses to even build a tree with incompatible
+children. The runtime check vanishes.
 
 The cost is on the construction side: every constructor application
 has to be at the right index. The compiler is unforgiving about

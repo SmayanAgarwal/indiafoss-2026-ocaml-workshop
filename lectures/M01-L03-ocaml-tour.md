@@ -279,11 +279,12 @@ true && (false || true)
 
 :::
 
-The `=` versus `==` distinction is the single most common source of
-confusion for students arriving from Java or JavaScript. Repeat
-after me: in OCaml, the everyday equality operator is `=`, with one
-equals sign. The other one is for advanced cases. We will return to
-this in the [operators lecture](M02-L04-operators.html#comparison-and-equality).
+Repeat after me: in OCaml, the everyday equality operator is `=`,
+with one equals sign. The other one, `==`, is reserved for advanced
+cases (pointer-identity comparison) and almost never what beginners
+want. Mixing them up compiles fine and silently returns the wrong
+answer, which is why it tops the list of beginner gotchas. We will
+return to this in the [operators lecture](M02-L04-operators.html#comparison-and-equality).
 
 ## Strings
 

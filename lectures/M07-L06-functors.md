@@ -23,14 +23,14 @@ grouped under a name. This lecture introduces the natural next step:
 *functors*, and they are how the language expresses generic data
 structures and algorithms.
 
-The name "functor" comes from [category theory](https://en.wikipedia.org/wiki/Functor),
-where a functor maps between categories: a kind of structure-preserving
-function on whole structured things. OCaml's functors are simpler
-than that: a functor is just a "function" from modules to modules.
-The quotation marks are because modules and values live at
-different levels in OCaml's type system, so a functor is not
-interchangeable with a regular function. But conceptually, it is
-the same idea.
+The name comes from [category theory](https://en.wikipedia.org/wiki/Functor);
+in OCaml the practical meaning is narrower: a functor takes one or
+more modules and produces a new module. We will keep saying
+"function" for one informally, even though strictly speaking OCaml
+functors live at the module level, not the value level: you cannot
+store one in a list or return one from an `if`. They are
+parameterised modules, with module-level parameters substituting for
+value-level ones.
 
 The standard library uses functors everywhere. `Map.Make`,
 `Set.Make`, and `Hashtbl.Make` are all functors. When you want a

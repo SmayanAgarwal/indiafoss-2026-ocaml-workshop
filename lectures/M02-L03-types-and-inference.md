@@ -459,9 +459,9 @@ let identity x = x
 - Functions that don't constrain their arg type stay polymorphic.
 
 ```ocaml
-let _ = identity 5
-let _ = identity "hello"
-let _ = identity true
+let _ = identity 7
+let _ = identity 3.14
+let _ = identity [1; 2; 3]
 ```
 
 - Each call instantiates `'a` differently. **No casting.**
@@ -482,9 +482,10 @@ if it does not constrain its argument's type, inference assigns it
 a polymorphic type automatically.
 
 Each call instantiates the type variable to the concrete type of
-the argument. `identity 5` instantiates `'a` to `int`; `identity
-"hello"` instantiates it to `string`; `identity true` to `bool`.
-No casting, no boxing, no special syntax. The function works.
+the argument. `identity 7` instantiates `'a` to `int`; `identity
+3.14` instantiates it to `float`; `identity [1; 2; 3]` to `int
+list`. No casting, no boxing, no special syntax. The function
+works.
 
 When you see `'a`, `'b`, `'c` in inferred types, those are type
 variables; the function is polymorphic in them. The names start at

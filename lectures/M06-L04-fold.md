@@ -29,7 +29,7 @@ pattern, name the abstraction, then study the two flavours that
 arise (`fold_left` and `fold_right`). At the end we look at folds
 beyond lists.
 
-## From `sum` and `concat` to `fold`
+## From `sum` and `all_true` to `fold`
 
 Two functions:
 
@@ -38,59 +38,61 @@ let rec sum = function
   | [] -> 0
   | h :: t -> h + sum t
 
-let rec join = function
-  | [] -> ""
-  | h :: t -> h ^ join t
+let rec all_true = function
+  | [] -> true
+  | h :: t -> h && all_true t
 
 let _ = sum [1; 2; 3]
-let _ = join ["a"; "b"; "c"]
+let _ = all_true [true; true; false]
 ```
 
 Same shape, two differences:
 
-- The base case returns a different value: `0` for sum, `""` for join.
-- The combining step uses a different operator: `+` for sum, `^` for join.
+- The base case returns a different value: `0` for `sum`, `true`
+  for `all_true`.
+- The combining step uses a different operator: `+` for `sum`, `&&`
+  for `all_true`.
 
 Both differences need to be parameterised. The base case becomes an
 argument we will call `init` (the initial accumulator); the operator
 becomes a function we will call `f`. Putting them together:
 
 ```ocaml
-let rec combine f init = function
+let rec reduce f init = function
   | [] -> init
-  | h :: t -> f h (combine f init t)
+  | h :: t -> f h (reduce f init t)
 
-let sum    = combine (+)  0
-let join   = combine (^)  ""
+let sum      = reduce (+)  0
+let all_true = reduce (&&) true
 ```
 
 :::slide
 
-## From sum and concat to fold
+## From sum and all_true to fold
 
 ```ocaml
 let rec sum = function
   | [] -> 0
   | h :: t -> h + sum t
 
-let rec join = function
-  | [] -> ""
-  | h :: t -> h ^ join t
+let rec all_true = function
+  | [] -> true
+  | h :: t -> h && all_true t
 ```
 
 - Same shape.
-- Base case differs: `0` vs `""`.
-- Combining step differs: `+` vs `^`.
+- Base case differs: `0` vs `true`.
+- Combining step differs: `+` vs `&&`.
 
 Factor both out:
 
 ```ocaml
-let rec combine f init = function
+let rec reduce f init = function
   | [] -> init
-  | h :: t -> f h (combine f init t)
+  | h :: t -> f h (reduce f init t)
 
-let sum  = combine (+)  0
-let join = combine (^)  ""
+let sum      = reduce (+)  0
+let all_true = reduce (&&) true
 ```
 
 - One generic function captures the shape.
@@ -98,7 +100,7 @@ let join = combine (^)  ""
 
 :::
 
-That little function `combine` is, with a tiny renaming, the
+That little function `reduce` is, with a tiny renaming, the
 standard library function `List.fold_right`. The renaming: people
 conventionally write `acc` instead of `init` for the accumulator
 argument, and put the list before the accumulator. So:
@@ -136,12 +138,13 @@ That is, the rightmost element is combined first with the initial
 accumulator, then that result with the next element, and so on
 inward. The parentheses associate to the right.
 
-A useful way to see this: every OCaml list `[a; b; c]` is shorthand
-for `a :: (b :: (c :: []))`. `fold_right f xs init` is what you get
-if you replace every `::` in this expression with `f` and the
-trailing `[]` with `init`. So `[1; 2; 3]` becomes `1 :: (2 :: (3 ::
-[]))`; with `f = (+)` and `init = 0`, that becomes `1 + (2 + (3 +
-0))`, which is `6`.
+A useful way to picture this: a list value is a chain of cons
+cells terminated by `[]`. The fold *replaces every cell in that
+chain*: each `::` becomes a call to `f`, and the terminal `[]`
+becomes `init`. A four-element list `[x1; x2; x3; x4]` is built
+by the chain `x1 :: x2 :: x3 :: x4 :: []`, and folding right with
+`(+)` and `0` produces `x1 + x2 + x3 + x4 + 0`. The fold reuses
+the list's own structure as the skeleton of the computation.
 
 That is also why this signature is so general: it lets you replace
 the list's "structure" with any operator and any initial value you
@@ -253,8 +256,8 @@ For a non-associative operator, the two folds disagree. Subtraction
 is the textbook example:
 
 ```ocaml
-let _ = List.fold_right (-) [3; 2; 1] 0      (* 3 - (2 - (1 - 0)) = 2 *)
-let _ = List.fold_left  (-) 0 [3; 2; 1]      (* ((0 - 3) - 2) - 1 = -6 *)
+let _ = List.fold_right (-) [10; 3; 1] 0     (* 10 - (3 - (1 - 0)) = 8 *)
+let _ = List.fold_left  (-) 0 [10; 3; 1]     (* ((0 - 10) - 3) - 1 = -14 *)
 ```
 
 Same list, same operator, different answers. When this happens, you

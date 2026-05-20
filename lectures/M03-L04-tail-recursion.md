@@ -602,15 +602,22 @@ The shape:
 
 :::
 
-The recipe (adapted from CS3110's textbook):
+Three questions to ask when you turn an `O(n)`-stack function into
+a tail-recursive one:
 
-1. Turn the original recursive function into a helper. Add an
-   accumulator parameter, conventionally named `acc`.
-2. Write the outer function that calls the helper with the original
-   base case's return value as the initial accumulator (here, `0`).
-3. Change the helper's base case to return `acc`.
-4. Change the helper's recursive case to fold the per-step work into
-   the accumulator *before* the recursive call.
+1. *What is the running result?* This is the value the function
+   computes incrementally as it walks the input. Make it a new
+   parameter, conventionally `acc`.
+2. *What is its starting value?* Whatever the original function
+   would have returned in the base case. For `sum_to`, that is `0`;
+   for `product`, `1`; for `length`, `0`; for `reverse`, `[]`.
+3. *What happens to it at each step?* Whatever the original
+   function did *after* the recursive call. Apply it to `acc`
+   *before* recursing, so the recursive call sits in tail position.
+
+The first two answers go into the outer wrapper (call the helper
+with the starting value); the third answer reshapes the recursive
+case. The base case just returns `acc`.
 
 By the end of Module 4 this rewrite will be muscle memory. By the
 end of Module 6, you will rarely write it by hand, because

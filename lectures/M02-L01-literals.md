@@ -398,13 +398,13 @@ is only attempted when `x` is nonzero. We will lean on this
 behaviour later when we want to guard expensive computations.
 
 Now, the equality operator. OCaml has two of them, written `=` and
-`==`, and they mean *different things*. This is the largest single
-source of confusion for students arriving from Java or JavaScript,
-where `==` is the everyday equality operator, so let me put it as
-strongly as I can: **in OCaml, the everyday equality operator is
-`=`, with one equals sign.** The other one, `==`, is a low-level
-operator that compares whether two values are at the same memory
-address. Almost no OCaml code wants that.
+`==`, and they mean *different things*. The everyday operator, the
+one you reach for any time you want to ask "are these two values the
+same?", is **`=`, with a single equals sign.** The other one, `==`,
+is a low-level operator that compares whether two values sit at the
+same memory address. Almost no OCaml code wants that, and the
+mix-up is the single most common subtle bug I see in beginner code:
+the program compiles, runs, and silently produces the wrong answer.
 
 The reason `=` is different from `==` is that OCaml has *structural*
 equality, which inspects values by their content. Two strings are

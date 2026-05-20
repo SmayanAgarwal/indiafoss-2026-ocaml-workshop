@@ -251,25 +251,22 @@ Compare a C-style version returning `-1` on error:
 
 :::
 
-Contrast this with two other approaches:
+The right way to read `int -> int -> int option` is from the
+*caller's* side: anybody who receives a value from `safe_div` is
+holding an `int option`, and the type-checker will refuse to let
+them treat it as a plain `int` without first asking which case they
+got. The error case is unmistakable, and the place that decides
+what to do about it is the call site.
 
-1. *Return a sentinel* like `-1`. The caller might forget to check
-   (especially in a chain of operations), or might genuinely
-   compute a `-1` and confuse it with the error code. The
-   sentinel-vs-real-value ambiguity is the heart of why sentinels
-   are fragile.
-2. *Throw an exception*. We will see exceptions in
-   [Module 7](M07-L03-exceptions.html). They work, but they
-   introduce a *non-local* control flow that the caller's type
-   does not advertise. A caller can forget to catch the exception
-   (especially in code that crosses module boundaries), and you
-   get a runtime crash.
-
-`option` is the type-driven middle ground: the function returns
-normally in both cases, but the type forces the caller to inspect
-the result before using it. This makes "what to do on failure" an
-*explicit local decision* rather than a forgotten check or an
-unhandled exception.
+This forced-at-the-type-level handling is what `option` buys you
+over the alternatives. A C-style `-1`-on-error sentinel compiles
+into the same `int` type as a legitimate result, so the compiler
+will not refuse to let you do arithmetic on it; the caller has to
+remember to check. An exception (Module 7) hides the failure mode
+in non-local control flow that the caller's type does not
+advertise, so a forgotten `try ... with` becomes a runtime crash
+at the worst possible moment. `option` puts the same information
+on the surface, where the compiler can see it.
 
 ## Chained `option` access
 

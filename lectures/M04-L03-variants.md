@@ -327,51 +327,51 @@ real bug pattern.
 Suppose you start with:
 
 ```ocaml
-type color = Red | Blue
+type http_method = Get | Post
 
 (* somewhere far away in the codebase: *)
-let name = function
-  | Red -> "red"
-  | _ -> "blue"
+let is_write = function
+  | Post -> true
+  | _    -> false
 ```
 
-Now you add a new colour:
+Now you add a new method:
 
 ```ocaml skip
-type color = Red | Blue | Green
+type http_method = Get | Post | Put
 
-let name = function
-  | Red -> "red"
-  | _ -> "blue"
+let is_write = function
+  | Post -> true
+  | _    -> false
 ```
 
-The `name` function compiles without complaint and silently
-returns `"blue"` for `Green`. The compiler does not warn because
-the match *is* exhaustive (the wildcard catches `Green`). You have
-introduced a silent bug.
+`Put` is a write method too, but `is_write Put` silently returns
+`false`. The compiler does not warn because the match *is*
+exhaustive (the wildcard catches `Put`). You have introduced a
+silent bug.
 
 :::slide
 
 ## The catch-all trap
 
 ```ocaml
-type color = Red | Blue
-let name = function
-  | Red -> "red"
-  | _ -> "blue"
+type http_method = Get | Post
+let is_write = function
+  | Post -> true
+  | _    -> false
 ```
 
-Now add `Green`:
+Now add `Put`:
 
 ```ocaml skip
-type color = Red | Blue | Green
-let name = function
-  | Red -> "red"
-  | _ -> "blue"
+type http_method = Get | Post | Put
+let is_write = function
+  | Post -> true
+  | _    -> false
 ```
 
 - Compiles, no warning.
-- Silently calls `Green` "blue".
+- `is_write Put` silently returns `false`.
 - The wildcard `_` defeats exhaustiveness checking.
 
 **Rule:** prefer to list constructors explicitly, especially in

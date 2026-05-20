@@ -409,8 +409,7 @@ discarded; the program runs, but the warning is right that you
 probably meant something else. To silence the warning when the
 discard is intentional, wrap the expression in `ignore`:
 `ignore 5` evaluates to `()` and explicitly throws away whatever
-`5` was. (The standard library defines `ignore` as `let ignore _
-= ()`. There is nothing magical about it.)
+`5` was.
 
 The `begin ... end` and `(...)` brackets group a sequence into
 one expression, which we sometimes need when a sequence appears
@@ -513,52 +512,57 @@ functional setting, the question does not arise because there is
 nothing to share. With mutation, every API has to decide what its
 caller is allowed to do with the values it returns.
 
-## Why the broken counter is broken
+## Where you put `let ref` matters
 
-A cautionary tale from the CS3110 textbook, worth seeing once
-because the same shape of bug recurs in larger code.
+A small bug whose shape recurs constantly in larger code.
+
+Suppose we want a ticket dispenser: a zero-argument function whose
+first call returns `1`, second returns `2`, and so on. A first
+attempt:
 
 ```ocaml
-let next_val_broken = fun () ->
-  let counter = ref 0 in
-  incr counter;
-  !counter
+let dispense_broken () =
+  let n = ref 0 in
+  incr n;
+  !n
 
-let _ = next_val_broken ()
-let _ = next_val_broken ()
-let _ = next_val_broken ()
+let _ = dispense_broken ()
+let _ = dispense_broken ()
+let _ = dispense_broken ()
 ```
 
-You might expect this to count up: `1`, `2`, `3`. It does not. It
-returns `1` every time.
+Expected: `1`, `2`, `3`. Actual: `1` every time.
 
-The reason is that `let counter = ref 0` is *inside* the function.
-Each call to `next_val_broken` evaluates the body, which means
-each call allocates a *fresh* ref cell, initialised to `0`,
-increments it to `1`, and returns `1`. The ref is local to the
-call; no state survives between calls.
+Trace through one call. The body runs as a fresh evaluation: `let
+n = ref 0` allocates a new `ref` cell with value `0`; `incr n`
+bumps that cell to `1`; `!n` reads `1` back. The cell was *local*
+to this call, so it has nothing to do with any cell from a previous
+call. Each call starts over from zero.
 
-The fix is to hoist the `let counter` *out* of the function, so
-the ref is allocated once and captured by the closure:
+The fix is to hoist the `let n = ref 0` *out* of the function so
+that the cell is allocated once, when the function is defined, and
+the function value closes over it:
 
 ```ocaml
-let next_val =
-  let counter = ref 0 in
+let dispense =
+  let n = ref 0 in
   fun () ->
-    incr counter;
-    !counter
+    incr n;
+    !n
 
-let _ = next_val ()
-let _ = next_val ()
-let _ = next_val ()
+let _ = dispense ()
+let _ = dispense ()
+let _ = dispense ()
 ```
 
-Now the ref is allocated *once* when `next_val` is defined, and
-the function value closes over it. Successive calls update the
-same cell. The toplevel reports `1`, `2`, `3`.
+Now there is one cell, allocated at definition time, captured by
+the closure. Successive calls hit the same cell. The toplevel
+reports `1`, `2`, `3`.
 
-The lesson: where you put `let ref` matters. Inside the function,
-fresh per call; outside, captured once.
+The lesson generalises: a `let` *inside* a function body runs on
+every call; a `let` outside, captured by closure, runs once. With
+immutable bindings the distinction rarely matters; with `ref` it
+decides whether your state survives between calls.
 
 ## Activity
 

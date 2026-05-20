@@ -36,36 +36,36 @@ We saw a hint of `map` at the end of [Lecture 1](M06-L01-functions-revisited.htm
 Here is the full derivation. Suppose we want two list functions:
 
 ```ocaml
-let rec add1 = function
+let rec double_each = function
   | [] -> []
-  | h :: t -> (h + 1) :: add1 t
+  | h :: t -> (h * 2) :: double_each t
 
-let rec concat_bang = function
+let rec string_lengths = function
   | [] -> []
-  | h :: t -> (h ^ "!") :: concat_bang t
+  | h :: t -> String.length h :: string_lengths t
 
-let _ = add1 [1; 2; 3]
-let _ = concat_bang ["sweet"; "salty"]
+let _ = double_each [1; 2; 3]
+let _ = string_lengths ["hi"; "world"]
 ```
 
-`add1` adds one to every element of a list of `int`s. `concat_bang`
-sticks a `"!"` on the end of every string in a list of strings. Same
-shape, twice. Both:
+`double_each` doubles every element of an `int list`. `string_lengths`
+turns a `string list` into the `int list` of their lengths. Notice
+the second function's input and output element types differ; the
+output list is still a list, the same length, but built from values
+computed from each input.
 
-- pattern-match on the list;
-- return the empty list for the empty list;
-- recurse on the tail and cons the transformed head.
-
-The only thing that differs is what each one does to the head. Pull
-that out as a parameter `f`:
+The two functions share a skeleton: dispatch on the list, return
+`[]` on `[]`, and on a cons, compute a fresh head and cons it onto
+the recursive call. The only thing that differs is *what each
+function does to the head*. Pull that out as a parameter `f`:
 
 ```ocaml
 let rec map f = function
   | [] -> []
   | h :: t -> f h :: map f t
 
-let _ = map (fun x -> x + 1) [1; 2; 3]
-let _ = map (fun s -> s ^ "!") ["sweet"; "salty"]
+let _ = map (fun x -> x * 2) [1; 2; 3]
+let _ = map String.length ["hi"; "world"]
 ```
 
 :::slide
@@ -89,11 +89,12 @@ let _ = map (fun x -> x * x) [1; 2; 3; 4]
 :::
 
 That is `map`. Nine lines, including the example. The original
-`add1` and `concat_bang` collapse into one-liners on top of it:
+`double_each` and `string_lengths` collapse into one-liners on top of
+it:
 
 ```ocaml
-let add1        = map (fun x -> x + 1)
-let concat_bang = map (fun s -> s ^ "!")
+let double_each    = map (fun x -> x * 2)
+let string_lengths = map String.length
 ```
 
 Each is a [*partial application*](M03-L03-currying.html#partial-application-the-payoff)

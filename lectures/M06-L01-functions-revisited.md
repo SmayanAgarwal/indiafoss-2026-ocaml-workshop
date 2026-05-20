@@ -241,12 +241,11 @@ previewing it here to make the larger point: factoring *the walk*
 out of *the work* gives you one general-purpose function plus a
 small data-like description of what to do at each step. Three
 concrete computations collapsed into three one-line definitions.
-This is the *Abstraction Principle* (Bruce MacLennan's name for
-it): identify a pattern that repeats, abstract it into a reusable
-form, and supply only the variations as parameters.
+This pattern, identifying repeated structure and parameterising
+over the difference, is at the heart of every higher-order function
+we will write.
 
-The Abstraction Principle is at the heart of why higher-order
-functions matter. It is not just an aesthetic gain: when you later
+The same idea drives why higher-order functions matter in practice. It is not just an aesthetic gain: when you later
 need to optimise the walk (say, make it tail-recursive), every
 client of the abstracted function benefits at once. When you write
 `all_doubled`, `all_squared`, `all_plus_one` separately, you have
