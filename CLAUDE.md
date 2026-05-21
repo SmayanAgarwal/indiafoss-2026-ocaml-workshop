@@ -71,6 +71,14 @@ with your question (or surface in chat).
     extension (QCheck + OUnit2).
   - M11 routes to `assets/x-oxcaml/` (large OxCaml bundle).
   - Other modules route to plain `assets/x-ocaml/`.
+- Rebuild the in-browser bundle: `bash tools/build-x-ocaml.sh`
+  (vanilla bundle from `vendor/x-ocaml/`). The vendored
+  `src/style.css` carries KC's tooltip-not-clipped fix
+  (commit `b32ca84` on the `nptel` branch of
+  `kayceesrk/x-ocaml`); the script's tail asserts the fix is
+  present in the rebuilt bundle so a regression is caught
+  loudly. The OxCaml bundle is rebuilt separately from the
+  upstream `build_portable_js_extend.sh` on the OxCaml branch.
 - mdx validation: `dune runtest` (M09 excluded; M11/M12 cells
   marked appropriately).
 
