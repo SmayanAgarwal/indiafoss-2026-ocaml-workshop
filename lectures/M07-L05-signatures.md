@@ -222,6 +222,17 @@ records.
 A signature can hide more than just *values*. It can hide the
 type of a module's principal representation.
 
+Why would you want that? The `Counter` example so far hid only a
+ref. But often the more interesting thing to hide is the *shape*
+of the data the module operates on. A stack might be implemented
+today as a list and tomorrow as a two-list pair (for amortised
+performance) or as a mutable array. If callers know the shape,
+they can pattern-match on it directly, or build values of it
+without going through the module's constructors, and then any
+later change to the representation silently breaks them. Hiding
+the type, not just the values, is what gives you the freedom to
+change the implementation later without consulting every caller.
+
 ```ocaml
 module type STACK = sig
   type 'a t

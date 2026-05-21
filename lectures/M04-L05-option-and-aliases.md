@@ -478,7 +478,9 @@ are the same type to the compiler, you can freely substitute one
 for the other; the type system will not warn you. For real type
 safety here, you need a [record](M04-L02-records.html) or a
 [single-constructor variant](M04-L03-variants.html#constructors-with-payload)
-(the *newtype* idiom). The cost of a real wrapper is one
+(this last trick of wrapping a base type in a fresh one-constructor
+variant is sometimes called the *newtype* idiom, after the
+Haskell keyword). The cost of a real wrapper is one
 allocation per value and one constructor name in every literal;
 the benefit is the compiler catching `add_durations 30 60` when
 30 is fps and 60 is ms.

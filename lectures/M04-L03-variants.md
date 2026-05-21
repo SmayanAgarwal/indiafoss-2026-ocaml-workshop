@@ -291,9 +291,8 @@ The warning gives you a counterexample (`Rectangle (_, _)`) to help
 you find what is missing. In real codebases, you almost always
 want to promote this warning to an *error*: a partial match is a
 latent crash, and the compiler is offering to find them for you.
-The dune build option for this is `(flags (:standard -strict-sequence
--strict-formats -w +8))`, but you do not need to know that
-syntax now. The
+There is a build-tool setting that does this (we will meet the
+build tool, dune, in [Module 7](M07-L04-module-basics.html)). The
 [exhaustiveness lecture in Module 5](M05-L04-exhaustiveness.html#treating-warnings-as-errors)
 covers turning the warning into an error; for now, just know the
 option exists.

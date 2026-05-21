@@ -625,6 +625,9 @@ by the result without changing program meaning)?
 - (a) `let f x = x + 1`
 - (b) `let f x = Random.int x`
 - (c) `let counter = ref 0 in let f () = incr counter; !counter`
+  (we have not seen `ref`/`incr`/`!` yet; treat them as a hidden
+  mutable cell with read and increment operations; full coverage
+  in [Module 7](M07-L01-references.html))
 - (d) `let f x = print_endline (string_of_int x); x`
 
 Think before peeking at the next slide.

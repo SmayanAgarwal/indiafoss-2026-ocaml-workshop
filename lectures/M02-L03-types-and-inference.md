@@ -599,10 +599,11 @@ let first (x, _) = x
 To **constrain**, annotate:
 
 ```ocaml
-let first_int (x, _ : int * int) = x
+let first_int ((x, _) : int * int) = x
 ```
 
 - `val first_int : int * int -> int = <fun>`.
+- Inner parens matter: `: int * int` annotates the whole pattern.
 - Now only works on pairs of `int`. Less general, sometimes what you want.
 
 :::
@@ -617,8 +618,13 @@ specifically wanted `first` to work only on `int * int` (to catch
 accidental misuse), you would annotate:
 
 ```ocaml
-let first_int (x, _ : int * int) = x
+let first_int ((x, _) : int * int) = x
 ```
+
+The inner parentheses around `(x, _)` matter: the annotation
+`: int * int` applies to the *whole* pattern, not just to `_`.
+Without the inner parentheses you get the same behaviour, but
+the parse is subtle and easier to misread.
 
 Now the function is `int * int -> int`, less general but more
 constrained. Whether to constrain is a judgement call; in

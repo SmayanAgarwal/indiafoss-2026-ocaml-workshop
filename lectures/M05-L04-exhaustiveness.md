@@ -229,9 +229,14 @@ The answer is almost always yes.
 ## The dual: redundant clauses
 
 Exhaustiveness has a sibling check: **redundancy**. The
-exhaustiveness check finds clauses that *should* exist but
-don't. The redundancy check finds clauses that *do* exist but
-will never fire.
+exhaustiveness check (warning 8) finds clauses that *should*
+exist but don't: a value of the matched type could arrive that
+no clause covers. The redundancy check (warning 11) finds
+clauses that *do* exist but will never fire: an earlier clause
+already covers every value the later one would. The two
+warnings are different in direction (missing vs unreachable)
+but related in spirit: both compare the set of values a type
+admits against the set the clauses cover.
 
 ```ocaml skip
 let action = function

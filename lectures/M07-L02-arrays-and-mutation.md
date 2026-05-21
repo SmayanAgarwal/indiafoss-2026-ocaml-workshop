@@ -499,8 +499,8 @@ a.(0) + a.(2) + a.(4)
 ```
 
 - [ ] `9`
-- [ ] `105`
 - [x] `105`
+- [ ] `108`
 - [ ] `Invalid_argument`
 
 **Why:** the assignment changes `a.(2)` from `3` to `99`. The

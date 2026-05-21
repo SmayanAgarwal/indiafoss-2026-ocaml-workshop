@@ -95,6 +95,10 @@ The expression evaluates to `14`, of type `int`.
 
 Integer division uses `/`, but in OCaml as in C and Java (and unlike
 in Python 3), it *truncates*: it throws away any fractional part.
+You will see `let _ = ...` in cells from here on; the `_` is a
+"don't-care" name that just lets the toplevel print the value
+without binding it to anything. We cover the pattern in
+[M02-L02](M02-L02-let-bindings.html#underscore-i-dont-care-about-the-name).
 
 ```ocaml
 17 / 5

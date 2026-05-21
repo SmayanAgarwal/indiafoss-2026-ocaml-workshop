@@ -258,7 +258,12 @@ operations (`return`, sometimes called `pure`, which is `fun x ->
 Some x`; and `bind`, which is what we wrote above). Anything that
 fits that shape is a candidate for the same `let*` notation, with
 the same intuition: "give the value a name; if there is no value,
-short-circuit."
+short-circuit." There are also three equational laws (left identity,
+right identity, associativity) that a "good" monad's `return` and
+`bind` are expected to satisfy; we sketch them in the
+[next lecture](M08-L02-option-monad.html#the-monad-laws-a-teaser),
+but they are background, not something you check by hand each time
+you write a `bind`.
 
 ## Why this matters
 

@@ -223,7 +223,9 @@ recent one being the one you reach when you type `x`.
 The clearest demonstration that shadowing is not mutation comes
 from [closures](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment),
 which we will study in Module 3 but can already use in a simple
-example.
+example. The `()` in `f ()` is the unit value: `f` is defined to
+take no useful argument, and we call it by passing the placeholder
+`()`. Full treatment of unit-taking functions comes in Module 3.
 
 ```ocaml
 let x = 1

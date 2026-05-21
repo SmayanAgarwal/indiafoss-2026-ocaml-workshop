@@ -370,9 +370,11 @@ the value `f` saw. This is the same point from
 [M02-L02](M02-L02-let-bindings.html#shadowing) (shadowing is not
 mutation), applied to function closures.
 
-In dynamically-scoped languages, `f` would look up `n` at call time
-and would return `100`. OCaml is statically scoped: the binding
-that was in scope when `f` was defined is the one `f` uses, forever.
+OCaml uses *static scoping with value capture*: the binding that
+was in scope when `f` was defined is the one `f` uses, forever. In
+a language where names were re-looked-up at call time, or where the
+closure held a *reference* to the variable rather than its value,
+`f ()` could see a later assignment. OCaml does neither.
 
 ## Functions can be passed as arguments
 

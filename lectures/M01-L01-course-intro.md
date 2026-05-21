@@ -115,13 +115,16 @@ sharper question: what kind of bug does the type system structurally
 testing. We cover OUnit2 for unit tests and QCheck for property-based
 testing, which is a particularly natural fit for a language where so
 many functions are pure. Module 10 then turns to memory safety as a
-security story: the canonical C memory bugs (use-after-free, buffer
-overflow, uninitialised read, double-free), how they become CVEs
-(the now-famous Microsoft 70%, Android 90%, Fish-in-a-Barrel 80%
-statistics and the [White House February 2024
+security story. The reason we can talk about "undefined behaviour"
+precisely in week 10 is that we will have spent eight weeks
+pinning down what *defined* behaviour even means; week 10 names
+the C memory bugs (use-after-free, buffer overflow, uninitialised
+read, double-free), shows how they become CVEs (the now-famous
+Microsoft 70%, Android 90%, Fish-in-a-Barrel 80% statistics and
+the [White House February 2024
 memorandum](M10-L02-memory-bugs-as-security.html) on memory-safe
-languages), and how OCaml rules each one out by construction. We
-also walk a [Heartbleed-style
+languages), and shows how OCaml rules each one out by construction.
+We also walk a [Heartbleed-style
 example](M10-L05-tutorial.html) end to end. Module 11 picks up
 where the vanilla type system stops:
 [OxCaml](https://oxcaml.org), a research branch of OCaml maintained
@@ -131,10 +134,7 @@ stack allocation), uniqueness (use-after-free of manually managed
 resources, caught at compile time), and linearity (use exactly
 once). Module 12 caps the course by asking
 what falls out if a language is this safe: the answer is MirageOS,
-where the operating system itself is an OCaml program. The reason we
-can talk about "undefined behaviour" precisely in week 10 is that we
-will have spent eight weeks pinning down what *defined* behaviour
-even means.
+where the operating system itself is an OCaml program.
 
 :::slide
 

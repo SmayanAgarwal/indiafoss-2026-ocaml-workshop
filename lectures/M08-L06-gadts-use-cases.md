@@ -435,7 +435,8 @@ The [tutorial in lecture 7](M08-L07-tutorial.html) brings together
 the monad pattern from
 lectures [1](M08-L01-sequencing.html)-[4](M08-L04-state-monad.html)
 and the GADT pattern from
-lectures [5](M08-L05-gadts-basics.html)-[6](#). We build a small
+lectures [5](M08-L05-gadts-basics.html)-[6](M08-L06-gadts-use-cases.html).
+We build a small
 expression language whose AST is a GADT (so ill-typed programs
 cannot be constructed), and an evaluator that returns `'a option`
 (so runtime failures like division-by-zero short-circuit cleanly).

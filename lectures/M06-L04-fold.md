@@ -136,7 +136,9 @@ f a (f b (f c init))
 
 That is, the rightmost element is combined first with the initial
 accumulator, then that result with the next element, and so on
-inward. The parentheses associate to the right.
+inward. The parentheses associate to the right. (The recursion
+walks the list left-to-right to *reach* the empty tail, but the
+arithmetic happens on the way back, rightmost element first.)
 
 A useful way to picture this: a list value is a chain of cons
 cells terminated by `[]`. The fold *replaces every cell in that
