@@ -314,8 +314,10 @@ If you are reading this in a browser, you should see a "Run" button
 near the top right of the code block above. Click it. The OCaml
 toplevel runs *in your browser* (no server, no install, the bytes
 never leave your machine) and the output appears below the cell.
-The first run takes a few seconds to compile the toplevel; later
-runs are instant.
+The first run takes a few seconds while the OCaml runtime loads
+into your browser; subsequent runs are fast. Modules that use the
+OxCaml bundle (Week 11) carry a larger runtime, so the first run
+there can take 10-15 seconds.
 
 You can edit the code. Try changing `"NPTEL"` to your own name and
 clicking Run again. If you make a syntax mistake, you will see the

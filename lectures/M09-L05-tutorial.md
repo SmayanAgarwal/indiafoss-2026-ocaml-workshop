@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: testing the expr evaluator with OUnit2 and QCheck"
-lecture_no: 4
+lecture_no: 5
 week: 9
 duration_target_min: 25
 concepts: [testing tutorial, OUnit2, QCheck, properties, invariants, expression evaluator, debugging]
@@ -16,7 +16,7 @@ reading:
 
 # Tutorial: testing the `expr` evaluator with OUnit2 and QCheck
 
-This tutorial puts the previous three lectures to work on a single
+This tutorial puts the previous four lectures to work on a single
 larger example. We take the [`expr` AST and `eval`
 function from M05-L06](M05-L06-tutorial.html), give them a full
 test suite, deliberately break the implementation, and watch
@@ -754,7 +754,7 @@ that exercises everything.
 
 ## Activity
 
-:::quiz code id=M09-L04-q1
+:::quiz code id=M09-L05-q1
 The `eval` function above does not have an explicit property
 asserting that *multiplication by zero gives zero*. Write a
 QCheck property that:
@@ -806,7 +806,7 @@ let test_mul_zero =
 Four lines (counting the `assume`): a property whose formal
 statement is just one equation, plus a NaN guard.
 
-:::quiz mcq id=M09-L04-q2
+:::quiz mcq id=M09-L05-q2
 A colleague writes a single QCheck property for the
 [`safe_div` function from M04-L05](M04-L05-option-and-aliases.html):
 
@@ -897,8 +897,12 @@ After this module:
   `assert_equal`, `assert_raises`, `>::`, `TestList`, `dune`
   integration ([L02](M09-L02-unit-testing.html)).
 - Write QCheck properties for invariants of a function:
-  generators, properties, shrinking, statistics
+  generators, properties, shrinking, statistics, generating
+  values that satisfy an invariant, custom arbitraries
   ([L03](M09-L03-property-based-testing.html)).
+- Test stateful data structures against a reference
+  implementation using sequences of operations
+  ([L04](M09-L04-model-based-testing.html)).
 - Combine the two on a real function, including catching a
   deliberately introduced bug (this lecture).
 
@@ -915,6 +919,7 @@ context of memory safety, with security as the application.
 - Explain why a well-typed program can still be wrong (L1).
 - Write OUnit2 unit tests for any module (L2).
 - Write QCheck properties for any invariant (L3).
+- Apply model-based testing to stateful code (L4).
 - Combine both on a real function (this lecture).
 
 Next module: M10 on memory safety. Tests catch behaviour;

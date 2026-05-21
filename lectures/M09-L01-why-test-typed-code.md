@@ -596,7 +596,7 @@ intended behaviour, not just against past bugs.
 **Pitfall 4: equating "all tests pass" with "no bugs."** The
 test suite tells you the cases you tried did not fail. It does
 not tell you the cases you did not try are fine. PBT and code
-coverage tools (briefly in [Lecture 4](M09-L04-tutorial.html))
+coverage tools (briefly in [Lecture 5](M09-L05-tutorial.html))
 help close that gap, but never fully.
 
 ## What's next
@@ -613,7 +613,12 @@ property-based testing with QCheck. You will see why FP makes
 PBT natural, watch the shrinker minimise a failing input, and
 write your first generators.
 
-[Lecture 4](M09-L04-tutorial.html) puts both tools to work on a
+[Lecture 4](M09-L04-model-based-testing.html) extends PBT to
+stateful code: how to test a hash table or a queue against a
+simple reference implementation using random sequences of
+operations.
+
+[Lecture 5](M09-L05-tutorial.html) puts both tools to work on a
 function from earlier in the course, ending with a deliberately
 buggy implementation that QCheck finds in seconds.
 
@@ -624,8 +629,10 @@ buggy implementation that QCheck finds in seconds.
 - L2: **OUnit2 unit testing.** The Stack example. `dune`
   integration.
 - L3: **QCheck property-based testing.** Generators, shrinking,
-  why FP and PBT fit together.
-- L4: **Tutorial.** A function from M01-M08, fully tested both
+  generating values that satisfy invariants, custom arbitraries.
+- L4: **Model-based testing.** Stateful data structures vs. a
+  reference implementation.
+- L5: **Tutorial.** A function from M01-M08, fully tested both
   ways, with a deliberately buggy version for QCheck to find.
 
 :::
