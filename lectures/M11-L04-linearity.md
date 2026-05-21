@@ -106,7 +106,7 @@ Here is the running example for this lecture. A small module that
 manages file handles, with the type system enforcing the
 "open-read*-close" protocol:
 
-```ocaml skip
+```ocaml
 module type Handle = sig
   type t
 
@@ -274,11 +274,11 @@ type-level discipline concrete. In a real OxCaml program this
 would wrap `Unix.openfile` and `Unix.close`; the simplified
 in-memory version mirrors the structure without the I/O:
 
-```ocaml skip
+```ocaml
 module Handle : Handle = struct
   type t = { mutable buf : string; mutable pos : int }
 
-  let open_ path =
+  let open_ _path =
     let buf = (* read whole file into buf, omitted *) "" in
     { buf; pos = 0 }
 

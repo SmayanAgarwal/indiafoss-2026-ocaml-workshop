@@ -186,7 +186,7 @@ fine, as long as the local value itself does not escape.
 A small taste of what the annotations look like (we will read this
 carefully in M11-L02):
 
-```ocaml skip
+```ocaml
 type point = { x : float; y : float }
 
 let distance (a @ local) (b @ local) : float =
@@ -204,6 +204,9 @@ The escape-attempt version, the one that would be `return &x` in C,
 does not compile:
 
 ```ocaml skip
+(* Compile-time error demo: kept as `skip` because the lecture
+   text says "the compiler refuses this". The error message below
+   is the expected diagnostic. *)
 let escape () =
   let p = stack_ { x = 1.0; y = 2.0 } in
   p
@@ -244,7 +247,7 @@ it to a low-level resource manager.
 
 The signature of a uniqueness-checked reference looks like this:
 
-```ocaml skip
+```ocaml
 module type Unique_ref = sig
   type 'a t
   val alloc : 'a -> 'a t @ unique
@@ -287,7 +290,7 @@ file-handle type, for example, can require that `close` takes a
 `once` handle: any code that calls `close` twice fails to type
 check, because the handle is consumed on first use.
 
-```ocaml skip
+```ocaml
 module type Handle = sig
   type t
   val open_  : string -> t @ once

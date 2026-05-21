@@ -22,16 +22,28 @@ let head ~asset_root ~(fm : Frontmatter.t) =
     | Some s when String.trim s <> "" -> s
     | _ -> "unknown"
   in
-  (* M09 (testing) lectures load an extension bundle that adds QCheck
-     and OUnit2 into the running vanilla x-ocaml toplevel. The bundle
-     is produced by tools/build-m09-extras.sh using the patched
-     js_of_ocaml fork; loaded via [src-load], it composes additively
-     with the worker's existing Stdlib without overwriting any
-     symbols. Other modules use vanilla x-ocaml and skip this attribute. *)
-  let src_load_attr =
+  (* Per-module x-ocaml runtime selection.
+
+     M01..M10 and M12 use the vanilla x-ocaml bundle at
+     [assets/x-ocaml/]. M09 (testing) additionally loads an extension
+     bundle via [src-load] that adds QCheck and OUnit2 into the
+     running vanilla toplevel; the bundle is produced by
+     tools/build-m09-extras.sh using the patched js_of_ocaml fork and
+     composes additively with the worker's Stdlib.
+
+     M11 (OxCaml) uses an entirely different worker: the x-oxcaml
+     bundle at [assets/x-oxcaml/], built against OCaml 5.2.0+ox, so
+     locality / uniqueness / linearity mode syntax compiles in the
+     cells. No [src-load] is needed: the OxCaml worker already has the
+     mode system built into the compiler. *)
+  let bundle_dir, src_load_attr =
     match fm.week with
-    | Some 9 -> Printf.sprintf "\n    src-load=\"%s/assets/x-ocaml/m09-extras.js\"" asset_root
-    | _ -> ""
+    | Some 9 ->
+        ( "x-ocaml",
+          Printf.sprintf
+            "\n    src-load=\"%s/assets/x-ocaml/m09-extras.js\"" asset_root )
+    | Some 11 -> ("x-oxcaml", "")
+    | _ -> ("x-ocaml", "")
   in
   Printf.sprintf
     {|<!doctype html>
@@ -47,13 +59,14 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   <link rel="stylesheet" href="%s/assets/css/chapter.css">
   <link rel="stylesheet" href="%s/assets/css/slides.css">
   <script async
-    src="%s/assets/x-ocaml/x-ocaml.js"
-    src-worker="%s/assets/x-ocaml/x-ocaml.worker.js"%s></script>
+    src="%s/assets/%s/x-ocaml.js"
+    src-worker="%s/assets/%s/x-ocaml.worker.js"%s></script>
 </head>|}
     (Parse.html_escape commit_sha)
     (Parse.html_escape quiz_api_url)
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
-    asset_root asset_root asset_root asset_root asset_root asset_root
+    asset_root asset_root asset_root asset_root
+    asset_root bundle_dir asset_root bundle_dir
     src_load_attr
 
 let header_bar ~(fm : Frontmatter.t) ~running_lecture =

@@ -132,7 +132,7 @@ The motivating example from the 2025-05-29 blog post is a
 the GC's control, with explicit `alloc` and `free` operations. The
 unsafe version of the interface looks innocent:
 
-```ocaml skip
+```ocaml
 module type Unsafe_ref = sig
   type 'a t
   val alloc : 'a -> 'a t
@@ -149,7 +149,7 @@ exact bugs M10 spent a lecture cataloguing.
 
 Uniqueness lets us tighten the signatures:
 
-```ocaml skip
+```ocaml
 module type Unique_ref = sig
   type 'a t
   val alloc : 'a -> 'a t @ unique

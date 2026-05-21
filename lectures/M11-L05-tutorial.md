@@ -80,7 +80,7 @@ Combined annotation: `t @ once @ local`.
 
 Here is the module type, in the OxCaml dialect we have been using:
 
-```ocaml skip
+```ocaml
 module type Handle = sig
   type t
 

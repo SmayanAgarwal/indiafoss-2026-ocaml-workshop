@@ -84,7 +84,7 @@ to use the value within its scope; you can always hand it a
 
 Concretely, you write the mode after an `@` symbol:
 
-```ocaml skip
+```ocaml
 let use_locally (r @ local) = !r + 1
 (* val use_locally : int ref @ local -> int = <fun> *)
 ```
@@ -96,7 +96,7 @@ mode-crosses the locality axis, which we will explain shortly).
 
 You can hand this function a heap-allocated ref, no problem:
 
-```ocaml skip
+```ocaml
 let test () =
   let r = ref 41 in
   use_locally r
@@ -132,7 +132,7 @@ The running example for the rest of this lecture is from the
 CS6868 OxCaml handout: computing the length of a 2-D polyline.
 First the types and a basic distance function:
 
-```ocaml skip
+```ocaml
 type point = { x : float; y : float }
 
 let distance (a @ local) (b @ local) : float =
@@ -150,7 +150,7 @@ so the answer escapes to the caller cleanly.
 
 Now use it:
 
-```ocaml skip
+```ocaml
 let test_distance () =
   let a = stack_ { x = 0.0; y = 0.0 } in
   let b = stack_ { x = 3.0; y = 4.0 } in
@@ -189,6 +189,9 @@ Suppose we make a mistake and try to return a `stack_`-allocated
 point:
 
 ```ocaml skip
+(* Compile-time error demo: kept as `skip` because the lecture
+   text walks through the compiler's refusal. Expected message is
+   shown below the cell in prose. *)
 let escape_demo () =
   let p = stack_ { x = 1.0; y = 2.0 } in
   p
@@ -213,6 +216,9 @@ The same diagnosis fires if we try to stash a local value in a
 long-lived global cell:
 
 ```ocaml skip
+(* Compile-time error demo: storing a stack-allocated local into
+   a top-level global cell is rejected by the locality checker.
+   Kept skip; expected error follows in the prose. *)
 let storage : point ref = ref { x = 0.0; y = 0.0 }
 
 let store_local () =
@@ -270,7 +276,7 @@ point will share.
 The `exclave_` keyword expresses exactly that. It says "allocate
 this in the caller's region, not mine":
 
-```ocaml skip
+```ocaml
 let midpoint (a @ local) (b @ local) : point @ local =
   exclave_ { x = (a.x +. b.x) /. 2.0;
              y = (a.y +. b.y) /. 2.0 }
@@ -285,7 +291,7 @@ region, and disappears when the caller's frame goes.
 
 Composition works:
 
-```ocaml skip
+```ocaml
 let translate (p @ local) (dx : float) (dy : float)
     : point @ local =
   exclave_ { x = p.x +. dx; y = p.y +. dy }
@@ -352,7 +358,7 @@ mode-crossed away.
 
 For `int`-style primitives, the cross is silent:
 
-```ocaml skip
+```ocaml
 let bump (x @ local) : int = x + 1
 (* val bump : int @ local -> int = <fun> *)
 ```
@@ -392,7 +398,7 @@ allocation is on the stack and the compiler verifies it.
 Computing the perimeter of a triangle, with three stack-allocated
 points and no heap traffic:
 
-```ocaml skip
+```ocaml
 let triangle_perimeter (a @ local) (b @ local) (c @ local)
     : float =
   distance a b +. distance b c +. distance c a
@@ -415,7 +421,7 @@ The locality axis extends through data structures. A
 are all in the current region. You can iterate over such a list
 without escape:
 
-```ocaml skip
+```ocaml
 let rec sum_xs (lst : point list @ local) : float =
   match lst with
   | [] -> 0.0
@@ -425,7 +431,7 @@ let rec sum_xs (lst : point list @ local) : float =
 And you can *build* a new local list, with `exclave_` placing the
 new cons cells in the caller's region:
 
-```ocaml skip
+```ocaml
 let rec translate_polyline
     (poly : point list @ local) (dx : float) (dy : float)
     : point list @ local =
@@ -470,7 +476,7 @@ outermost region: the caller of the top-level `translate_polyline`.
 Locality has a limitation that surfaces in this same example.
 Consider `path_length`, which sums distances along a polyline:
 
-```ocaml skip
+```ocaml
 let rec path_length (poly : point list @ local) : float =
   match poly with
   | a :: (b :: _ as rest) ->
@@ -562,6 +568,8 @@ of CVEs.
 The OxCaml equivalent:
 
 ```ocaml skip
+(* Compile-time error demo: the OxCaml mirror of C's `return &x`.
+   Kept skip; expected error follows. *)
 let bad () =
   let buf = stack_ (Bytes.create 16) in
   buf
