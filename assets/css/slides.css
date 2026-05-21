@@ -40,7 +40,7 @@ body.mode-slides.slides-loading .reveal {
 body.mode-slides .reveal .slides section.slide,
 body.mode-slides .reveal .slides section[data-slide] {
   text-align: left;
-  font-size: 1.35rem;
+  font-size: 1.7rem;
   line-height: 1.55;
   padding: 1rem 2rem;
   border-left: none;
@@ -74,10 +74,10 @@ body.mode-slides .reveal .slides section h6 {
 }
 body.mode-slides .reveal .slides section h1,
 body.mode-slides .reveal .slides section h2 {
-  font-size: 2.2rem;
+  font-size: 2.8rem;
 }
 body.mode-slides .reveal .slides section h3 {
-  font-size: 1.6rem;
+  font-size: 2rem;
 }
 
 body.mode-slides x-ocaml {

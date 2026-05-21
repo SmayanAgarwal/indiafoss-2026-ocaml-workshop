@@ -94,6 +94,12 @@ body.mode-slides  .lecture-meta-footer { display: none; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* [overflow: hidden] clips at the content box. Without an
+     explicit line-height + small padding-bottom the box height
+     equals the typographic line, and descenders (g, p, y, ?
+     tail) get clipped at the bottom edge. */
+  line-height: 1.4;
+  padding-bottom: 0.1rem;
 }
 .mode-toggle,
 .cell-controls button {

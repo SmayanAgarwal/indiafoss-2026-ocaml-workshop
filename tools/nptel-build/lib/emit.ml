@@ -884,15 +884,13 @@ let runtime_script ~asset_root =
             // fit the viewport, so this is a content budget, not
             // a rendering size.
             //
-            // minScale=0.1 and maxScale=1.0 together make Cmd+- in
-            // the host browser shrink the slide intuitively. Without
-            // them, reveal scales the canvas UP to fill an enlarged
-            // viewport (because the default maxScale is 2.0), which
-            // cancels out the browser zoom-out until the cap kicks
-            // in (around 50%% browser zoom). Capping at 1.0 means
-            // the slide never grows past its natural canvas size,
-            // so any browser zoom-out is immediately visible.
-            width: 1280, height: 800, minScale: 0.1, maxScale: 1.0,
+            // minScale=0.1 lets the slide shrink well below the
+            // canvas size on small viewports. maxScale=1.5 lets the
+            // slide grow on wider monitors (the canvas at 1.5x is
+            // about the width of a typical laptop screen) without
+            // ballooning to the reveal.js default of 2.0, which
+            // defeats Cmd+- until you hit 50%% browser zoom.
+            width: 1280, height: 800, minScale: 0.1, maxScale: 1.5,
             // Without this, arrow keys while typing in an x-ocaml cell
             // also navigate slides. Shadow DOM hides the inner
             // contenteditable from document.activeElement (which sees
