@@ -882,10 +882,17 @@ let runtime_script ~asset_root =
             // so slides with a tall diagram plus bullets do not
             // overflow. reveal.js then auto-scales the canvas to
             // fit the viewport, so this is a content budget, not
-            // a rendering size. minScale lowered from the default
-            // 0.2 so Cmd+- on the host browser keeps shrinking
-            // the slide instead of bottoming out.
-            width: 1280, height: 800, minScale: 0.1,
+            // a rendering size.
+            //
+            // minScale=0.1 and maxScale=1.0 together make Cmd+- in
+            // the host browser shrink the slide intuitively. Without
+            // them, reveal scales the canvas UP to fill an enlarged
+            // viewport (because the default maxScale is 2.0), which
+            // cancels out the browser zoom-out until the cap kicks
+            // in (around 50%% browser zoom). Capping at 1.0 means
+            // the slide never grows past its natural canvas size,
+            // so any browser zoom-out is immediately visible.
+            width: 1280, height: 800, minScale: 0.1, maxScale: 1.0,
             // Without this, arrow keys while typing in an x-ocaml cell
             // also navigate slides. Shadow DOM hides the inner
             // contenteditable from document.activeElement (which sees
