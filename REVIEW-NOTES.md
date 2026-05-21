@@ -73,10 +73,44 @@ Conventions for this file:
   fast; consider one extra worked example or a slow-down
   paragraph.
 
-## M09 (review pass not yet run)
+## M09
 
-- [ ] **M09-L01..L05** never had a student-perspective review
-  pass; an agent is running on this now.
+Review pass complete (`<commit pending>`); 4 small fixes auto-
+applied (L01 pitfall-4 cross-ref, L03 self-reference + list-size
+typo, L04 `let*` forward-ref + broken link). Flagged items:
+
+- [ ] **M09-L03** "Custom arbitraries" section (lines
+  1356-1505): reads as bolted on after the shrinker section.
+  Re-introduces `QCheck.make`, repeats printer/shrinker advice,
+  and the worked `tree` example duplicates L05's `expr`
+  generator structurally. Consider trimming or moving so L05's
+  `expr` generator does not feel like a third tour of the same
+  material.
+- [ ] **M09-L03** line 1106 `dag_gen`: uses `>>=` on `Gen.t`
+  monadically, but `>>=` is never named in this lecture (unlike
+  `let*`, `>|=`, `<+>` which each get a one-liner). Either
+  explain `>>=` once or rewrite to `let*` for consistency.
+- [ ] **M09-L03** input-space and invariant-generation stretch
+  (lines 678-1154, ~470 lines): the heaviest part of the 35-min
+  lecture. Consider cutting one of the duplicate sorted-list
+  recipes (A2 prefix-sum) or balanced-BST recipes (B2 midpoint
+  split) since A1/B1 are the canonical pedagogical examples.
+- [ ] **M09-L04** `Ht` implementation (lines 178-263): 70+
+  lines of mutable state, linear probing, tombstones, and
+  resize before the testing harness begins. For a 25-min lecture
+  about *testing*, a lot of unrelated code to digest first.
+  Consider compressing to a sketch with the full version in an
+  appendix.
+- [ ] **M09-L05** entry point (lines 715-724): code shows
+  `run_test_tt_main ounit_suite; QCheck_runner.run_tests_main
+  qcheck_tests` as a single `let () =`, but `run_test_tt_main`
+  exits, so a reader copying the code gets only the OUnit2 half.
+  Either split into two executables (update the dune stanza too)
+  or explain how to keep both in one binary.
+- [ ] **M09-L05** "Result" sample at line 540: explanatory
+  parenthetical on the QCheck shrunk witness reverses operand
+  attribution in a way that may confuse students tracing
+  through. Sanity-check rewrite for clarity.
 
 ## M10-M12
 

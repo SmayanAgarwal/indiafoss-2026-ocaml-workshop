@@ -1155,9 +1155,9 @@ satisfy the invariant from the start.
 
 ## Shrinking, in depth
 
-L3 introduced shrinking with the `bad_sort` example: a failing
-12-element list got shrunk to a 1-element list, and the bug was
-obvious in the small witness. Now we go under the hood.
+We introduced shrinking informally with the `bad_sort` example: a
+failing multi-element list got shrunk to a 1-element list, and the
+bug was obvious in the small witness. Now we go under the hood.
 
 ### Why shrinking matters
 

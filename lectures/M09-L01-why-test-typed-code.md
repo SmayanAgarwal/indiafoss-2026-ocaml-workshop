@@ -595,8 +595,9 @@ intended behaviour, not just against past bugs.
 
 **Pitfall 4: equating "all tests pass" with "no bugs."** The
 test suite tells you the cases you tried did not fail. It does
-not tell you the cases you did not try are fine. PBT and code
-coverage tools (briefly in [Lecture 5](M09-L05-tutorial.html))
+not tell you the cases you did not try are fine. PBT (Lecture 3)
+and code coverage tools (`bisect_ppx`, mentioned briefly in
+[Lecture 2](M09-L02-unit-testing.html#what-ounit2-does-not-do))
 help close that gap, but never fully.
 
 ## What's next
