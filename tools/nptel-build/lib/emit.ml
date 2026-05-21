@@ -878,6 +878,14 @@ let runtime_script ~asset_root =
           waitForCellsToSettle();
           reveal = new Reveal({
             embedded: false, hash: false, history: false,
+            // Larger canvas than the reveal.js default (960x700)
+            // so slides with a tall diagram plus bullets do not
+            // overflow. reveal.js then auto-scales the canvas to
+            // fit the viewport, so this is a content budget, not
+            // a rendering size. minScale lowered from the default
+            // 0.2 so Cmd+- on the host browser keeps shrinking
+            // the slide instead of bottoming out.
+            width: 1280, height: 800, minScale: 0.1,
             // Without this, arrow keys while typing in an x-ocaml cell
             // also navigate slides. Shadow DOM hides the inner
             // contenteditable from document.activeElement (which sees

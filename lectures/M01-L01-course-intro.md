@@ -138,11 +138,17 @@ where the operating system itself is an OCaml program.
 
 :::slide
 
-## What you'll learn
+## The course map
 
 ![12-module course roadmap](/assets/diagrams/M01-roadmap.svg)
 
-By the end:
+Eight FP modules, then four secure-systems modules.
+
+:::
+
+:::slide
+
+## By the end of the course
 
 - Write **idiomatic OCaml**.
 - **Reason equationally** about your code.
