@@ -32,10 +32,10 @@ assets/reveal/plugin/
 # the no-effects worker; portable.js's await/capsule/portable libs
 # aren't used by M11, which is mode annotations only; the no-effects
 # worker saves ~15 MB over +effects since M11 has no Domain.Safe.spawn
-# or effect-handler examples). The 60 MB worker still exceeds GitHub's
-# 50 MB soft-warning threshold; deployment is a separate task
-# (release-asset, git-LFS, or CI fetch from KC's CDN).
-assets/x-oxcaml/
+# or effect-handler examples). The 60 MB worker exceeds GitHub's
+# 50 MB soft warning but is under the 100 MB push limit and accepted
+# by GH Pages; committed directly to assets/x-oxcaml/ rather than
+# git-LFS'd, matching the deployment of KC's other OxCaml blog posts.
 
 # OS junk
 .DS_Store
