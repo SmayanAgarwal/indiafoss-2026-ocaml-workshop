@@ -400,18 +400,15 @@ let rec sieve = function
       p :: sieve (List.filter (fun n -> n mod p <> 0) rest)
 
 let rec range a b = if a > b then [] else a :: range (a + 1) b
-
-let _ = sieve (range 2 50)
+let nums = range 2 50
+let _ = sieve nums
 ```
 
-Press **Run.** You should see the primes up to 50 come out. Try
-changing the second argument to `range`: ask for the primes up to
-100, or 200, or 1000. (The first argument has to stay at 2: this
-particular sieve assumes the smallest value in the list is a
-prime, which is true only when the list starts at 2.)
+Press **Run.** Output: the primes up to 50.
 
-You will write code like this from scratch by Week 6. For now, just
-enjoy the output and notice how short the program is.
+- Try `range 2 100`, `range 2 1000`.
+- First argument stays at 2 (sieve assumes the head is prime).
+- You will write this from scratch by Week 6.
 
 :::
 
