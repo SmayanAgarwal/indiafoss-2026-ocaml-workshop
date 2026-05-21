@@ -30,9 +30,12 @@ pipeline, so they never appear in rendered output):
 **Sweep command:**
 
 ```sh
-grep -rn '<!-- KC[!?]\?:' lectures/ tools/ assets/ README.md \
+grep -rEn '<!--[[:space:]]*KC[!?]?:' lectures/ tools/ assets/ README.md \
   2>/dev/null
 ```
+
+(The pattern tolerates `<!-- KC:` and `<!--KC:` with or without
+the space after `<!--`.)
 
 Run this at the start of a session, when KC says "sweep", or
 when finishing other work that may have created context for an

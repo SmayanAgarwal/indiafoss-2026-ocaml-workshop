@@ -315,9 +315,7 @@ near the top right of the code block above. Click it. The OCaml
 toplevel runs *in your browser* (no server, no install, the bytes
 never leave your machine) and the output appears below the cell.
 The first run takes a few seconds while the OCaml runtime loads
-into your browser; subsequent runs are fast. Modules that use the
-OxCaml bundle (Week 11) carry a larger runtime, so the first run
-there can take 10-15 seconds.
+into your browser; subsequent runs are fast.
 
 You can edit the code. Try changing `"NPTEL"` to your own name and
 clicking Run again. If you make a syntax mistake, you will see the
@@ -406,7 +404,10 @@ let rec range a b = if a > b then [] else a :: range (a + 1) b
 let _ = sieve (range 2 50)
 ```
 
-Press **Run.** You should see the primes up to 50 come out.
+Press **Run.** You should see the primes up to 50 come out. Try
+changing the second argument to `range`: ask for the primes up to
+100, or replace `range 2 50` with `range 50 100` to get the primes
+between 50 and 100.
 
 You will write code like this from scratch by Week 6. For now, just
 enjoy the output and notice how short the program is.
@@ -422,9 +423,10 @@ mentioning offhand if anyone asks; do not labour it. The point is
 
 The output is a list of integers, in OCaml notation: `[2; 3; 5; 7;
 11; 13; 17; 19; 23; 29; 31; 37; 41; 43; 47]`. Those are the primes
-up to 50, computed by a version of the Sieve of Eratosthenes that
-fits in five lines. Without explaining anything yet, notice a few
-things.
+up to 50, computed by a version of the
+[Sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes)
+that fits in five lines. Without explaining anything yet, notice
+a few things.
 
 There is no loop in this code. There is no mutable counter, no
 `++`, no array index. The function `sieve` is *recursive*: it calls
@@ -471,23 +473,20 @@ assignments are submitted online via the SWAYAM portal.
 
 :::
 
-A few details worth knowing. The assignments are programming
-problems with auto-graded test cases. You write OCaml code, submit
-through the SWAYAM portal, and the autograder runs it against a
-hidden set of inputs. You will see your score after the submission
-deadline closes. There are no late submissions: the portal closes
-at the deadline. NPTEL is strict about this and I cannot make
-exceptions.
+A few details worth knowing. Assignments are released on the same
+weekly cadence as the videos and are submitted through the SWAYAM
+portal. Submission deadlines are strict: the portal closes at the
+deadline. NPTEL does not allow late submissions and I cannot make
+exceptions. The exact format of each assignment (how much OCaml
+you write, how much is multiple-choice, how it is auto-graded) is
+finalised closer to release; treat the assignment page as the
+authoritative source for that week.
 
-The final exam is a written paper, conducted in person by NPTEL at
-their proctored centres across India. The questions are
-short-answer and code-reading: things like "What is the type of this
-expression?", "What does this program print?", "Implement this
-function in OCaml." It is not open-book. You write code with a pen
-on paper, which is unusual for a programming course but is the NPTEL
-standard. The exam is multiple-choice-heavy by NPTEL convention; I
-will make sure the questions test real understanding rather than
-memorised syntax.
+The final exam is conducted in person by NPTEL at their proctored
+exam centres across India. NPTEL sets the exam format; details will
+be confirmed on the SWAYAM platform before the exam window. Whatever
+the format, the questions will test real understanding of the course
+material rather than memorised syntax.
 
 The 40% threshold for a certificate is the standard NPTEL pass mark.
 Most students who follow along weekly comfortably clear it. The
@@ -521,14 +520,16 @@ sitting down to a long session. The chapter pages (these documents
 you are reading) elaborate on each video and are meant as the
 read-after-watching companion.
 
-The tutorial video at the end of each week is important. It walks
-through 2-3 problems of the same flavour as the assignment, with me
-working out the solutions on the fly. If you find an assignment
-problem hard, the tutorial is the first place to look: there will
-be a similar problem worked out.
+The tutorial video at the end of each week is important. It is
+not a walkthrough of that week's assignment; instead, it works
+through 2-3 problems that exercise the same ideas, with me
+deriving the solutions on the fly. If you find an assignment
+problem hard, the tutorial is the first place to look: the
+techniques you need will have been demonstrated there.
 
-The discussion forum is your main channel for questions. I check it
-daily, and so do the teaching assistants. Use it. Asking questions
+The discussion forum is your main channel for questions. The
+teaching assistants and I monitor it through the week. Use it.
+Asking questions
 in public also helps the other students who had the same question
 but were too shy to ask.
 
@@ -548,9 +549,10 @@ expecting them would be disappointed.
 - We are not doing pure type theory; we will use a little, where it
   helps. The course is engineering-flavoured.
 
-If you want either of the first two, the Cornell CS3110 textbook and
-*Real World OCaml* are excellent follow-on reading.
-
+If you want either of the first two, the
+[Cornell CS3110 textbook](https://cs3110.github.io/textbook/) and
+[*Real World OCaml*](https://dev.realworldocaml.org/) are excellent
+follow-on reading.
 :::
 
 We will not build a production system from scratch. That is a real
@@ -559,8 +561,8 @@ course. The longest piece of code you will write in this course
 fits on one screen.
 
 We will not survey every feature of OCaml. The language has many
-corners: objects and classes (rarely used in modern code), camlp4
-syntax extensions (deprecated), polymorphic variants (mostly
+corners: objects and classes (rarely used in modern code), ppx
+syntax extensions (a tooling topic of its own), polymorphic variants (mostly
 specialised), first-class modules (advanced),
 [GADTs](M08-L05-gadts-basics.html) (we touch them briefly), effect
 handlers (a Multicore OCaml feature we leave for a follow-on
@@ -571,12 +573,12 @@ We will not do pure type theory. This is a programming course, not
 a programming-languages-theory course. I will use type-theoretic
 language ("polymorphism", "parametricity", "soundness") where it
 helps explain something, and I will not when it does not. If you
-want the type-theory companion text, [Pierce's *Types and Programming
+do want the theory companion, [Pierce's *Types and Programming
 Languages*](https://www.cis.upenn.edu/~bcpierce/tapl/) is the
-standard reference; if you want the OCaml-flavoured version, the
-[Cornell CS3110 textbook](https://cs3110.github.io/textbook/) and
-[*Real World OCaml*](https://dev.realworldocaml.org/) (both free,
-both linked above) are excellent and complement this course well.
+standard reference, and
+[*Software Foundations*](https://softwarefoundations.cis.upenn.edu/)
+(Pierce et al., free online) takes you through the same material
+mechanised in Coq.
 
 ## A quick checkpoint
 
