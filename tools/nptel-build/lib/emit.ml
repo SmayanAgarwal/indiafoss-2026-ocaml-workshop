@@ -1051,36 +1051,6 @@ let render_prev_next ~(manifest : Manifest.t option) =
       Buffer.add_string buf "</nav>\n";
       Buffer.contents buf
 
-(* Synthesised opening title slide. Every lecture gets one prepended
-   to the body so the slide mode never cold-opens; it carries the
-   course name, the lecture title, the Module/Lecture label, and the
-   instructor. The .title-slide class hides it in chapter mode (we
-   only want it on the slide spine; the chapter has its own H1 and
-   the header bar). *)
-let title_slide ~(fm : Frontmatter.t) =
-  let title =
-    if fm.title = "" then "(untitled lecture)"
-    else Parse.html_escape fm.title
-  in
-  let lecture_label =
-    match fm.week, fm.lecture_no with
-    | Some w, Some l -> Printf.sprintf "Module %d &middot; Lecture %d" w l
-    | _ -> ""
-  in
-  Printf.sprintf
-    {|<section class="slide title-slide" data-slide>
-  <div class="title-slide-inner">
-    <p class="title-slide-course">Functional Programming with OCaml</p>
-    <h2 class="title-slide-lecture">%s</h2>
-    %s
-    <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
-  </div>
-</section>
-|}
-    title
-    (if lecture_label = "" then ""
-     else Printf.sprintf "<p class=\"title-slide-label\">%s</p>" lecture_label)
-
 let render_body ~html_body ~(fm : Frontmatter.t) ~manifest =
   (* Look up the current lecture's running L number from the manifest
      so the header shows "Lecture 24" instead of "Lecture 1" for
@@ -1111,7 +1081,6 @@ let render_body ~html_body ~(fm : Frontmatter.t) ~manifest =
      a Reveal.js wrapper sibling becomes visible; the runtime script
      reparents the section[data-slide] elements into it on activation. *)
   Buffer.add_string buf "<article class=\"chapter\">\n";
-  Buffer.add_string buf (title_slide ~fm);
   Buffer.add_string buf html_body;
   Buffer.add_string buf "\n</article>\n";
   Buffer.add_string buf (render_prev_next ~manifest);
