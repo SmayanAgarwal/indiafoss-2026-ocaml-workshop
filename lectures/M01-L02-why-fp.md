@@ -79,11 +79,35 @@ A two-operand `subleq A, B` is shorthand for "subtract and fall
 through to the next instruction." We use that shorthand below; the
 semantics are unchanged.
 
+:::slide
+
+## Two-operand shorthand
+
+If the branch target is the next instruction, drop the third
+operand:
+
+```
+subleq A, B
+```
+
+is equivalent to
+
+```
+    subleq A, B, L1
+L1: ...
+```
+
+The common case (subtract and fall through, no branch taken)
+becomes a two-argument form. We use it below.
+
+:::
+
 Three `subleq` instructions, working with one scratch memory
 location `Z` that starts at zero, implement *addition*. The pattern
 is:
 
 ```
+; initially Z = 0
 subleq A, Z        ; Z := Z - A     (so Z = -A)
 subleq Z, B        ; B := B - Z = B + A
 subleq Z, Z        ; Z := 0 again
@@ -91,7 +115,25 @@ subleq Z, Z        ; Z := 0 again
 
 You can work out for yourself, with patience, that after these three
 instructions, the memory at location `B` contains `B + A` and the
-memory at `Z` is back to zero. With slightly more work you can write
+memory at `Z` is back to zero.
+
+:::slide
+
+## Addition in three instructions
+
+```
+; initially Z = 0
+subleq A, Z        ; Z := Z - A     (so Z = -A)
+subleq Z, B        ; B := B - Z = B + A
+subleq Z, Z        ; Z := 0 again
+```
+
+- Scratch cell `Z` starts at 0; ends at 0.
+- After three `subleq`s, memory at `B` holds `B + A`.
+- A few more instructions implement copy, move, conditional, and
+  multiplication.
+
+::: With slightly more work you can write
 the `subleq` equivalents of "copy a memory cell", "branch on a
 condition", "multiply by a constant", and so on. After enough such
 gadgets, you have all the building blocks of a Turing machine.
