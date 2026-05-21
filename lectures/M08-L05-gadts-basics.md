@@ -177,6 +177,15 @@ what type this is" because the compiler wants to know now.
 
 ## Pattern matching with type refinement
 
+A breath before the next bit. So far you have seen GADT syntax,
+the `_` placeholder, and what type-safe construction buys. The
+section below is the centerpiece of the lecture: how the
+compiler uses the constructor's result type to refine the type
+during pattern matching, and the `type a. ...` annotation that
+turns this on. Read the `eval` walkthrough that follows slowly;
+the four cases each illustrate a different facet of the
+refinement.
+
 The compiler's bookkeeping continues into
 [pattern matching](M05-L01-basic-patterns.html). When you `match`
 on a GADT value, each case knows which constructor fired, and

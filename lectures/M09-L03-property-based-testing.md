@@ -1359,33 +1359,13 @@ counterexample," which is what a debugger needs.
 If you take one thing from QCheck's API, take the shrinker. The
 generator does the search; the shrinker does the diagnosis.
 
-## Custom arbitraries
+## Bundling generator, printer, and shrinker
 
-Up to now we have built generators by composing the built-in
-combinators (`QCheck.map`, `QCheck.pair`, `QCheck.list`). For
-custom types you eventually want a `'a QCheck.arbitrary` of your
-own, with a generator, a printer, and (optionally) a shrinker
-bundled together.
-
-The constructor:
-
-```ocaml
-val QCheck.make :
-  ?print:('a -> string) ->
-  ?shrink:('a -> 'a QCheck.Iter.t) ->
-  'a QCheck.Gen.t ->
-  'a QCheck.arbitrary
-```
-
-Three things in one bundle:
-
-- A `Gen.t`: a function `Random.State.t -> 'a` that pulls one
-  pseudorandom value.
-- A `print`: turns a value into a string for failure messages.
-- A `shrink`: produces an `Iter.t` of one-step-smaller
-  candidates.
-
-A worked example: a `tree` ADT with two constructors.
+By now you have seen `QCheck.make` used in passing several
+times: it is how generator, printer, and shrinker get bundled
+into a single `'a QCheck.arbitrary` that a property can quantify
+over. The end-to-end shape, for a custom recursive type, looks
+like this:
 
 ```ocaml
 type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
@@ -1430,26 +1410,13 @@ let tree_arb : int tree QCheck.arbitrary =
     (tree_gen 4 QCheck.Gen.small_int)
 ```
 
-The three pieces:
+The generator uses `frequency` (1 leaf for every 3 nodes) and
+a depth bound to keep the tree finite. The printer and shrinker
+follow the patterns from the shrinking section above: recursive
+descent, structural simplifications first, element shrinks
+second.
 
-- `tree_gen depth elem_gen`: a generator parameterised by a
-  recursion depth and a generator for elements. `frequency`
-  weights the Leaf and Node cases (here, 1 leaf for every 3
-  nodes); the depth bound prevents infinite trees. The
-  `let*` is QCheck's monadic let-binding for `Gen.t`.
-
-- `tree_to_string`: a recursive pretty-printer. Without this,
-  failure messages say `<opaque>`, which is useless. *Always
-  write a printer* for your custom arbitraries; it is the
-  difference between a useful and a useless failure message.
-
-- `tree_shrink`: the recursive shrinker. The structure: at a
-  `Node`, try replacing the whole node with either child
-  (drops a level of the tree), then try shrinking the element,
-  then try shrinking each sub-tree. The result is a stream of
-  smaller candidates explored in this order.
-
-Once `tree_arb` exists, properties on it write themselves:
+Once `tree_arb` exists, properties on the type are one-liners:
 
 ```ocaml
 let rec size = function Leaf -> 0 | Node (l, _, r) -> 1 + size l + size r
@@ -1470,46 +1437,18 @@ let test_mirror_involutive =
     (fun t -> mirror (mirror t) = t)
 ```
 
-Two properties, one for each side of the law. The custom
-arbitrary makes both possible without rewriting any plumbing.
+The printer is the cheapest investment with the largest payoff:
+write one whenever a type appears in any property. Skipping the
+printer means failure messages say `<opaque>` and you lose the
+counter-example. The shrinker is worth writing once a type
+appears in more than one property, or once a property fails
+often enough that the minimal counterexample matters.
 
-:::slide
-
-## A custom arbitrary, end to end
-
-```ocaml
-let tree_arb : int tree QCheck.arbitrary =
-  QCheck.make
-    ~print:tree_to_string_int
-    ~shrink:(tree_shrink QCheck.Shrink.int)
-    (tree_gen 4 QCheck.Gen.small_int)
-```
-
-Three pieces:
-
-1. **Generator**: recursive, with frequency weights and a
-   depth bound to avoid infinite trees.
-2. **Printer**: pretty-prints values into failure messages.
-3. **Shrinker**: tries to replace a Node by a child, then
-   shrinks the element, then shrinks each sub-tree.
-
-With `tree_arb` in hand, properties on `tree` are one-liners.
-
-:::
-
-### When you need this vs. when you don't
-
-The minor-but-real cost of a full `arbitrary` is the printer and
-shrinker. Both can be omitted (the defaults are "print
-`<opaque>`" and "no shrinking"), but failure messages get
-substantially worse. The good rule: if the type appears in *any*
-property, write the printer; if the type appears in *more than
-one* property and the test suite is non-trivial, write the
-shrinker too.
-
-The built-in arbitraries (`QCheck.int`, `QCheck.list`, etc.)
-already bundle all three. You only need this machinery when you
-build for a *custom* type that QCheck does not know about.
+The same pattern will reappear in the next lecture's
+model-based-testing harness, where the custom arbitrary is over
+*sequences of commands* rather than over trees, and again in
+the [tutorial](M09-L05-tutorial.html) where it is over
+arithmetic expressions.
 
 ## When PBT does not help
 

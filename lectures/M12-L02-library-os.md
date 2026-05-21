@@ -74,14 +74,45 @@ the device drivers) all inside it. There is no separate layer
 underneath. The CPU executes everything in one address space, in one
 privilege mode.
 
-Picture: a single coloured box at the top, labelled "Process" (or, in
-the library-OS version, "Kernel"). Inside it, smaller boxes: the
-application, JAR files, the JVM, libc, libssl, libm. In the
-conventional picture, those small boxes sit on top of a *separate*
-kernel band, separated by a thin line; in the library-OS picture, the
-big box extends downward to also contain libsched, libnet, libfs, all
-directly above the hardware. The boundary that used to live inside
-the picture is gone.
+Picture the two side by side. The conventional kernel:
+
+```
++-------------------------------+
+| Process                       |
+|  [Jars] [Application]         |
+|     [Java VM]                 |
+|  [libc][libssl][libm]         |
++-------------------------------+
++-------------------------------+
+| Kernel                        |   <-- separate, privileged
++-------------------------------+
++-------------------------------+
+| Hardware                      |
++-------------------------------+
+```
+
+A hard line between process and kernel; every device touch goes
+through a syscall.
+
+The library OS:
+
+```
++-------------------------------+
+| Kernel (just a name)          |
+|  [Jars] [Application]         |
+|     [Java VM]                 |
+|  [libc][libssl][libm]         |
+|  [libsched][libnet][libfs]    |
++-------------------------------+
++-------------------------------+
+| Hardware                      |
++-------------------------------+
+```
+
+One box, one address space, one privilege mode. The "Kernel" label
+is now just the name for the union of the libraries the application
+chose to link. The thin line that used to live inside the picture is
+gone.
 
 :::slide
 

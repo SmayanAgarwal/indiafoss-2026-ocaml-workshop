@@ -566,18 +566,17 @@ type req = Get of string | Post of string * string
 
 - [ ] `let url_of = function Get url -> url`
 - [x] `let url_of = function | Get url -> url | Post (url, _) -> url`
-- [ ] `let url_of = function | Get url | Post (url, _) -> url`
 - [ ] `let url_of (Get url | Post (url, _)) = url`
 
-**Why:** the second answer (separate clauses) is correct. The
-third would also work *syntactically*, since both alternatives
-bind `url : string`, but it relies on or-pattern semantics that
-require the same binding name and type in every alternative;
-this is exactly the case where or-patterns are allowed across
-constructors. Some readers find the explicit clauses clearer;
-both forms are idiomatic. The first option is non-exhaustive.
-The fourth has a syntax issue (parameter pattern would need
-parenthesisation).
+**Why:** the second answer (separate clauses, one per
+constructor) is correct and the most explicit form. The first
+option is non-exhaustive: it handles `Get` but not `Post`, and
+the compiler would issue a warning. The third option has a
+syntax problem: an or-pattern used as the entire parameter of a
+function definition needs to be parenthesised differently and
+requires every alternative to bind the same name at the same
+type, which makes the destructuring fragile across constructor
+shapes. Reach for the explicit clauses by default.
 :::
 
 A code task:

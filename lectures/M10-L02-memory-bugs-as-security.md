@@ -328,20 +328,29 @@ there, the call instruction jumps to that address. The control
 flow of the program is now wherever the attacker pointed it.
 
 ```text
-+--------------------+
-| original widget    |
-| draw  -> 0x401000  |   (legitimate code)
-| state -> 0x600100  |
-+--------------------+
+            offset
+  w  ---->  +--------------------+
+            | (widget header)    |    0
+            +--------------------+
+            | draw  -> 0x401000  |    8     (legitimate code)
+            +--------------------+
+            | state -> 0x600100  |   16
+            +--------------------+
 
-  free(w)
-  heap spray: attacker controls these bytes
+   free(w);                            block now on the allocator's free list
 
-+--------------------+
-| attacker bytes     |
-| draw  -> 0x7fff... |   (attacker-chosen address!)
-| state -> ...       |
-+--------------------+
+   heap-spray: attacker forces many small allocations whose bytes they control
+
+            offset
+  w  ---->  +--------------------+
+            | attacker bytes     |    0     w still points here
+            +--------------------+
+            | draw  -> 0x7fff... |    8     attacker-chosen address
+            +--------------------+
+            | ...                |   16
+            +--------------------+
+
+   w->draw(w);  ==  load *(w + 8); call it.   Call lands at 0x7fff...
 ```
 
 This is sometimes called *type confusion*: the program reads
@@ -381,6 +390,37 @@ A ROP chain can be Turing-complete: any computation the attacker
 wants can be expressed as a sequence of gadgets. Common chains
 end by calling `system("/bin/sh")` or by mapping a fresh page as
 executable and copying the attacker's actual shellcode into it.
+
+The arithmetic is purely stack-relative. Imagine the function
+under attack has just returned to a frame the attacker overwrote
+during the buffer overflow earlier. The stack looks like this
+just before the first `ret` fires (addresses grow downward):
+
+```text
+                                offset from %rsp at the
+                                moment ret runs
+  +-------------------------+
+  | overwritten return addr | %rsp + 0    <-- ret pops this,
+  |  -> addr of gadget 1    |                 jumps to gadget 1
+  +-------------------------+
+  | addr of gadget 2        | %rsp + 8    <-- gadget 1 ends in ret,
+  +-------------------------+                 pops this, jumps here
+  | addr of gadget 3        | %rsp + 16
+  +-------------------------+
+  | addr of gadget 4        | %rsp + 24
+  +-------------------------+
+  | ...                     |
+  +-------------------------+
+  | addr of system / "/bin/ | (last gadget; the chain's payoff)
+  | sh" arg setup           |
+  +-------------------------+
+```
+
+Each `ret` decrements the work to be done by one cell. The
+attacker's job is to lay out those cells, in order, in
+attacker-controlled memory that ends up at `%rsp` when control
+returns. The buffer-overflow step writes them; the gadget
+addresses turn them into computation.
 
 :::slide
 

@@ -249,7 +249,8 @@ modes extends the toolkit to handle the second-and-a-half category
 3. **Aliasing and concurrency.** Strict aliasing, data races.
 4. **Lifetime.** Use-after-free, dangling pointers to stack.
 
-**This lecture and the next: deep dive on (1) and (4).**
+**(1) and (4) host the four named memory bugs we survey next:
+use-after-free, buffer overflow, uninitialised read, double-free.**
 
 :::
 

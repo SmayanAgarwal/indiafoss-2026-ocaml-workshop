@@ -17,94 +17,77 @@ Conventions:
 These are the items I left alone because the trade-off is real
 and I want your read before changing structure or voice.
 
-- [ ] **M04-L05** type-abbrev half stapled on. The lecture is
-  titled "`option`, `result`, and type abbreviations"; the
-  abbreviation half currently sits after the option/result
-  treatment and reads like an appendix. Options for the
-  reorganisation: (a) split into two lectures; (b) lead with
-  abbreviations as the lightweight intro, then the heavier
-  `option`/`result`; (c) leave as-is and accept the stapled feel.
-- [ ] **M04-L05** option intro density. The first introduction
-  of `option` packs definition + `None`/`Some` semantics + idioms
-  + comparison to `null` into a single block. Possible
-  decomposition: a tight intro section (just the type and a
-  one-line example), then a separate "idioms" section. Trade-off
-  is lecture length.
-- [ ] **M05-L05** q2 has a genuinely ambiguous answer. The MCQ
-  asks how to extract `url` from a variant; option 2 (separate
-  clauses) is marked correct, and the explanation acknowledges
-  option 3 (or-pattern across constructors) also compiles. Best
-  options: (a) reword to "which is the most idiomatic" rather
-  than "which correctly extracts"; (b) drop option 3 entirely;
-  (c) make it a multi-select.
-- [ ] **M08-L04** state-monad rewrite count. The lecture has four
-  successive sections that all rewrite gensym (the bare worked
-  example, the "vs. ref" framing, the "hides the plumbing"
-  rewrite, the "labelled" rewrite). Worth keeping all four for
-  the contrast they expose, or trimming to two (canonical + one
-  refinement)?
-- [ ] **M08-L05** type-annotation pacing. The GADT-basics
-  lecture introduces GADT syntax, type-safe construction, pattern
-  matching with type refinement, and phantom types in quick
-  succession. Add one more worked example, or accept the pace
-  given that L06 elaborates with use cases?
-- [ ] **M09-L03** "Custom arbitraries" section (lines 1356-
-  1505) reads as bolted on after the shrinker section. The
-  worked `tree` example duplicates L05's `expr` generator
-  structurally. Options: (a) trim by half (cut the printer/
-  shrinker repetition); (b) move it to L04 as a prelude to the
-  command generators; (c) merge with the shrinker section since
-  custom arbitraries *are* generator + printer + shrinker
-  bundled.
-- [ ] **M09-L03** input-space and invariant-generation stretch
-  (lines 678-1154, ~470 lines) is the heaviest part of the
-  35-min lecture. Candidates for trimming: recipe A2 (prefix-sum
-  sorted lists, duplicate of A1) or recipe B2 (balanced-BST
-  midpoint splitting, duplicate of B1's operation-based
-  generator). Cutting one each would save ~100-150 lines.
-- [ ] **M09-L04** `Ht` implementation (lines 178-263): 70+
-  lines of mutable state, linear probing, tombstones, and
-  resize before the testing harness begins. For a 25-min lecture
-  about *testing*, this is a lot of unrelated code to digest
-  first. Options: (a) compress to a sketch with the full version
-  in an appendix; (b) link to an external file; (c) keep as-is
-  because students need to see the SUT to understand the test.
-- [ ] **M10-L01** UB categories slide overlap. The four UB
-  categories on the slide (memory, integer, aliasing, lifetime)
-  partially overlap with the four bug classes enumerated later
-  (use-after-free, buffer overflow, uninitialised read,
-  double-free). Either merge them into one taxonomy, or sharpen
-  the distinction between "categories of UB" and "specific bugs
-  that fall in each category."
-- [ ] **M10-L02** ROP/heap-spray diagram offset annotation. The
-  diagram could use an explicit annotation showing the offset
-  arithmetic (saved-rip offset, gadget chain layout), not just
-  the high-level shape. Adding this means redrawing the diagram.
-- [ ] **M11-L04** Girard footnote placement. The Girard / Linear
-  Logic origin footnote currently sits at the end of the
-  lecture (lines 444-477). Move it as a margin aside near the
-  first mention of "linearity" so the historical hook lands
-  when the word appears? The in-memory mock note is already
-  present at lines 108-141; no action needed there.
-- [ ] **M12-L01** iceberg metaphor used at lines 169, 254-288,
-  378, 477. Multiple reinforcements vs. one canonical use; pick
-  whether the metaphor earns four mentions or works better as
-  one set-piece.
-- [ ] **M12-L02** ASCII layer diagrams: the lecture currently
-  describes layers in prose ("kernel below it, kernel code runs
-  with full hardware privilege" etc.). An ASCII layer diagram
-  for "user code -> library OS -> hypervisor -> hardware" would
-  help. Holding off because ASCII art needs careful layout in
-  both chapter and slide modes; want your read on whether to
-  use ASCII or commission an SVG.
-- [ ] **M12-L03** EPT/RVI jargon at lines 74 and 270. Two
-  mentions in the same lecture, both correct, but the reader
-  meets EPT (Intel) and RVI (AMD) without a one-line gloss on
-  what "second-level page tables" actually do. Worth one
-  paragraph, or skip because most students will not need it?
-- [ ] **M12-L04** industrial-users list at lines 224-261 runs
-  long. Worth trimming, or keep as written because the variety
-  is the point?
+- [~] **M04-L05** type-abbrev half stapled on: leave-as-is per
+  KC. All three pieces are part of M04's data-type vocabulary
+  and the explicit cross-topic lecture is fine at the end of
+  the module.
+- [~] **M04-L05** option intro density: rejected. Intro (37-82)
+  is paced reasonably; idioms section starts at line 159. The
+  "Why not null" motivation in between is contrast, not
+  idiom-as-intro. Agent's flag does not stand.
+- [x] **M05-L05** q2: applied. Dropped the or-pattern-across-
+  constructors option entirely and rewrote the rationale; the
+  remaining three options are unambiguous. (Multi-select MCQ
+  support deferred; the toolchain currently hardcodes single-
+  select radios.)
+- [~] **M08-L04** state-monad rewrite count: rejected per KC.
+  On a re-pass there are three versions (bare gensym; ref
+  comparison; clean gensym), not four, and each earns its place.
+- [x] **M08-L05** type-annotation pacing: applied. Added a
+  "take a breath" paragraph at the top of the "Pattern matching
+  with type refinement" section, naming it as the centerpiece
+  and signalling the eval walkthrough below.
+- [x] **M09-L03** "Custom arbitraries" section: applied. Trimmed
+  ~50 lines: dropped the formal QCheck.make signature intro
+  (reader has already seen it used four times), dropped the
+  slide that re-itemised generator/printer/shrinker, kept the
+  tree_arb worked example as a single integrated walkthrough
+  with a forward-reference to L04/L05 where the pattern recurs.
+  Section renamed from "Custom arbitraries" to "Bundling
+  generator, printer, and shrinker" to reflect the trim.
+- [~] **M09-L03** input-space stretch: leave-as-is per KC. On
+  a re-pass each recipe earns its place: A2 illustrates building
+  by accumulation; B2 illustrates structural construction with
+  a different distribution from B1 (B1 = induced-by-insertion
+  order, B2 = balanced/uniform). A 35-min lecture has room for
+  thorough coverage of the hardest topic.
+- [~] **M09-L04** Ht implementation length: leave-as-is per KC.
+  The 70-line SUT is the right scale (simple enough to read,
+  complex enough to have plausible bugs in resize/tombstone
+  timing). The lecture explicitly tells readers to skim. The
+  testing point lands harder with the full SUT in view.
+- [x] **M10-L01** UB categories slide overlap: applied.
+  Strengthened the slide's closing line to name the four memory
+  bugs that live inside categories (1) and (4) explicitly, so
+  a slide-only reader sees the connection without having to
+  pivot to the chapter prose.
+- [x] **M10-L02** ROP/heap-spray diagrams: applied. Annotated
+  the existing type-confusion ASCII diagram with explicit
+  offset-0/8/16 labels so the slide's "load *(w+8); call it"
+  arithmetic aligns visually. Added a new ASCII stack-layout
+  diagram in the ROP step showing the gadget chain at offsets
+  %rsp + 0/8/16/24, making concrete why "each `ret` pops the
+  next gadget" actually works.
+- [~] **M11-L04** Girard footnote placement: leave-as-is per
+  KC. The intro forward-pointer at line 47 already names Girard
+  and the end-section pays off the pointer; the existing
+  structure works.
+- [~] **M12-L01** iceberg metaphor: leave-as-is per KC. The
+  four uses form a foreshadow / develop / visualise / conclude
+  arc; each mention earns its place.
+- [x] **M12-L02** ASCII layer diagrams: applied. Duplicated the
+  conventional-kernel and library-OS ASCII boxes from the slides
+  into the chapter prose at the "Picture: a single coloured
+  box..." paragraph, so chapter readers see the diagram inline
+  without toggling to slide mode. (The slide versions stay.)
+- [~] **M12-L03** EPT/RVI jargon: rejected per KC. Both
+  acronyms are defined inline at first mention (line 74); NPT
+  and "second-level page tables" are not used in the lecture.
+  Standard define-at-first-use discipline; no defect.
+- [~] **M12-L04** industrial-users list: leave-as-is per KC.
+  Ten entries across diverse industries (finance, compilers,
+  security, blockchain, SEO, dev tools) is the answer to "is
+  this a research toy?"; cutting weakens the breadth argument.
 
 ## Resolved
 
