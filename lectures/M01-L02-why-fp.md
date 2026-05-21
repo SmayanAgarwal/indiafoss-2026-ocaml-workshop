@@ -267,12 +267,17 @@ does. That is fine for a CPU; it is murder for a human reader.
 
 ## Alan Perlis (1922-1990)
 
+![Alan Perlis](/assets/images/alan-perlis.jpg)
+
 > "A language that doesn't affect the way you think about
 > programming is not worth knowing."
 >
 > Alan Perlis, *Epigrams on Programming* (1982).
 
-The first ACM Turing Award winner. The quote is why we are
+A pioneer in compiler construction and programming-language
+design; the **first ACM Turing Award winner** (1966), cited
+"for his influence in the area of advanced programming
+techniques and compiler construction." The quote is why we are
 spending twelve weeks on OCaml even if you never ship a line of
 it.
 
@@ -908,5 +913,12 @@ This lecture's prose, worked examples, and quizzes are original to
 this course. Materials referenced during preparation are listed in
 the *Reading* section above; Cornell CS3110 and Real World OCaml
 are CC BY-NC-ND-licensed and have not been derivatively reused.
+The Alan Perlis portrait
+([upload.wikimedia.org/wikipedia/en/5/59/Alan_Perlis.jpg](https://upload.wikimedia.org/wikipedia/en/5/59/Alan_Perlis.jpg);
+description page on
+[Wikipedia](https://en.wikipedia.org/wiki/File:Alan_Perlis.jpg))
+is used under fair use; this is a non-commercial educational
+use of a low-resolution biographical photo of a deceased person
+where no free-licence alternative is available.
 See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.
