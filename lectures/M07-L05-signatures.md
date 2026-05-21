@@ -179,17 +179,12 @@ mechanism in every programming language exists.
 
 ## Why hide internals?
 
-Two reasons:
-
-- **Invariants**. If you let external code touch the ref directly,
-  they might do `Counter.n := -100`. The signature prevents this:
-  the only way to interact with the counter is through `next` and
-  `reset`, which maintain whatever invariants you decided on
-  (monotonic increase, non-negative, ...).
-- **Change**. If you decide later to store `n` as a different
-  type (a Zarith integer, an atomic counter, a database row), no
-  external code breaks: they only see the `next` and `reset`
-  functions, which still have the same types.
+- **Invariants.** External code cannot do `Counter.n := -100`.
+- Only `next` and `reset` reach the state; they enforce the rules
+  (monotonic, non-negative, ...).
+- **Change.** Swap the ref for a Zarith integer, an atomic
+  counter, or a database row.
+- Callers see the same `next` and `reset`; nothing breaks.
 
 :::
 

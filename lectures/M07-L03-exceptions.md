@@ -84,20 +84,15 @@ lists them under "Predefined exceptions."
 let _ = try List.hd [] with Failure _ -> 0
 ```
 
-`int = 0`.
+`int = 0`. `List.hd` raises `Failure "hd"`; `try ... with` catches.
 
-- `List.hd` raises `Failure "hd"` on an empty list.
-- The `try ... with` catches.
+Common standard-library exceptions:
 
-A handful of exceptions are defined in the standard library:
-
-- `Failure of string` raised by `failwith "..."`.
-- `Invalid_argument of string` raised by `invalid_arg "..."`.
-- `Not_found` raised by lookup functions when the key is absent.
-- `Division_by_zero` raised by `/` and `mod` on `0`.
-- `End_of_file` raised when reading past the end.
-- Plus a few others; you'll see them as the failures of various
-  standard library functions.
+- `Failure of string`: from `failwith "..."`.
+- `Invalid_argument of string`: from `invalid_arg "..."`.
+- `Not_found`: lookups when the key is absent.
+- `Division_by_zero`: `/` and `mod` on `0`.
+- `End_of_file`: reading past the end.
 
 :::
 
@@ -366,17 +361,12 @@ val find_x_opt : string -> int option         (* None on failure *)
 val find_x_result : string -> (int, string) result   (* Error msg *)
 ```
 
-Trade-offs:
-
-- **Raise**: cheapest at the call site (no wrapping), but the
-  failure isn't in the type. Callers may forget to handle.
-- **Option**: failure is in the type; caller must match on
-  `None`. No reason for the failure.
-- **Result**: failure has a payload (an error message, an error
-  code).
-- **Stdlib convention**: each function comes in *both* shapes
-  (`List.find` raises `Not_found`; `List.find_opt` returns `None`).
-- **Default**: reach for the `_opt` form.
+- **Raise**: cheap at call site; failure not in the type.
+- **Option**: failure in the type; no reason carried.
+- **Result**: failure in the type, with a payload.
+- **Stdlib**: each function in *both* shapes (`List.find` raises,
+  `List.find_opt` returns).
+- **Default**: prefer `_opt`.
 
 :::
 
@@ -442,16 +432,20 @@ wrong call.
 
 ## When *not* to use exceptions
 
-- For control flow you'd handle anyway (`option` is cleaner).
-- For "this won't happen" assertions (use `assert false` or, better,
-  redesign to make it unrepresentable).
-- For deeply nested computations where reasoning about *when* the
-  exception escapes is hard.
-- **Good fit**: genuinely rare failures (parse failed, file not
-  found) where calling code shouldn't be polluted by error
-  handling at every step.
-- **Bad fit**: predictable "missing value" cases, where `option`
-  is clearer.
+**Avoid for:**
+
+- Control flow you'd handle anyway: prefer `option`.
+- "This won't happen" assertions: use `assert false`, or redesign.
+- Deep nesting where the escape path is hard to follow.
+
+**Good fit:**
+
+- Rare failures (parse failed, file not found) where error
+  handling would pollute every step.
+
+**Bad fit:**
+
+- Predictable "missing value" cases: `option` is clearer.
 
 :::
 

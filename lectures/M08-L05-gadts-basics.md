@@ -265,17 +265,14 @@ branches; with GADTs it can change.
 
 ## Why is this useful?
 
-Three reasons:
-
-- **Make illegal states unrepresentable.** Programs that would
-  crash an interpreter become type errors.
-- **Compose typed DSLs.** A small embedded language gets its
-  type-checking for free from the host.
-- **Carry compile-time metadata.** Phantom types encode "list
-  known non-empty" or "value known positive".
-
-Cost: the type-level reasoning is more involved; some patterns
-need help (locally abstract types, explicit constraints).
+- **Make illegal states unrepresentable.** Crashes become type
+  errors.
+- **Compose typed DSLs.** Embedded languages inherit host typing.
+- **Carry compile-time metadata.** "List known non-empty",
+  "value known positive".
+- **Cost:** type-level reasoning is heavier.
+- Some patterns need locally abstract types or explicit
+  constraints.
 
 :::
 
@@ -372,9 +369,8 @@ Avoid them when:
 - A regular variant plus `option`/`result` is enough.
 - The complexity exceeds the safety gain.
 
-GADTs are powerful but advanced. Most OCaml code does not use them;
-the code that does (interpreters, query builders, library cores)
-uses them heavily.
+Rare in everyday code; heavy use in interpreters, query builders,
+library cores.
 
 :::
 
@@ -523,9 +519,8 @@ Lecture 6: **GADT use cases**.
 - Heterogeneous lists and type witnesses.
 - The format-string trick behind `Printf`.
 - Less-trivial examples.
-
-Then Lecture 7, the Module 8 tutorial: combining GADTs with the
-monad pattern in a small typed evaluator.
+- Then Lecture 7: combining GADTs with monads in a typed
+  evaluator.
 
 :::
 

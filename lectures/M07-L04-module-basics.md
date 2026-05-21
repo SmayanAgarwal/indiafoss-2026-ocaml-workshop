@@ -435,13 +435,10 @@ returns a module is called a *functor*, and we cover it in
 
 ## Modules are values, sort of
 
-- OCaml modules are **not first-class values by default**: you
-  can't pass them around like ints.
-- Extensions (*first-class modules*) exist, but for the basic
-  Module 7 toolkit, modules exist at *compile time* and are used
-  statically.
-- The "function-like" thing that takes a module and returns a
-  module is called a **functor** (see Lecture 6).
+- Not first-class by default; cannot pass them like ints.
+- *First-class modules* are an extension; ignored this week.
+- Modules live at **compile time**, used statically.
+- A function from modules to modules is a **functor** (Lecture 6).
 
 :::
 

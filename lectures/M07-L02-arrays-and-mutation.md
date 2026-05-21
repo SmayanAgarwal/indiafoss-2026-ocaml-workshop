@@ -593,15 +593,12 @@ let _ = a
 
 `[|5; 4; 3; 2; 1|]`.
 
-- The function returns `unit`; its effect is to mutate `a`.
-- **Classic two-pointer reverse**: swap element at index `i` with
-  the one at `n - 1 - i`, for `i` from `0` to halfway through.
-- `for ... to ... do ... done` is OCaml's standard imperative
-  loop; it's pretty much only used in arrays-and-mutation code.
-- This is *destructive*: the original list of values is lost.
-- For an immutable reverse, prefer
-  `Array.of_list (List.rev (Array.to_list a))` or just keep it as
-  a list.
+- Returns `unit`; effect is to mutate `a`.
+- **Two-pointer reverse:** swap `a.(i)` and `a.(n-1-i)`, halfway.
+- `for ... to ... do ... done`: OCaml's imperative loop.
+- Destructive: original values are lost.
+- Immutable alternative: `Array.of_list (List.rev (Array.to_list
+  a))`, or keep it as a list.
 
 :::
 

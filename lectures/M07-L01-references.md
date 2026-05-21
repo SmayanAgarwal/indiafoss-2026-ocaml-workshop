@@ -184,15 +184,12 @@ defensible.
 
 ## When `ref` is the right tool
 
-- **Counters, accumulators in imperative-flavoured loops.** When
-  the natural way to express a computation is "step through, update
-  this variable", `ref` is fine.
-- **Caches**. A memoization table that grows across calls.
-- **Recursive references** (rarely needed but possible).
-- **Interop with code that expects mutation** (callbacks, GUI
-  state).
-- Most everyday OCaml code uses no `ref`s at all; reach for them
-  only when the alternative is awkward.
+- **Imperative-flavoured loops:** counters, accumulators.
+- **Caches:** memoization tables across calls.
+- **Recursive references:** rare but possible.
+- **Mutation interop:** callbacks, GUI state.
+- Most everyday OCaml uses no `ref`s; reach only when the
+  alternative is awkward.
 
 :::
 

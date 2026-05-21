@@ -60,18 +60,11 @@ from somewhere.
 
 ## Why we need them
 
-- In Module 6 we wrote `List.map` once and used it on any element
-  type.
-- That's **parametric polymorphism**: the function doesn't depend
-  on what `'a` is.
-- More complex data structures can't get away with that: a binary
-  search tree of `'a` needs to *compare* values of `'a`; a hash
-  table needs to *hash* and compare them.
-- Parametric polymorphism doesn't give you a compare or hash
-  function.
-- **Enter functors**: a functor takes a module providing the
-  required operations and produces a data structure specialised to
-  that module's type.
+- `List.map` is **parametric polymorphism**: works for any `'a`.
+- Sets/maps/hashtables need more: `compare`, `hash`, equality.
+- Parametric polymorphism alone cannot supply those.
+- **Functors** take a module providing the missing operations.
+- Output: a data structure specialised to that module's type.
 
 :::
 
@@ -413,15 +406,11 @@ mechanism.
 
 ## Functors are how `Set` and `Map` stay generic
 
-- There's **no `Set` type** in OCaml's stdlib that "just works for
-  any type".
-- There's `Set.Make`, which lets you *construct* a set type for
-  any *ordered* type.
-- The orderedness is the **constraint**; you provide it as a
-  module.
-- **Compare with Java**: `TreeSet<E>` requires `E` to implement
-  `Comparable<E>`. Same idea, expressed as a Java *interface*
-  rather than an OCaml *module type*.
+- No plain `'a Set.t` in the stdlib.
+- `Set.Make` *constructs* a set type for any ordered type.
+- The orderedness is the **constraint**, supplied as a module.
+- **Java parallel**: `TreeSet<E>` requires `Comparable<E>`.
+- Same idea; an interface instead of a module type.
 
 :::
 

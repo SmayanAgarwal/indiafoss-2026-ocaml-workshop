@@ -260,19 +260,21 @@ For everyday OCaml code, GADTs are usually the wrong hammer.
 
 ## When GADTs do not help
 
-For:
+Prefer plain types for:
 
-- Modelling business data: just use records and variants.
-- Configuring options: a record is fine.
-- Most parsing tasks: regular ADTs plus an interpreter are enough.
-- Code that is well-served by simple types.
+- Business data: records and variants.
+- Configuration: a record.
+- Most parsing: regular ADT plus interpreter.
+- Anything well-served by simple types.
 
-GADTs are tools for code that *needs* the type system to do real
-work. Where existing variants/records suffice, prefer them. The
-GADT toolchain has more sharp edges (locally abstract types,
-explicit annotations, sometimes-hostile error messages). Worth
-pulling out when you genuinely have heterogeneous typed data to
-flow through a single function.
+**Sharp edges of GADTs:**
+
+- Locally abstract types.
+- Explicit annotations.
+- Sometimes-hostile error messages.
+
+Reach for GADTs only when heterogeneous typed data must flow
+through one function.
 
 :::
 

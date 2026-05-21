@@ -443,25 +443,19 @@ for arbitrary `'a`?
 
 ## Activity discussion
 
-- A `Less : 'a expr * 'a expr -> bool expr` would *type-check at
-  construction*: you could build it without error.
-- But the evaluator would fail.
-- In `Less (a, b) -> eval a < eval b`, OCaml's polymorphic compare
-  `<` works for any *concrete* type.
-- Inside the GADT branch, `a` and `b` have *abstract* type `'a`.
-- The compiler does not know enough about `'a` to compile the
-  comparison.
+- Polymorphic `Less : 'a expr * 'a expr -> bool expr` builds fine.
+- The evaluator fails: `<` needs a concrete type.
+- Inside the GADT branch, `a` and `b` have abstract type `'a`.
+- The compiler cannot compile the comparison.
 
 Two fixes:
 
-- **Constraint via witness**: pass a comparator alongside, like a
-  GADT for ordered types.
-- **Specialise**: keep separate constructors for each numeric type
-  (`Less : int expr * ...`, `Less_float : float expr * ...`).
+- **Witness:** pass a comparator alongside (GADT for ordered
+  types).
+- **Specialise:** one constructor per numeric type (`Less`,
+  `Less_float`).
 
-The first is more elegant; the second is what we already have.
-A GADT lets you encode constraints precisely. You must encode the
-constraints you actually need.
+A GADT encodes the constraints you actually need. Pick precisely.
 
 :::
 
@@ -571,10 +565,8 @@ After Module 8 you can:
 - Define and use simple GADTs to encode type-level information.
 - Combine GADTs with monads in a small typed interpreter.
 
-- You have finished the **functional programming** half of the
-  course (Modules 1-8).
-- The toolkit you built here is the foundation for the
-  secure-systems half of the course (to be added).
+End of the **functional programming** half (Modules 1-8); the
+secure-systems half builds on this foundation.
 
 :::
 
