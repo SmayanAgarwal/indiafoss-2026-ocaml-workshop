@@ -160,6 +160,26 @@ LOOP: subleq N, Z              ; Z := -N
 DONE:
 ```
 
+:::slide
+
+## Sum 1 + 2 + ... + N in `subleq`
+
+```
+LOOP: subleq N, Z         ; Z := -N
+      subleq Z, S         ; S := S + N
+      subleq Z, Z         ; Z := 0
+      subleq ONE, N, DONE ; N := N - 1; if N <= 0, jump to DONE
+      subleq Z, Z, LOOP   ; unconditional jump back to LOOP
+DONE:
+```
+
+- Six instructions; three idioms.
+- Addition gadget (three lines), decrement-and-branch,
+  unconditional jump (`subleq Z, Z, L`).
+- A `for` loop, but the code never says "loop".
+
+:::
+
 Six instructions. Three idioms are doing the work, and every one
 of them is the `subleq` equivalent of something a higher-level
 language gives you in a single keyword:
@@ -216,9 +236,13 @@ is not primarily a way of telling a CPU what to do. A programming
 language is a way of *thinking about a problem*. When you write a
 program, you are doing two things at once: communicating an
 algorithm to a machine, and communicating that algorithm to a human
-reader (often your future self). The first is a solved problem;
-once you have a Turing-complete language, you can compute anything.
-The second is the hard part.
+reader (often your future self, or, in 2026, an LLM-based coding
+agent helping you maintain the program). The first is a solved
+problem; once you have a Turing-complete language, you can compute
+anything. The second is the hard part. Coding agents, incidentally,
+are also much better at higher-level languages than at `subleq`;
+the same readability that helps a human reader helps the agent
+predict what comes next.
 
 `subleq` fails badly at the second task. A `subleq` program that
 implements anything non-trivial looks like a long sequence of memory
@@ -236,6 +260,21 @@ does. That is fine for a CPU; it is murder for a human reader.
 - Languages exist to let you **say what you mean.**
 - A programming language is for **thinking**, not just running.
 - Richer abstractions: thinking closer to the running code.
+
+:::
+
+:::slide
+
+## Alan Perlis (1922-1990)
+
+> "A language that doesn't affect the way you think about
+> programming is not worth knowing."
+>
+> Alan Perlis, *Epigrams on Programming* (1982).
+
+The first ACM Turing Award winner. The quote is why we are
+spending twelve weeks on OCaml even if you never ship a line of
+it.
 
 :::
 
@@ -350,7 +389,7 @@ let double x = x + x
 
 - `double 21` is `42`. Always. Anywhere.
 - Replace any call with its result; meaning unchanged.
-<!-- KC: at this point in the slide, we should mention "referential transparency" -->
+- This property has a name: **referential transparency**.
 
 :::
 
@@ -517,10 +556,13 @@ This sharing is the practical reason immutability does not cost an
 arm and a leg. The runtime does not copy `xs` when it builds `ys`;
 it just points to the existing list. Both `xs` and `ys` live in
 memory at the same time, sharing the `[1; 2; 3]` portion. This is
-called *persistent* or *purely functional* data structures, and an
-entire subfield of computer science is devoted to designing them so
-that operations like "add an element" or "remove an element" are
-cheap.
+called a [*persistent* or *purely functional* data
+structure](https://en.wikipedia.org/wiki/Persistent_data_structure),
+and an entire subfield of computer science is devoted to designing
+them so that operations like "add an element" or "remove an
+element" are cheap. The canonical reference is Chris Okasaki's
+*Purely Functional Data Structures* (Cambridge University Press,
+1998), linked in the reading list.
 
 Immutability is what makes equational reasoning extend from individual
 function calls to data structures. If `xs` cannot be modified
@@ -542,32 +584,30 @@ admission that the language defaults are wrong.
 Let's make this concrete with a quiz before moving on.
 
 :::quiz mcq id=cons-immutability
-Predict the answer before pressing Run on the cell above (the
-cell starts with its output cleared so the answer is not visible
-on the page). Look at this OCaml code:
+Look at this OCaml code:
 
 ```ocaml
-let xs = [1; 2; 3]
-let ys = 0 :: xs
+let xs = [10; 20; 30]
+let ys = xs @ [40]
 ```
 
 What is the value of `xs` after the second line?
 
-- [ ] `[0; 1; 2; 3]`
-- [x] `[1; 2; 3]`
+- [ ] `[10; 20; 30; 40]`
+- [x] `[10; 20; 30]`
 - [ ] An empty list
 - [ ] A runtime error: cannot modify a list
 
-**Why:** `::` (cons) does not modify `xs`. It builds a *new* list
-whose head is `0` and whose tail is `xs`. So `ys` is `[0; 1; 2; 3]`
-and `xs` is still `[1; 2; 3]`. This is the central immutability
-property of OCaml's data structures: the language gives you no way
-to mutate `xs` in place. (In imperative pseudocode, the analogue is
-`ys = [0] + xs` in Python or `ys = new ArrayList<>(...); ys.add(0);
-ys.addAll(xs);` in Java. The Python expression also leaves `xs`
-unchanged; the Java version creates a new list explicitly. In both
-cases, the imperative language *also* gives you ways to mutate
-`xs` in place, which OCaml does not.)
+**Why:** `@` (list append) does not modify `xs`. It builds a *new*
+list by walking down `xs` and pasting `[40]` onto the end. So `ys`
+is `[10; 20; 30; 40]` and `xs` is still `[10; 20; 30]`. This is
+the central immutability property of OCaml's data structures: the
+language gives you no way to mutate `xs` in place. In imperative
+pseudocode the analogue is `ys = xs + [40]` in Python (which also
+leaves `xs` unchanged) or `ys = new ArrayList<>(xs); ys.add(40);`
+in Java (which creates a new list explicitly). The imperative
+languages additionally give you ways to mutate `xs` in place,
+which OCaml does not.
 :::
 
 ## Where functional programming shines
@@ -595,8 +635,8 @@ can run them on different cores, in different threads, on different
 machines, and the program's meaning is preserved. Concurrent
 programs in functional languages typically do not need locks,
 mutexes, or atomics, because there is no shared mutable state to
-protect. We will see this in the secure-systems half of the course
-(Module 12).
+protect. This course does not cover concurrency directly; the
+follow-on CS6868 OxCaml course at IIT Madras takes it up.
 
 **Refactoring at scale.** The [Jane Street](https://www.janestreet.com)
 codebase is millions of lines of OCaml, written over twenty years
@@ -644,10 +684,16 @@ problems are inherently mutation-heavy. In-place sorting, hash
 tables, union-find with path compression, cache-aware matrix
 multiplication: these have purely-functional counterparts, but the
 mutating version is sometimes substantially faster because it does
-not allocate. OCaml lets you use mutation when you need it; you
-just have to opt in (with the [`ref` type](M07-L01-references.html),
-or with [mutable record fields](M07-L02-arrays-and-mutation.html),
-which we will see in Module 7).
+not allocate. The reason runs deeper than algorithm choice. Modern
+CPUs are *designed* around mutation: registers get overwritten,
+cache lines are read-modify-write, write buffers retire stores in
+order. Purely functional data structures, which never overwrite a
+cell, work *with* the cache when they can share, but pay an
+allocator round-trip whenever they cannot. OCaml lets you use
+mutation when you need it; you just have to opt in (with the
+[`ref` type](M07-L01-references.html), or with
+[mutable record fields](M07-L02-arrays-and-mutation.html), which
+we will see in Module 7).
 
 **Imperative APIs.** The world is full of stateful interfaces.
 Files have to be opened and closed. Databases have transactions.
@@ -710,17 +756,19 @@ hands-on memory management, which is appropriate when you need it
 and overkill when you do not.
 
 The second half of this course tackles secure systems software:
-the OCaml runtime, the garbage collector, memory safety, the C
-FFI, unikernel operating systems, concurrency, capability-based
-security. Of all the functional languages, OCaml is the one where
-this material is *natural*. It is the language
-[MirageOS](https://mirage.io) (a unikernel OS) is written in.
-It is the language the [Tezos blockchain](https://tezos.com)
-runtime is written in. It is the language that the user of this
-course (me) and a substantial part of the OCaml team at
-[Tarides](https://tarides.com) use to do this kind of work
-day-to-day. We get to teach both halves of the course in the same
-language.
+memory safety, the OCaml runtime, OxCaml modes for locality /
+uniqueness / linearity, and unikernel operating systems. Of all
+the functional languages, OCaml is the one where this material is
+*natural*. The [Jane Street](https://www.janestreet.com) codebase,
+millions of lines deployed on Wall Street trading systems, is
+written in OCaml; so is much of the
+[Tarides](https://tarides.com) work on
+[MirageOS](https://mirage.io) (the unikernel operating system we
+look at in Module 12) and on the OCaml runtime itself. The
+[Tezos blockchain](https://tezos.com) was originally an
+OCaml-only project; today it is a mix of OCaml and Rust, but the
+shell, the protocol, and the validators are still OCaml. We get
+to teach both halves of the course in the same language.
 
 ## Activity
 
@@ -734,8 +782,12 @@ by its result without changing meaning.)
 - (a) `let f x = x + 1`
 - (b) `let f x = Random.int x`
 - (c) `let counter = ref 0 in let f () = incr counter; !counter`
-  (treat as a hidden mutable cell; covered in Module 7)
 - (d) `let f x = print_endline (string_of_int x); x`
+
+You have not seen `Random.int`, `ref`, `incr`, `!`, or
+`print_endline` yet; guess what they do from the names and the
+syntax. The point is not the syntax; the point is which calls
+can be replaced by their results.
 
 Think before peeking at the next slide.
 
@@ -820,7 +872,7 @@ them.
 - Next video: **a tour of OCaml.**
 - Numbers, booleans, strings, basic let bindings, type inference,
   toplevel workflow.
-- The lecture *is* the tour.
+- Many runnable cells; click them all.
 
 :::
 
@@ -841,9 +893,15 @@ basic shape of OCaml programs.
   case for higher-order functions and lazy evaluation as
   modularity tools:
   <https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf>
+- **Chris Okasaki, *Purely Functional Data Structures*** (Cambridge
+  University Press, 1998): the canonical text on persistent data
+  structures, building cheap "modify" operations on top of values
+  the language refuses to mutate:
+  <https://www.cs.cmu.edu/~rwh/students/okasaki.pdf>
 - **Real World OCaml**, Chapter 1 *A Guided Tour*: complementary
   introduction:
   <https://dev.realworldocaml.org/guided-tour.html>
+  
 ## Sources
 
 This lecture's prose, worked examples, and quizzes are original to
