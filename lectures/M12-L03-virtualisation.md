@@ -359,8 +359,8 @@ unikernel's entry point. We will look at exactly this in
 - Built specifically for unikernels: no PCI emulation, no CD-ROM,
   no BIOS.
 - Backends include:
-  - `solo5-hvt` -- on top of KVM.
-  - `solo5-spt` -- as a sandboxed Linux process with seccomp.
+  - `solo5-hvt`: on top of KVM.
+  - `solo5-spt`: as a sandboxed Linux process with seccomp.
   - Xen, muen, virtio.
 - The typical production deployment substrate for MirageOS.
 
@@ -485,7 +485,7 @@ material on memory safety and applies it at the OS level.
 
 ## What's next
 
-- Lecture 4: **Ingredient 3 -- OCaml for systems.** Why a memory-
+- Lecture 4: **Ingredient 3, OCaml for systems.** Why a memory-
   safe language matters when the MMU isn't there to save you.
 - Lecture 5: **MirageOS = Library OS + Virtualisation + OCaml.**
 

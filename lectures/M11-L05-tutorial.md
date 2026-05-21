@@ -1,5 +1,5 @@
 ---
-title: "Tutorial — a resource-management API"
+title: "Tutorial: a resource-management API"
 lecture_no: 5
 week: 11
 duration_target_min: 25

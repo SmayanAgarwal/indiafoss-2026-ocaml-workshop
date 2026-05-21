@@ -1,5 +1,5 @@
 ---
-title: "Uniqueness — use-after-free at the type level"
+title: "Uniqueness: use-after-free at the type level"
 lecture_no: 3
 week: 11
 duration_target_min: 25

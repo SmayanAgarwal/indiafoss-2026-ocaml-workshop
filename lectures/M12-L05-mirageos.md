@@ -8,11 +8,11 @@ keywords: [OCaml, MirageOS, unikernel, mirage, Solo5, TLS, OCaml-TLS, Fiat-Crypt
 activity_question: "If a MirageOS unikernel is a single statically-compiled ELF binary that contains its own OS, what file system, network stack, and TLS library does it use? Where does that code come from, and what is the trust story for it?"
 think_about_this: "The course began with `let x = 1` and ends with an entire operating system written in the same language. What stayed true across those eleven modules of distance, and what changed?"
 reading:
-  - title: "MirageOS — A programming framework for building type-safe, modular systems"
+  - title: "MirageOS: A programming framework for building type-safe, modular systems"
     url: https://mirage.io/
   - title: "mirage-skeleton: example MirageOS unikernels"
     url: https://github.com/mirage/mirage-skeleton
-  - title: "Kaloper-Meršinjak, Mehnert, Madhavapeddy, Sewell — Not-quite-so-broken TLS"
+  - title: "Kaloper-Meršinjak, Mehnert, Madhavapeddy, Sewell: Not-quite-so-broken TLS"
     url: https://www.usenix.org/system/files/conference/usenixsecurity15/sec15-paper-kaloper-mersinjak.pdf
 ---
 
@@ -474,8 +474,8 @@ end
 
 - A **functor over Mirage_time.S**: the same code runs against the
   Unix-backed implementation, the Solo5-backed implementation, etc.
-- `mirage configure -t unix` -- runs as a Linux process.
-- `mirage configure -t hvt` -- runs as a VM on KVM.
+- `mirage configure -t unix`: runs as a Linux process.
+- `mirage configure -t hvt`: runs as a VM on KVM.
 
 :::
 
@@ -567,7 +567,7 @@ By the end of M08 you had a complete functional language and the
 discipline to use it well.
 
 In [Module 9](M09-L01-why-test.html) we said that types catch type
-errors but not behaviour, and added testing -- especially property-
+errors but not behaviour, and added testing; especially property-
 based testing, which works particularly well because pure functions
 are properties.
 

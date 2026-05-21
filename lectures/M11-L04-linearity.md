@@ -1,5 +1,5 @@
 ---
-title: "Linearity — use exactly once"
+title: "Linearity: use exactly once"
 lecture_no: 4
 week: 11
 duration_target_min: 25

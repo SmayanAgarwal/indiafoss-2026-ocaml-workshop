@@ -430,7 +430,7 @@ difference?
 **Why:** the kernel-module bug on Linux can take the kernel down,
 which takes every process with it. The library-OS bug only affects
 this one VM/process, which is a *win* on the isolation axis between
-applications -- but inside the library OS there is no MMU wall, so
+applications; but inside the library OS there is no MMU wall, so
 the bug can corrupt other parts of *that* unikernel freely. The
 upshot: virtualisation gives us isolation between unikernels, and
 the language (M12-L04) gives us safety within a unikernel.
@@ -502,8 +502,8 @@ library OS has no host kernel at all.
 
 ## What's next
 
-Lecture 3 introduces the second ingredient. The library-OS cons --
-no protection, no drivers -- are solved not by abandoning the
+Lecture 3 introduces the second ingredient. The library-OS cons
+(no protection, no drivers) are solved not by abandoning the
 library-OS idea but by *running it as a guest on a hypervisor*.
 Virtualisation gives us isolation between guests for free, and lets
 the hypervisor's host OS (or a small dedicated tender like Solo5)
@@ -514,9 +514,9 @@ interface that the library OS can speak natively.
 
 ## What's next
 
-- Lecture 3: **Ingredient 2 -- Virtualisation.** The hypervisor
+- Lecture 3: **Ingredient 2, Virtualisation.** The hypervisor
   closes both library-OS cons in one move.
-- Lecture 4: **Ingredient 3 -- OCaml.** Safety inside the
+- Lecture 4: **Ingredient 3, OCaml.** Safety inside the
   unikernel; matters because the MMU is no longer there.
 - Lecture 5: **MirageOS.** All three put together.
 

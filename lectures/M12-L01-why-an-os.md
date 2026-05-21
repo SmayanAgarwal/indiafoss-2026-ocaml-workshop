@@ -234,7 +234,7 @@ newsgroup. Defending the monolithic design choice for Linux, he wrote:
 > totally from scratch in less than a year without having any prior
 > knowledge.
 >
-> -- Linus Torvalds, 1992
+> Linus Torvalds, 1992
 
 In 1992 the kernel was 200 KB compressed. Two and a half decades
 later, it is 30 million lines. The *kernel itself* is no longer a
@@ -254,7 +254,7 @@ hardware that the average production server will never touch.
 > totally from scratch in less than a year without having any prior
 > knowledge."
 >
-> -- Linus Torvalds, 1992
+> Linus Torvalds, 1992
 
 **1992: 200 KB compressed. Today: 30 million lines.**
 
@@ -358,9 +358,9 @@ The synthesis, in [Lecture 5](M12-L05-mirageos.html), is MirageOS.
 
 Three ingredients, the rest of this module:
 
-1. **Library OS** -- the kernel as ordinary library calls.
-2. **Virtualisation** -- the hypervisor gives us isolation.
-3. **OCaml** -- a safe language at the OS layer.
+1. **Library OS**: the kernel as ordinary library calls.
+2. **Virtualisation**: the hypervisor gives us isolation.
+3. **OCaml**: a safe language at the OS layer.
 
 Sum: **MirageOS = Library OS + Virtualisation + OCaml**.
 
@@ -464,12 +464,12 @@ not escape academia at the time, and what changed.
 
 ## What's next
 
-- Lecture 2: **Ingredient 1 -- Library OS.** The kernel as
+- Lecture 2: **Ingredient 1, Library OS.** The kernel as
   function calls, not syscalls. Nemesis, Exokernel, and what
   killed them.
-- Lecture 3: **Ingredient 2 -- Virtualisation.** Why
+- Lecture 3: **Ingredient 2, Virtualisation.** Why
   hypervisors closed the library-OS isolation gap.
-- Lecture 4: **Ingredient 3 -- OCaml.** Why memory safety at
+- Lecture 4: **Ingredient 3, OCaml.** Why memory safety at
   the OS layer matters.
 - Lecture 5: **MirageOS.** The synthesis.
 

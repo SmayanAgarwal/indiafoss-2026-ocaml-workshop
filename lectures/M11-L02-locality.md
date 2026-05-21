@@ -1,5 +1,5 @@
 ---
-title: "Locality — safe stack allocation"
+title: "Locality: safe stack allocation"
 lecture_no: 2
 week: 11
 duration_target_min: 25
