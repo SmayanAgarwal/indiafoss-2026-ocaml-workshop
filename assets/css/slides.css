@@ -82,10 +82,13 @@ body.mode-slides .reveal .slides section h3 {
 
 body.mode-slides x-ocaml {
   /* em (not rem) so the cell font scales with the slide body
-     font-size. At slide body 1.7rem, 0.85em is about 23px,
-     which matches the bullet rhythm but leaves room for long
-     code lines. */
-  font-size: 0.85em;
+     font-size. The x-ocaml shadow-DOM CSS sets the editor to
+     :host { font-size: 1.2em } on top of whatever we set here,
+     so the effective rendered code size is host * 1.2. At slide
+     body 1.7rem, 0.55em gives a host ~15px and a rendered code
+     size of ~18px, comfortably smaller than the 27px body so
+     long code lines fit but the cell stays readable. */
+  font-size: 0.55em;
   margin: 0.6rem 0;
 }
 
