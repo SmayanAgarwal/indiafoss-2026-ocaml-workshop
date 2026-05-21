@@ -263,10 +263,10 @@ idioms; OCaml is the counterexample.
 ## Why OCaml?
 
 - A **functional-first** language with a serious type system.
-- **Practical:** used at Tarides, Jane Street, Bloomberg, Facebook (Hack/Flow),
-  Docker, Ahrefs, Semgrep. Powers the WebAssembly reference
-  interpreter and the CompCert verified C compiler. Rust's first
-  compiler was OCaml.
+- **Practical:** real production use.
+  - In industry: Tarides, Jane Street, Bloomberg, Facebook (Hack and Flow), Docker, Ahrefs, Semgrep.
+  - Powers the WebAssembly reference interpreter and the CompCert verified C compiler.
+  - Rust's first compiler was written in OCaml.
 - **Fast:** native code performance close to C, with garbage collection
   and no undefined behaviour in the safe fragment.
 - **A great teaching language** for ideas you will see again in Rust,
