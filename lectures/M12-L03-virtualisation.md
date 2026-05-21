@@ -184,6 +184,15 @@ intercepts the privileged operations (port I/O, control-register
 writes, page-table updates) and either handles them in the kernel
 fast path or kicks them out to QEMU for slower-path emulation.
 
+![Linux KVM architecture: host userspace processes plus a QEMU-KVM
+process running a guest with its own kernel and userspace, all on top
+of a Linux kernel that has the KVM module loaded, on hardware with
+VT-x / AMD-V extensions. A side panel notes the library-OS "cons"
+with "device drivers all need to be rewritten" struck
+through.](/assets/m12/figures/slide-18-linux-kvm.svg)
+
+The same layering rendered as a slide-mode ASCII fallback:
+
 :::slide
 
 ## Linux KVM, layered
@@ -282,6 +291,18 @@ still true *within* one unikernel, and OCaml will help with that. The
 second half ("device drivers all need to be rewritten") is no longer
 true: VirtIO is the only device class the unikernel needs to support,
 and that single driver suite works against every modern hypervisor.
+
+![Memory-safety slide with the library-OS "Cons" panel underneath:
+the whole "There is no kernel protection internally, and device
+drivers all need to be rewritten from a normal kernel" line is struck
+through in red, signalling that virtualisation (and the OCaml
+ingredient in M12-L04) collectively close out both
+halves.](/assets/m12/figures/slide-23-memory-safety-strikethrough.svg)
+
+The figure above is the talk's "strike through the con" beat: the
+same Cons sentence M12-L02 ended on is reproduced and crossed out
+once virtualisation (this lecture) and language safety (M12-L04) are
+both in hand.
 
 :::slide
 

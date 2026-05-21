@@ -143,6 +143,15 @@ the silicon. Each layer was written by a different community at a
 different time with different goals. Each adds its own assumptions,
 its own bugs, and its own attack surface.
 
+![Seven-layer stack diagram with Application on top and Firmware at
+the bottom, kernel highlighted in the
+middle.](/assets/m12/figures/slide-04-kernel-core-component.svg)
+
+The kernel sits in the middle of that stack as a single highlighted
+box; the diagram above pairs the layer cake with the Torvalds 1992
+quote we will return to at the end of this lecture. The slide-mode
+table below is the same picture for screen-reader access.
+
 :::slide
 
 ## The stack your program runs on
@@ -261,11 +270,17 @@ see: drivers, scheduling, paging, filesystems, network stacks, all the
 parts of the kernel and the userspace libraries that your runtime
 quietly depends on, almost none of which you ever asked for.
 
-Picture: a vertical scene. At the top, two small chunks of ice break
-the surface, labelled "code you want to run." Below the water, the
+![Iceberg metaphor: a small tip of ice above the water labelled
+"code you want to run", a much larger mass below the waterline
+labelled "code your operating system insists you need", with a side
+annotation reading "Huge TCB means security
+concern".](/assets/m12/figures/slide-06-monolithic-iceberg.svg)
+
+A vertical scene: at the top, two small chunks of ice break the
+surface, labelled "code you want to run". Below the water, the
 iceberg extends downward into shadow, labelled "code your operating
-system insists you need." Off to one side, an annotation: "huge TCB
-means security concern."
+system insists you need". Off to one side, an annotation: "huge TCB
+means security concern".
 
 That last annotation is the point. The Trusted Computing Base, or TCB,
 is the set of components your security argument depends on. If any

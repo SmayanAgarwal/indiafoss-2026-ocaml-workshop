@@ -76,6 +76,11 @@ privilege mode.
 
 Picture the two side by side. The conventional kernel:
 
+![Conventional layout: a Process box containing Jars, Application,
+Java VM, libc, libssl, libm sits on a separate horizontal Kernel
+band, which in turn sits on
+Hardware.](/assets/m12/figures/slide-10-process-conventional.svg)
+
 ```
 +-------------------------------+
 | Process                       |
@@ -96,6 +101,11 @@ through a syscall.
 
 The library OS:
 
+![Library OS layout: one big Kernel box containing Jars, Application,
+Java VM, libc, libssl, libm and the new libsched, libnet, libfs all
+in the same address space, sitting directly on
+Hardware.](/assets/m12/figures/slide-12-libos-kernel-as-libraries.svg)
+
 ```
 +-------------------------------+
 | Kernel (just a name)          |
@@ -113,6 +123,15 @@ One box, one address space, one privilege mode. The "Kernel" label
 is now just the name for the union of the libraries the application
 chose to link. The thin line that used to live inside the picture is
 gone.
+
+![The same library-OS layout annotated with the three consequences:
+"application runs in a single address space", "single calling
+convention", and "drive hardware directly from
+application".](/assets/m12/figures/slide-13-libos-single-address-space.svg)
+
+Three callouts on the picture name the three consequences spelled out
+below: one address space, one calling convention, hardware driven
+directly from the application.
 
 :::slide
 

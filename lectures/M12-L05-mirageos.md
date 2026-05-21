@@ -170,6 +170,15 @@ build` runs the compile-and-link, and the output is a blue box
 labelled `image`. Off to the side, a green `unikernel.ml` (the
 application code you actually wrote) also feeds into the dune build.
 
+![MirageOS compiler pipeline diagram: a green config.ml feeds into
+mirage configure, which generates Makefile, opam, main.ml, and per-
+backend mirage_net_XXX.ml / mirage_tcpip.ml stubs; make plus dune
+build then combine these with the user's unikernel.ml to produce a
+single image (ELF binary).](/assets/m12/figures/slide-31-mirageos-compiler-pipeline.svg)
+
+The ASCII rendering below is the same pipeline for slide-mode and
+screen-reader use.
+
 :::slide
 
 ## MirageOS multi-stage pipeline
@@ -229,6 +238,17 @@ A MirageOS unikernel does not call into any Linux. Every piece of
 functionality the application needs has to come from an OCaml library
 inside the binary. The MirageOS ecosystem is large enough that this
 is feasible for many real applications.
+
+![Talk slide "Available Libraries": five blocks listing the OCaml
+libraries that ship with MirageOS, namely Network (Ethernet, IP,
+UDP, TCP, HTTP 1.0/1.1/2.0, ALPN, DNS, ARP, DHCP, SMTP, IRC, cap-n-
+proto, emails), Storage (block device, ramdisk, qcow, B-trees, VHD,
+zlib, gzip, lzo, git, tar, FAT32), Data-structures (LRU, Rabin's
+fingerprint, bloom filters, adaptive radix trees, DIET trees),
+Security (x.509, ASN.1, TLS, SSH), and Crypto (hashes, ciphers, AEAD
+primitives, public-key, Fortuna); plus a side note that TLS uses
+"rigorous engineering" via Fiat-Crypto extracted from
+Coq.](/assets/m12/figures/slide-29-available-libraries.svg)
 
 Roughly catalogued, the available libraries are:
 
