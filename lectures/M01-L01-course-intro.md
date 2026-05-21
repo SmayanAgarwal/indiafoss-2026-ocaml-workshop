@@ -108,14 +108,30 @@ thought that transfer to every other language you will ever use.
 
 The last four modules (weeks 9-12) cover secure systems software,
 which sounds like a separate course but is intimately connected to
-what we did in the first half. The OCaml runtime, the garbage
-collector, undefined behaviour, memory safety, foreign function
-interfaces, unikernel operating systems, and capability-based
-concurrency: these are the parts of the language that touch real
-hardware and real performance, and they are where OCaml's safety
-properties pay the largest dividends. The reason we can talk about
-"undefined behaviour" precisely in week 9 is that we will have
-spent eight weeks pinning down what *defined* behaviour even means.
+what we did in the first half. Module 9 takes the type-safety
+intuition you built up over the first eight weeks and asks the
+sharper question: what kind of bug does the type system structurally
+*fail* to catch? The answer is "behaviour", and the response is
+testing. We cover OUnit2 for unit tests and QCheck for property-based
+testing, which is a particularly natural fit for a language where so
+many functions are pure. Module 10 then turns to memory safety as a
+security story: the canonical C memory bugs (use-after-free, buffer
+overflow, uninitialised read, double-free), how they become CVEs
+(the now-famous Microsoft 70%, Android 90%, Fish-in-a-Barrel 80%
+statistics and the [White House February 2024
+memorandum](M10-L02-memory-bugs-as-security.html) on memory-safe
+languages), and how OCaml rules each one out by construction. We
+also walk a [Heartbleed-style
+example](M10-L05-tutorial.html) end to end. Module 11 picks up
+where the vanilla type system stops: OxCaml's mode system extends
+the types with locality (safe stack allocation), uniqueness
+(use-after-free of manually managed resources, at compile time), and
+linearity (use exactly once). Module 12 caps the course by asking
+what falls out if a language is this safe: the answer is MirageOS,
+where the operating system itself is an OCaml program. The reason we
+can talk about "undefined behaviour" precisely in week 10 is that we
+will have spent eight weeks pinning down what *defined* behaviour
+even means.
 
 :::slide
 
@@ -127,8 +143,12 @@ By the end:
 
 - You write **idiomatic OCaml**.
 - You **reason equationally** about your code.
-- You understand how OCaml's design choices buy you safety where
-  C and C++ traditionally fail.
+- You back the type system up with **tests** (OUnit2, QCheck).
+- You can name the C bug classes OCaml rules out, and use **modes**
+  (locality, uniqueness, linearity) to close the ones a GC alone
+  cannot.
+- You understand the safety story all the way down to the **OS**
+  (MirageOS), where C and C++ traditionally fail.
 
 :::
 
@@ -164,9 +184,19 @@ with slowness: it comes from the type system ruling out, at
 compile time, classes of undefined behaviour that C programs hit
 at runtime. Garbage collection helps on top, but the load-bearing
 safety is in the types. The secure-systems half of the course makes
-this concrete: you will see what *defined* and *undefined* behaviour
-mean, where the OCaml runtime draws the line, and how to interface
-safely with C code that does not.
+this concrete on three fronts. Where types reach their structural
+limit (a well-typed function can still compute the wrong answer),
+[Module 9](M09-L01-why-test-typed-code.html) brings in tests, both
+unit tests and property-based tests, as the complement that catches
+behaviour. Where vanilla OCaml's types reach *their* limit (stack
+allocation, manually managed resources), [Module
+11](M11-L01-modes-as-safety.html) introduces OxCaml's mode system,
+which extends the types to track *how* a value may be used, not just
+*what* it is. In between, [Module
+10](M10-L01-ub-and-the-zoo.html) makes the memory-safety claim
+precise: you will see what *defined* and *undefined* behaviour mean,
+the C bug classes the GC plus types rule out, and where the OCaml
+runtime itself draws the line.
 
 ## Why OCaml?
 
@@ -528,9 +558,9 @@ corners: objects and classes (rarely used in modern code), camlp4
 syntax extensions (deprecated), polymorphic variants (mostly
 specialised), first-class modules (advanced),
 [GADTs](M08-L05-gadts-basics.html) (we touch them briefly), effect
-handlers (a Module 12 topic in the secure-systems half). I have
-picked the subset that will be most useful to you in the largest
-number of future situations.
+handlers (a Multicore OCaml feature we leave for a follow-on
+course). I have picked the subset that will be most useful to you in
+the largest number of future situations.
 
 We will not do pure type theory. This is a programming course, not
 a programming-languages-theory course. I will use type-theoretic
