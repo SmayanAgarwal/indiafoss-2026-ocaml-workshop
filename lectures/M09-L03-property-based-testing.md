@@ -1100,6 +1100,11 @@ to include the edge. The resulting graph is a DAG by
 construction because no edge points backward in the vertex
 ordering.
 
+Here `>>=` is QCheck's monadic bind on arbitraries, the same
+shape as the `let*` form we used earlier: pull a value out of
+the generator on the left, then build the next generator using
+it.
+
 ```ocaml
 let dag_gen : (int * int) list QCheck.arbitrary =
   let open QCheck in

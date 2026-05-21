@@ -278,9 +278,14 @@ The performance argument for staying in C is real but smaller than it
 used to be. OCaml's native compiler produces straight-line machine
 code at a quality that is in the same neighbourhood as C compiled
 with `-O2`. For algorithmic workloads (parsers, evaluators, graph
-algorithms, numerical kernels), OCaml is typically 1.5x to 2x slower
-than equivalent C. Java and Go are in the same league. Python is
-typically 10x to 100x slower.
+algorithms, numerical kernels), the publicly available cross-language
+shootouts (the
+[Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html),
+academic and industrial micro-benchmarks of similar shape) typically
+place OCaml within a 1.5x-2x window of equivalent C, with the exact
+multiplier depending heavily on the workload. Java and Go are in the
+same league. Python is typically 10x to 100x slower. Treat the "1.5x
+to 2x" as the rough order of magnitude, not a precise figure.
 
 Two facts soften the OCaml-vs-C gap:
 

@@ -208,6 +208,17 @@ There are two differences from `fold_right`:
    is a small inconsistency in the standard library, but it has been
    the convention since the early days of OCaml.
 
+A side-by-side reminder, because the order trips up almost everyone
+the first ten times:
+
+| | combining function `f` | call shape |
+|---|---|---|
+| `fold_right` | `'a -> 'acc -> 'acc` (element, acc) | `fold_right f xs init` |
+| `fold_left`  | `'acc -> 'a -> 'acc` (acc, element) | `fold_left f init xs`  |
+
+Mnemonic: in `fold_X`, the accumulator sits on the `X` side, both
+inside `f` and in the call.
+
 ## What `fold_left` computes, step by step
 
 For `fold_left f acc [x1; x2; x3]`, the computation is:

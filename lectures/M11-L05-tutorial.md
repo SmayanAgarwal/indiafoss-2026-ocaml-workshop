@@ -56,7 +56,10 @@ We want a file-handle module that delivers four guarantees:
    returned by enclosing functions.
 
 Guarantees (2) and (3) are *linearity*. Guarantees (4) is
-*locality*. (1) falls out automatically.
+*locality*. (1) falls out automatically: each successful call to
+`open_` constructs a brand-new handle, so the "exactly once" is
+the constructor itself, not something the type system has to
+enforce after the fact.
 
 The two axes compose. A `t @ once @ local` is the combination: at
 most one further use *and* may not escape the current scope.
@@ -310,8 +313,12 @@ The C version of this bug is the standard `fclose` / `fclose`
 pattern. On Linux, the second close may close some *other* file
 descriptor that the kernel has reassigned to the same integer.
 This has produced a class of CVEs around file-handle confusion
-attacks; the famous one is **CVE-2020-1472 ("Zerologon")**, which
-involved double-close as part of its exploit chain.
+attacks. One representative example is
+[CVE-2020-1472 ("Zerologon")](https://nvd.nist.gov/vuln/detail/CVE-2020-1472),
+a Netlogon cryptographic-authentication bypass in Windows
+domain controllers where a flawed handle-management path was
+part of the exploit chain. The OCaml signature above forbids
+the double-close at compile time.
 
 ### Bug 2: escape attempt
 

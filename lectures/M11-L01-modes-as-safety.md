@@ -184,6 +184,12 @@ of the snapshot this course is pinned to; if you try a slightly
 different OxCaml version, some surface details may differ. The
 *ideas* are stable; the spelling is not.
 
+`Modes.Aliased.t` in particular is a small wrapper type used to
+expose a unique value through an interface without compromising
+its uniqueness. We will introduce it where it earns its keep, in
+[M11-L03](M11-L03-uniqueness.html); for now treat it as one more
+piece of syntax that exists for a reason you do not yet need.
+
 ### Locality: scope-tracking
 
 OxCaml introduces a **locality** axis with two modes,

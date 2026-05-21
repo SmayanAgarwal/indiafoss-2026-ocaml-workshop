@@ -541,8 +541,8 @@ Output:
 random seed: 42
 Law eval (Sub (Num a, Num b)) = a -. b: FAIL (1 shrink step).
 Test failed on input: (0.0, 1.0).
-expected: -1.0 (= 0.0 -. 1.0)
-got:       1.0 (= 1.0 -. 0.0)
+  expected: -1.0   (correct: a -. b  =  0.0 -. 1.0)
+  got:       1.0   (bad_eval: b -. a  =  1.0 -. 0.0)
 ```
 
 Two-element pair. Bug is obvious. From a 4-element nested
@@ -712,16 +712,23 @@ let qcheck_tests = [
     (fun (a, b) -> eval (Sub (Num a, Num b)) = a -. b);
 ]
 
-(* --- entry point --- *)
+(* --- entry point ---
+   Illustrative only. `run_test_tt_main` calls `exit` after the
+   OUnit2 run, so the QCheck call below never fires. In a real
+   project, split the two suites into separate test executables
+   (see the dune note that follows). *)
 let () =
   run_test_tt_main ounit_suite;
   QCheck_runner.run_tests_main qcheck_tests
 ```
 
 Two suites, one entry point. `run_test_tt_main` exits after
-running OUnit2, so to run both you would normally split them
-into two test executables in `dune`. For this tutorial, keep
-them in mind as two complementary frames on the same function.
+running OUnit2, so the QCheck call below it never actually
+fires. In a real project, you split them: one test executable
+per suite, each with its own `(test ...)` stanza in `dune`. For
+this tutorial we keep them adjacent in one file to highlight
+the contrast between specific OUnit2 cases and quantified
+QCheck properties.
 
 And the corresponding `dune`:
 

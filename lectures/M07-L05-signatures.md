@@ -40,8 +40,10 @@ than nominal, and it is checked entirely at compile time.
 
 A signature is a `sig ... end` block listing values and their
 types. Module type names conventionally begin with an uppercase
-letter; an older convention from [Standard ML](https://smlfamily.github.io/)
-uses ALL CAPS, which you still see in textbooks.
+letter; many codebases (and most textbooks) use ALL CAPS for the
+name, others use ordinary CamelCase. We will use ALL CAPS in this
+lecture because it keeps the signature visually distinct from
+modules; pick whichever your codebase already uses.
 
 ```ocaml
 module type COUNTER = sig

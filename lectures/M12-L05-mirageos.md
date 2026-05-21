@@ -351,7 +351,12 @@ protocol looks like.
 Worth seeing the code for one concrete example. The simplest
 MirageOS unikernel is something that, every second, logs the word
 "hello" and exits after a few iterations. The actual `unikernel.ml`
-looks like this:
+looks like this. The `open Lwt.Infix` at the top brings the `>>=`
+operator into scope: `>>=` is Lwt's monadic bind, the same shape
+as the QCheck-generator `>>=` from
+[M09-L03](M09-L03-property-based-testing.html); read `e >>= fun x -> ...`
+as "wait for the Lwt computation `e`, then continue with its
+result bound to `x`."
 
 ```ocaml skip
 open Lwt.Infix
