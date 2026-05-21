@@ -45,6 +45,16 @@ body.mode-slides .reveal .slides section[data-slide] {
   padding: 1rem 2rem;
   border-left: none;
   background: transparent;
+  /* Cap section at the canvas height (1280x800) and let it scroll
+     internally if dynamic content (e.g. an x-ocaml cell's output
+     after pressing Run) pushes it past the canvas. overflow-y:auto
+     means the scrollbar appears only when overflow actually
+     happens; static slides that already fit stay scrollbar-free.
+     box-sizing: border-box so the 1rem top + bottom padding stays
+     inside the 800px budget. */
+  max-height: 800px;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 /* Bullet lists in slide mode: looser spacing, no decorative wall of text. */
@@ -91,7 +101,11 @@ body.mode-slides .reveal .slides section:has(.title-slide-inner) {
   text-align: left;
 }
 body.mode-slides .reveal .slides .title-slide-inner {
-  min-height: 800px;
+  /* Section is capped at 800px with 1rem top + 1rem bottom
+     padding (box-sizing: border-box), so the usable inner area
+     is 800px - 2rem. Use that exactly so vertical centring fills
+     the canvas without spilling into the scrollbar zone. */
+  min-height: calc(800px - 2rem);
   max-width: 95%;
   margin: 0;
   display: flex;
