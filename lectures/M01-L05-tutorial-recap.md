@@ -104,7 +104,7 @@ so the function returns `float`. The full type is `float -> float`.
 
 :::slide
 
-## Problem 1 type-check
+## Problem 1: type-check
 
 What is the type of `kelvin_of_celsius`?
 
@@ -112,14 +112,13 @@ What is the type of `kelvin_of_celsius`?
 let kelvin_of_celsius c = c +. 273.15
 ```
 
-`float -> float`. The `+.` operator forces `c` to be `float`, and the
+* `float -> float`. The `+.` operator forces `c` to be `float`, and the
 result of `+.` is `float`, so the function is `float -> float`.
-
-If you had accidentally written `c + 273.15`, OCaml would have
+* If you had accidentally written `c + 273.15`, OCaml would have
 complained: `+` is integer addition, and `273.15` is not an integer.
-The error would have read:
+* The error would have read:
 
-```
+```text
 This expression has type float but an expression was expected of type int
 ```
 
@@ -128,7 +127,7 @@ This expression has type float but an expression was expected of type int
 If you had typed `c + 273.15` (with the wrong, integer operator),
 the compiler would have refused with:
 
-```
+```text
 This expression has type float but an expression was expected of type int
 ```
 
@@ -157,9 +156,10 @@ close to. Read on.
 
 :::slide
 
-## Problem 2: Round-trip
+## Problem 2: round-trip
 
-Convert Celsius to Kelvin and back. Verify you get the same number.
+* Convert Celsius to Kelvin and back.
+* Verify you get the same number.
 
 ```ocaml
 let kelvin_of_celsius c = c +. 273.15
@@ -169,8 +169,8 @@ let original = 36.6
 let there_and_back = celsius_of_kelvin (kelvin_of_celsius original)
 ```
 
-Run it. The toplevel reports `there_and_back = 36.6` (or thereabouts;
-see next slide).
+* Run it. Toplevel reports `there_and_back = 36.6`.
+* Or thereabouts (see next slide).
 
 :::
 
@@ -209,18 +209,17 @@ a non-terminating decimal expansion). The rounding errors are tiny
 
 ## Float precision aside
 
-Sometimes `there_and_back` is not *exactly* `36.6`. Floats are stored
-with finite precision, and `+. 273.15 -. 273.15` can introduce a tiny
-rounding error.
+* `there_and_back` may not be *exactly* `36.6`.
+* Floats are finite-precision; `+. 273.15 -. 273.15` can drift in
+  the last digit.
 
 ```ocaml
 let _ = 0.1 +. 0.2
 ```
 
-`float = 0.300000000000000044`, not `0.3`. This is true in every
-language that uses IEEE 754 floats, including Python and JavaScript.
-
-When you compare floats, prefer "close enough":
+* Result: `float = 0.300000000000000044`, not `0.3`.
+* True in every IEEE 754 language (Python, JavaScript, Java, C).
+* When comparing floats, use a tolerance:
 
 ```ocaml
 let close a b = abs_float (a -. b) < 1e-9
@@ -273,9 +272,8 @@ float literals force `c` to be `float`.
 
 ## Problem 3: a more useful predicate
 
-A "healthy" daytime temperature for a city is between 15 and 30 °C.
-Write a function that tells you whether a given Celsius value is in
-that range.
+* A "healthy" daytime temperature is between 15 and 30 °C.
+* Write a function that decides if a Celsius value is in range.
 
 ```ocaml
 let is_comfortable c = c >= 15.0 && c <= 30.0
@@ -289,8 +287,8 @@ let _ = is_comfortable 22.0
 let _ = is_comfortable 38.0
 ```
 
-`true` and `false`. The function's type, inferred, is
-`float -> bool`.
+* Returns `true` and `false` respectively.
+* Inferred type: `float -> bool`.
 
 :::
 
@@ -328,8 +326,9 @@ functions from smaller ones by feeding outputs to inputs.
 
 ## Problem 4: combining functions
 
-Now compose. We have temperatures in Kelvin from a sensor, and want a
-Celsius-flavoured comfort check.
+* Temperatures from a sensor arrive in Kelvin.
+* The comfort check we have is defined in Celsius.
+* Compose: feed the Kelvin->Celsius result into the comfort check.
 
 ```ocaml
 let kelvin_of_celsius c = c +. 273.15
@@ -342,9 +341,9 @@ let is_comfortable_kelvin k =
 let _ = is_comfortable_kelvin 295.15  (* 22 °C *)
 ```
 
-`true`. Notice that `is_comfortable_kelvin` is built by *applying*
-`is_comfortable` to the *result* of `celsius_of_kelvin`. No new logic;
-just composition.
+* Result: `true`.
+* No new logic; just `is_comfortable` applied to the result of
+  `celsius_of_kelvin`.
 
 :::
 
@@ -391,28 +390,26 @@ its keep:
 
 ## Reading a type error
 
-Type errors are noisy at first. Let's deliberately write one.
+* Type errors are noisy at first; write one deliberately.
 
 ```ocaml skip
 let bad c = c + 273.15
 ```
 
-The toplevel will say something like:
+* The toplevel says:
 
-```
+```text
 Error: This expression has type float but an expression was expected
        of type int because it is in the result of an integer
        application
 ```
 
-Three pieces of information:
-
-- the offending expression (`273.15`)
-- the actual type (`float`)
-- the expected type (`int`)
-- *why* the expected type is what it is
-
-In this case "because of integer `+`". Fix: use `+.`.
+* Four pieces of information:
+  * the offending expression (`273.15`),
+  * the actual type (`float`),
+  * the expected type (`int`),
+  * *why* it was expected (here: integer `+`).
+* Fix: use `+.`.
 
 :::
 
@@ -438,15 +435,16 @@ mass divided by height squared.
 
 ## Activity
 
-Write a function `bmi` that takes a mass in kilograms and a height in
-metres, and returns the body mass index (mass divided by height squared).
+* Write `bmi mass height`.
+* Mass in kilograms, height in metres.
+* Returns mass divided by height squared.
 
 ```ocaml skip
 (* fill in *)
 let bmi mass height = ???
 ```
 
-Test it with `bmi 70.0 1.75`. Expected answer: about `22.86`.
+* Test it: `bmi 70.0 1.75` should be about `22.86`.
 
 :::
 
@@ -488,11 +486,11 @@ let bmi mass height = mass /. (height *. height)
 let _ = bmi 70.0 1.75
 ```
 
-The toplevel reports `float = 22.857142857142854`. Close to the
-expected `22.86`; the trailing digits are float precision noise.
-
-The inferred type is `float -> float -> float`. Two floats in, one
-float out.
+* Toplevel reports `float = 22.857142857142854`.
+* Close to the expected `22.86`; trailing digits are float
+  precision noise.
+* Inferred type: `float -> float -> float`. Two floats in, one
+  float out.
 
 :::
 
@@ -519,9 +517,11 @@ following without checking a reference:
 - Recognise when a type error is asking for `+.` rather than `+`.
 - Compose two functions by feeding one's result into the next.
 
-That's the foundation. Module 2 dives into the structure of OCaml
-expressions in more depth: literals, `let` bindings, operators,
-`if`/`then`/`else`. We start writing real (small) programs.
+That's the foundation.
+
+- **Next:** Module 2 dives into expressions, `let` bindings,
+  operators, `if`/`then`/`else`.
+- We start writing real (small) programs.
 
 :::
 
