@@ -76,15 +76,11 @@ use it many times, you can use it once and then stop. The reverse
 is rejected: a `once` value cannot satisfy a context that may use
 the value many times.
 
-The annotation goes after `@`, like the other axes:
-
-```ocaml skip
-val close : t @ once -> unit
-```
-
-This says: `close` takes a `t` at mode `once`. Calling `close`
-consumes that single use. After the call, the binding is gone;
-the compiler refuses any further reference.
+The annotation goes after `@`, like the other axes. For example,
+`val close : t @ once -> unit` says that `close` takes a `t` at
+mode `once`. Calling `close` consumes that single use. After the
+call, the binding is gone; the compiler refuses any further
+reference. We will see the full signature in context in a moment.
 
 :::slide
 
@@ -104,7 +100,22 @@ The reverse is rejected.
 
 Here is the running example for this lecture. A small module that
 manages file handles, with the type system enforcing the
-"open-read*-close" protocol:
+"open-read*-close" protocol. We will define the module type, the
+implementation, and three deliberately buggy clients in turn; the
+implementation has to exist first so that the bug demos have an
+`open_`, `read`, and `close` to call.
+
+A note on the implementation: this lecture uses an **in-memory
+mock** as the backing of `Handle`. The body of `open_` allocates
+a small record with an empty buffer; `read` slices substrings;
+`close` does nothing. In production you would back the same
+signature with `Unix.openfile` / `Unix.read` / `Unix.close`, and
+the I/O code would do the real work. The point of the lecture is
+not the I/O; it is that the linearity guarantees are entirely
+independent of the backing. With a real file descriptor inside,
+the type system's "used at most once" contract is exactly the
+contract you want on an OS file descriptor. The mock keeps the
+runtime trivial so we can focus on the compiler's behaviour.
 
 ```ocaml
 module type Handle = sig
@@ -121,9 +132,31 @@ module type Handle = sig
   val close : t @ once -> unit
   (** [close t] closes [t]. The handle is consumed. *)
 end
+
+module Handle : Handle = struct
+  type t = { mutable buf : string; mutable pos : int }
+
+  let open_ _path =
+    (* In production: Unix.openfile path [...] mode and store the
+       fd. Here: an empty in-memory buffer. *)
+    { buf = ""; pos = 0 }
+
+  let read t n =
+    (* In production: Unix.read t.fd buf 0 n and copy. Here:
+       safely substring whatever the buffer holds. *)
+    let avail = String.length t.buf - t.pos in
+    let take = if n < avail then n else avail in
+    let s = if take <= 0 then "" else String.sub t.buf t.pos take in
+    t.pos <- t.pos + take;
+    s, t
+
+  let close _t =
+    (* In production: Unix.close t.fd. Here: nothing to release. *)
+    ()
+end
 ```
 
-Read each line:
+Read each line of the signature:
 
 - `open_` produces a `once` handle. The caller will use it at
   most once, then.
@@ -135,16 +168,20 @@ Read each line:
 - `close` consumes the `once` handle without returning a new one.
   After `close`, there is no live handle to the file.
 
+The implementation itself looks ordinary. OxCaml's mode checking
+is structural, not type-level: the compiler reads the
+implementation in light of the declared signature and verifies
+that each function respects linearity. The mode bookkeeping is in
+the *checker*, not in the runtime.
+
 A correct client looks like this:
 
-```ocaml skip
-open Handle
-
+```ocaml
 let read_two () =
-  let t = open_ "data.txt" in
-  let s1, t = read t 100 in
-  let s2, t = read t 100 in
-  close t;
+  let t = Handle.open_ "data.txt" in
+  let s1, t = Handle.read t 100 in
+  let s2, t = Handle.read t 100 in
+  Handle.close t;
   s1, s2
 ```
 
@@ -163,10 +200,13 @@ past aliasing), but the *programming model* is the same.
 
 ## File-handle protocol as a type
 
-```ocaml skip
-val open_ : string -> t @ once
-val read  : t @ once -> int -> string * t @ once
-val close : t @ once -> unit
+```ocaml
+module type Handle_recap = sig
+  type t
+  val open_ : string -> t @ once
+  val read  : t @ once -> int -> string * t @ once
+  val close : t @ once -> unit
+end
 ```
 
 - `open_` produces a fresh once-usable handle.
@@ -182,26 +222,25 @@ each operation.
 
 The whole point of the API is that you cannot misuse it. Let us
 walk through three deliberate bugs and see what the compiler says.
+Each cell below is *meant* to fail to compile; press Run on each
+to see the OxCaml compiler's refusal inline.
 
 ### Bug 1: double-close
 
-```ocaml skip
+```ocaml
+(* Press Run; the compiler refuses on linearity grounds. *)
 let double_close () =
-  let t = open_ "data.txt" in
-  close t;
-  close t
+  let t = Handle.open_ "data.txt" in
+  Handle.close t;
+  Handle.close t
 ```
 
-The compiler:
-
-> Error: This value is used here, but it is defined as once and
-> has already been used:
-> Line 3, characters 8-9.
-
-The first `close t` consumed the handle. The second `close t` is
-attempting to reference a binding that no longer holds a live
-once-value. The compiler refuses, with a message that points at
-the offending use and the prior use.
+The first `Handle.close t` consumed the handle. The second
+`Handle.close t` is attempting to reference a binding that no
+longer holds a live once-value. The compiler refuses, with a
+message of the form "This value is used here, but it is defined
+as once and has already been used", pointing at the offending use
+and the prior one.
 
 The corresponding C bug is the canonical double-close: calling
 `fclose` twice, or `unix_close` twice, on the same file
@@ -212,28 +251,27 @@ program does not compile.
 
 ### Bug 2: use-after-close
 
-```ocaml skip
+```ocaml
+(* Press Run; same shape as bug 1, different surface form. *)
 let read_after_close () =
-  let t = open_ "data.txt" in
-  close t;
-  let _s, _t' = read t 10 in
+  let t = Handle.open_ "data.txt" in
+  Handle.close t;
+  let _s, _t' = Handle.read t 10 in
   ()
 ```
 
-> Error: This value is used here, but it is defined as once and
-> has already been used:
-> Line 3, characters 8-9.
-
 Same shape. The `close t` consumed the handle; `read t` then
 tries to use it again. The compiler tracks the single allowable
-use and rejects the second one.
+use and rejects the second one with the same "already been used as
+once" error.
 
 ### Bug 3: forgetting to close
 
-```ocaml skip
+```ocaml
+(* Press Run; discarding a once-value is also a violation. *)
 let leak () =
-  let t = open_ "data.txt" in
-  let _s, _t = read t 10 in
+  let t = Handle.open_ "data.txt" in
+  let _s, _t = Handle.read t 10 in
   ()
 ```
 
@@ -241,16 +279,14 @@ This one is subtler. The handle is consumed by `read`, and the
 fresh handle returned by `read` is bound to `_t`. The underscore
 tells the compiler we are intentionally discarding the value.
 Discarding a `once` value is a *violation*: the protocol said this
-value must be used (exactly) once, and we never used it. The
-compiler emits a warning that, in stricter configurations, becomes
-an error:
+value must be used (exactly) once, and we never used it.
 
-> Warning 26: this expression has type t @ once and is not used.
-
-Different OxCaml configurations handle this differently; the strict
-mode treats it as an error, the default emits a warning. Either
-way, the leak is visible to the type system, unlike in vanilla
-OCaml where a forgotten close is a silent file-descriptor leak.
+Different OxCaml configurations handle this differently: strict
+configurations treat the leak as an error, the default emits a
+warning of the form "this expression has type `t @ once` and is
+not used." Either way, the leak is visible to the type system,
+unlike in vanilla OCaml where a forgotten close is a silent
+file-descriptor leak.
 
 :::slide
 
@@ -264,65 +300,6 @@ OCaml where a forgotten close is a silent file-descriptor leak.
 
 The C versions of these bugs ship to production. The OxCaml
 versions do not compile.
-
-:::
-
-## A worked example end-to-end
-
-Let us write a `Handle` implementation, just enough to make the
-type-level discipline concrete. In a real OxCaml program this
-would wrap `Unix.openfile` and `Unix.close`; the simplified
-in-memory version mirrors the structure without the I/O:
-
-```ocaml
-module Handle : Handle = struct
-  type t = { mutable buf : string; mutable pos : int }
-
-  let open_ _path =
-    let buf = (* read whole file into buf, omitted *) "" in
-    { buf; pos = 0 }
-
-  let read t n =
-    let s = String.sub t.buf t.pos n in
-    t.pos <- t.pos + n;
-    s, t
-
-  let close _t = (* close the underlying fd *) ()
-end
-```
-
-This is straightforward OCaml. The interesting part is the
-*signatures* in the `Handle` module type; the implementation looks
-ordinary because OxCaml's mode checking is structural, not
-type-level. The compiler reads the implementation in light of the
-declared signatures and verifies that each function respects
-linearity.
-
-A more comprehensive `read` would handle EOF, but the protocol
-shape is the same: consume, return a fresh handle.
-
-:::slide
-
-## Implementation: straightforward, signatures do the work
-
-```ocaml skip
-let open_ path = { buf = ...; pos = 0 }
-let read t n =
-  let s = String.sub t.buf t.pos n in
-  t.pos <- t.pos + n;
-  s, t
-let close _t = ()
-```
-
-The compiler checks that this matches:
-
-```ocaml skip
-val open_ : string -> t @ once
-val read  : t @ once -> int -> string * t @ once
-val close : t @ once -> unit
-```
-
-The mode bookkeeping is in the *checker*, not in the runtime.
 
 :::
 
@@ -383,13 +360,12 @@ calling it twice would use the captured value twice.
 This is automatic: you do not annotate the closure as `once`; the
 compiler infers it from the captures.
 
-```ocaml skip
-let make_closer (t : t @ once) : (unit -> unit) @ once =
-  fun () -> close t
-
+```ocaml
+(* Press Run; the closure captures a once-handle and is itself
+   forced to mode once, so a second call fails to type-check. *)
 let use_it () =
-  let t = open_ "data.txt" in
-  let f = make_closer t in
+  let t = Handle.open_ "data.txt" in
+  let f = fun () -> Handle.close t in
   f ();
   f ()                  (* type error: f is once, already used *)
 ```
@@ -406,10 +382,14 @@ axis instead of the uniqueness axis.
 A closure that captures a `once` value has mode `once`.
 A closure that captures a `unique` value has mode `once`.
 
-```ocaml skip
-let f = (* captures a once-value *)
-f ();
-f ()           (* type error: f used twice *)
+```ocaml
+(* Same shape as the use_it example above; press Run to see the
+   second call rejected. *)
+let demo_capture () =
+  let t = Handle.open_ "data.txt" in
+  let f = fun () -> Handle.close t in
+  f ();
+  f ()           (* type error: f used twice *)
 ```
 
 The rule keeps you from sneaking a once-resource through a normal

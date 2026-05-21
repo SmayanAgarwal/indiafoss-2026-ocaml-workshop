@@ -170,8 +170,10 @@ constrained.
 
 ## `stack_`: allocate on the current stack frame
 
-```ocaml skip
-let a = stack_ { x = 0.0; y = 0.0 } in
+```ocaml
+let stack_demo () =
+  let a = stack_ { x = 0.0; y = 0.0 } in
+  a.x +. a.y
 ```
 
 - Allocates the record on **the stack**, in the current function's
@@ -242,15 +244,17 @@ exactly the C `return &x` bug, type-checked into nonexistence.
 
 ## Escape attempts are type errors
 
-```ocaml skip
-let escape () =
+```ocaml
+(* Press Run; the compiler refuses on locality grounds. *)
+let escape_slide () =
   let p = stack_ { x = 1.0; y = 2.0 } in
   p   (* type error: p is local, return must not be *)
 ```
 
-```ocaml skip
-let stash () =
-  let p = stack_ {...} in
+```ocaml
+(* Press Run; same axis, different escape route. *)
+let stash_slide () =
+  let p = stack_ { x = 1.0; y = 2.0 } in
   storage := p   (* type error: storage holds global, p is local *)
 ```
 
@@ -310,8 +314,8 @@ is to use `exclave_`.
 
 ## `exclave_`: allocate in the caller's region
 
-```ocaml skip
-let midpoint (a @ local) (b @ local) : point @ local =
+```ocaml
+let midpoint_recap (a @ local) (b @ local) : point @ local =
   exclave_ { x = (a.x +. b.x) /. 2.0;
              y = (a.y +. b.y) /. 2.0 }
 ```
@@ -502,11 +506,11 @@ zero-allocation tools, and you sometimes need others.
 
 ## What locality does *not* cover
 
-```ocaml skip
-let rec path_length (poly : point list @ local) : float =
+```ocaml
+let rec path_length_recap (poly : point list @ local) : float =
   match poly with
   | a :: (b :: _ as rest) ->
-      distance a b +. path_length rest
+      distance a b +. path_length_recap rest
   | _ -> 0.0
 ```
 

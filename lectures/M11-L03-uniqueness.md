@@ -90,10 +90,15 @@ is rejected: you cannot promote an `aliased` value to `unique`, no
 matter what; the compiler has no evidence that other references do
 not exist.
 
-You write the mode after `@`, just like locality:
+You write the mode after `@`, just like locality. A representative
+signature, wrapped in a tiny module type so the toplevel can check
+it directly:
 
-```ocaml skip
-val free : 'a t @ unique -> unit
+```ocaml
+module type Free_sig = sig
+  type 'a t
+  val free : 'a t @ unique -> unit
+end
 ```
 
 This signature says: `free` takes a `'a t` value at mode `unique`,
@@ -184,11 +189,14 @@ for `free`) a fresh unique reference is returned to chain through.
 
 ## The `Unique_ref` signature
 
-```ocaml skip
-val alloc : 'a -> 'a t @ unique
-val free  : 'a t @ unique -> unit
-val get   : 'a t @ unique -> 'a * 'a t @ unique
-val set   : 'a t @ unique -> 'a -> 'a t @ unique
+```ocaml
+module type Unique_ref_recap = sig
+  type 'a t
+  val alloc : 'a -> 'a t @ unique
+  val free  : 'a t @ unique -> unit
+  val get   : 'a t @ unique -> 'a * 'a t @ unique
+  val set   : 'a t @ unique -> 'a -> 'a t @ unique
+end
 ```
 
 Every operation:
@@ -230,13 +238,23 @@ simplified `t.value` version compiles for ordinary values.
 
 A subtle test: change `set` to use `Fun.id` on the result. Same
 behaviour, but `Fun.id` is a normal-mode function the compiler
-cannot prove preserves uniqueness:
+cannot prove preserves uniqueness. Wrapping the variant in a
+module ascription against the same signature makes the failure
+concrete:
 
-```ocaml skip
-let set t x =
-  t.value <- x;
-  let t' = Fun.id t in    (* compiler cannot prove unique *)
-  t'
+```ocaml
+(* Press Run; the ascription fails because the rewritten set does
+   not satisfy 'a t @ unique -> 'a -> 'a t @ unique. *)
+module M_bad : Unique_ref = struct
+  type 'a t = { mutable value : 'a }
+  let alloc x = { value = x }
+  let free _t = ()
+  let get t = (t.value, t)
+  let set t x =
+    t.value <- x;
+    let t' = Fun.id t in    (* compiler cannot prove unique *)
+    t'
+end
 ```
 
 The compiler rejects this with a message that the function does
@@ -283,8 +301,8 @@ is possible because there is nothing left to use.
 
 ## Correct usage shadows through
 
-```ocaml skip
-let okay (r : int t @ unique) =
+```ocaml
+let okay_slide (r : int t @ unique) =
   let _v, r = get r in
   let r = set r 20 in
   free r
@@ -341,14 +359,14 @@ of memory-safety bugs.
 
 ## Use-after-free and double-free: type errors
 
-```ocaml skip
-let oops r =
+```ocaml
+let oops_uaf (r : int t @ unique) =
   free r;
   get r           (* type error *)
 ```
 
-```ocaml skip
-let oops r =
+```ocaml
+let oops_double (r : int t @ unique) =
   free r;
   free r          (* type error *)
 ```
@@ -370,8 +388,8 @@ the returned value.
 
 In the `okay` example, watch the ownership pass through:
 
-```ocaml skip
-let okay (r0 : int t @ unique) =
+```ocaml
+let okay_renamed (r0 : int t @ unique) =
   let _v, r1 = get r0 in   (* ownership passed from r0 to r1 *)
   let r2 = set r1 20 in    (* passed from r1 to r2 *)
   free r2                  (* r2 consumed, no new owner *)
@@ -454,8 +472,8 @@ downgrades the closure's linearity to `once`.
 
 ## The closure-capture pitfall
 
-```ocaml skip
-let wat () =
+```ocaml
+let wat_recap () =
   let t = alloc 42 in
   let f () = free t in
   f ();
@@ -518,12 +536,12 @@ useful life.
 
 ## Aliasing destroys the uniqueness privilege
 
-```ocaml skip
-let dup r = (r, r)
+```ocaml
+let dup_recap r = (r, r)
 
-let oops () =
+let oops_alias () =
   let r = alloc 42 in      (* r : int t @ unique *)
-  let a, b = dup r in      (* coerced to aliased *)
+  let a, _b = dup_recap r in (* coerced to aliased *)
   free a                   (* error: aliased, expected unique *)
 ```
 
@@ -539,8 +557,11 @@ explicitly.
 
 When you read the signature of `free`:
 
-```ocaml skip
-val free : 'a t @ unique -> unit
+```ocaml
+module type Free_unique = sig
+  type 'a t
+  val free : 'a t @ unique -> unit
+end
 ```
 
 you can conclude, just from the signature, that calling `free` on
@@ -559,8 +580,11 @@ contract.
 
 Contrast with a hypothetical linear-only version of the same API:
 
-```ocaml skip
-val free : 'a t @ once -> unit
+```ocaml
+module type Free_once = sig
+  type 'a t
+  val free : 'a t @ once -> unit
+end
 ```
 
 This says "use the reference at most once, then call `free`." From
@@ -581,13 +605,19 @@ appropriate axis.
 
 ## Uniqueness vs linearity, modularly
 
-```ocaml skip
-val free : 'a t @ unique -> unit
+```ocaml
+module type Free_unique_slide = sig
+  type 'a t
+  val free : 'a t @ unique -> unit
+end
 ```
 → Safe from the signature alone. Modular reasoning.
 
-```ocaml skip
-val free : 'a t @ once -> unit
+```ocaml
+module type Free_once_slide = sig
+  type 'a t
+  val free : 'a t @ once -> unit
+end
 ```
 → Safe only if you audit the whole API. Whole-API reasoning.
 

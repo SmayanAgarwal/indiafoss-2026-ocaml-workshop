@@ -140,44 +140,65 @@ The ownership chain threads the handle through each call.
 ## The implementation
 
 The implementation is mostly mechanical. We need a representation
-type for the handle (here, a record with the underlying file
-descriptor and a current position), and we need the four
-operations:
+type for the handle and four operations.
 
-```ocaml skip
+A note on the body. In a production setting you would wrap a
+`Unix.file_descr`: `open_` would call `Unix.openfile`, `read`
+would call `Unix.read`, `write` would call `Unix.write_substring`,
+and `close` would call `Unix.close`. The browser toplevel we are
+using does not ship a real `Unix` module, so the cell below uses
+an **in-memory mock**: the handle carries a mutable `Bytes`
+buffer plus a position cursor; `read` slices bytes out, `write`
+appends, `close` is a no-op. The mode discipline we are studying
+is entirely independent of the backing: swapping the body for
+real I/O would not change a single mode annotation. The compiler
+checks the signature; the runtime can be trivial.
+
+```ocaml
 module Handle : Handle = struct
   type t = {
-    fd : Unix.file_descr;
+    mutable buf : Bytes.t;
     mutable pos : int;
   }
 
-  let open_ path =
-    let fd = Unix.openfile path [ Unix.O_RDWR ] 0o600 in
-    exclave_ { fd; pos = 0 }
+  let open_ _path =
+    (* In production: Unix.openfile path [Unix.O_RDWR] 0o600 and
+       store the fd. Here: a fresh, empty Bytes buffer.
+       exclave_ places the record in the caller's region. *)
+    exclave_ { buf = Bytes.create 0; pos = 0 }
 
   let read t n =
-    let buf = Bytes.create n in
-    let _ = Unix.read t.fd buf 0 n in
-    t.pos <- t.pos + n;
-    exclave_ (Bytes.unsafe_to_string buf, t)
+    (* In production: Unix.read t.fd buf 0 n. Here: slice from
+       the in-memory buffer. *)
+    let avail = Bytes.length t.buf - t.pos in
+    let take = if n < avail then n else avail in
+    let s =
+      if take <= 0 then ""
+      else Bytes.sub_string t.buf t.pos take
+    in
+    t.pos <- t.pos + take;
+    exclave_ (s, t)
 
   let write t s =
-    let _ = Unix.write_substring t.fd s 0 (String.length s) in
+    (* In production: Unix.write_substring t.fd s 0 (length s).
+       Here: append to the in-memory buffer. *)
+    let extra = Bytes.of_string s in
+    t.buf <- Bytes.cat t.buf extra;
     t.pos <- t.pos + String.length s;
     exclave_ t
 
-  let close t =
-    Unix.close t.fd
+  let close _t =
+    (* In production: Unix.close t.fd. Here: nothing to release. *)
+    ()
 end
 ```
 
 A few points to note.
 
-First, `open_` calls `Unix.openfile` (which returns a `Unix.file_descr`),
-then *allocates* a fresh record using `exclave_`. The `exclave_`
-keyword places the record in the *caller's* region, not in
-`open_`'s own region. The caller's region is the scope where the
-handle is to be used; the handle therefore lives long enough.
+First, `open_` *allocates* a fresh record using `exclave_`. The
+`exclave_` keyword places the record in the *caller's* region, not
+in `open_`'s own region. The caller's region is the scope where
+the handle is to be used; the handle therefore lives long enough.
 
 Second, `read` returns a pair `(string, t)`. By the locality
 rules, this pair, the string, and the `t` should all be in the
@@ -198,20 +219,18 @@ returned values.
 
 :::slide
 
-## The implementation
+## The implementation (sketch)
 
 ```ocaml skip
-let open_ path =
-  let fd = Unix.openfile path [ Unix.O_RDWR ] 0o600 in
-  exclave_ { fd; pos = 0 }
+let open_ _path =
+  exclave_ { buf = Bytes.create 0; pos = 0 }
 
 let read t n =
-  let buf = Bytes.create n in
-  let _ = Unix.read t.fd buf 0 n in
+  let s = Bytes.sub_string t.buf t.pos n in
   t.pos <- t.pos + n;
-  exclave_ (Bytes.unsafe_to_string buf, t)
+  exclave_ (s, t)
 
-let close t = Unix.close t.fd
+let close _t = ()
 ```
 
 `exclave_` lets each operation return a value in the caller's
@@ -225,7 +244,7 @@ signature.
 Here is a client that opens a file, writes some bytes, reads them
 back, and closes:
 
-```ocaml skip
+```ocaml
 let example () =
   let t = Handle.open_ "scratch.txt" in
   let t = Handle.write t "hello" in
@@ -248,7 +267,7 @@ cleanly.
 
 ## Correct usage
 
-```ocaml skip
+```ocaml
 let example () =
   let t = Handle.open_ "scratch.txt" in
   let t = Handle.write t "hello" in
@@ -271,18 +290,18 @@ OxCaml.
 
 ### Bug 1: double-close
 
-```ocaml skip
+```ocaml
+(* Press Run; linearity rejects the second close. *)
 let double () =
   let t = Handle.open_ "scratch.txt" in
   Handle.close t;
   Handle.close t
 ```
 
-The compiler:
+The compiler responds with a message of the form
 
 > Error: This value is used here, but it is defined as once and
-> has already been used:
-> Line 3, characters 16-17.
+> has already been used.
 
 The first `close t` consumed the handle. The second `close t` is
 attempting to use it again. Linearity rejects it.
@@ -296,7 +315,9 @@ involved double-close as part of its exploit chain.
 
 ### Bug 2: escape attempt
 
-```ocaml skip
+```ocaml
+(* Press Run; locality refuses to let a local handle land in a
+   long-lived global cell. *)
 let bad_storage : Handle.t ref = ref (Handle.open_ "init.txt")
 
 let escape () =
@@ -308,7 +329,7 @@ Two things go wrong here. First, the top-level `bad_storage`
 declaration itself fails: `Handle.open_` returns a `t @ local`,
 which cannot land in a top-level mutable cell (top-level cells are
 global). Second, even if we tried inside `escape`, the assignment
-fails:
+fails, with a message of the form
 
 > Error: This value is local because it is the result of
 > Handle.open_.
@@ -327,7 +348,8 @@ this particular API is "open and close in one scope."
 
 ### Bug 3: use-after-close
 
-```ocaml skip
+```ocaml
+(* Press Run; same shape as bug 1, different surface form. *)
 let uaf () =
   let t = Handle.open_ "scratch.txt" in
   Handle.close t;
@@ -335,14 +357,9 @@ let uaf () =
   ()
 ```
 
-The compiler:
-
-> Error: This value is used here, but it is defined as once and
-> has already been used:
-> Line 3, characters 16-17.
-
-Same shape as the double-close: `close` consumed the handle, and
-`read t` is trying to use it. Linearity rejects.
+The compiler responds with the same "used as once, already used"
+shape of error. `close` consumed the handle, and `read t` is
+trying to use it. Linearity rejects.
 
 The C version of use-after-close is one of the most common
 practical bugs: a logging library closes its file descriptor on
@@ -394,12 +411,17 @@ ignores the return value of `fclose` (most programs do) gets no
 benefit. And none of it catches the use-after-close pattern, which
 is the most dangerous of the three.
 
-Compare with the OxCaml signature:
+Compare with the OxCaml signature (this is the same `Handle`
+module type we wrote above; rebinding it under a fresh name lets
+us put the signature side by side with the C prototypes):
 
-```ocaml skip
-val open_ : string -> t @ once @ local
-val read  : t @ once @ local -> int -> string * t @ once @ local
-val close : t @ once @ local -> unit
+```ocaml
+module type Handle_recap = sig
+  type t
+  val open_ : string -> t @ once @ local
+  val read  : t @ once @ local -> int -> string * t @ once @ local
+  val close : t @ once @ local -> unit
+end
 ```
 
 The signature *is* the protocol. Reading the signature is reading
@@ -560,7 +582,7 @@ types however you like, but each operation should accept a buffer
 at `@ once @ local`, and the non-`free` operations should return a
 fresh `@ once @ local` buffer):
 
-```ocaml skip
+```ocaml
 module type Buffer = sig
   type t
   val alloc : int -> t @ once @ local
