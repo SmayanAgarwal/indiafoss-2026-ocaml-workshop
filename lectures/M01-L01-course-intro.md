@@ -501,7 +501,8 @@ Every week of the course follows the same shape:
 - **A tutorial video** at the end of the week that walks through
   problems of the same flavour as that week's assignment.
 - **One assignment** released alongside the videos.
-- **A discussion forum** on the NPTEL platform, checked daily.
+- **A discussion forum** on the NPTEL platform; monitored by
+  the TAs and me through the week.
 
 :::
 
