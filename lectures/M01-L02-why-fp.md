@@ -72,14 +72,21 @@ That's the whole language.
 
 :::
 
+A convention worth knowing before the next snippet: if the third
+operand is the address of the very next instruction (the common
+case, no branch taken), most `subleq` assemblers let you drop it.
+A two-operand `subleq A, B` is shorthand for "subtract and fall
+through to the next instruction." We use that shorthand below; the
+semantics are unchanged.
+
 Three `subleq` instructions, working with one scratch memory
 location `Z` that starts at zero, implement *addition*. The pattern
 is:
 
 ```
-subleq A, Z, next1        ; Z := Z - A     (so Z = -A)
-subleq Z, B, next2        ; B := B - Z = B + A
-subleq Z, Z, end          ; Z := 0 again
+subleq A, Z        ; Z := Z - A     (so Z = -A)
+subleq Z, B        ; B := B - Z = B + A
+subleq Z, Z        ; Z := 0 again
 ```
 
 You can work out for yourself, with patience, that after these three
