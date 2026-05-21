@@ -81,7 +81,11 @@ body.mode-slides .reveal .slides section h3 {
 }
 
 body.mode-slides x-ocaml {
-  font-size: 0.9rem;
+  /* em (not rem) so the cell font scales with the slide body
+     font-size. At slide body 1.7rem, 0.85em is about 23px,
+     which matches the bullet rhythm but leaves room for long
+     code lines. */
+  font-size: 0.85em;
   margin: 0.6rem 0;
 }
 
