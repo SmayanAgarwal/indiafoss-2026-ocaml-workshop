@@ -20,6 +20,17 @@ html, body {
   line-height: 1.55;
 }
 
+/* Safety net: any stray wide element (a markdown image with a
+   pixel width, a long inline pre tag, a third-party embed) should
+   never punch a horizontal scrollbar through the whole page.
+   [overflow-x: clip] is preferred over [hidden] because it does
+   not establish a new scroll container and so does not break the
+   sticky positioning of the page header. Scoped to chapter mode
+   because reveal.js manages its own viewport in slide mode. */
+body.mode-chapter {
+  overflow-x: clip;
+}
+
 :root {
   --sidebar-width: 260px;
 }
@@ -35,12 +46,22 @@ body.mode-slides  .lecture-meta-footer { display: none; }
   background: var(--bg);
   border-bottom: 1px solid var(--rule);
   padding: 0.6rem 1rem;
+  /* [box-sizing: border-box] so the header's padding stays inside
+     its declared width. Without this, on narrow viewports the
+     padding adds 2rem to the content width and pushes the header
+     past 100vw. */
+  box-sizing: border-box;
+  max-width: 100%;
   display: flex;
   /* Vertically centre items by box, not by text baseline. The ⌂
      glyph in the home link extends well below the normal text
      baseline; baseline alignment lets the button box hang below
      the header rule and get visually clipped. */
   align-items: center;
+  /* Allow the header to wrap onto a second row on narrow viewports
+     so the right-side cell-controls cluster does not overflow the
+     viewport horizontally. */
+  flex-wrap: wrap;
   /* Uniform spacing between all header items: the same 0.4rem used
      by the inner cell-controls. The lecture-title has [flex: 1] so
      it absorbs the wide gap between the left cluster (sidebar
@@ -90,6 +111,9 @@ body.mode-slides  .lecture-meta-footer { display: none; }
 .cell-controls {
   display: flex;
   gap: 0.4rem;
+  /* Let buttons wrap to a second row on narrow viewports instead
+     of overflowing the header (and the page) horizontally. */
+  flex-wrap: wrap;
 }
 body.mode-chapter .when-slides  { display: none; }
 body.mode-slides  .when-chapter { display: none; }
@@ -98,6 +122,13 @@ body.mode-slides  .when-chapter { display: none; }
   max-width: var(--width);
   margin: 2rem auto;
   padding: 0 1rem 4rem;
+  /* A bare URL written as link text (e.g. autolink
+     [<https://example.com/very/long/path>]) is one unbreakable token;
+     on narrow viewports it forces the line to extend past the
+     viewport edge. [overflow-wrap: anywhere] lets the browser
+     break it after any character if needed, but leaves normal
+     prose alone. */
+  overflow-wrap: anywhere;
 }
 
 /* ---- GitBook-style sidebar ---- */
@@ -362,6 +393,23 @@ body.mode-slides .privacy-banner { display: none; }
 .chapter pre { background: var(--code-bg); padding: 0.8rem 1rem; border-radius: 4px; overflow-x: auto; }
 .chapter code { background: var(--code-bg); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.9em; }
 .chapter pre code { background: transparent; padding: 0; }
+/* Images and wide block elements must not exceed the chapter
+   column width: without [max-width: 100%] a roadmap SVG of intrinsic
+   width 800 punches a horizontal scrollbar through the page on
+   mobile. */
+.chapter img,
+.chapter svg,
+.chapter video {
+  max-width: 100%;
+  height: auto;
+}
+/* Tables can be arbitrarily wide; wrap them in a horizontally
+   scrollable region rather than letting them push the page. */
+.chapter table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
 
 /* Slide sections inline in chapter mode: render as soft callouts. */
 .chapter section.slide {
