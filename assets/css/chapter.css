@@ -307,6 +307,62 @@ body.mode-slides .home-link { opacity: 0.6; }
   }
 }
 
+/* ---- Mobile / touch refinements ----
+   Three issues the smaller-viewport pass found:
+
+   1. Touch targets. The header buttons are ~32x34 px on desktop;
+      that is under the Apple HIG 44 px and Material 48 px
+      minimums, so on touch devices the buttons are hard to hit.
+   2. The lecture title ellipses aggressively to "Course..." once
+      the cell-controls cluster wraps; at narrow widths the title
+      should drop to its own row.
+   3. The privacy banner sits flush against the right edge at
+      ~390 px viewport. Span it full-width with safe margins
+      instead, so it has dismiss buttons inside the viewport.
+
+   Scoped to (a) coarse pointers (phones, tablets), and (b) narrow
+   viewports (<= 600 px) so desktop browsers at narrow widths also
+   get the bigger targets if a mouse user is squinting. */
+
+@media (pointer: coarse), (max-width: 600px) {
+  .mode-toggle,
+  .cell-controls button,
+  .sidebar-collapse,
+  .home-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+  .privacy-banner button {
+    min-height: 44px;
+    min-width: 64px;
+    padding: 0.5rem 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Stack: lecture title gets its own row below the button cluster.
+     The page-header flex-wrap (set in the earlier mobile pass) lets
+     this happen; we just force the title to take the full row. */
+  .lecture-title {
+    flex-basis: 100%;
+    order: 99;            /* push title below the button cluster */
+    text-overflow: clip;  /* no need to ellipsis once it has the row */
+    white-space: normal;
+    font-size: 1rem;
+  }
+
+  /* Privacy banner: span the bottom of the viewport with comfortable
+     left/right margins. Drops the fixed 360 px max-width that
+     pushed it flush against narrow screens' right edges. */
+  .privacy-banner {
+    left: 0.75rem;
+    right: 0.75rem;
+    max-width: none;
+  }
+}
+
 .chapter h1, .chapter h2, .chapter h3 {
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   line-height: 1.25;
