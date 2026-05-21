@@ -331,9 +331,11 @@ how to interpret each operand of a primitive operation).
 
 The trick is to use the low bit of every word as a *tag*:
 immediates have the low bit set to `1`; pointers have the low
-bit set to `0` (heap blocks are always allocated at even
-addresses, so this is enforceable). At any point in execution,
-one bit test distinguishes an immediate from a pointer.
+bit set to `0`. This works because the runtime always allocates
+heap blocks at even (in fact, word-aligned) addresses, so the low
+bit of a pointer is naturally zero, leaving it free to use as a
+tag. At any point in execution, one bit test distinguishes an
+immediate from a pointer.
 
 This is the choice that cost us the 63rd bit of integer range,
 as we observed in [M02-L01](M02-L01-literals.html). The cost is
@@ -400,8 +402,13 @@ available without an extra word per array.
 
 The GC's job is to find and reclaim memory the program will not
 use again. OCaml's GC is a *generational two-space minor heap +
-mark-sweep-compact major heap* design. The detail is more than
-this lecture needs; the conceptual model is:
+mark-sweep-compact major heap* design. "Generational" here means
+the GC bets that most allocations die young (the *minor* heap
+holds short-lived blocks and is collected often and cheaply), and
+that the survivors are likely to live a while longer (promoted
+into the *major* heap, which is collected less often and more
+thoroughly). The detail is more than this lecture needs; the
+conceptual model is:
 
 1. The program allocates a new block. The minor heap is fast:
    bump a pointer, write the header, return the address.

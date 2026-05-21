@@ -217,6 +217,16 @@ percent of all CVEs at Microsoft, 70 percent at Chromium, 90
 percent of Android native, 80 percent of in-the-wild 0-days. There
 is no debate about magnitude.
 
+Every one of those bugs is, in some form, one of the four
+categories we catalogued in [M10-L01](M10-L01-ub-and-the-zoo.html):
+use-after-free, buffer overflow, uninitialised read, double-free.
+And every one of those four categories is impossible in safe
+OCaml, for reasons we will make precise in
+[M10-L03](M10-L03-how-ocaml-rules-them-out.html). The 70 / 80 / 90
+percent numbers are, equivalently, the percentage of CVEs whose
+*entire bug class* OCaml rules out by construction. Keep that
+framing as you read the rest of this lecture.
+
 Now to the second half of the question: why does a memory bug
 become a security incident?
 

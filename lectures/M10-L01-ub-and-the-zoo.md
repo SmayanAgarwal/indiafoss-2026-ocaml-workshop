@@ -148,8 +148,15 @@ caller proceeds with a corrupted view of the world. This was
 [CVE-2009-1897](https://nvd.nist.gov/vuln/detail/CVE-2009-1897), a
 real Linux kernel vulnerability.
 
-The bug is *not* a compiler bug. The C standard makes this
-behaviour legal. The bug is in the source code's reliance on UB.
+The conceptual move worth pausing on: the *source program* contains
+UB (the dereference on line 2, in the hypothetical case `tun` is
+null). The compiler is allowed to optimise on the assumption that
+UB does not occur. The *miscompile* (deleting the null check) is
+the consequence of that assumption. The bug is *not* a compiler
+bug. The C standard makes this behaviour legal. The bug is in the
+source code's reliance on UB: the programmer wrote a check that
+runs *after* the dereference, and the C standard interprets the
+dereference as a promise that the check is unnecessary.
 
 :::slide
 
@@ -255,6 +262,12 @@ it.
 
 ### Use-after-free
 
+In C, the programmer manually requests memory with `malloc` and
+returns it with `free`. Once you call `free` on a block, the
+allocator considers the memory available to hand out to the next
+`malloc`. If you keep using the original pointer after that point,
+you are reading bytes the program no longer owns.
+
 A program allocates a block of memory, frees it, then accesses the
 freed block again. From the C compiler's point of view, the
 program "owns" that memory for an interval starting at `malloc` and
@@ -285,6 +298,12 @@ execution with high reliability because browsers run in a single
 process with broad capabilities.
 
 ### Buffer overflow
+
+In C, arrays do not carry their length at runtime. A function that
+copies bytes into a buffer trusts the caller to pass a length that
+fits; if the caller miscomputes (or, in the security setting, the
+attacker controls the length), the copy walks past the buffer's
+end and overwrites whatever was next in memory.
 
 A program writes past the end of an allocated buffer, corrupting
 whatever memory happens to lie beyond. C's standard library is

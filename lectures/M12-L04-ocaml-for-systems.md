@@ -343,7 +343,10 @@ requests per second:
   Rust HTTP server.
 - **`nethttp_go`**: Go, the standard library `net/http`.
 
-The shape of the result (full numbers in the talk's slide 26):
+The shape of the result, as measured by the ocaml-multicore eio
+team's harness around 2023-2024 (full numbers in the talk's slide
+26; absolute numbers will drift over time as the libraries are
+tuned, but the relative ordering has been stable):
 
 | Stack | Peak serviced requests/sec | Position |
 | --- | --- | --- |

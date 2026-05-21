@@ -283,8 +283,12 @@ disappear when `midpoint` returns. The right place is the
 **caller's** region: the caller is the one whose lifetime the new
 point will share.
 
-The `exclave_` keyword expresses exactly that. It says "allocate
-this in the caller's region, not mine":
+The `exclave_` keyword expresses exactly that. (The name comes
+from the geographic sense of "exclave": a piece of one country's
+territory that sits inside another's. An `exclave_` allocation
+sits in the *caller's* region while syntactically appearing in
+*this* function's body.) It says "allocate this in the caller's
+region, not mine":
 
 ```ocaml
 let midpoint (a @ local) (b @ local) : point @ local =

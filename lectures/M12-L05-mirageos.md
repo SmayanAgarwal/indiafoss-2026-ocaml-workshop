@@ -59,13 +59,21 @@ stack lands.
 ## What MirageOS is
 
 The one-line definition: **MirageOS is a library OS plus a compiler
-that builds specialised images.** The library OS part is exactly the
-M12-L02 story: a collection of OCaml libraries that, between them,
-implement the functionality that used to be in the kernel. The
-compiler part is the interesting addition: MirageOS has its own
-build tool, `mirage`, that takes a high-level description of the
-unikernel you want and orchestrates the OCaml compiler, the package
-manager, and `dune` into producing the final ELF binary.
+that builds specialised images.** The images it produces are called
+*unikernels*: a unikernel is a single statically-linked binary that
+contains both an application and the operating-system pieces it
+needs (network stack, storage, scheduling, crypto), bundled
+together so there is no separate kernel underneath. The "uni" in
+*unikernel* is the single image: one binary, one address space,
+one OS-and-application combined unit.
+
+The library OS part is exactly the M12-L02 story: a collection of
+OCaml libraries that, between them, implement the functionality
+that used to be in the kernel. The compiler part is the
+interesting addition: MirageOS has its own build tool, `mirage`,
+that takes a high-level description of the unikernel you want and
+orchestrates the OCaml compiler, the package manager, and `dune`
+into producing the final ELF binary.
 
 A few properties of the resulting image are worth knowing up front:
 

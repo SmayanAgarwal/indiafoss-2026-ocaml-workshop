@@ -24,7 +24,12 @@ push it down into the *operating system itself*? Could the OCaml runtime
 be the runtime of a server, with no Linux underneath?
 
 The answer, by the end of the module, is yes: that is exactly what
-MirageOS does. But to get there we first have to understand what an
+MirageOS does. ("Unikernel" is the name for the kind of artefact
+MirageOS produces: a single binary that contains the application
+*and* the operating-system pieces it needs, bundled together as one
+unit. We will define it carefully in the synthesis lecture
+M12-L05; for now, treat it as shorthand for "what we are building
+toward.") But to get there we first have to understand what an
 operating system actually is, why monolithic kernels are so large, and
 where the security cost of that size lives. This first lecture sets up
 the problem the rest of the module solves. It is deliberately

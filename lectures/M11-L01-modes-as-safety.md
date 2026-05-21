@@ -121,6 +121,10 @@ OxCaml has five axes. M11 covers **locality**, **uniqueness**,
 
 ## The behavioural-types framing
 
+The slide above defined a *behavioural type* as a type that
+tracks the protocol of use, not just the shape of a value. Why is
+that the framing worth caring about?
+
 Before OxCaml existed, OCaml programmers who wanted to enforce
 "this resource must be closed exactly once" reached for runtime
 tricks. The standard one: a mutable `bool` inside the resource,
@@ -171,6 +175,14 @@ dynamic check is gone.
 The next three lectures (M11-L02 through M11-L04) each take one
 axis, give a working example, and walk through what the compiler
 says when you try to break the rule. This section is the road map.
+
+A note on the code snippets below and in the following lectures:
+the OxCaml mode-syntax (the `@ local`, `@ unique`, `@ once`
+annotations, `stack_`, `exclave_`, `Modes.Aliased.t`) is still
+evolving across OxCaml releases. The snippets reflect the syntax
+of the snapshot this course is pinned to; if you try a slightly
+different OxCaml version, some surface details may differ. The
+*ideas* are stable; the spelling is not.
 
 ### Locality: scope-tracking
 
