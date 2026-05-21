@@ -572,10 +572,10 @@ real (if small) functions in OCaml comfortably.
 
 ## What's next
 
-In the next lecture we look at the **type system**: what `int`,
-`float`, `string`, `bool` give you that dynamically typed languages
-hide, and how OCaml infers types you never had to write.
-<!-- KC!: Is that what we are looking at in the next lecture?>
+- **Next:** [M01-L05](M01-L05-tutorial-recap.html), Module 1's
+  tutorial: worked temperature-conversion problems end to end.
+- **Then Module 2:** the type system in detail (`int`, `float`,
+  `string`, `bool`), type inference, `if` as an expression.
 
 :::
 
