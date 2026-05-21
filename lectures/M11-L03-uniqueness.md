@@ -203,7 +203,7 @@ Every operation:
 A perfectly innocent-looking implementation satisfies the
 signature:
 
-```ocaml skip
+```ocaml
 module M : Unique_ref = struct
   type 'a t = { mutable value : 'a }
   let alloc x = { value = x }
@@ -264,7 +264,7 @@ work behind the scenes:
 
 A well-typed client looks like this:
 
-```ocaml skip
+```ocaml
 open M
 
 let okay (r : int t @ unique) =
@@ -303,7 +303,8 @@ exists.
 
 Now the bad cases.
 
-```ocaml skip
+```ocaml
+(* Press Run to see the use-after-free rejected at compile time. *)
 let use_after_free (r : int t @ unique) =
   free r;
   get r
@@ -321,7 +322,8 @@ longer a live unique reference. The compiler refuses.
 
 Double-free, the same way:
 
-```ocaml skip
+```ocaml
+(* Press Run to see double-free rejected at compile time. *)
 let double_free (r : int t @ unique) =
   free r;
   free r
@@ -411,7 +413,9 @@ linearity.
 Suppose we have a unique reference and write a closure that frees
 it:
 
-```ocaml skip
+```ocaml
+(* Press Run; the closure captures a unique value, becomes `once`,
+   and the second call is rejected on linearity grounds. *)
 let wat () =
   let t = alloc 42 in       (* t : int t @ unique *)
   let f () = free t in      (* closure captures t *)
@@ -474,7 +478,7 @@ This is why we need *both* uniqueness and linearity.
 You can also see the asymmetry in the submoding rule. Take a
 unique reference and pass it through a function that aliases it:
 
-```ocaml skip
+```ocaml
 let dup r = (r, r)
 
 let oops () =
@@ -492,13 +496,13 @@ unique `r` can be coerced down (`unique ⊑ aliased`).
 But now `a` and `b` are aliased. They can no longer be passed to
 `free`, `get`, or `set`:
 
-```ocaml skip
+```ocaml
+(* Press Run; once you alias a unique reference via `dup`, you
+   cannot pass it to `free` any more. *)
 let oops () =
   let r = alloc 42 in
   let a, _b = dup r in
   free a
-(* Error: This value is "aliased" but is expected to be "unique"
-         because it is being used as the unique argument to free. *)
 ```
 
 Once you coerce a unique reference to aliased, you cannot get

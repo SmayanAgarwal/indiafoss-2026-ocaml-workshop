@@ -203,17 +203,12 @@ freely. The two arguments may now live on the stack.
 The escape-attempt version, the one that would be `return &x` in C,
 does not compile:
 
-```ocaml skip
-(* Compile-time error demo: kept as `skip` because the lecture
-   text says "the compiler refuses this". The error message below
-   is the expected diagnostic. *)
+```ocaml
+(* This is rejected by the type system; press Run to see the
+   error inline. *)
 let escape () =
   let p = stack_ { x = 1.0; y = 2.0 } in
   p
-(* Error: This value is local because it is stack_-allocated.
-         However, the highlighted expression is expected to be
-         local to the parent region or global because it is a
-         function return value. *)
 ```
 
 The C version compiles and silently breaks. The OxCaml version

@@ -188,10 +188,8 @@ let a = stack_ { x = 0.0; y = 0.0 } in
 Suppose we make a mistake and try to return a `stack_`-allocated
 point:
 
-```ocaml skip
-(* Compile-time error demo: kept as `skip` because the lecture
-   text walks through the compiler's refusal. Expected message is
-   shown below the cell in prose. *)
+```ocaml
+(* Press Run to see the compiler's refusal inline. *)
 let escape_demo () =
   let p = stack_ { x = 1.0; y = 2.0 } in
   p
@@ -215,10 +213,9 @@ is local-in-*our*-region, which is the wrong region.
 The same diagnosis fires if we try to stash a local value in a
 long-lived global cell:
 
-```ocaml skip
-(* Compile-time error demo: storing a stack-allocated local into
-   a top-level global cell is rejected by the locality checker.
-   Kept skip; expected error follows in the prose. *)
+```ocaml
+(* Press Run; the locality checker rejects storing a local value
+   into a long-lived global cell. *)
 let storage : point ref = ref { x = 0.0; y = 0.0 }
 
 let store_local () =
@@ -567,16 +564,12 @@ of CVEs.
 
 The OxCaml equivalent:
 
-```ocaml skip
-(* Compile-time error demo: the OxCaml mirror of C's `return &x`.
-   Kept skip; expected error follows. *)
+```ocaml
+(* The OxCaml mirror of C's `return &x`; press Run to see the
+   compile-time refusal. *)
 let bad () =
   let buf = stack_ (Bytes.create 16) in
   buf
-(* Error: This value is local because it is stack_-allocated.
-         However, the highlighted expression is expected to be
-         local to the parent region or global because it is a
-         function return value. *)
 ```
 
 This **does not** compile. The compiler has all the information it
