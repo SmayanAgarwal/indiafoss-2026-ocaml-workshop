@@ -123,10 +123,13 @@ memorandum](M10-L02-memory-bugs-as-security.html) on memory-safe
 languages), and how OCaml rules each one out by construction. We
 also walk a [Heartbleed-style
 example](M10-L05-tutorial.html) end to end. Module 11 picks up
-where the vanilla type system stops: OxCaml's mode system extends
-the types with locality (safe stack allocation), uniqueness
-(use-after-free of manually managed resources, at compile time), and
-linearity (use exactly once). Module 12 caps the course by asking
+where the vanilla type system stops:
+[OxCaml](https://oxcaml.org), a research branch of OCaml maintained
+by Jane Street, adds a *mode system* on top of the language we will
+have learned by then; the modes extend the types with locality (safe
+stack allocation), uniqueness (use-after-free of manually managed
+resources, caught at compile time), and linearity (use exactly
+once). Module 12 caps the course by asking
 what falls out if a language is this safe: the answer is MirageOS,
 where the operating system itself is an OCaml program. The reason we
 can talk about "undefined behaviour" precisely in week 10 is that we
