@@ -144,14 +144,13 @@ where the operating system itself is an OCaml program.
 
 By the end:
 
-- You write **idiomatic OCaml**.
-- You **reason equationally** about your code.
-- You back the type system up with **tests** (OUnit2, QCheck).
-- You can name the C bug classes OCaml rules out, and use **modes**
-  (locality, uniqueness, linearity) to close the ones a GC alone
-  cannot.
-- You understand the safety story all the way down to the **OS**
-  (MirageOS), where C and C++ traditionally fail.
+- Write **idiomatic OCaml**.
+- **Reason equationally** about your code.
+- Back the type system up with **tests** (OUnit2, QCheck).
+- Name the C bug classes OCaml rules out.
+- Use **modes** (locality, uniqueness, linearity) to close the
+  gaps a GC alone cannot.
+- Follow the safety story down to the **OS** (MirageOS).
 
 :::
 
@@ -265,15 +264,15 @@ idioms; OCaml is the counterexample.
 
 ## Why OCaml?
 
-- A **functional-first** language with a serious type system.
-- **Practical:** real production use.
-  - In industry: Tarides, Jane Street, Bloomberg, Facebook (Hack and Flow), Docker, Ahrefs, Semgrep.
-  - Powers the WebAssembly reference interpreter and the CompCert verified C compiler.
+- **Functional-first**, with a serious type system.
+- **Practical:**
+  - Jane Street, Bloomberg, Meta (Hack, Flow), Docker,
+    Tarides, Ahrefs, Semgrep.
+  - WebAssembly reference interpreter; CompCert.
   - Rust's first compiler was written in OCaml.
-- **Fast:** native code performance close to C, with garbage collection
-  and no undefined behaviour in the safe fragment.
-- **A great teaching language** for ideas you will see again in Rust,
-  Scala, Haskell, Swift, Kotlin, TypeScript.
+- **Fast:** native code close to C; GC; no UB in the safe fragment.
+- **Great teaching language:** ideas reappear in Rust, Scala,
+  Haskell, Swift, Kotlin, TypeScript.
 
 :::
 
@@ -326,7 +325,7 @@ compiler error inline; fix it and run again.
 ## Run code right in this page
 
 - Every lecture has **runnable OCaml cells.**
-- Click **Run** — output appears inline.
+- Click **Run**; output appears inline.
 - Edit any cell, Run again.
 - Nothing to install.
 
@@ -461,13 +460,9 @@ certificate.
 
 ## How the course is graded
 
-- **25%** weekly assignments. One assignment per week, due roughly a
-  week after the corresponding videos appear.
-- **75%** final certification exam.
-- You need **40%** overall to receive a certificate.
-
-The proctored final exam is conducted in person by NPTEL; the
-assignments are submitted online via the SWAYAM portal.
+- **25%** weekly assignments (one per week, via SWAYAM).
+- **75%** final certification exam (proctored, in person at NPTEL).
+- **40%** overall to receive a certificate.
 
 :::
 
@@ -541,16 +536,15 @@ expecting them would be disappointed.
 
 ## What is *not* in this course
 
-- We are not building a production system from scratch.
-- We are not surveying every language feature OCaml has; we cover the
-  ones that matter for clear, type-safe code.
-- We are not doing pure type theory; we will use a little, where it
-  helps. The course is engineering-flavoured.
+- **Not** building a production system from scratch.
+- **Not** surveying every OCaml feature; just the load-bearing
+  subset.
+- **Not** pure type theory; we use a little where it helps.
 
-If you want either of the first two, the
-[Cornell CS3110 textbook](https://cs3110.github.io/textbook/) and
-[*Real World OCaml*](https://dev.realworldocaml.org/) are excellent
-follow-on reading.
+Follow-on reading:
+[CS3110](https://cs3110.github.io/textbook/),
+[Real World OCaml](https://dev.realworldocaml.org/).
+
 :::
 
 We will not build a production system from scratch. That is a real
@@ -627,7 +621,7 @@ easier to read instead.
 - **Real World OCaml**, Prologue:
   <https://dev.realworldocaml.org/prologue.html>
 - The NPTEL course page (you're already there).
-- John Whitington, *OCaml from the Very Beginning* (book) -- a
+- John Whitington, *OCaml from the Very Beginning* (book): a
   gentler pace, useful as a parallel read if you find this course
   moving too quickly.
 ## Sources
