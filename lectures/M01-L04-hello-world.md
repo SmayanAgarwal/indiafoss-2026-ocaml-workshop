@@ -363,9 +363,9 @@ let () = 42
 :::
 
 The `let () = 42` example above is genuinely useful as a teaching
-case. Try uncommenting the `skip` annotation and running it; the
-compiler will refuse <!-- KC: uncomment what? Looks stale. -->, with an error message like *"This expression
-has type int but an expression was expected of type unit."* This is
+case. Press **Run** on the cell; the compiler refuses with an
+error message like *"This expression has type int but an
+expression was expected of type unit."* This is
 the pattern-match-as-type-check property doing its job. You said
 the result should be `()`; the compiler checked that you actually
 produced a `unit`; you didn't (you produced an `int`); the
@@ -438,19 +438,23 @@ how it differs from `;`. They are very different things.
 - `;` is the **sequencing operator** in the expression language. It
   sequences two expressions; the left must be `unit`. You use it
   inside an expression (typically inside a `let () = ...` body).
-- `;;` is a **toplevel separator**, not part of the language proper.
-  It tells the OCaml toplevel "end of input; please evaluate now."
-  You see it in tutorials that show toplevel transcripts. In a `.ml`
-  file, you almost never need `;;`; the compiler can figure out
-  where each declaration ends. <!-- KC: We also see ;; in the top-level of modules, but we haven't covered modules yet. So I don't know whether your description that it is not part of language proper is fully accurate. -->
+- `;;` is a **phrase separator** between top-level definitions. In
+  the OCaml toplevel (the interactive REPL) it doubles as "end of
+  input; please evaluate now", which is why tutorials that show
+  toplevel transcripts are sprinkled with it. In a `.ml` file the
+  compiler can almost always tell where one definition ends and
+  the next begins (the keywords `let`, `type`, `module`, and so
+  on, mark the boundary), so `;;` is grammatical but redundant
+  and idiomatic code omits it.
 
 :::slide
 
 ## Two semicolons are different from one
 
 - `;` (single) sequences side-effecting expressions; left side must be `unit`.
-- `;;` (double) is the toplevel's "end of input" marker.
-  - Almost never needed in source files.
+- `;;` (double) separates top-level definitions. The interactive
+  toplevel also uses it as "end of input; evaluate now".
+  - Grammatical in `.ml` files but redundant; idiomatic code omits it.
 
 ```ocaml
 let () =
@@ -463,10 +467,10 @@ let () =
 :::
 
 If you copy-paste code from an old OCaml tutorial that uses `;;`
-between every declaration, the code still compiles, but the `;;` is
-dead syntax. You can leave it in or take it out without changing
-the meaning. Modern OCaml code rarely uses `;;`. In this course we
-will not use it.
+between every declaration, the code still compiles, but the `;;`
+is redundant: you can leave it in or take it out without changing
+the meaning. Modern OCaml code rarely uses `;;`. In this course
+we will not use it.
 
 ## A small code challenge
 
