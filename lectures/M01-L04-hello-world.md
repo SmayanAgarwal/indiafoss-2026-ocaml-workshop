@@ -364,7 +364,7 @@ let () = 42
 
 The `let () = 42` example above is genuinely useful as a teaching
 case. Try uncommenting the `skip` annotation and running it; the
-compiler will refuse, with an error message like *"This expression
+compiler will refuse <!-- KC: uncomment what? Looks stale. -->, with an error message like *"This expression
 has type int but an expression was expected of type unit."* This is
 the pattern-match-as-type-check property doing its job. You said
 the result should be `()`; the compiler checked that you actually
@@ -442,7 +442,7 @@ how it differs from `;`. They are very different things.
   It tells the OCaml toplevel "end of input; please evaluate now."
   You see it in tutorials that show toplevel transcripts. In a `.ml`
   file, you almost never need `;;`; the compiler can figure out
-  where each declaration ends.
+  where each declaration ends. <!-- KC: We also see ;; in the top-level of modules, but we haven't covered modules yet. So I don't know whether your description that it is not part of language proper is fully accurate. -->
 
 :::slide
 
@@ -450,7 +450,7 @@ how it differs from `;`. They are very different things.
 
 - `;` (single) sequences side-effecting expressions; left side must be `unit`.
 - `;;` (double) is the toplevel's "end of input" marker.
-- Almost never needed in source files.
+  - Almost never needed in source files.
 
 ```ocaml
 let () =
