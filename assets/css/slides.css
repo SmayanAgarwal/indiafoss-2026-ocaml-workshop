@@ -85,17 +85,18 @@ body.mode-slides .reveal .slides section h3 {
    wrapping a `<div class="title-slide-inner">`; reveal.js sets
    `style="display: block"` inline on every visible section, so we
    cannot flex the section itself. The inner wrapper takes the
-   canvas height and does the centring. */
+   canvas height and does the vertical centring; text is
+   left-aligned. */
 body.mode-slides .reveal .slides section:has(.title-slide-inner) {
-  text-align: center;
+  text-align: left;
 }
 body.mode-slides .reveal .slides .title-slide-inner {
   min-height: 800px;
-  max-width: 90%;
-  margin: 0 auto;
+  max-width: 95%;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 body.mode-slides .reveal .slides .title-slide-course {
