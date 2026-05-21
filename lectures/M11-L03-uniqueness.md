@@ -159,7 +159,7 @@ module type Unique_ref = sig
   type 'a t
   val alloc : 'a -> 'a t @ unique
   val free  : 'a t @ unique -> unit
-  val get   : 'a t @ unique -> 'a * 'a t @ unique
+  val get   : 'a t @ unique -> 'a Modes.Aliased.t * 'a t @ unique
   val set   : 'a t @ unique -> 'a -> 'a t @ unique
 end
 ```
@@ -172,14 +172,18 @@ Read each line carefully; it is the whole story.
 - `free : 'a t @ unique -> unit` takes a unique reference and
   consumes it. After the call, the caller's binding cannot be
   used again.
-- `get : 'a t @ unique -> 'a * 'a t @ unique` is the interesting
-  one. To read the value, we *consume* the unique reference and
-  hand the caller back two things: the contents and a *fresh*
-  unique reference to the same cell. The caller's original binding
-  is gone; the new binding lives on. This is the "ownership chain"
-  shape that propagates through every operation.
+- `get : 'a t @ unique -> 'a Modes.Aliased.t * 'a t @ unique` is
+  the interesting one. To read the value, we *consume* the unique
+  reference and hand the caller back two things: the contents
+  wrapped in `Modes.Aliased.t` (so the reader can alias it freely),
+  and a *fresh* unique reference to the same cell. The caller's
+  original binding is gone; the new binding lives on. The
+  `Modes.Aliased` wrap on the value is necessary because OxCaml's
+  deep-uniqueness rule otherwise insists every component of a
+  unique pair is itself unique, which would prevent the caller from
+  copying the read-out value.
 - `set : 'a t @ unique -> 'a -> 'a t @ unique` same shape: consume,
-  return a fresh unique handle.
+  install, return a fresh unique handle.
 
 The pattern across all of these is: every operation takes the
 unique reference, the original binding is consumed, and (except
@@ -194,7 +198,7 @@ module type Unique_ref_recap = sig
   type 'a t
   val alloc : 'a -> 'a t @ unique
   val free  : 'a t @ unique -> unit
-  val get   : 'a t @ unique -> 'a * 'a t @ unique
+  val get   : 'a t @ unique -> 'a Modes.Aliased.t * 'a t @ unique
   val set   : 'a t @ unique -> 'a -> 'a t @ unique
 end
 ```
@@ -216,7 +220,9 @@ module M : Unique_ref = struct
   type 'a t = { mutable value : 'a }
   let alloc x = { value = x }
   let free _t = ()                       (* deallocation elided *)
-  let get t = (t.value, t)
+  let get t =
+    let a = Modes.Aliased.{ aliased = t.value } in
+    a, t
   let set t x = t.value <- x; t
 end
 ```
@@ -226,15 +232,12 @@ memory step; the OxCaml documentation has examples that wire into
 real allocators. What matters for now is the *type discipline*: the
 compiler verifies that the implementation respects uniqueness.
 
-Note that `get` returns the pair `(t.value, t)`. By the deep-
-uniqueness rule, both components of the pair are at mode `unique`.
-That is wrong for the value: we want the caller to be free to
-*alias* the contents (you might want two copies of the string
-that was stored). The library provides an escape hatch called
-`Modes.Aliased.t` that says "this field is aliased, even inside an
-otherwise unique container." We use it in the production-shaped
-version, which we will not need for this lecture's argument; the
-simplified `t.value` version compiles for ordinary values.
+The `Modes.Aliased.{ aliased = t.value }` wrapper on the value
+returned by `get` is the production-shaped escape hatch: it tells
+the compiler "this field is aliased, even inside an otherwise
+unique container." Without it the deep-uniqueness rule would
+demand the value itself be unique, which is rarely what the caller
+wants when reading.
 
 A subtle test: change `set` to use `Fun.id` on the result. Same
 behaviour, but `Fun.id` is a normal-mode function the compiler
@@ -249,7 +252,9 @@ module M_bad : Unique_ref = struct
   type 'a t = { mutable value : 'a }
   let alloc x = { value = x }
   let free _t = ()
-  let get t = (t.value, t)
+  let get t =
+    let a = Modes.Aliased.{ aliased = t.value } in
+    a, t
   let set t x =
     t.value <- x;
     let t' = Fun.id t in    (* compiler cannot prove unique *)

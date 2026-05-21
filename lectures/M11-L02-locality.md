@@ -154,10 +154,19 @@ Now use it:
 let test_distance () =
   let a = stack_ { x = 0.0; y = 0.0 } in
   let b = stack_ { x = 3.0; y = 4.0 } in
-  distance a b
-(* val test_distance : unit -> float = <fun>
-   test_distance ();; - : float = 5.0 *)
+  let d = distance a b in
+  Printf.printf "distance = %.1f\n" d
+(* val test_distance : unit -> unit = <fun>
+   test_distance ();; distance = 5.0 *)
 ```
+
+We bind `distance a b` to `d` and `Printf.printf` afterwards rather
+than returning the call result directly. The locality checker
+refuses a tail-position call whose arguments are stack-allocated in
+the current region, because tail-call optimisation would otherwise
+let the callee outlive the arguments. Binding to a local `d` first
+puts the call out of tail position; the stack frame (holding `a`
+and `b`) survives until the call completes.
 
 Both `point` records live on `test_distance`'s stack frame. The
 `stack_` keyword forces the record to be allocated there. When
