@@ -179,9 +179,13 @@ The closest analogue in other languages is C's `void`, Java's
 "this function does not return a useful value." The difference is
 that in OCaml, `unit` is a real type with a real value `()`. You
 can store `()` in a list (`[(); (); ()]` is a valid OCaml list of
-length 3). You can return `()` from a function. You can take `()`
-as an argument. It is just unusual to do any of these, because the
-value carries no information.
+length 3) or return `()` from a function. Storing and returning
+are unusual; the value carries no information so it is hard to
+do anything useful with one. *Taking* `()` as an argument, on
+the other hand, is everyday OCaml: `fun () -> ...` is the standard
+idiom for a *thunk*, a computation deferred until someone calls
+it. You will see this all over the standard library and the
+ecosystem.
 
 The phrase "no useful value" is doing a lot of work. `unit` is the
 *absence* of information, but it is the absence-as-a-value, not the
