@@ -73,7 +73,7 @@ let rec rev = function
 
 We write a unit-test suite for it:
 
-```ocaml skip
+```ocaml
 let () =
   assert (rev [] = []);
   assert (rev [1] = [1]);
@@ -181,7 +181,7 @@ For *every* list `xs`:
 Now the OCaml part. The [QCheck](https://github.com/c-cube/qcheck)
 library lets us write the involution property like this:
 
-```ocaml skip
+```ocaml
 let test_rev_involutive =
   QCheck.Test.make
     ~name:"rev is involutive"
@@ -209,6 +209,10 @@ Five pieces:
 To run the test:
 
 ```ocaml skip
+(* QCheck_runner lives in the separate [qcheck] opam package and
+   is not bundled into the in-browser toplevel; this snippet is
+   for the dune-based project setup. In a cell, run a single
+   property with [QCheck.Test.check_exn test_rev_involutive]. *)
 let () =
   QCheck_runner.run_tests_main [test_rev_involutive]
 ```
@@ -278,7 +282,7 @@ And combinators that build bigger generators out of smaller ones:
 These compose: `QCheck.(list (pair int string))` is a generator for
 random lists of (int, string) pairs.
 
-```ocaml skip
+```ocaml
 let gen_int_pair_list : (int * string) list QCheck.arbitrary =
   QCheck.(list (pair int string))
 ```
@@ -357,7 +361,7 @@ every input is "sorted" trivially. To capture `List.sort` we need
 *two* properties: the output is sorted, AND the output is a
 permutation of the input.
 
-```ocaml skip
+```ocaml
 let is_sorted xs =
   let rec go = function
     | [] | [_] -> true
@@ -633,7 +637,7 @@ example, "the head of a list equals its first element" is true
 only for non-empty lists. QCheck supports this with
 *preconditions* via `QCheck.assume`:
 
-```ocaml skip
+```ocaml
 let test_hd_first =
   QCheck.Test.make
     ~name:"hd returns first element"
@@ -827,7 +831,7 @@ let () =
 
 Reference solution:
 
-```ocaml skip
+```ocaml
 let test_concat_empty_right =
   QCheck.Test.make
     ~name:"empty is right identity for @"

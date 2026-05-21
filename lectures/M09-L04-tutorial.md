@@ -116,7 +116,7 @@ specific behaviour*. Five cases:
 The simplest possible expression: a single `Num`. The evaluator
 should return its carried value.
 
-```ocaml skip
+```ocaml
 open OUnit2
 
 let test_num_leaf _ =
@@ -134,7 +134,7 @@ leaf.
 
 Four small expressions, one per binary constructor:
 
-```ocaml skip
+```ocaml
 let test_add _ =
   assert_equal ~printer:string_of_float 5.0
     (eval (Add (Num 2.0, Num 3.0)))
@@ -164,7 +164,7 @@ symmetric input like `3.0 - 3.0` would not distinguish the bug.
 The recursion is its own thing to test. A two-level nested
 expression exercises both leaf and recursive cases:
 
-```ocaml skip
+```ocaml
 let test_nested _ =
   (* (1 + 2) * (4 - 0.5) = 3 * 3.5 = 10.5 *)
   let expr =
@@ -185,7 +185,7 @@ would catch it.
 The honest edge case. In IEEE-754 float, `1.0 /. 0.0` is
 `infinity`, not an exception. So:
 
-```ocaml skip
+```ocaml
 let test_div_by_zero _ =
   assert_equal ~printer:string_of_float infinity
     (eval (Div (Num 1.0, Num 0.0)))
@@ -271,7 +271,7 @@ out of the box. We have to build one. The recursive case is the
 interesting part: we need to limit recursion depth so we do not
 generate infinite trees.
 
-```ocaml skip
+```ocaml
 let rec gen_expr depth =
   let open QCheck.Gen in
   if depth <= 0 then
@@ -335,7 +335,7 @@ generated expression should return *something*, without exception
 (except possibly via division-by-zero producing `infinity`/`nan`,
 which is a normal `float` value in IEEE-754, not an exception).
 
-```ocaml skip
+```ocaml
 let test_eval_terminates =
   QCheck.Test.make
     ~name:"eval returns a float on any expr"
@@ -365,7 +365,7 @@ within the bounds of our `float_range`, commutativity holds modulo
 floating-point ordering of operands. We will assert exact equality
 and see what happens:
 
-```ocaml skip
+```ocaml
 let test_add_commutes =
   QCheck.Test.make
     ~name:"Add commutes"
@@ -395,7 +395,7 @@ would never have surfaced.
 `Add (Num 0.0, e)` should evaluate to the same value as `e`.
 Similarly `Mul (Num 1.0, e)` should give `e`.
 
-```ocaml skip
+```ocaml
 let test_add_identity =
   QCheck.Test.make
     ~name:"0 + e = e"
@@ -424,7 +424,7 @@ in mathematics. In IEEE-754, distributivity fails for many inputs
 (rounding accumulates differently in the two expansions). We can
 write the property as an *approximate* equality:
 
-```ocaml skip
+```ocaml
 let test_distributes_approx =
   QCheck.Test.make
     ~name:"Mul distributes over Add (approx)"
@@ -502,7 +502,7 @@ generated expressions, and the bad subtraction leaks through.
 
 Suppose we *also* add a generator-aware Sub-specific property:
 
-```ocaml skip
+```ocaml
 let test_sub_antisymmetric =
   QCheck.Test.make
     ~name:"Sub (a, b) = -(Sub (b, a))"
@@ -521,7 +521,7 @@ bug that swaps those inputs.
 
 A better property:
 
-```ocaml skip
+```ocaml
 let test_sub_eval_matches_minus =
   QCheck.Test.make
     ~name:"eval (Sub (Num a, Num b)) = a -. b"
@@ -793,7 +793,7 @@ let () =
 
 Reference solution:
 
-```ocaml skip
+```ocaml
 let test_mul_zero =
   QCheck.Test.make
     ~name:"0 * e = 0"

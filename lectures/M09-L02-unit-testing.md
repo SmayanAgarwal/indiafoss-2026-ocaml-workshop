@@ -266,7 +266,7 @@ assertions cover almost everything you will ever write.
 The workhorse. Used for "did this expression evaluate to that
 value?"
 
-```ocaml skip
+```ocaml
 open OUnit2
 let _ = assert_equal 6 (1 + 2 + 3)
 ```
@@ -517,7 +517,7 @@ end
 The positive cases assert that the stack behaves as expected on
 normal inputs. We start with the smallest possible cases:
 
-```ocaml skip
+```ocaml
 open OUnit2
 
 let test_fresh_is_empty _ =
@@ -548,7 +548,7 @@ corrupt another.
 Now a slightly bigger case that exercises the *order* property of
 a stack: last in, first out.
 
-```ocaml skip
+```ocaml
 let test_lifo_three _ =
   let s = Stack.create () in
   Stack.push 1 s;
@@ -594,7 +594,7 @@ function is *not* supposed to accept? For our stack, the obvious
 ones are `pop` and `peek` on an empty stack. Both should raise
 `Empty`.
 
-```ocaml skip
+```ocaml
 let test_pop_empty_raises _ =
   let s = Stack.create () in
   assert_raises Empty (fun () -> Stack.pop s)
@@ -617,7 +617,7 @@ A subtler negative case: a stack that has had items pushed and
 then *all* popped should be back to empty, and a further pop
 should raise `Empty`.
 
-```ocaml skip
+```ocaml
 let test_pop_after_drain_raises _ =
   let s = Stack.create () in
   Stack.push 1 s;
@@ -790,7 +790,7 @@ group of cases tests the same property under different inputs,
 write a parameterised test (a function that *makes* a case from
 some input):
 
-```ocaml skip
+```ocaml
 let lifo_test input expected =
   let name = "LIFO on " ^ string_of_int (List.length input) ^ " items" in
   name >:: (fun _ ->
@@ -901,7 +901,7 @@ let () =
 
 Reference solution:
 
-```ocaml skip
+```ocaml
 let test_push_pop_seven _ =
   let s = Stack.create () in
   Stack.push 7 s;
