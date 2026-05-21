@@ -133,12 +133,53 @@ subleq Z, Z        ; Z := 0 again
 - A few more instructions implement copy, move, conditional, and
   multiplication.
 
-::: With slightly more work you can write
-the `subleq` equivalents of "copy a memory cell", "branch on a
-condition", "multiply by a constant", and so on. After enough such
-gadgets, you have all the building blocks of a Turing machine.
-`subleq` is *Turing complete*: it can compute anything any other
-programming language can compute.
+:::
+
+With slightly more work you can write the `subleq` equivalents of
+"copy a memory cell", "branch on a condition", "multiply by a
+constant", and so on. After enough such gadgets, you have all the
+building blocks of a Turing machine. `subleq` is *Turing complete*:
+it can compute anything any other programming language can
+compute.
+
+To make "with slightly more work" concrete, here is a complete
+`subleq` program that computes `B := 5 * A`. It assumes `B = 0`
+and `Z = 0` to start, and it just uses the three-instruction
+addition gadget five times in a row:
+
+```
+; B := 5 * A. Initially B = 0, Z = 0.
+subleq A, Z       ; Z := -A
+subleq Z, B       ; B := 0 + A = A
+subleq Z, Z       ; Z := 0
+subleq A, Z       ; Z := -A
+subleq Z, B       ; B := A + A = 2A
+subleq Z, Z       ; Z := 0
+subleq A, Z       ; Z := -A
+subleq Z, B       ; B := 2A + A = 3A
+subleq Z, Z       ; Z := 0
+subleq A, Z       ; Z := -A
+subleq Z, B       ; B := 3A + A = 4A
+subleq Z, Z       ; Z := 0
+subleq A, Z       ; Z := -A
+subleq Z, B       ; B := 4A + A = 5A
+subleq Z, Z       ; Z := 0
+```
+
+Fifteen instructions, the same three lines repeated five times.
+No branching, no `for` loop, no counter, no name for "the five
+iterations". Reading this code you have no way to *tell* it is
+multiplication by five without mentally executing it, three
+instructions at a time, and noticing that the cycle repeats. A
+real `subleq` program that needs to loop over `n` iterations
+cannot even unroll like this: it has to encode the loop counter,
+the decrement, and the conditional branch in `subleq` instructions
+on cells of memory, often with self-modifying code to compute the
+addresses to branch to. The fifteen instructions above become
+hundreds.
+
+That is the practical content of "Turing complete": yes, you can
+write any program; no, you do not want to.
 
 :::slide
 
