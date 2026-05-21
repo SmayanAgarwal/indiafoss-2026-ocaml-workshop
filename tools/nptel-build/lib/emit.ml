@@ -22,6 +22,17 @@ let head ~asset_root ~(fm : Frontmatter.t) =
     | Some s when String.trim s <> "" -> s
     | _ -> "unknown"
   in
+  (* M09 (testing) lectures load an extension bundle that adds QCheck
+     and OUnit2 into the running vanilla x-ocaml toplevel. The bundle
+     is produced by tools/build-m09-extras.sh using the patched
+     js_of_ocaml fork; loaded via [src-load], it composes additively
+     with the worker's existing Stdlib without overwriting any
+     symbols. Other modules use vanilla x-ocaml and skip this attribute. *)
+  let src_load_attr =
+    match fm.week with
+    | Some 9 -> Printf.sprintf "\n    src-load=\"%s/assets/x-ocaml/m09-extras.js\"" asset_root
+    | _ -> ""
+  in
   Printf.sprintf
     {|<!doctype html>
 <html lang="en">
@@ -37,12 +48,13 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   <link rel="stylesheet" href="%s/assets/css/slides.css">
   <script async
     src="%s/assets/x-ocaml/x-ocaml.js"
-    src-worker="%s/assets/x-ocaml/x-ocaml.worker.js"></script>
+    src-worker="%s/assets/x-ocaml/x-ocaml.worker.js"%s></script>
 </head>|}
     (Parse.html_escape commit_sha)
     (Parse.html_escape quiz_api_url)
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
     asset_root asset_root asset_root asset_root asset_root asset_root
+    src_load_attr
 
 let header_bar ~(fm : Frontmatter.t) ~running_lecture =
   let lecture_id =
