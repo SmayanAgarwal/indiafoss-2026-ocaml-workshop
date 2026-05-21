@@ -458,7 +458,7 @@ certificate.
 
 - **25%** weekly assignments. One assignment per week, due roughly a
   week after the corresponding videos appear.
-- **75%** final certification exam. Two paper sets exist; you sit one.
+- **75%** final certification exam.
 - You need **40%** overall to receive a certificate.
 
 The proctored final exam is conducted in person by NPTEL; the
