@@ -40,6 +40,11 @@ body.mode-chapter .reveal { display: none; }
 body.mode-slides  .chapter { display: none; }
 body.mode-slides  .lecture-meta-footer { display: none; }
 
+/* The auto-injected opening title slide is slide-mode only.
+   In chapter mode the page header bar plus the lecture's own
+   H1 carry the title, so the title slide is redundant inline. */
+body.mode-chapter section.title-slide { display: none; }
+
 .page-header {
   position: sticky;
   top: 0;

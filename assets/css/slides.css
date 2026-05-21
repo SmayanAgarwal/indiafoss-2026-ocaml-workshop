@@ -80,15 +80,52 @@ body.mode-slides .reveal .slides section h3 {
   font-size: 2rem;
 }
 
+/* Auto-injected opening title slide. Carries the course name, the
+   lecture title, the Module/Lecture label, and the instructor. */
+body.mode-slides .reveal .slides section.title-slide {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+body.mode-slides .reveal .slides section.title-slide .title-slide-inner {
+  max-width: 90%;
+}
+body.mode-slides .reveal .slides section.title-slide .title-slide-course {
+  font-size: 1.6rem;
+  color: var(--muted, #555);
+  margin: 0 0 1rem 0;
+  letter-spacing: 0.02em;
+}
+body.mode-slides .reveal .slides section.title-slide .title-slide-lecture {
+  font-size: 3.2rem;
+  font-weight: 700;
+  margin: 0 0 0.8rem 0;
+  line-height: 1.15;
+}
+body.mode-slides .reveal .slides section.title-slide .title-slide-label {
+  font-size: 1.4rem;
+  color: var(--muted, #555);
+  margin: 0 0 2.4rem 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+body.mode-slides .reveal .slides section.title-slide .title-slide-instructor {
+  font-size: 1.5rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
 body.mode-slides x-ocaml {
   /* em (not rem) so the cell font scales with the slide body
      font-size. The x-ocaml shadow-DOM CSS sets the editor to
      :host { font-size: 1.2em } on top of whatever we set here,
      so the effective rendered code size is host * 1.2. At slide
-     body 1.7rem, 0.55em gives a host ~15px and a rendered code
-     size of ~18px, comfortably smaller than the 27px body so
-     long code lines fit but the cell stays readable. */
-  font-size: 0.55em;
+     body 1.7rem, 0.68em gives a host ~18.5px and a rendered code
+     size of ~22px, readable from across a lecture hall while
+     leaving room for long lines. */
+  font-size: 0.68em;
   margin: 0.6rem 0;
 }
 
