@@ -406,8 +406,9 @@ let _ = sieve (range 2 50)
 
 Press **Run.** You should see the primes up to 50 come out. Try
 changing the second argument to `range`: ask for the primes up to
-100, or replace `range 2 50` with `range 50 100` to get the primes
-between 50 and 100.
+100, or 200, or 1000. (The first argument has to stay at 2: this
+particular sieve assumes the smallest value in the list is a
+prime, which is true only when the list starts at 2.)
 
 You will write code like this from scratch by Week 6. For now, just
 enjoy the output and notice how short the program is.
