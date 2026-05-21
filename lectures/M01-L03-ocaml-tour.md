@@ -334,10 +334,8 @@ operations: `String.length`, `String.get`, `String.sub`,
 "hello, " ^ "world"
 ```
 
-`^` is string concatenation. Strings in OCaml are bytes; for
-proper Unicode reach for `uutf` or `Camomile`, depending on the era of
-your codebase.
-<!-- KC: Unicode bit is unnecessary detail for now in the slides. Ok to may be keep it in the chapter text. -->
+- `^` is string concatenation.
+- `String.length`, `String.get`, `String.sub` for the rest.
 
 ```ocaml
 String.length "OCaml"
@@ -820,9 +818,10 @@ programs.
 
 ## What's next
 
-- **Module 2 zooms into expressions:** <!-- KC: we're not yet at Module 2, right? We still have L04, L05 -->
-- Literals, `let` bindings, operators, type inference, `if`/`then`/`else`.
-- We start writing real (small) programs.
+- **L04:** [hello-world walkthrough](M01-L04-hello-world.html).
+- **L05:** [Module 1 tutorial](M01-L05-tutorial-recap.html).
+- **Module 2:** zooms into expressions: literals, `let` bindings,
+  operators, type inference, `if`/`then`/`else`.
 
 :::
 

@@ -166,7 +166,9 @@ Eight FP modules, then four secure-systems modules.
 - **Reason equationally** about your code.
 - Back the type system up with **tests** (OUnit2, QCheck).
 - Name the C bug classes OCaml rules out.
-- Use [OxCaml](https://oxcaml.org) **modes** to close performance and safety gaps in OCaml.
+- Use [OxCaml](https://oxcaml.org) **modes** to close performance
+  and safety gaps a **garbage collector** (automatic memory
+  reclamation) alone cannot.
 - Follow the safety story down to the **OS** ([MirageOS](https://mirage.io)).
 
 :::
@@ -201,7 +203,9 @@ Java or Go on typical workloads, and is dramatically faster than
 dynamic languages like Python or Ruby. The safety is not paid for
 with slowness: it comes from the type system ruling out, at
 compile time, classes of undefined behaviour that C programs hit
-at runtime. Garbage collection helps on top, but the load-bearing
+at runtime. *Garbage collection* (the runtime feature that
+reclaims memory automatically once a value is no longer reachable,
+so you never call `free` by hand) helps on top, but the load-bearing
 safety is in the types. The secure-systems half of the course makes
 this concrete on three fronts. Where types reach their structural
 limit (a well-typed function can still compute the wrong answer),
@@ -215,7 +219,6 @@ which extends the types to track *how* a value may be used, not just
 10](M10-L01-ub-and-the-zoo.html) makes the memory-safety claim
 precise: you will see what *defined* and *undefined* behaviour mean,
 the C bug classes the GC plus types rule out, and where the OCaml
-<!-- KC: GC must be explained. Same in slides when GC is first introduced. -->
 runtime itself draws the line.
 
 ## Why OCaml?
