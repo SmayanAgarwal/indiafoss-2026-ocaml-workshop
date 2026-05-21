@@ -11,24 +11,6 @@ Course launches on SWAYAM/NPTEL in **July 2026**.
 
 Live preview: <https://fplaunchpad.github.io/ocaml_nptel/>.
 
-## Status
-
-All 49 lectures of the FP half (Modules 1-8) are drafted as
-full textbook-style handouts (~30,900 lines of markdown total,
-averaging ~630 lines per lecture). Each lecture is one ~25-minute
-video (slide mode) plus a long-form chapter (prose with worked
-examples, asides, and inline quizzes). Modules 9-12 (secure systems
-software) are out of scope for this rewrite pass.
-
-Build pipeline runs end-to-end:
-
-- `tools/nptel-build/`: custom OCaml binary that compiles
-  `lectures/M*.md` to single-page lectures under `_site/`.
-- `dune runtest`: 33 unit + integration tests for the toolchain,
-  plus per-lecture `ocaml-mdx` validation of every runnable cell.
-- `tools/run-tests.sh`: orchestrates the toolchain tests plus a
-  Playwright end-to-end check.
-
 ## What's in here
 
 ```
