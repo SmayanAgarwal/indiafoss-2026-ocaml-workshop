@@ -134,6 +134,14 @@ body.mode-slides .reveal .slides section > p:only-of-type img {
   max-height: 70vh;
 }
 
+/* Portrait shots (a single person, biographical asides) are
+   tall and would crowd out the rest of the slide at the default
+   60vh cap. Pin them well below half the canvas height. */
+body.mode-slides .reveal .slides section img.portrait {
+  max-height: 32vh;
+  max-width: 220px;
+}
+
 /* Reset (↺) stays visible in slide mode -- useful when presenting
    to revert a live edit. Position is handled by the cell wrapper
    (chapter.css), which works in both modes. */

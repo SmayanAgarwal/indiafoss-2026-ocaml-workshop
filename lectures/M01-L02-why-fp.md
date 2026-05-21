@@ -267,19 +267,18 @@ does. That is fine for a CPU; it is murder for a human reader.
 
 ## Alan Perlis (1922-1990)
 
-![Alan Perlis](/assets/images/alan-perlis.jpg)
+<img src="/assets/images/alan-perlis.jpg" alt="Alan Perlis"
+     class="portrait">
 
 > "A language that doesn't affect the way you think about
 > programming is not worth knowing."
 >
 > Alan Perlis, *Epigrams on Programming* (1982).
 
-A pioneer in compiler construction and programming-language
-design; the **first ACM Turing Award winner** (1966), cited
-"for his influence in the area of advanced programming
-techniques and compiler construction." The quote is why we are
-spending twelve weeks on OCaml even if you never ship a line of
-it.
+Pioneer in compiler construction and programming-language
+design; the **first ACM Turing Award winner** (1966), cited for
+"influence in the area of advanced programming techniques and
+compiler construction."
 
 :::
 
