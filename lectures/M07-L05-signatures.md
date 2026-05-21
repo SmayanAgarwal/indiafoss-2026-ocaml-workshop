@@ -14,6 +14,18 @@ reading:
 
 # Module signatures
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Module signatures</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The [last lecture](M07-L04-module-basics.html) introduced modules:
 named bundles of definitions you can refer to with dot notation.
 We ran into a

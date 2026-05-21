@@ -14,6 +14,18 @@ reading:
 
 # Local functions and mutual recursion
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Local functions and mutual recursion</h2>
+<p class="title-slide-label">Module 3 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Two related topics in this lecture. The first is *local* function
 definitions: helpers defined inside another function with
 `let ... in`, scoped only to that outer function. The second is

@@ -16,6 +16,17 @@ reading:
 
 # A tour of OCaml
 
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">A tour of OCaml: values, types, and the toplevel</h2>
+<p class="title-slide-label">Module 1 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The [previous](M01-L01-course-intro.html) [two](M01-L02-why-fp.html)
 lectures argued for functional programming in general and for OCaml
 in particular. This lecture is different: it is the quick whirlwind
@@ -134,7 +145,7 @@ truncates:
 ```
 
 - 63-bit on a 64-bit machine; one bit for runtime tagging.
-- For arbitrary precision: `zarith`, not built-in `int`.
+- For arbitrary precision: [`zarith`](https://github.com/ocaml/Zarith), not built-in `int`.
 
 :::
 
@@ -181,7 +192,9 @@ OCaml's float operators are **distinct** from the integer ones:
 1.0 +. 2.5
 ```
 
-`+.` instead of `+`. `*.` instead of `*`. `/.` instead of `/`.
+- `+.` instead of `+`.
+- `*.` instead of `*`.
+- `/.` instead of `/`.
 
 Mixing them is a *type error*, caught at compile time:
 
@@ -324,6 +337,7 @@ operations: `String.length`, `String.get`, `String.sub`,
 `^` is string concatenation. Strings in OCaml are bytes; for
 proper Unicode reach for `uutf` or `Camomile`, depending on the era of
 your codebase.
+<!-- KC: Unicode bit is unnecessary detail for now in the slides. Ok to may be keep it in the chapter text. -->
 
 ```ocaml
 String.length "OCaml"
@@ -806,7 +820,7 @@ programs.
 
 ## What's next
 
-- **Module 2 zooms into expressions:**
+- **Module 2 zooms into expressions:** <!-- KC: we're not yet at Module 2, right? We still have L04, L05 -->
 - Literals, `let` bindings, operators, type inference, `if`/`then`/`else`.
 - We start writing real (small) programs.
 

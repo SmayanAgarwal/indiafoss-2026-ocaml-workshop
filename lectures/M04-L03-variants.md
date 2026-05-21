@@ -18,6 +18,18 @@ reading:
 
 # Variants (sum types)
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Variants (sum types)</h2>
+<p class="title-slide-label">Module 4 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [Tuples](M04-L01-tuples.html) and
 [records](M04-L02-records.html) express *and*: a 2D point has an
 `x` *and* a `y`; a person has a name *and* an age *and* an email.

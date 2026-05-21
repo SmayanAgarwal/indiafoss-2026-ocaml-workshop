@@ -14,6 +14,18 @@ reading:
 
 # Matching records, variants, and combined shapes
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Matching records, variants, and combined shapes</h2>
+<p class="title-slide-label">Module 5 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Pattern matching on records and variants is where most of the
 day-to-day OCaml work happens. You take a value apart, look at
 its tag, look at its fields, dispatch on the combination, and

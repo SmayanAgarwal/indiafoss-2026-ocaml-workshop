@@ -14,6 +14,18 @@ reading:
 
 # `let` bindings and shadowing
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">`let` bindings and shadowing</h2>
+<p class="title-slide-label">Module 2 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The [previous lecture](M02-L01-literals.html) introduced literals:
 the smallest building blocks of a program. This lecture introduces
 the next layer up: *names*. Names let you build programs that are

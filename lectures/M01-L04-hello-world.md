@@ -16,6 +16,18 @@ reading:
 
 # Your first OCaml program
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Your first OCaml program: hello, world (and beyond)</h2>
+<p class="title-slide-label">Module 1 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 In the [previous lecture](M01-L03-ocaml-tour.html) we toured the
 values and expressions of OCaml: numbers, booleans, strings, `let`
 bindings, type inference. We have not yet written anything that
@@ -563,6 +575,7 @@ real (if small) functions in OCaml comfortably.
 In the next lecture we look at the **type system**: what `int`,
 `float`, `string`, `bool` give you that dynamically typed languages
 hide, and how OCaml infers types you never had to write.
+<!-- KC!: Is that what we are looking at in the next lecture?>
 
 :::
 

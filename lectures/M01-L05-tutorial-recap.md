@@ -14,6 +14,18 @@ reading:
 
 # Tutorial: small expressions, end to end
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: temperature conversions and small expressions</h2>
+<p class="title-slide-label">Module 1 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Module 1 has been mostly explanatory: we surveyed values, types, and
 the shape of an OCaml program, but we have not yet sat down and
 *worked* through problems in the way you will in the weekly

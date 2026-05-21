@@ -18,6 +18,18 @@ reading:
 
 # Uniqueness: use-after-free at the type level
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Uniqueness: use-after-free at the type level</h2>
+<p class="title-slide-label">Module 11 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 In M10 we made the case that OCaml's garbage collector takes the
 use-after-free problem off the table for *memory*. The argument
 was straightforward: the collector frees a block only when no

@@ -14,6 +14,18 @@ reading:
 
 # GADTs: variants with type-level information
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">GADTs: variants with type-level information</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This lecture switches gears entirely from the
 [monad story](M08-L01-sequencing.html). So far in Module 8 we have
 been about *sequencing* computations; now we turn to a more

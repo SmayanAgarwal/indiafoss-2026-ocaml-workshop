@@ -14,6 +14,18 @@ reading:
 
 # Exceptions
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Exceptions</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 A function's type tells you the shape of its output: `int -> int`
 returns an `int`, `'a list -> int` returns the length of a list,
 and so on. But what if the function is asked to compute something

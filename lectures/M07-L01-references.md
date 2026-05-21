@@ -14,6 +14,18 @@ reading:
 
 # Mutable references
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Mutable references</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 For six modules we have written OCaml without using mutation. Every
 value has been immutable; whenever we needed a new state, we made a
 new value, with [`let` shadowing](M02-L02-let-bindings.html) the

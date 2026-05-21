@@ -16,6 +16,18 @@ reading:
 
 # Tuples
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tuples</h2>
+<p class="title-slide-label">Module 4 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The first three modules of this course have been about computation:
 literals, bindings, conditionals, functions, recursion. We have
 moved a lot of `int`s and `string`s and `bool`s through the

@@ -14,6 +14,18 @@ reading:
 
 # Tutorial for Module 3
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: Fibonacci, GCD, list helpers</h2>
+<p class="title-slide-label">Module 3 &middot; Lecture 6</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This tutorial works through six small problems: Fibonacci (naive
 and linear-time), GCD by Euclid, a list indexing function, a
 tail-recursive sum, list reversal, and a digit-counting function.

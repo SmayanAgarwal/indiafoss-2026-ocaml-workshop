@@ -14,6 +14,18 @@ reading:
 
 # `fold`: reduce a list to a single value
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">`fold`: reduce a list to a single value</h2>
+<p class="title-slide-label">Module 6 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [`map`](M06-L02-map.html) returns a list.
 [`filter`](M06-L03-filter.html) returns a list. `fold` returns
 *anything*: a number, a string, a record, another list, a tree. If

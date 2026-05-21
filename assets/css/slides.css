@@ -80,38 +80,44 @@ body.mode-slides .reveal .slides section h3 {
   font-size: 2rem;
 }
 
-/* Auto-injected opening title slide. Carries the course name, the
-   lecture title, the Module/Lecture label, and the instructor. */
-body.mode-slides .reveal .slides section.title-slide {
+/* Title slide. Carries course name, lecture title, Module/Lecture
+   label, and instructor. Authored in markdown as a `:::slide` block
+   wrapping a `<div class="title-slide-inner">`; reveal.js sets
+   `style="display: block"` inline on every visible section, so we
+   cannot flex the section itself. The inner wrapper takes the
+   canvas height and does the centring. */
+body.mode-slides .reveal .slides section:has(.title-slide-inner) {
   text-align: center;
+}
+body.mode-slides .reveal .slides .title-slide-inner {
+  min-height: 800px;
+  max-width: 90%;
+  margin: 0 auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
 }
-body.mode-slides .reveal .slides section.title-slide .title-slide-inner {
-  max-width: 90%;
-}
-body.mode-slides .reveal .slides section.title-slide .title-slide-course {
+body.mode-slides .reveal .slides .title-slide-course {
   font-size: 1.6rem;
   color: var(--muted, #555);
   margin: 0 0 1rem 0;
   letter-spacing: 0.02em;
 }
-body.mode-slides .reveal .slides section.title-slide .title-slide-lecture {
+body.mode-slides .reveal .slides .title-slide-lecture {
   font-size: 3.2rem;
   font-weight: 700;
   margin: 0 0 0.8rem 0;
   line-height: 1.15;
 }
-body.mode-slides .reveal .slides section.title-slide .title-slide-label {
+body.mode-slides .reveal .slides .title-slide-label {
   font-size: 1.4rem;
   color: var(--muted, #555);
   margin: 0 0 2.4rem 0;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-body.mode-slides .reveal .slides section.title-slide .title-slide-instructor {
+body.mode-slides .reveal .slides .title-slide-instructor {
   font-size: 1.5rem;
   margin: 0;
   line-height: 1.4;

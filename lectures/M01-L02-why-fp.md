@@ -16,6 +16,18 @@ reading:
 
 # Why functional programming?
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Why functional programming?</h2>
+<p class="title-slide-label">Module 1 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 A reasonable question to open with: if you can already write programs
 in C or Python or Java, why spend twelve weeks learning a new style?
 You are not, after all, going to ship code in OCaml at every job

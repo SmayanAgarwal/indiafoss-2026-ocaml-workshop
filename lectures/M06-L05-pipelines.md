@@ -14,6 +14,18 @@ reading:
 
 # Function composition and pipelines
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Function composition and pipelines</h2>
+<p class="title-slide-label">Module 6 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 We now have a small but powerful toolkit: [`map`](M06-L02-map.html),
 [`filter`](M06-L03-filter.html), [`fold`](M06-L04-fold.html), and a
 habit of writing one-off functions with `fun x -> ...`. The natural

@@ -16,6 +16,18 @@ reading:
 
 # Tutorial: a resource-management API
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: a resource-management API</h2>
+<p class="title-slide-label">Module 11 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The previous four lectures introduced three mode axes and worked
 small examples for each. This tutorial brings them together in a
 single API: a file-handle module that uses **linearity** to enforce

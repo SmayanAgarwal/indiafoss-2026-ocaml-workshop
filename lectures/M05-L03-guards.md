@@ -14,6 +14,18 @@ reading:
 
 # Guards: when-clauses on patterns
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Guards: when-clauses on patterns</h2>
+<p class="title-slide-label">Module 5 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 A pattern by itself matches on *shape*: this constructor, that
 literal, a wildcard. Sometimes you want to filter further on a
 *computation*: not just "the head of the list is some integer",

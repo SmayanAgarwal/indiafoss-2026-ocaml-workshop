@@ -16,6 +16,18 @@ reading:
 
 # Functions as values, revisited
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Functions as values, revisited</h2>
+<p class="title-slide-label">Module 6 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Back in [Module 3](M03-L01-functions-as-values.html) we said,
 almost in passing, that functions are *first-class values* in OCaml:
 a function is a value the same way `42` is a value, with the same

@@ -18,6 +18,18 @@ reading:
 
 # Property-based testing with QCheck
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Property-based testing with QCheck</h2>
+<p class="title-slide-label">Module 9 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [Lecture 2](M09-L02-unit-testing.html) gave you OUnit2 and a habit
 for it: pick an input, write down its expected output, compare,
 report. The hand-written assertions in `test_lifo_three` exercise

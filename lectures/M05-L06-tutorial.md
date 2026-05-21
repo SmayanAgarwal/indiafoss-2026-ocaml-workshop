@@ -14,6 +14,18 @@ reading:
 
 # Tutorial: walking an arithmetic expression AST
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: walking an arithmetic expression AST</h2>
+<p class="title-slide-label">Module 5 &middot; Lecture 6</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 In this tutorial we build a tiny expression language and four
 functions over it: an evaluator, a pretty printer, a depth
 calculator, and a constant folder. Each function is a pattern

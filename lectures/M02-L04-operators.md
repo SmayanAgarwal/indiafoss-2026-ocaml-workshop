@@ -14,6 +14,18 @@ reading:
 
 # Operators, precedence, and common pitfalls
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Operators, precedence, and common pitfalls</h2>
+<p class="title-slide-label">Module 2 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 You already know most of OCaml's operators from school arithmetic
 and from previous lectures (the
 [tour](M01-L03-ocaml-tour.html#integers) introduced `+`, `*`, `/`,

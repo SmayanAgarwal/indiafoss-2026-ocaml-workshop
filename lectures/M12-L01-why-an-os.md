@@ -16,6 +16,18 @@ reading:
 
 # Why do we need an operating system?
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Why do we need an OS?</h2>
+<p class="title-slide-label">Module 12 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Module 12 is the last leg of this course, and it changes the question.
 For eleven modules we have asked: how do we write a *program* in OCaml
 that is safe, correct, and reasonably fast? In this final module we ask:

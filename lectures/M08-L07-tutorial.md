@@ -14,6 +14,18 @@ reading:
 
 # Tutorial for Module 8: a tiny well-typed evaluator
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: a tiny well-typed evaluator</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 7</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This is the capstone for the OCaml half of the course. We are
 going to build a small expression language that combines almost
 everything we have seen in Module 8:

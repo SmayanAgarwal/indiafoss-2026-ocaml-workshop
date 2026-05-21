@@ -14,6 +14,18 @@ reading:
 
 # Recursion
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Recursion</h2>
+<p class="title-slide-label">Module 3 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 A recursive function is one that calls itself. In a language without
 mutable loop variables, recursion is the main way to "do something N
 times" or "walk through a structure." This lecture is about how to

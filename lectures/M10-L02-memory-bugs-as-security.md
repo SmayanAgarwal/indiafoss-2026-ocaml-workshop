@@ -20,6 +20,18 @@ reading:
 
 # Memory bugs as security incidents
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Memory bugs as security incidents</h2>
+<p class="title-slide-label">Module 10 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The previous lecture catalogued the four canonical memory-safety
 bugs in C: use-after-free, buffer overflow, uninitialised read,
 double-free. Each is undefined behaviour. Each is something the

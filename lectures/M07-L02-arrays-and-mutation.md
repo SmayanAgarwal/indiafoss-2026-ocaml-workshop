@@ -14,6 +14,18 @@ reading:
 
 # Mutable records and arrays
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Mutable records and arrays</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Beyond the single-cell [`ref`](M07-L01-references.html), OCaml has
 two more mutable building blocks: *records with mutable fields*
 and *fixed-size arrays*. The

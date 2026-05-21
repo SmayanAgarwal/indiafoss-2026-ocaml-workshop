@@ -16,6 +16,18 @@ reading:
 
 # Unit testing in OCaml with OUnit2
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Unit testing in OCaml with OUnit2</h2>
+<p class="title-slide-label">Module 9 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [Lecture 1](M09-L01-why-test-typed-code.html) made the case that
 types and tests are complementary: types catch type errors on every
 build, tests catch behaviour on the inputs you choose. The example

@@ -16,6 +16,18 @@ reading:
 
 # Literals
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Literals: integers, floats, booleans, strings</h2>
+<p class="title-slide-label">Module 2 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Every program in OCaml is, in the end, an *expression*: a piece of
 syntax that the language can *evaluate* down to a *value*. The
 distinction between expression and value is worth pausing on, because

@@ -14,6 +14,18 @@ reading:
 
 # GADTs: use cases beyond toy interpreters
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">GADTs: use cases beyond toy interpreters</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 6</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The [toy expression-AST from Lecture 5](M08-L05-gadts-basics.html#the-gadt-form)
 is the standard "first example" of GADTs. It is useful for showing
 the mechanics, but it leaves a misleading impression: that GADTs

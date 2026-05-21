@@ -16,6 +16,18 @@ reading:
 
 # Ingredient 1: Library OS
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Ingredient 1: Library OS</h2>
+<p class="title-slide-label">Module 12 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [Last lecture](M12-L01-why-an-os.html) ended with a question: do we
 really have to ship the entire monolithic kernel with every
 application, even when the application only needs a sliver of it?

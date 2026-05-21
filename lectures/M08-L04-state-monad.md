@@ -14,6 +14,18 @@ reading:
 
 # The state monad
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">The state monad</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The previous two lectures used monads for *failure*:
 [option](M08-L02-option-monad.html) and
 [result](M08-L03-result-monad.html) both encode "this step may or

@@ -16,6 +16,18 @@ reading:
 
 # Records
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Records</h2>
+<p class="title-slide-label">Module 4 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 A record is a bundle, like a tuple, but with each component
 identified by *name* instead of position. The
 [last lecture](M04-L01-tuples.html) argued that tuples are the

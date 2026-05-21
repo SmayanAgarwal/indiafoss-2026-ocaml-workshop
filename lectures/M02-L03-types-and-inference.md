@@ -16,6 +16,18 @@ reading:
 
 # Static vs dynamic semantics, and type inference
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Static vs dynamic semantics, and type inference</h2>
+<p class="title-slide-label">Module 2 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Programming languages catch errors at different times. Some catch
 them while you are compiling; some catch them while you are running;
 some never catch them. Where a language draws this line shapes how

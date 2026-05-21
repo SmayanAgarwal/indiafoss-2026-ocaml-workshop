@@ -16,6 +16,18 @@ reading:
 
 # Ingredient 2: Virtualisation
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Ingredient 2: Virtualisation</h2>
+<p class="title-slide-label">Module 12 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [Last lecture](M12-L02-library-os.html) we built a library OS and
 listed its two big problems: no internal protection (the application
 can corrupt the network stack because they share an address space)

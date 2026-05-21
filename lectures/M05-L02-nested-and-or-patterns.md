@@ -14,6 +14,18 @@ reading:
 
 # Nested patterns and or-patterns
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Nested patterns and or-patterns</h2>
+<p class="title-slide-label">Module 5 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The pattern forms we saw in [Lecture 1](M05-L01-basic-patterns.html)
 (literals, variables, wildcards) match a value at exactly one level:
 "this is the constant `0`", or "this is anything, call it `x`." Real

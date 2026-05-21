@@ -16,6 +16,18 @@ reading:
 
 # Undefined behaviour and the C memory-safety zoo
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Undefined behaviour and the C memory-safety zoo</h2>
+<p class="title-slide-label">Module 10 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Nine modules of OCaml have built up an intuition that, when your
 program type-checks, certain whole classes of bugs simply cannot
 happen. You have not seen a segmentation fault. You have not seen a

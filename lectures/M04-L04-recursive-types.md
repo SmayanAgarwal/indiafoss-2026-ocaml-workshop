@@ -16,6 +16,18 @@ reading:
 
 # Recursive types
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Recursive types: lists, trees, expressions</h2>
+<p class="title-slide-label">Module 4 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 A variant becomes much more interesting when one of its constructors
 carries a value of *the same type* being defined. That single
 self-reference is what makes it possible to describe data of

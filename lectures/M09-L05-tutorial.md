@@ -16,6 +16,18 @@ reading:
 
 # Tutorial: testing the `expr` evaluator with OUnit2 and QCheck
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: testing the expr evaluator with OUnit2 and QCheck</h2>
+<p class="title-slide-label">Module 9 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This tutorial puts the previous four lectures to work on a single
 larger example. We take the [`expr` AST and `eval`
 function from M05-L06](M05-L06-tutorial.html), give them a full

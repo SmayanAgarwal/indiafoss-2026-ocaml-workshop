@@ -20,6 +20,18 @@ reading:
 
 # Where OCaml itself has UB
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Where OCaml itself has UB</h2>
+<p class="title-slide-label">Module 10 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The last lecture made the safety story precise: in the *safe
 fragment* of OCaml, the four canonical memory bugs are ruled out
 by construction. This lecture is the honest boundary. Every

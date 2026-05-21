@@ -14,6 +14,18 @@ reading:
 
 # Tutorial for Module 7
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: a queue functor</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 7</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This tutorial pulls together the machinery from the rest of the
 module. We build a small *functional queue* (FIFO: first-in,
 first-out) using the classic two-stack trick. We package it as a

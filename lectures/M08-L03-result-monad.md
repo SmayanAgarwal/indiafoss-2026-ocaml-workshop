@@ -14,6 +14,18 @@ reading:
 
 # The result monad
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">The result monad: errors with information</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [`option`](M04-L05-option-and-aliases.html#the-option-type) says
 "maybe a value, maybe not".
 [`result`](M04-L05-option-and-aliases.html#the-result-type) says

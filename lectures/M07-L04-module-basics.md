@@ -14,6 +14,18 @@ reading:
 
 # Module basics
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Module basics</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 So far every piece of OCaml we have written has lived at the top
 level: a string of `let`s, `type`s, and `let rec`s, each defined
 in a shared global namespace. That worked for the kinds of

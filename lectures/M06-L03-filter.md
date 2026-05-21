@@ -14,6 +14,18 @@ reading:
 
 # `filter`: keep what passes the predicate
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">`filter`: keep what passes the predicate</h2>
+<p class="title-slide-label">Module 6 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 `filter` is the second of the three canonical higher-order list
 functions. Where [`map`](M06-L02-map.html) transforms every element
 and keeps them all, `filter` keeps each element exactly as it was,

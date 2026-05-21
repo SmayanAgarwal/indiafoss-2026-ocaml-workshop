@@ -14,6 +14,18 @@ reading:
 
 # The option monad
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">The option monad and `let*` sugar</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 In the [previous lecture](M08-L01-sequencing.html) we built up a
 helper `bind` for sequencing optional computations, and previewed
 the `let*` syntactic sugar that lets such code read top to bottom.

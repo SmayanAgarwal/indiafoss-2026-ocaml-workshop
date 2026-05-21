@@ -14,6 +14,18 @@ reading:
 
 # Basic patterns
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Basic patterns: literals, variables, wildcards</h2>
+<p class="title-slide-label">Module 5 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 You have been writing `match ... with` and `let (x, y) = ...` since
 [Module 2](M02-L02-let-bindings.html), in small doses. From this
 lecture on, pattern matching moves to the centre of the language. It

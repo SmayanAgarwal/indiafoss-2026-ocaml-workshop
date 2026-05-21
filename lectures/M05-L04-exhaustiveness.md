@@ -14,6 +14,18 @@ reading:
 
 # Exhaustiveness checking
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Exhaustiveness checking</h2>
+<p class="title-slide-label">Module 5 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Of all the static checks the OCaml compiler performs, the one
 you will come to value most is *exhaustiveness*. The compiler
 looks at every `match` you write and asks: "do these clauses

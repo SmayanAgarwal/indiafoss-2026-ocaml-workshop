@@ -16,6 +16,18 @@ reading:
 
 # Ingredient 3: OCaml for systems
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Ingredient 3: OCaml for systems</h2>
+<p class="title-slide-label">Module 12 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 We have a library OS ([M12-L02](M12-L02-library-os.html)) that
 collapses the kernel into ordinary function calls and a hypervisor
 ([M12-L03](M12-L03-virtualisation.html)) that isolates one library

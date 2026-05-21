@@ -14,6 +14,18 @@ reading:
 
 # Currying and partial application
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Currying and partial application</h2>
+<p class="title-slide-label">Module 3 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 In OCaml, a function with multiple arguments is secretly a *chain*
 of one-argument functions. This shape is called *currying*, after
 the logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry)

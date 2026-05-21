@@ -20,6 +20,18 @@ reading:
 
 # Tutorial: walking Heartbleed end to end
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: walking Heartbleed end to end</h2>
+<p class="title-slide-label">Module 10 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The previous four lectures built the safety picture in
 generality: the categories of memory-safety bugs (M10-L01); the
 security cost when one of them ships (M10-L02); how OCaml rules

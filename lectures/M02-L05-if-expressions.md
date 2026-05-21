@@ -14,6 +14,18 @@ reading:
 
 # `if`/`then`/`else` as an expression
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">`if`/`then`/`else` as an expression</h2>
+<p class="title-slide-label">Module 2 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This lecture introduces conditionals. The construct is familiar from
 every language you have written before: a way to choose between two
 courses of action depending on a boolean. The OCaml version of

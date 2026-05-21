@@ -16,6 +16,18 @@ reading:
 
 # Why test a type-safe program?
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Why test a type-safe program?</h2>
+<p class="title-slide-label">Module 9 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Eight modules ago, the very first lecture of this course claimed,
 roughly, that OCaml's type system catches "a lot" of bugs. By
 Module 5 you had pattern-match exhaustiveness on top of basic

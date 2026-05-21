@@ -16,6 +16,18 @@ reading:
 
 # Locality: safe stack allocation
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Locality: safe stack allocation</h2>
+<p class="title-slide-label">Module 11 &middot; Lecture 2</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 OCaml allocates almost everything on the heap. Tuples, records,
 closures, boxed floats, list cons cells: each one is a fresh
 allocation, each one trips a minor-heap pointer bump, each one

@@ -18,6 +18,18 @@ reading:
 
 # `option`, `result`, and type abbreviations
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">`option`, `result`, and type abbreviations</h2>
+<p class="title-slide-label">Module 4 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 A function that *might fail to produce a value* is everywhere in
 real software: a hashtable lookup that finds nothing; a parser
 fed garbage; division by zero. Every language has to answer the

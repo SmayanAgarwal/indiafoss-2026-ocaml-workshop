@@ -14,6 +14,18 @@ reading:
 
 # Tutorial for Module 2
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: small expressions, end to end</h2>
+<p class="title-slide-label">Module 2 &middot; Lecture 6</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This is the tutorial video for Module 2. We will work through five
 small programs that exercise everything in the module:
 [literals](M02-L01-literals.html), [`let` bindings](M02-L02-let-bindings.html),

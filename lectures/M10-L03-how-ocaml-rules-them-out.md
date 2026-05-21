@@ -16,6 +16,18 @@ reading:
 
 # How OCaml rules them out by construction
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">How OCaml rules them out by construction</h2>
+<p class="title-slide-label">Module 10 &middot; Lecture 3</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 We have, by now, a precise catalogue of memory-safety bugs (M10-L01)
 and a precise account of why they matter in production (M10-L02).
 This lecture makes the OCaml side precise. For each of the four

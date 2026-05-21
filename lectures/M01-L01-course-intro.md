@@ -16,6 +16,18 @@ reading:
 
 # Course introduction
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Course introduction: what you'll learn, how it's run</h2>
+<p class="title-slide-label">Module 1 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Welcome to **Functional Programming with OCaml**. This first lecture
 is short and almost entirely logistical: what we will cover over the
 twelve weeks, who the course is aimed at, how it is graded, and how
@@ -154,9 +166,8 @@ Eight FP modules, then four secure-systems modules.
 - **Reason equationally** about your code.
 - Back the type system up with **tests** (OUnit2, QCheck).
 - Name the C bug classes OCaml rules out.
-- Use **modes** (locality, uniqueness, linearity) to close the
-  gaps a GC alone cannot.
-- Follow the safety story down to the **OS** (MirageOS).
+- Use [OxCaml](https://oxcaml.org) **modes** to close performance and safety gaps in OCaml.
+- Follow the safety story down to the **OS** ([MirageOS](https://mirage.io)).
 
 :::
 
@@ -204,6 +215,7 @@ which extends the types to track *how* a value may be used, not just
 10](M10-L01-ub-and-the-zoo.html) makes the memory-safety claim
 precise: you will see what *defined* and *undefined* behaviour mean,
 the C bug classes the GC plus types rule out, and where the OCaml
+<!-- KC: GC must be explained. Same in slides when GC is first introduced. -->
 runtime itself draws the line.
 
 ## Why OCaml?
@@ -274,7 +286,8 @@ idioms; OCaml is the counterexample.
 - **Practical:**
   - Jane Street, Bloomberg, Meta (Hack, Flow), Docker,
     Tarides, Ahrefs, Semgrep.
-  - WebAssembly reference interpreter; CompCert.
+  - WebAssembly reference interpreter
+  - CompCert verified C compiler
   - Rust's first compiler was written in OCaml.
 - **Fast:** native code close to C; GC; no UB in the safe fragment.
 - **Great teaching language:** ideas reappear in Rust, Scala,
@@ -466,8 +479,8 @@ certificate.
 
 ## How the course is graded
 
-- **25%** weekly assignments (one per week, via SWAYAM).
-- **75%** final certification exam (proctored, in person at NPTEL).
+- **25%** weekly assignments (one per week).
+- **75%** final certification exam (proctored, in person at NPTEL exam centres).
 - **40%** overall to receive a certificate.
 
 :::

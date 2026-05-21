@@ -18,6 +18,18 @@ reading:
 
 # MirageOS = Library OS + Virtualisation + OCaml
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">MirageOS = Library OS + Virtualisation + OCaml</h2>
+<p class="title-slide-label">Module 12 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 We have the three ingredients now. [M12-L02](M12-L02-library-os.html)
 shrank the kernel into a set of libraries.
 [M12-L03](M12-L03-virtualisation.html) used a hypervisor to put a

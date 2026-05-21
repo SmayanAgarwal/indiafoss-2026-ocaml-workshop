@@ -14,6 +14,18 @@ reading:
 
 # Sequencing computations
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Sequencing computations: motivation for monads</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Module 8 is about a pattern that shows up everywhere in OCaml code,
 once you learn to look for it: *sequencing computations that might
 fail*. We already have the shapes for "something may go wrong":

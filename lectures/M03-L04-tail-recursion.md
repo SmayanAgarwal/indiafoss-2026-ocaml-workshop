@@ -14,6 +14,18 @@ reading:
 
 # Tail recursion and accumulators
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tail recursion and accumulators</h2>
+<p class="title-slide-label">Module 3 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 The naive `factorial` and `sum_to` we wrote in
 [M03-L02](M03-L02-recursion.html#a-first-recursive-function) work
 fine for small inputs and crash with a stack overflow for big ones.

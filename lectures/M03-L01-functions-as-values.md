@@ -16,6 +16,18 @@ reading:
 
 # Functions as values
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Functions as values, and anonymous functions</h2>
+<p class="title-slide-label">Module 3 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 In OCaml, a function is a *value*, the same way `42` and `"hello"`
 are values. You can name a function with `let`, pass it as an
 argument to another function, return it from a function, and store

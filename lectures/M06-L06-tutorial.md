@@ -14,6 +14,18 @@ reading:
 
 # Tutorial: rebuild parts of `List`
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Tutorial: rebuild parts of `List`</h2>
+<p class="title-slide-label">Module 6 &middot; Lecture 6</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 This lecture is the worked-exercise capstone of Module 6. Across the
 previous five lectures we built up a small but powerful toolkit:
 [higher-order functions](M06-L01-functions-revisited.html),

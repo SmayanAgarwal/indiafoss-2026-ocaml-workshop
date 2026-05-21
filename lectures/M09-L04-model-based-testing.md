@@ -18,6 +18,18 @@ reading:
 
 # Model-based testing of stateful data structures
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Model-based testing of stateful data structures</h2>
+<p class="title-slide-label">Module 9 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 [Lecture 3](M09-L03-property-based-testing.html) developed
 property-based testing on *pure* functions: a list reversal, a
 sort, an expression evaluator. The properties were statements

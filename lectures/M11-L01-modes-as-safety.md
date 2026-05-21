@@ -18,6 +18,18 @@ reading:
 
 # Modes as the type-level continuation of safety
 
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Modes as the type-level continuation of safety</h2>
+<p class="title-slide-label">Module 11 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
 Module 10 made a careful argument. The garbage collector plus the
 type system rule out a small zoo of memory bugs by construction:
 use-after-free, buffer overflow, uninitialised read, double-free.
