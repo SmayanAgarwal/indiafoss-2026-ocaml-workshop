@@ -143,43 +143,58 @@ it can compute anything any other programming language can
 compute.
 
 To make "with slightly more work" concrete, here is a complete
-`subleq` program that computes `B := 5 * A`. It assumes `B = 0`
-and `Z = 0` to start, and it just uses the three-instruction
-addition gadget five times in a row:
+`subleq` program that computes `S := 1 + 2 + ... + N`: the sum
+of the first `N` positive integers. It assumes the memory cell
+`N` starts at the value we want (say, 5), `S` and `Z` start at
+0, and `ONE` is a cell whose value is permanently 1.
 
 ```
-; B := 5 * A. Initially B = 0, Z = 0.
-subleq A, Z       ; Z := -A
-subleq Z, B       ; B := 0 + A = A
-subleq Z, Z       ; Z := 0
-subleq A, Z       ; Z := -A
-subleq Z, B       ; B := A + A = 2A
-subleq Z, Z       ; Z := 0
-subleq A, Z       ; Z := -A
-subleq Z, B       ; B := 2A + A = 3A
-subleq Z, Z       ; Z := 0
-subleq A, Z       ; Z := -A
-subleq Z, B       ; B := 3A + A = 4A
-subleq Z, Z       ; Z := 0
-subleq A, Z       ; Z := -A
-subleq Z, B       ; B := 4A + A = 5A
-subleq Z, Z       ; Z := 0
+; S := 1 + 2 + ... + N.
+; Initially: N holds the count, S = 0, Z = 0, ONE = 1.
+
+LOOP: subleq N, Z              ; Z := -N
+      subleq Z, S              ; S := S + N
+      subleq Z, Z              ; Z := 0
+      subleq ONE, N, DONE      ; N := N - 1; if N <= 0, jump to DONE
+      subleq Z, Z, LOOP        ; unconditional jump back to LOOP
+DONE:
 ```
 
-Fifteen instructions, the same three lines repeated five times.
-No branching, no `for` loop, no counter, no name for "the five
-iterations". Reading this code you have no way to *tell* it is
-multiplication by five without mentally executing it, three
-instructions at a time, and noticing that the cycle repeats. A
-real `subleq` program that needs to loop over `n` iterations
-cannot even unroll like this: it has to encode the loop counter,
-the decrement, and the conditional branch in `subleq` instructions
-on cells of memory, often with self-modifying code to compute the
-addresses to branch to. The fifteen instructions above become
-hundreds.
+Six instructions. Three idioms are doing the work, and every one
+of them is the `subleq` equivalent of something a higher-level
+language gives you in a single keyword:
+
+- The first three instructions are the **addition gadget** from
+  above, used to compute `S := S + N`.
+- The fourth instruction is a **conditional branch combined with
+  a decrement**: `subleq ONE, N, DONE` subtracts 1 from `N` and,
+  if the result is `<= 0`, jumps to `DONE`. The decrement and the
+  exit test are the same instruction.
+- The fifth instruction is the canonical `subleq` idiom for an
+  **unconditional jump**: `subleq Z, Z, LOOP`. Computing `Z - Z`
+  always gives `0`, which is `<= 0`, so the branch is always
+  taken. That is how you write `goto` in a language that only
+  has subtract-and-branch.
+
+Trace it for `N = 3`: iteration one sets `S = 3`, decrements `N`
+to 2, jumps back. Iteration two sets `S = 5`, decrements `N` to
+1, jumps back. Iteration three sets `S = 6`, decrements `N` to
+0, and the conditional branch fires: `DONE`. We are left with
+`S = 1 + 2 + 3 = 6`. The program is in any meaningful sense a
+`for` loop, but you cannot *see* the loop in the code; you have
+to recognise the unconditional-jump idiom, recognise the
+decrement-and-branch idiom, and reconstruct the control flow in
+your head. The code does not say "loop"; the code says "subtract
+this from that and branch."
 
 That is the practical content of "Turing complete": yes, you can
-write any program; no, you do not want to.
+write any program; no, you do not want to. And a substantial
+`subleq` program (one that allocates an array, calls a function,
+or even just compares two values without leaving them in a
+wrecked state) is a great deal more painful than the six lines
+above. Writing one is a humbling experience and an excellent
+appetite-builder for the idea of *abstraction*, which is what
+the rest of this course is about.
 
 :::slide
 
