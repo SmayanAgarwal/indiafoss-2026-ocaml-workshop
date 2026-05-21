@@ -396,7 +396,7 @@ its keep:
 let bad c = c + 273.15
 ```
 
-* The toplevel says:
+The toplevel says:
 
 ```text
 Error: This expression has type float but an expression was expected
@@ -404,12 +404,18 @@ Error: This expression has type float but an expression was expected
        application
 ```
 
-* Four pieces of information:
-  * the offending expression (`273.15`),
-  * the actual type (`float`),
-  * the expected type (`int`),
-  * *why* it was expected (here: integer `+`).
-* Fix: use `+.`.
+:::
+
+:::slide
+
+## Four pieces in a type error
+
+* The **offending expression** (`273.15`).
+* The **actual type** (`float`).
+* The **expected type** (`int`).
+* **Why** it was expected (here: integer `+`).
+
+Fix: use `+.` instead of `+`.
 
 :::
 
