@@ -28,9 +28,13 @@ _references/cs3100_m25/
 # reveal.js: we only use the dist/ subdir. The plugins are not loaded.
 assets/reveal/plugin/
 
-# x-oxcaml bundle (~85 MB): too big to commit. Lifted from
-# KC's ~/websites/kcsrk.info/assets/x-ocaml-ox/ for M11 lectures.
-# Deployment story (CI build or release-time copy) is a separate task.
+# x-oxcaml bundle (~65 MB after dropping portable.js and swapping to
+# the no-effects worker; portable.js's await/capsule/portable libs
+# aren't used by M11, which is mode annotations only; the no-effects
+# worker saves ~15 MB over +effects since M11 has no Domain.Safe.spawn
+# or effect-handler examples). The 60 MB worker still exceeds GitHub's
+# 50 MB soft-warning threshold; deployment is a separate task
+# (release-asset, git-LFS, or CI fetch from KC's CDN).
 assets/x-oxcaml/
 
 # OS junk
