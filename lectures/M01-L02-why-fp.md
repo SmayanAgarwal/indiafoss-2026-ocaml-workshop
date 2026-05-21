@@ -203,7 +203,7 @@ the rest of this course is about.
 - *Everything.*
 - Three `subleq` instructions implement addition.
 - A few more: copy, move, conditional, multiply.
-- `subleq` is **Turing complete** — same power as any other language.
+- `subleq` is **Turing complete**: same power as any other language.
 
 So why not write everything in `subleq`?
 
@@ -231,10 +231,11 @@ does. That is fine for a CPU; it is murder for a human reader.
 
 ## Because language is about more than what you *can* compute
 
-- A Facebook clone in `subleq`: theoretically possible, practically catastrophic.
+- A WhatsApp clone in `subleq`: theoretically possible,
+  practically catastrophic.
 - Languages exist to let you **say what you mean.**
 - A programming language is for **thinking**, not just running.
-- Richer abstractions ⇒ thinking closer to the running code.
+- Richer abstractions: thinking closer to the running code.
 
 :::
 
@@ -272,8 +273,8 @@ detail.
 
 Two load-bearing abstractions:
 
-1. **Functions as values.** Pass them around, return them, store them. First-class.
-2. **Immutability.** Data is constructed, not mutated. New states $=$ new values.
+1. **Functions as values.** Pass, return, store. First-class.
+2. **Immutability.** Data is constructed, not mutated. New states = new values.
 
 Together: programs as **compositions of values**, not **sequences of state changes**.
 
@@ -339,16 +340,17 @@ sense, just a *function*: a mapping from inputs to outputs.
 
 A function is **pure** when:
 
-- Its output depends only on its arguments.
-- It produces no observable side effects: no I/O, no mutation, no
-  exception, no hidden state read or written.
+- Output depends only on its arguments.
+- No observable side effects: no I/O, no mutation, no exception,
+  no hidden state.
 
 ```ocaml
 let double x = x + x
 ```
 
-`double 21` is `42`. Always. Anywhere. Whether you call it once,
-twice, or never.
+- `double 21` is `42`. Always. Anywhere.
+- Replace any call with its result; meaning unchanged.
+<!-- KC: at this point in the slide, we should mention >
 
 :::
 
@@ -367,9 +369,9 @@ functional programming as a discipline. We will use it constantly.
 
 ## Equational reasoning
 
-- Pure functions ⇒ reason about code like algebra.
+- Pure functions: reason about code like algebra.
 - `double 21` is *equal to* `42`.
-- Replace one with the other, anywhere — meaning unchanged.
+- Replace one with the other anywhere; meaning unchanged.
 
 ```ocaml
 let total = double 21 + double 21
@@ -377,7 +379,8 @@ let total = double 21 + double 21
 (* same as *)  let total = 84
 ```
 
-Sounds modest. Powerful tool for **refactoring, testing, proving**.
+- Sounds modest.
+- Powerful tool for **refactoring, testing, proving**.
 
 :::
 
@@ -628,7 +631,7 @@ is not a free lunch.
 ## When functional doesn't (be honest)
 
 - **Hardware-level performance.** Cache-aware algorithms want mutation.
-- **Imperative APIs.** Database, file system, network — effects exist.
+- **Imperative APIs.** Databases, file systems, networks: effects exist.
 - **Idiom carry-over.** Your first programs will fight your intuition. Normal.
 
 OCaml is **functional-first**: disciplined escape hatches, used only when they help.
@@ -684,9 +687,9 @@ language that inherited many ML ideas. So why OCaml?
 
 Three things that don't often appear together:
 
-- A serious **type system** — compile-time errors, not runtime.
+- A serious **type system**: compile-time errors, not runtime.
 - **Native-code performance** close to C.
-- **Pragmatic effects** — state, exceptions, I/O when you need them; types make the boundary explicit.
+- **Pragmatic effects**: state, exceptions, I/O when you need them; types make the boundary explicit.
 
 That combination is what lets the second half of the course tackle **secure systems software**.
 
@@ -724,15 +727,13 @@ language.
 
 ## Activity
 
-Which of these is referentially transparent (the call can be replaced
-by the result without changing program meaning)?
+Which of these is referentially transparent? (Call can be replaced
+by its result without changing meaning.)
 
 - (a) `let f x = x + 1`
 - (b) `let f x = Random.int x`
 - (c) `let counter = ref 0 in let f () = incr counter; !counter`
-  (we have not seen `ref`/`incr`/`!` yet; treat them as a hidden
-  mutable cell with read and increment operations; full coverage
-  in [Module 7](M07-L01-references.html))
+  (treat as a hidden mutable cell; covered in Module 7)
 - (d) `let f x = print_endline (string_of_int x); x`
 
 Think before peeking at the next slide.
@@ -775,9 +776,9 @@ let f x = x + 1
 
 - **(b)** is random.
 - **(c)** reads and writes hidden state.
-- **(d)** prints — an observable effect.
+- **(d)** prints: observable effect.
 
-Replace any of these with a previous result: program behaviour changes.
+Replace any of these with a previous result: behaviour changes.
 
 :::
 
