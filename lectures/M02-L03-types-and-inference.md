@@ -63,19 +63,16 @@ let _ = 23 + 45
 
 Every expression has both:
 
-- **Static semantics**: meaning *before* you run.
-  - Main piece: **what type the expression has**.
-- **Dynamic semantics**: what happens when you *run* it.
-  - Result: a **value**.
+- **Static semantics**: meaning *before* you run; mainly its **type**.
+- **Dynamic semantics**: what happens when you *run* it; a **value**.
 
 ```ocaml
 let _ = 23 + 45
 ```
 
-- Static: `int + int`, so the expression has type `int`.
+- Static: `int + int`, expression has type `int`.
 - Dynamic: evaluates to `68`.
-
-- Both matter; static catches whole classes of bug before you press Run.
+- Static catches whole classes of bug before Run.
 
 :::
 
@@ -106,22 +103,15 @@ languages catch different fractions of errors statically.
 
 ## A spectrum of languages
 
-Think of a spectrum, not a binary:
+Spectrum, not binary:
 
-- **Mostly dynamic** (JavaScript, Python):
-  - Almost everything checked at runtime.
-  - Bugs surface only when their code path runs.
-- **Some static, mostly dynamic** (C):
-  - Types declared, but weak system: casts / `void*` sidestep it.
-  - Memory errors are runtime, often silent.
-- **More static** (Java, Scala, Rust, Kotlin, Swift):
-  - Strong type systems; most type errors compile-time.
-  - Null refs and downcast failures still surface at runtime.
-- **Mostly static** (OCaml, Haskell):
-  - Almost no runtime type errors in well-typed code.
-  - Compiler catches a large fraction of bugs pre-run.
+- **Mostly dynamic** (JavaScript, Python): everything checked at runtime.
+- **Some static** (C): types declared but weak; casts and `void*` sidestep it.
+- **More static** (Java, Scala, Rust, Kotlin, Swift): strong typing,
+  but nulls and downcasts surface at runtime.
+- **Mostly static** (OCaml, Haskell): almost no runtime type errors.
 
-- OCaml sits near the **"mostly static"** end: a deliberate choice.
+OCaml sits at the **mostly static** end.
 
 :::
 
@@ -183,8 +173,7 @@ Error: This expression has type float but an expression was expected
        of type int because it is in the right operand of equality.
 ```
 
-- The program does not run.
-- Static check fails first: never reaches "what does the comparison return".
+- Program does not run; static check fails first.
 
 :::
 
@@ -217,10 +206,8 @@ let _ = 23 = 45
 let _ = 23 = 45
 ```
 
-- Both sides `int`: static check passes, expression type is `bool`.
-- At runtime, the comparison evaluates to `false`.
-- Dynamic semantics produced a **value** (`false`).
-- Evaluating to `false` is **not an error**; it's what the comparison means.
+- Both sides `int`: static check passes, type is `bool`.
+- Runtime: evaluates to `false`. A **value**, not an error.
 
 :::
 
@@ -245,16 +232,12 @@ let you write code faster? Four reasons that compound:
 
 ## Why catch errors statically?
 
-- **Earlier is cheaper.** A bug caught at compile time can't ship.
+- **Earlier is cheaper.** Compile-time bugs can't ship.
 - **Better localization.** Compiler points at file and line.
-  - A runtime null-pointer three calls deep is harder to trace.
 - **Fearless refactoring.** Rename a field; compiler lists every call site.
-  - In a dynamic language you find them by running the code.
 - **Documentation.** Types annotate the API, mechanically checked.
 
-- **Cost**: upfront friction; must be well-typed before running.
-- People from dynamic languages sometimes find this annoying.
-- Trade: fewer bugs at later, more expensive stages.
+**Cost:** upfront friction. Trade fewer bugs later for more work now.
 
 :::
 
@@ -454,8 +437,8 @@ let identity x = x
 
 `val identity : 'a -> 'a = <fun>`.
 
-- Read `'a` as "some type, to be filled in by the caller".
-- OCaml has **parametric polymorphism** (like Java generics / C++ templates, more pleasant).
+- Read `'a` as "some type, filled in by the caller".
+- **Parametric polymorphism** (like Java generics or C++ templates).
 - Functions that don't constrain their arg type stay polymorphic.
 
 ```ocaml
@@ -539,14 +522,11 @@ would reject it (`float` does not match the `int` constraint from
 let triple (x : int) : int = x + x + x
 ```
 
-- Inference would have given `int -> int` anyway.
-- Annotation uses:
-  - **Documents intent** in public APIs.
-  - **Pins down ambiguity** (rare, with records and modules).
-  - **Locates type errors**: an annotated function fails at *its* line.
-
-- For everyday code, leave annotations off.
-- For module signatures (`.mli`, Module 7), annotations **are the API**.
+- Inference would give `int -> int` anyway.
+- Use annotations to: document public APIs, pin down ambiguity,
+  locate type errors.
+- For everyday code, leave them off.
+- For `.mli` signatures (Module 7), annotations **are the API**.
 
 :::
 
@@ -584,7 +564,7 @@ What is the inferred type?
 
 ## When inference reports a surprising type
 
-Sometimes the inferred type is more general than you expected:
+Sometimes inferred type is more general than expected:
 
 ```ocaml
 let first (x, _) = x
@@ -592,8 +572,7 @@ let first (x, _) = x
 
 `val first : 'a * 'b -> 'a = <fun>`.
 
-- Works on any pair.
-- First element any type `'a`, second any (possibly different) `'b`, result `'a`.
+- Works on any pair; result is the first element.
 - We didn't ask for genericity; inference gave it.
 
 To **constrain**, annotate:
@@ -604,7 +583,6 @@ let first_int ((x, _) : int * int) = x
 
 - `val first_int : int * int -> int = <fun>`.
 - Inner parens matter: `: int * int` annotates the whole pattern.
-- Now only works on pairs of `int`. Less general, sometimes what you want.
 
 :::
 
@@ -676,9 +654,8 @@ two `int` arguments but the inner expression `y *. 2.0` is
 - `x +. (...)` forces `x : float`; result `float`.
 - So `f : float -> float -> float`.
 
-- Had you written `x + y *. 2.0`: type error.
-- `+` wants `int`, `*.` wants `float`.
-- Inference reports an inconsistency and points at the offender.
+If you'd written `x + y *. 2.0`: type error. `+` wants `int`, `*.`
+wants `float`.
 
 :::
 

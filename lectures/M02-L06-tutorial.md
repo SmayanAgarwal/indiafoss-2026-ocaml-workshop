@@ -65,7 +65,7 @@ let _ = temperature_label 22.5
 
 - Result: `string = "comfortable"`.
 - Try `30.0`, `-2.0`, `10.0`.
-- Boundary: `15.0` is classified "comfortable" because `<` is **strict**.
+- Boundary: `15.0` is "comfortable"; `<` is **strict**.
 
 :::
 
@@ -118,8 +118,7 @@ let _ = is_leap 2000
 ```
 
 - Expected: `true, false, false, true`.
-- Parens around the first `&&` not strictly needed (`&&` binds tighter than `||`).
-- They make the rule **readable**: explicit parens beat clever precedence.
+- Parens around `&&` not strictly needed; they make the rule **readable**.
 
 :::
 
@@ -180,7 +179,7 @@ let _ = bmi_category 70.0 1.75
 ```
 
 - Result: `string = "normal"`.
-- `let b = bmi mass height in`: compute BMI **once**, name it, then branch.
+- `let b = bmi mass height in`: compute BMI **once**, then branch.
 
 :::
 
@@ -234,8 +233,7 @@ let _ = clamp 0 10 25
 
 - Results: `7, 0, 10`.
 - Type: `int -> int -> int -> int`.
-- Parameter order: `lo`, `hi`, `x`.
-- Result: the clamped value.
+- Argument order: `lo`, `hi`, `x`.
 
 :::
 
@@ -282,11 +280,9 @@ let _ = scaled 100.0 0.0 5.0
 ```
 
 - Results: `26.25` and `0.0`.
-- Second call avoids divide-by-zero via `b = 0.0` check in `safe_divide`.
-- `safe_divide` **replaces** the bad case with a sentinel (`0.0`).
-- A design decision, not always right.
-- Sometimes you want the error visible: exception or `result` type.
-- We'll come back to this in Module 4.
+- Second call avoids divide-by-zero via the `b = 0.0` guard.
+- Sentinel `0.0` is a **design choice**, not always right.
+- Alternatives: raise an exception, return a `result`. See Module 4.
 
 :::
 
@@ -332,7 +328,7 @@ Error: This expression has type float but an expression was expected
        of type int
 ```
 
-- Compiler reports on `3.14`: its type (`float`) doesn't match expected (`int`).
+- Compiler points at `3.14`: type `float`, expected `int`.
 - "Expected" is **driven by the operator**: `*` is integer mul.
 - Fix: switch to `*.`.
 
@@ -362,9 +358,8 @@ Error: This expression has type int but an expression was expected
        of type string
 ```
 
-- `bad` was inferred as `string -> string` (because of `^`).
-- Passing an `int` is rejected.
-- Convert with `string_of_int`:
+- `bad` inferred as `string -> string` (because of `^`).
+- Passing an `int`: rejected. Convert with `string_of_int`:
 
 ```ocaml skip
 let _ = bad (string_of_int 5)
@@ -400,8 +395,7 @@ Error: This expression has type int but an expression was expected
 ```
 
 - Both `if` branches must have the **same type**.
-- Decide: `string` (rewrite else) or `int` (rewrite then).
-- Either is fine; pick one.
+- Decide on `string` or `int` and rewrite the other branch.
 
 :::
 
@@ -491,12 +485,10 @@ let signum_f x =
 
 What changed:
 
-- Comparison literals: `0` to `0.0`.
-- Returned literals: `-1, 0, 1` to `-1.0, 0.0, 1.0`.
-- Type signature: `int -> int` to `float -> float`.
+- Literals: `0` to `0.0`; `-1, 0, 1` to `-1.0, 0.0, 1.0`.
+- Type: `int -> int` to `float -> float`.
 
-- **Structure is identical.**
-- OCaml made you spell out the type choice; the logic is the same.
+**Structure is identical.** OCaml made you spell out the type choice.
 
 :::
 
@@ -544,15 +536,13 @@ following without checking references:
 After Module 2 you can:
 
 - Write `int`, `float`, `bool`, `string` literals.
-- Use `let` and `let ... in` to name values.
-- Read the type the toplevel reports for any expression.
-- Recognise the three common type errors and fix them.
-- Write multi-branch `if`/`else if`/`else` expressions.
+- Use `let` and `let ... in`.
+- Read the type the toplevel reports.
+- Recognise the common type errors.
+- Write multi-branch `if` expressions.
 - Compose small functions like `bmi`, `clamp`, `signum`.
 
-- **Next, Module 3**: functions as values.
-- Currying, partial application, recursion, tail recursion.
-- Once functions are first-class, real programs take shape.
+**Next, Module 3:** functions as values, currying, recursion.
 
 :::
 

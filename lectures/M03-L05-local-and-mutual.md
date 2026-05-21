@@ -67,10 +67,9 @@ let factorial n =
   go 1 n
 ```
 
-- `go` is defined *inside* `factorial` with `let rec ... in`.
+- `go` defined *inside* `factorial` with `let rec ... in`.
 - In scope only for the rest of that expression.
-- Outside `factorial`, the name `go` doesn't exist.
-- Right place for a helper that's only useful as implementation detail of one outer function.
+- Right place for an implementation-detail helper.
 
 :::
 
@@ -133,11 +132,10 @@ let factorial n = factorial_go 1 n
 ```
 
 - This works.
-- Downside: `factorial_go` is now a public name.
-- Anyone reading your code or using autocomplete sees it.
-- They might call `factorial_go 0 5` and get `0`: wrong answer that the `factorial` API would have prevented.
-- A local `let rec ... in` keeps the helper invisible to callers.
-- The *encapsulation* argument for local definitions, and the default choice.
+- Downside: `factorial_go` is a public name.
+- Callers could pass `factorial_go 0 5` and silently get `0`.
+- A local `let rec ... in` hides the helper.
+- Encapsulation: the default choice.
 
 :::
 
@@ -188,8 +186,8 @@ let average xs =
 
 Rule of thumb:
 
-- Helper has a meaningful name *other callers might want*: top-level.
-- Tactical aid for one function (accumulator-passing version, unfolded base case): local.
+- Reusable name other callers might want: top-level.
+- Tactical helper for one function: local.
 
 :::
 
@@ -249,9 +247,8 @@ let _ = is_odd 10
 
 - `true, false`.
 - Each function calls the other.
-- Tied together by the `and` keyword.
-- Without `and`, the first couldn't see the second (not defined yet).
-- With `and`, both names are in scope simultaneously and can reference each other.
+- Tied together by `and`.
+- Both names in scope simultaneously inside both bodies.
 
 :::
 
@@ -289,15 +286,14 @@ let rec is_odd  n = if n = 0 then false else is_even (n - 1)
 ```
 
 - OCaml rejects the first line: `Unbound value is_odd`.
-- When the first `let rec` is processed, `is_odd` doesn't exist yet.
-- The `and` keyword threads multiple recursive definitions through one name-resolution step:
+- When `let rec is_even` is processed, `is_odd` doesn't exist yet.
+- `and` threads multiple definitions through one name-resolution step:
 
 ```
 let rec X = ... and Y = ... and Z = ...
 ```
 
-- All of `X`, `Y`, `Z` are in scope inside each body.
-- Exactly what mutual recursion requires.
+- All names in scope inside each body.
 
 :::
 
@@ -361,9 +357,8 @@ and read_op n tokens =
   | _ -> None
 ```
 
-- `read_number` calls `read_op`, which calls `read_number`.
-- Together they implement a small recursive-descent parser.
-- Mutual recursion is the natural fit.
+- `read_number` calls `read_op` calls `read_number`.
+- A small recursive-descent parser; mutual recursion is the natural fit.
 
 :::
 
@@ -421,7 +416,7 @@ let collatz n =
 ```
 
 - Single-recursive example.
-- `let rec` and `and` work inside `in` expressions the same way:
+- `let rec ... and ...` works inside `let ... in` too:
 
 ```ocaml
 let demo () =
@@ -434,7 +429,7 @@ let demo () =
 ```
 
 - `string = "done"`.
-- The two local helpers refer to each other.
+- Local helpers can refer to each other.
 
 :::
 
@@ -489,25 +484,11 @@ and is_odd n =
 
 Trace for `is_even 6`:
 
-- `is_even 6 → is_odd 5 → is_even 4 → is_odd 3 → is_even 2 → is_odd 1 → is_even 0 → true`.
+- `is_even 6, is_odd 5, is_even 4, is_odd 3, is_even 2, is_odd 1, is_even 0, true`.
 
-Trace for `is_odd 6`:
-
-- `is_odd 0 = false`.
-- `is_even 1 = is_odd 0 = false`.
-- `is_odd 2 = is_even 1 = false`.
-- `is_even 3 = is_odd 2 = false`.
-- `is_odd 4 = is_even 3 = false`.
-- `is_even 5 = is_odd 4 = false`.
-- `is_odd 6 = is_even 5 = false`. Correct: 6 is not odd.
-
-Notes:
-
-- This is in tail position (calling a *different* function).
-- OCaml handles tail calls between mutually recursive functions the same way.
-- So this *is* constant-stack.
-- For large `n`, prefer `n mod 2 = 0`.
-- The mutual-recursion version is a clean illustration of the pattern.
+- Recursive calls are in tail position (calling the *other* function).
+- TCO works between mutually recursive functions: constant stack.
+- For large `n`, prefer `n mod 2 = 0`; this is just illustration.
 
 :::
 
@@ -586,8 +567,8 @@ machinery.
 
 Lecture 6: the **tutorial** for Module 3.
 
-- Work through `fib`, `gcd`, and a small list utility.
-- Trade-offs between naive recursion and tail recursion.
+- Work through `fib`, `gcd`, and small list utilities.
+- Trade-offs: naive vs tail recursion.
 
 :::
 

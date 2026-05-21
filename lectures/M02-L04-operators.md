@@ -117,11 +117,10 @@ let _ = 1.5 >= 1.5
 
 - Orderings: `<`, `<=`, `>`, `>=`.
 - `=` is **structural** equality; `<>` structural inequality.
-- All five are **polymorphic**: work on any type with a sensible structural compare.
-  - Numbers, strings, tuples, lists, variants, records.
-
-- `==` and `!=` are **physical** identity ("same allocation in memory").
-- Almost never what you want. **Use `=` and `<>`.**
+- All five are **polymorphic**: numbers, strings, tuples, lists,
+  variants, records.
+- `==` and `!=` are **physical** identity. Almost never what you want.
+- **Use `=` and `<>`.**
 
 :::
 
@@ -193,11 +192,10 @@ let _ = not true
 let _ = false && (1 / 0 = 0)
 ```
 
-- Result: `false`.
-- RHS never evaluated: no division by zero.
+- Result: `false`. RHS never evaluated, so no divide-by-zero.
 - Same for `true || ...`.
-- Identical to C, Java, JavaScript, Python.
-- Only difference: keyword `not` instead of `!`.
+- Identical to C / Java / JavaScript / Python.
+- Quirk: keyword `not` instead of `!`.
 
 :::
 
@@ -251,15 +249,14 @@ let _ = "first" ^ " " ^ "second"
 ```
 
 - `^` is **right-associative**.
-- `"a" ^ "b" ^ "c"` parses as `"a" ^ ("b" ^ "c")`.
-- Fine for a few strings; for many, use `String.concat`:
+- Fine for a few; for many, use `String.concat`:
 
 ```ocaml
 let _ = String.concat ", " ["apple"; "banana"; "cherry"]
 ```
 
-- `String.concat sep xs`: joins elements of `xs` with `sep` between.
-- More efficient than chained `^`.
+- `String.concat sep xs`: joins `xs` with `sep` between.
+- Faster than chained `^`.
 
 :::
 
@@ -304,7 +301,7 @@ let _ = String.length "hello"
 
 ## Function application is its own "operator"
 
-- In OCaml, **function application is just juxtaposition**. No parens.
+- **Function application is juxtaposition.** No parens.
 
 ```ocaml
 let _ = succ 5
@@ -312,14 +309,13 @@ let _ = max 3 7
 let _ = String.length "hello"
 ```
 
-- `succ 5`: function `succ` applied to `5`.
-- Parens used only when **grouping** with another operator:
+- Parens only for **grouping**:
 
 ```ocaml
 let _ = succ (max 3 7)
 ```
 
-- Without parens: parses as `(succ max) 3 7`, not what you want.
+- Without parens: parses as `(succ max) 3 7`. Wrong.
 
 :::
 
@@ -356,8 +352,7 @@ levels below.
 
 ## Operator precedence
 
-- Standard math conventions, with additions.
-- From **tightest** binding to **loosest**:
+From **tightest** to **loosest**:
 
 ```
 .       (record / module access)
@@ -373,7 +368,6 @@ function application
 ```
 
 - When in doubt, **parenthesize**.
-- Code is read more than written; explicit parens cost nothing.
 
 :::
 
@@ -461,14 +455,13 @@ Error: This expression has type int but an expression was expected
        of type string
 ```
 
-- Python / JavaScript: `"value: " + 5` works or silently coerces.
-- OCaml: convert **explicitly**.
+- Python / JavaScript coerce silently. OCaml does not.
 
 ```ocaml
 let _ = "value: " ^ string_of_int 5
 ```
 
-For richer formatting, use `Printf.sprintf`:
+Or `Printf.sprintf` for richer formatting:
 
 ```ocaml
 let _ = Printf.sprintf "value: %d" 5
@@ -505,15 +498,14 @@ let _ = abs -5
 ```
 
 - Looks like "absolute value of negative 5".
-- **Parses as** "`abs` minus `5`": type error (`abs` is a function).
-- Fix: use parens around the negative literal.
+- **Parses as** `abs - 5`: type error.
+- Fix: parenthesize the negative.
 
 ```ocaml
 let _ = abs (-5)
 ```
 
-- Same problem with `-.` for floats.
-- When in doubt, **parenthesize**.
+- Same trap with `-.` for floats.
 
 :::
 
@@ -543,15 +535,14 @@ let _ = 0 < x < 10
 let _ = 0 < x < 10
 ```
 
-- Parses as `(0 < x) < 10`: compares a `bool` to an `int`. Type error.
+- Parses as `(0 < x) < 10`: `bool` vs `int`. Type error.
 - Spell it out with `&&`:
 
 ```ocaml skip
 let _ = 0 < x && x < 10
 ```
 
-- Python is a rare language where `a < b < c` does the math thing.
-- OCaml (like most languages) makes you write `&&`.
+- Python supports chains; OCaml (like most languages) does not.
 
 :::
 
@@ -613,9 +604,9 @@ Parse with precedence:
 - Then `=`: `7 = 7` is `true`.
 - Then `&&`: `true && true` is `true`.
 
-- Answer: `true`.
-- Implicit groupings: `((1 + (2 * 3)) = 7) && true`.
-- Any grouping that surprises you: a candidate for **explicit parens**.
+Answer: `true`. Implicit: `((1 + (2 * 3)) = 7) && true`.
+
+Any grouping that surprises you: candidate for **explicit parens**.
 
 :::
 

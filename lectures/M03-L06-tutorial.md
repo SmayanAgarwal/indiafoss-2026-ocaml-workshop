@@ -62,12 +62,9 @@ let _ = fib 20
 ```
 
 - `int = 6765`.
-- Two recursive calls per step.
-- Call tree *branches*: `fib 20` calls `fib 19` and `fib 18`; each makes two more; etc.
+- Two recursive calls per step; call tree branches.
 - Total calls: exponential in `n`.
-- `fib 30`: works, slowly.
-- `fib 40`: takes a while.
-- `fib 50`: impractical.
+- `fib 30`: slow. `fib 40`: slower. `fib 50`: impractical.
 
 :::
 
@@ -112,11 +109,10 @@ let _ = fib 50
 ## Why is naive Fibonacci so slow?
 
 - `fib 5` computes `fib 4 + fib 3`.
-- `fib 4` recomputes `fib 3 + fib 2`. So `fib 3` is computed *twice*.
-- `fib 2`: three times. `fib 1`: five times. `fib 0`: three.
-- Work blows up: we keep recomputing overlapping sub-problems.
+- `fib 4` recomputes `fib 3 + fib 2`. `fib 3` is computed twice.
+- Overlapping sub-problems blow up the work.
 
-Faster fix: keep a *pair* `(a, b) = (fib (n-2), fib (n-1))` and update iteratively:
+Faster: keep a pair `(a, b) = (fib (n-2), fib (n-1))`:
 
 ```ocaml
 let fib n =
@@ -129,9 +125,8 @@ let fib n =
 let _ = fib 50
 ```
 
-- `int = 12586269025`.
-- Constant work per step. Linear in `n`.
-- The tail-recursive accumulator-pair pattern again.
+- `int = 12586269025`. Linear in `n`, constant work per step.
+- Tail-recursive accumulator-pair pattern.
 
 :::
 
@@ -185,14 +180,9 @@ let _ = gcd 48 18
 
 - `int = 6`. Classic Euclidean algorithm.
 - Each step replaces `(a, b)` with `(b, a mod b)`.
-- Base case: `b = 0`; then `a` is the GCD.
-
-Termination:
-
-- `a mod b < b` for positive `b`, so the second argument strictly decreases.
-- Always non-negative (OCaml's `mod` is non-negative for non-negative inputs).
-- Reaches zero in finite steps.
-- Already tail-recursive: the recursive call is the final expression.
+- Base case `b = 0`; then `a` is the GCD.
+- Termination: `a mod b < b`, so the second argument strictly decreases.
+- Already tail-recursive.
 
 :::
 
@@ -245,10 +235,9 @@ let _ = nth [10; 20; 30; 40] 2
 ```
 
 - `int = 30`. The 0-indexed third element.
-- *Almost* tail-recursive: `nth rest (n - 1)` is the final expression on the right branch.
-- Empty-list branch raises, which is fine.
-- For out-of-bounds we use `failwith` (raises `Failure`).
-- A nicer API would return `'a option`; we'll see that in Module 4.
+- Tail-recursive: `nth rest (n - 1)` is the final expression.
+- Out-of-bounds: `failwith` raises `Failure`.
+- A nicer API returns `'a option`; see Module 4.
 
 :::
 
@@ -307,9 +296,8 @@ let _ = sum [1; 2; 3; 4; 5]
 ```
 
 - `int = 15`.
-- Standard accumulator pattern.
-- Works on lists of any length without stack overflow.
-- Stdlib's `List.fold_left` generalizes this; more in Module 6.
+- Standard accumulator pattern; constant stack.
+- Stdlib's `List.fold_left` generalizes this; see Module 6.
 
 :::
 
@@ -360,8 +348,8 @@ let _ = reverse [1; 2; 3; 4]
 
 - `int list = [4; 3; 2; 1]`.
 - Each element prepended to the accumulator.
-- The first input element ends up *deepest* in the accumulator: what we want for reverse.
-- Stdlib has this as `List.rev`.
+- First input ends up deepest; that's what reverse wants.
+- Stdlib: `List.rev`.
 
 :::
 
@@ -426,9 +414,9 @@ let _ = count_digits 12345
 ```
 
 - `int = 5`.
-- Strips one digit at a time; base case is a single-digit number.
-- Negative inputs would loop forever (OCaml's `/` rounds toward zero, so the recursion may not approach the base).
-- Add a guard for safety:
+- Strips one digit at a time; base case is single-digit.
+- Negative inputs misbehave: `<` is true at once, returning `1`.
+- Guard with `abs`:
 
 ```ocaml
 let count_digits n =
@@ -481,9 +469,8 @@ different convention you would adjust the base case.
 
 Write `last : 'a list -> 'a option`:
 
-- Returns the last element of a list.
-- Returns `None` if the list is empty.
-- Must be tail-recursive (works on a one-million-element list without stack overflow).
+- Returns last element, or `None` if empty.
+- Must be tail-recursive (works on a million-element list).
 
 :::
 
@@ -505,19 +492,12 @@ let rec last = function
 
 Three cases:
 
-- `[]`: empty list, no last element.
-- `[x]`: single-element list, the only element is the last.
-- `_ :: rest`: throw away the head, recur on the rest.
+- `[]`: no last element.
+- `[x]`: only element is the last.
+- `_ :: rest`: drop head, recur.
 
-- `last rest` is the final expression in its case: tail-recursive.
-- OCaml optimizes it: no stack overflow on million-element lists.
-
-Why `option`?
-
-- No sensible "last element of an empty list".
-- `'a option` makes this explicit.
-- Caller must handle both `Some x` and `None`.
-- More on `option` in Module 4.
+- `last rest` is the final expression: tail-recursive.
+- `option` makes the empty case explicit; covered in Module 4.
 
 :::
 
@@ -583,18 +563,12 @@ tail-recursive version would accumulate-then-reverse like the
 After Module 3 you can:
 
 - Define functions, including anonymous functions with `fun`.
-- Use partial application (`add 5`, `between 0 10`).
-- Write recursive functions in their natural form, with base and
-  recursive cases.
-- Convert a non-tail-recursive function to tail-recursive with an
-  accumulator.
-- Use local helpers (`let rec go ... in`) and mutual recursion
-  (`let rec X ... and Y ...`).
+- Use partial application (`add 5`).
+- Write recursive functions with base and recursive cases.
+- Convert to tail-recursive with an accumulator.
+- Use local helpers and mutual recursion.
 
-Module 4 turns to **data types**: tuples, records, variants, and
-their recursive counterparts (the structure we use to model real
-problems). Pattern matching, which we've been previewing, takes
-center stage in Module 5.
+Module 4: **data types** (tuples, records, variants, recursive).
 
 :::
 

@@ -85,7 +85,7 @@ type json =
 ```
 
 - Six constructors: the standard JSON kinds.
-- Recursive cases: `JArray` carries a `json list`; `JObject` a list of `(string * json)` pairs.
+- Recursive: `JArray of json list`; `JObject of (string * json) list`.
 
 A small example:
 
@@ -183,9 +183,9 @@ let rec depth = function
 let _ = depth value
 ```
 
-- Scalars (`JNull`/`JBool`/`JNumber`/`JString`): depth 1.
+- Scalars (`JNull` / `JBool` / `JNumber` / `JString`): depth 1.
 - `JArray` or `JObject`: 1 + max depth of contents.
-- `JNull | JBool _ | ...` is an **or-pattern**: matches any listed constructor.
+- `A | B | C` is an **or-pattern**: matches any listed constructor.
 
 :::
 
@@ -282,8 +282,8 @@ let _ = lookup "name" (JString "not an object")
 
 - Results: `Some (JString "Alice")`, `None`, `None`.
 - Returns `json option`.
-- `None` when input isn't a `JObject` **or** the key isn't present.
-- `List.assoc_opt`: stdlib helper that does the association-list lookup.
+- `None` when input isn't a `JObject` or the key isn't present.
+- `List.assoc_opt`: stdlib helper for association-list lookup.
 
 :::
 
@@ -367,8 +367,7 @@ let rec pretty = function
 
 - Each constructor: one clause.
 - Arrays and objects **recurse**.
-- We didn't handle string escaping (a real printer escapes `\`, `"`, control chars).
-- For a toy ADT, this is the spine.
+- We skipped string escaping. A real printer escapes `\`, `"`, etc.
 
 :::
 
@@ -467,11 +466,9 @@ let set_field key new_value = function
   | other -> other
 ```
 
-- Returns a new `json` value (**immutable** update).
+- Returns a new `json` (immutable update).
 - Structural recursion over the list of fields.
-- `when k = key`: a **when-clause**, a runtime guard on the pattern.
-- Distinguishes "found the key" from "different key".
-- When-clauses are covered properly in Module 5.
+- `when k = key`: a **guard** on the pattern. Covered in Module 5.
 
 :::
 
@@ -623,11 +620,10 @@ type json =
   | JObject of (string * json) list
 ```
 
-- Compiler now warns **every match** on `json` that doesn't handle `JFloat`.
-- Affected: `depth`, `pretty`, `set_field`, `count_nulls`, etc.
-- Go down the list, add a `| JFloat f -> ...` clause to each.
-- This is the **refactor-with-the-compiler** property.
-- You don't find call sites by reading; the compiler finds them.
+- Compiler now warns every `match` on `json` that misses `JFloat`.
+- Affects `depth`, `pretty`, `set_field`, `count_nulls`, etc.
+- Add `| JFloat f -> ...` to each; repeat until silent.
+- **Refactor with the compiler**: it finds call sites, not you.
 
 :::
 
@@ -654,21 +650,14 @@ trade-off is real.
 
 After Module 4 you can:
 
-- Bundle multiple values with tuples (`(x, y)`) and records
-  (`{ x = ...; y = ... }`).
+- Bundle values with tuples and records.
 - Express "this or that" with variants.
 - Build recursive types like lists, trees, expressions.
 - Write functions over recursive types by pattern matching.
-- Use `option` and `result` to express "maybe" and "succeeded or
-  not" without nulls.
+- Use `option` and `result` instead of nulls.
 
-Module 5 zooms in on **pattern matching** itself:
-
-- Or-patterns.
-- When-clauses.
-- Exhaustiveness checking in more depth.
-- Nested patterns.
-- The `function` shorthand.
+Module 5: **pattern matching** in depth (or-patterns, when-clauses,
+exhaustiveness, nested patterns, `function`).
 
 :::
 

@@ -82,12 +82,11 @@ type 'a list =
 
 A `'a list` is either:
 
-- `[]`: the empty list.
-- `x :: rest`: an element `x : 'a` prepended to another `'a list` `rest`.
+- `[]`: empty list.
+- `x :: rest`: element `x : 'a` prepended to another `'a list` `rest`.
 
-- Recursive bit: the `'a list` inside the cons constructor.
-- Each cons cell points to *another list* of any size (including empty).
-- Hence: arbitrarily long.
+- The recursive bit: `'a list` inside the cons constructor.
+- Each cons cell points to *another list*; hence any length.
 
 :::
 
@@ -124,8 +123,7 @@ let _ = ys
 ```
 
 - `int list = [0; 1; 2; 3]`.
-- `0 :: xs` prepends `0` to `xs`.
-- Original `xs` is **unchanged**.
+- `0 :: xs` prepends `0` to `xs`; original `xs` **unchanged**.
 - `ys` shares its tail with `xs` (no copy).
 
 ```ocaml
@@ -179,10 +177,9 @@ let _ = sum [1; 2; 3; 4; 5]
 ```
 
 - Result: `int = 15`.
-- Two clauses, one per constructor of `list`.
+- Two clauses, one per constructor.
 - Recursive case calls `sum` on the *smaller* tail.
-- This is **structural recursion**: the function's recursion mirrors the data type's.
-- Every recursive variant gives you this pattern.
+- **Structural recursion**: function mirrors the data type.
 
 :::
 
@@ -252,9 +249,8 @@ type 'a tree =
   | Node of 'a tree * 'a * 'a tree
 ```
 
-- `Leaf`: empty.
-- `Node`: left subtree, value, right subtree.
-- Same shape as a list, but **two** recursive references.
+- `Leaf`: empty. `Node`: left, value, right.
+- Like a list, but **two** recursive references.
 
 ```ocaml
 type 'a tree =
@@ -383,10 +379,10 @@ type 'a forest = 'a rose_tree list
 and  'a rose_tree = Rose of 'a * 'a forest
 ```
 
-- `rose_tree`: a value and a *forest* of children.
-- `forest`: a list of rose trees.
-- `and` ties them together (same as value-level mutual recursion).
-- Models a node-labelled tree with **arbitrary number** of children per node.
+- `rose_tree`: value and a *forest* of children.
+- `forest`: list of rose trees.
+- `and` ties them together.
+- Models a node-labelled tree with **any number** of children.
 
 :::
 
@@ -446,11 +442,9 @@ let _ = eval e
 ```
 
 - Result: `int = 23`.
-- We've defined an arithmetic mini-language **and** its evaluator.
-- Each constructor: a piece of syntax.
-- Evaluator: pattern-matches and computes.
-- The embryo of every interpreter and compiler.
-- Same recipe for: JSON values, regular expressions, configurations, network protocols.
+- A mini-language **and** its evaluator in twelve lines.
+- Each constructor: a piece of syntax. Evaluator: match and compute.
+- Same recipe: JSON, regex, configs, network protocols.
 
 :::
 
@@ -486,15 +480,14 @@ type is correct:
 
 ## Structural induction
 
-To prove (or convince yourself) a function on a recursive type is correct:
+To convince yourself a function on a recursive type is correct:
 
-1. Show correctness on the **base case** (`Leaf`, `[]`, `Num n`).
-2. Assuming correctness on immediate substructures, show correctness on each **recursive case** (`Node`, `::`, `Add`).
+1. Show it on the **base case** (`Leaf`, `[]`, `Num n`).
+2. Assuming substructures work, show each **recursive case**.
 
-- Same principle as school induction: `P(0)` and `P(n) -> P(n+1)` give `P(n)` for all `n`.
-- Applied here to **data shapes**.
-- If a function matches every constructor and delegates recursive cases properly:
-  - Structural induction basically *guarantees* correctness.
+- Same principle as school induction, applied to data shapes.
+- If you cover every constructor and trust the recursive call,
+  structural induction guarantees correctness.
 
 :::
 
@@ -604,10 +597,9 @@ let t = Node (Node (Leaf, 1, Leaf), 2, Leaf)
 let _ = size t
 ```
 
-- Result: `int = 2` (two nodes: root `2`, left child `1`).
-- Base case: `Leaf -> 0`.
-- Recursive case: `1` + size of each subtree.
-- Pattern `Node (l, _, r)` ignores the value (we count, not read).
+- Result: `int = 2` (root `2`, left child `1`).
+- Base: `Leaf -> 0`. Recursive: `1 + size l + size r`.
+- `Node (l, _, r)` ignores the value (we count, not read).
 
 :::
 
@@ -621,9 +613,8 @@ discard the value position. This is the same idiom as in tuples.
 
 ## What's next
 
-Lecture 5: **type abbreviations** (giving short names to longer
-types) and **`option`** (the standard way to represent "maybe a
-value, maybe not"). After that, the Module 4 tutorial.
+Lecture 5: **type abbreviations** (short names for longer types)
+and **`option`** ("maybe a value"). Then the tutorial.
 
 :::
 

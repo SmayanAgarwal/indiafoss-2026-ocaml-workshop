@@ -51,18 +51,15 @@ read a textbook chapter on the same material.
 
 ## Four primitive kinds
 
-- Four primitive value kinds used constantly in OCaml:
-
 | Type | Example literal | What it represents |
 | --- | --- | --- |
-| `int` | `42`, `-7`, `0` | A whole number, signed, 63-bit on 64-bit machines |
-| `float` | `3.14`, `2.0`, `-0.5` | An IEEE-754 double-precision floating-point number |
-| `bool` | `true`, `false` | A boolean |
-| `string` | `"hello"`, `""` | A byte string |
+| `int` | `42`, `-7`, `0` | Whole number, signed, 63-bit on 64-bit |
+| `float` | `3.14`, `2.0` | IEEE-754 double-precision |
+| `bool` | `true`, `false` | Boolean |
+| `string` | `"hello"`, `""` | Byte string |
 
-- Every literal has a *type* the compiler **infers automatically**.
-- You never write `int x = 5;` in OCaml.
-- Just write `let x = 5`; the compiler figures out the type.
+- Compiler **infers** every literal's type.
+- No `int x = 5;`. Just `let x = 5`.
 
 :::
 
@@ -576,10 +573,10 @@ let temperature_label c =
 let _ = temperature_label 22.5
 ```
 
-- A function of type `float -> string`.
+- Function of type `float -> string`.
 - Body is **one expression**: a chain of `if`/`then`/`else`.
-- Full `if` lecture coming in Module 2 Lecture 5.
-- For now: the literals we've seen (`0.0`, `18.0`, `"freezing"`) combine into a working function.
+- Full `if` lecture in Lecture 5.
+- Literals (`0.0`, `18.0`, `"freezing"`) combine into a working function.
 
 :::
 

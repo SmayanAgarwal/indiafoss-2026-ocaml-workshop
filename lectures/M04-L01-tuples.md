@@ -74,8 +74,7 @@ let nested  = ((1, 2), (3, 4))
 - `pair : int * bool`
 - `triple : int * string * float`
 - `nested : (int * int) * (int * int)`
-- `*` in a type position reads as "and": "an int *and* a bool".
-- The type-level `*`, not the multiplication operator.
+- `*` in a type position reads as "and"; not the multiplication operator.
 
 :::
 
@@ -123,11 +122,9 @@ let _ : int * int * int = (1, 2, 3)
 ```
 
 - These are *different types*.
-- Can't pass an `int * int * int` where an `int * int` is expected.
-- Each tuple shape is its own type.
-- Contrast Python: a 2-tuple and a 3-tuple are both just `tuple`.
-- OCaml's choice: static checking ("exactly two coordinates").
-- Cost: a fresh type for every shape.
+- Can't pass an `int * int * int` where `int * int` is expected.
+- Contrast Python: 2-tuple and 3-tuple are both `tuple`.
+- OCaml: static checking, but a fresh type for every shape.
 
 :::
 
@@ -190,7 +187,7 @@ let _ = snd p
 
 - `fst : 'a * 'b -> 'a`, `snd : 'a * 'b -> 'b`.
 - Work on **pairs only**.
-- For triples (or larger), you **destructure**:
+- For triples or larger: **destructure**.
 
 ```ocaml
 let (x, y, z) = (1, 2, 3)
@@ -199,8 +196,7 @@ let _ = y
 let _ = z
 ```
 
-- `let (x, y, z) = ...` is a **pattern**.
-- Binds three names at once.
+- `(x, y, z)` is a **pattern**; binds three names at once.
 
 :::
 
@@ -267,7 +263,6 @@ let _ = distance (0.0, 0.0) (3.0, 4.0)
 
 - Result: `float = 5.0`.
 - Each parameter is a *pattern* `(x1, y1)`.
-- OCaml binds `x1`, `y1` from arg 1; `x2`, `y2` from arg 2.
 - Inferred type: `float * float -> float * float -> float`.
 - Two pairs in, one float out.
 
@@ -328,13 +323,9 @@ let add_tupled (x, y)  = x + y
 
 - `add_curried : int -> int -> int`. Two arguments.
 - `add_tupled  : int * int -> int`. One argument: a pair.
-- Call sites:
-  - `add_curried 3 4` (two args, no parens).
-  - `add_tupled (3, 4)` (one arg, the pair).
-- C and Python instinct says these are the same. They are not.
-- Idiomatic OCaml prefers the curried form for arguments you may
-  want to partially apply, the tuple form when you want to say
-  "these belong together."
+- Call sites: `add_curried 3 4` vs `add_tupled (3, 4)`.
+- Prefer curried for arguments you may partially apply.
+- Use tuple when values **belong together**.
 
 :::
 
@@ -366,20 +357,17 @@ A short summary of when to reach for a tuple:
 
 Use a tuple when:
 
-- You have a small, fixed number of values to bundle (2, 3, maybe 4).
-- The values may have different types.
-- The shape is *obvious from context*: a point is a pair `(x, y)`;
-  a key-value entry is a pair `(key, value)`.
-- Bundle is short-lived: built, used, destructured.
+- Small, fixed bundle (2, 3, maybe 4).
+- Possibly different types.
+- Shape is obvious: `(x, y)`, `(key, value)`.
 
 Don't use a tuple when:
 
-- You'd want to access components by *name* (use a record; next
-  lecture).
-- You'd have ten components (use a record).
-- The number of values varies (use a list).
+- You want access by *name* (use a record).
+- Ten components (use a record).
+- Number of values varies (use a list).
 
-**Rule of thumb:** two or three of something, positions speak for themselves.
+**Rule of thumb:** two or three things, positions speak for themselves.
 
 :::
 
@@ -419,7 +407,7 @@ let _ = q + r
 
 ## Returning multiple values
 
-OCaml functions return a **single** value. That value can be a tuple.
+OCaml functions return a **single** value: can be a tuple.
 
 ```ocaml
 let divmod a b =
@@ -428,15 +416,14 @@ let divmod a b =
 let _ = divmod 17 5
 ```
 
-- Result: `(int * int) = (3, 2)`.
-- Caller destructures:
+- Result: `(int * int) = (3, 2)`. Caller destructures:
 
 ```ocaml
 let divmod a b = (a / b, a mod b)
 let (q, r) = divmod 17 5
 ```
 
-- OCaml idiom for what Python and Go do with multiple return values.
+- The OCaml idiom for multiple return values.
 
 :::
 
@@ -498,8 +485,8 @@ let _ = lookup 2 pairs
 ```
 
 - Result: `string option = Some "two"`.
-- Pattern `(k, v) :: rest` destructures the head pair, binds both names.
-- `option` in lecture 5; more on `function` in Module 5.
+- `(k, v) :: rest`: nested pattern destructuring head and tail.
+- `option` in lecture 5; `function` in Module 5.
 
 :::
 
@@ -581,17 +568,15 @@ let xs = [1, 2]
 ```
 
 - Type: `(int * int) list`.
-- A list with *one* element: the pair `(1, 2)`.
-- For a list of two integers, separator is `;`, not `,`:
+- One element: the pair `(1, 2)`.
+- For a list of two ints, use `;`:
 
 ```ocaml
 let xs = [1; 2]
 ```
 
-- Lists use `;`. Tuples use `,`.
-- The comma in `[1, 2]` builds a tuple; the brackets wrap it as a
-  one-element list.
-- Compiler does not warn. Be careful.
+- Lists: `;`. Tuples: `,`.
+- Compiler does not warn; be careful.
 
 :::
 
@@ -686,17 +671,15 @@ Write the function.
 
 ## Activity discussion
 
-1. `p : int * bool * string` (three components, in order).
+1. `p : int * bool * string`.
 2. Function:
 
 ```ocaml
 let first3 (x, _, _) = x
 ```
 
-- Type: `val first3 : 'a * 'b * 'c -> 'a = <fun>`.
-- The `_` means "ignore this component"; we only care about the first.
-
-Try it:
+- `val first3 : 'a * 'b * 'c -> 'a = <fun>`.
+- `_` ignores a component.
 
 ```ocaml
 let first3 (x, _, _) = x

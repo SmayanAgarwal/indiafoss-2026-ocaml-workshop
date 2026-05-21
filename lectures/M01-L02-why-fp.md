@@ -350,7 +350,7 @@ let double x = x + x
 
 - `double 21` is `42`. Always. Anywhere.
 - Replace any call with its result; meaning unchanged.
-<!-- KC: at this point in the slide, we should mention >
+<!-- KC: at this point in the slide, we should mention "referential transparency" -->
 
 :::
 
@@ -441,7 +441,8 @@ int next() {
 }
 ```
 
-- `next()` is **not** `next()`.
+- Is `next() == next()`?
+  - No: first call returns `n`, second call returns `n+1`.
 - Reordering two calls: breaks meaning.
 - Caching the result: breaks meaning.
 - Reading imperative code = reconstructing implicit state.

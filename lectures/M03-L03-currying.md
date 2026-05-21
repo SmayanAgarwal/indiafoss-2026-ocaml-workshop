@@ -81,17 +81,17 @@ This is short for:
 let add = fun x -> fun y -> x + y
 ```
 
-- `add` is a one-argument function with argument `x`.
-- Its result is a *function* of one argument `y` returning `x + y`.
+- `add` takes one argument `x`.
+- Result: a function of one argument `y` returning `x + y`.
 
-The type confirms:
+Type confirms:
 
 ```
 val add : int -> int -> int
 ```
 
 - Right-associative: `int -> (int -> int)`.
-- *Takes an int, returns a function from int to int.*
+- Takes an int, returns a function from int to int.
 
 :::
 
@@ -130,17 +130,14 @@ let add x y = x + y
 let add5 = add 5
 ```
 
-- `add5 : int -> int`.
-- Adds 5 to whatever int you give it.
+- `add5 : int -> int`. Adds 5 to whatever you give it.
 
 ```ocaml
 let _ = add5 3
 ```
 
-- `int = 8`.
-- We *partially applied* `add` to one of its two arguments.
-- Result: a function waiting for the second.
-- Works for any curried function: supply some arguments, get back a function for the rest.
+- `int = 8`. We *partially applied* `add` to one argument.
+- Result: a function waiting for the rest.
 
 :::
 
@@ -183,10 +180,8 @@ let xs_plus_10 = List.map (add 10) xs
 ```
 
 - `int list = [11; 12; 13; 14]`.
-- `List.map` wants an `int -> int` function.
-- No need for the one-off lambda `fun x -> add 10 x`.
-- `add 10` already *is* that function.
-- Common reason to like currying: eliminates small wrapper lambdas in higher-order code.
+- `List.map` wants `int -> int`. `add 10` already *is* that.
+- Currying eliminates small wrapper lambdas in higher-order code.
 
 :::
 
@@ -236,18 +231,17 @@ let divide x y = x / y
 let half x = divide x 2  (* not "divide 2 x" *)
 ```
 
-- `divide 2` gives a function taking `y` and returning `2 / y`.
-- That's "two divided by", not "half".
-- The **first** argument is the one most easily fixed by partial application.
-- Stdlib APIs often place arguments in the order most useful for partial application.
+- `divide 2`: takes `y`, returns `2 / y`. Not "half".
+- The **first** argument is the easiest to fix.
+- Stdlib places arguments accordingly.
 
-For example, `List.map` takes the *function* first, *list* second:
+`List.map` takes the *function* first, *list* second:
 
 ```ocaml skip
 val List.map : ('a -> 'b) -> 'a list -> 'b list
 ```
 
-- So you can write `List.map (add 10)` and partial-apply meaningfully.
+- So `List.map (add 10)` partial-applies meaningfully.
 
 :::
 
@@ -293,10 +287,9 @@ let _ = increment 5
 let _ = double 5
 ```
 
-- `(+)` is the prefix-call form of `+`: it's `fun x y -> x + y`.
+- `(+)` is prefix form of `+`: `fun x y -> x + y`.
 - Partial-apply to `1` to get `increment`.
-- Same for `(*)` and `2`.
-- Space inside `( * )` avoids being parsed as the comment `(*`.
+- Space inside `( * )` avoids being parsed as comment `(*`.
 
 :::
 
@@ -341,10 +334,9 @@ let _ = in_celsius_room 22.5
 ```
 
 - Both `true`.
-- `between` takes three arguments (`lo`, `hi`, `x`).
-- Partial-applying two of them gives a *one-argument* predicate.
-- We make two specialized predicates here.
-- Same idea as `add 5`, with one more layer of nesting.
+- `between` takes three arguments.
+- Partial-apply two; get a one-argument predicate.
+- Same idea as `add 5`, one more layer of nesting.
 
 :::
 
@@ -389,16 +381,14 @@ you can drop the `x`:
 let f = g
 ```
 
-- If `f` just *applies* `g` and returns the result, the two are equivalent.
-- OCaml lets you write the shorter form.
+- If `f` just *applies* `g`, the two are equivalent.
 
 ```ocaml
 let xs = [1; 2; 3; 4]
 let xs_plus_10 = List.map ((+) 10) xs
 ```
 
-- We didn't need `fun x -> List.map ((+) 10) x`.
-- Same eta-reduction idea.
+- No `fun x -> List.map ((+) 10) x` wrapper needed.
 
 :::
 
@@ -442,11 +432,9 @@ let add_pair (x, y) = x + y
 let _ = add_pair (3, 4)
 ```
 
-- `add_pair : int * int -> int`.
-- Takes *one* argument: a pair.
-- `add 3 4` and `add_pair (3, 4)` are different syntax.
+- `add_pair : int * int -> int`. One argument: a pair.
 - Can't partial-apply the tuple version.
-- Most OCaml code prefers curried; tuple is used when the values are *conceptually one thing* (e.g. a 2D point).
+- Prefer curried; use tuple when values are *conceptually one thing*.
 
 :::
 

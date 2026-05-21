@@ -81,15 +81,10 @@ let rec sum_to n =
 let _ = sum_to 1_000_000
 ```
 
-- Crashes with `Stack overflow during evaluation`.
-
-Why?
-
-- Each call allocates a stack frame to remember *what to do with the recursive result*.
-- Recursive case `n + sum_to (n - 1)`: after the call returns, we must add `n`.
-- So `n` must be remembered across the call.
-- One million calls = one million stack frames, each holding a copy of `n`.
-- The stack runs out.
+- Crashes: `Stack overflow during evaluation`.
+- Each call needs a stack frame to remember "what to do with the result".
+- Body `n + sum_to (n - 1)`: must remember `n` across the call.
+- A million frames: stack runs out.
 
 :::
 
@@ -136,7 +131,7 @@ nothing but recur.
 
 ## A tail call is a recursive call with nothing left to do
 
-- A function call is **in tail position** if its result is the *final* result of the enclosing function.
+- A call is **in tail position** if its result is the final result.
 - Nothing happens after the call returns.
 
 ```ocaml
@@ -144,10 +139,8 @@ let rec f n = if n = 0 then 0 else f (n - 1)    (* tail call *)
 let rec g n = if n = 0 then 0 else 1 + g (n - 1)  (* NOT tail call *)
 ```
 
-- In `f`, when `f (n - 1)` returns, `f` immediately returns the same value.
-- The compiler doesn't need to keep a stack frame for the outer call.
-- In `g`, after the recursive call we still need to compute `1 + ...`.
-- The outer frame must persist.
+- In `f`, the call's result is returned directly: no stack frame needed.
+- In `g`, we still need `1 + ...` after; the frame must persist.
 
 :::
 
@@ -178,10 +171,10 @@ transfers to the callee without growing the stack.
 
 ## OCaml optimizes tail calls
 
-- The compiler **reuses** the current stack frame for a tail call instead of allocating a new one.
-- This is the **tail-call optimization** (TCO).
-- Effect: tail-recursive functions use *constant* stack space, regardless of recursion depth.
-- Enabled automatically; you just need to write recursion in tail form.
+- Compiler **reuses** the current stack frame for a tail call.
+- This is **tail-call optimization** (TCO).
+- Tail-recursive functions use *constant* stack space.
+- Enabled automatically; just write recursion in tail form.
 
 :::
 
@@ -229,8 +222,8 @@ let _ = sum_to 1_000_000
 
 ## The accumulator pattern
 
-- To make `sum_to` tail-recursive, move the "work" *before* the recursive call.
-- Pass the running total as an extra parameter.
+- Move the "work" *before* the recursive call.
+- Pass running total as an extra parameter.
 
 ```ocaml
 let sum_to n =
@@ -244,9 +237,8 @@ let _ = sum_to 1_000_000
 ```
 
 - `int = 500000500000`. No stack overflow.
-- Helper `go` takes running total `acc` and remaining work `n`.
-- Each step: add `n` to the accumulator, then recur on `(acc + n, n - 1)`.
-- The recursive call is the *final* expression in the else-branch: tail call.
+- `go` takes accumulator `acc` and remaining `n`.
+- Recursive call is the final expression: tail call.
 
 :::
 
@@ -285,10 +277,9 @@ go 9 1  =>  go (9+1) 0  =>  go 10 0
 go 10 0 =>  10                          (base case hit)
 ```
 
-- Each step computes the new accumulator *before* the recursive call.
-- By `n = 0`, the accumulator holds the full sum.
-- Same loop a procedural language would write: `int acc = 0; for (int i = n; i > 0; i--) acc += i; return acc;`.
-- Tail-recursive form is the same loop, without mutation.
+- New accumulator computed *before* the recursive call.
+- At `n = 0`, accumulator holds the full sum.
+- Same loop a C program would write, without mutation.
 
 :::
 
@@ -349,10 +340,9 @@ let _ = factorial 10
 ```
 
 - `int = 3628800`.
-- Same pattern: running product passed as `acc`.
-- Base case: return `acc`.
-- Caveat: `factorial 100` overflows OCaml's `int` (the math, not the stack).
-- For arbitrary-precision factorial, use `Zarith`.
+- Running product passed as `acc`; base returns `acc`.
+- Caveat: `factorial 100` overflows OCaml's `int`.
+- For arbitrary precision: `Zarith`.
 
 :::
 
@@ -416,10 +406,9 @@ let _ = length [10; 20; 30; 40]
 ```
 
 - `int = 4`.
-- Accumulator counts how many elements we've *already* seen.
-- When we hit `[]` we return the count.
-- This is the form used by `List.length` in the stdlib.
-- Runs in constant stack space regardless of list length.
+- Accumulator counts elements seen so far.
+- At `[]`, return the count.
+- Same shape as `List.length` in the stdlib; constant stack.
 
 :::
 
@@ -464,7 +453,6 @@ the end:
 ## When you can't easily go tail-recursive
 
 - Some functions resist a clean accumulator rewrite.
-- The "work after the recursive call" is not associative-commutative.
 
 ```ocaml
 let rec map f = function
@@ -473,8 +461,7 @@ let rec map f = function
 ```
 
 - `f x :: map f rest` is *not* tail-recursive.
-- We still need to prepend `f x` after the recursive call.
-- A tail-recursive version builds the list in reverse, then reverses at the end:
+- A tail-recursive version builds in reverse, then reverses:
 
 ```ocaml
 let map f xs =
@@ -485,11 +472,9 @@ let map f xs =
   go [] xs
 ```
 
-- Accumulate in reverse, then `List.rev` at the end.
-- Two passes through the list, but constant stack.
-- For very long lists, this is the right shape.
-- Stdlib `List.map` is *not* tail-recursive (historical reasons).
-- For long lists, use `List.rev (List.rev_map f xs)` instead.
+- Two passes, but constant stack.
+- Stdlib `List.map` is *not* tail-recursive (historical).
+- For long lists, use `List.rev (List.rev_map f xs)`.
 
 :::
 
@@ -519,12 +504,10 @@ yes, not tail; if no, tail.
 
 ## A heuristic for spotting tail calls
 
-After the recursive call returns, is there *any* computation left in the function?
+After the call returns, is there *any* computation left?
 
-- If yes: **not** a tail call.
-- If no: tail call.
-
-Test on each:
+- Yes: **not** a tail call.
+- No: tail call.
 
 ```ocaml
 let rec a n = if n = 0 then 0 else a (n - 1) + 1
@@ -532,9 +515,9 @@ let rec b n = if n = 0 then 0 else 1 + b (n - 1)
 let rec c n = if n = 0 then 0 else if n > 100 then c (n - 100) else c (n - 1)
 ```
 
-- `a`: not tail (we add `1` after).
+- `a`: not tail (adds `1` after).
 - `b`: not tail.
-- `c`: yes, both branches' recursive calls are the final expressions.
+- `c`: tail; both branches' recursive calls are final.
 
 :::
 
@@ -595,10 +578,9 @@ let sum n =
 The shape:
 
 - New top-level function with the original signature.
-- Inner helper `go` with an extra parameter `acc`.
-- Base case returns `acc`.
-- Recursive case folds the current step into `acc` and recurs.
-- Will become muscle memory by Module 4.
+- Inner helper `go` with an extra `acc` parameter.
+- Base case returns `acc`; recursive case folds step into `acc`.
+- Muscle memory by Module 4.
 
 :::
 
@@ -680,8 +662,8 @@ whole is not tail-recursive because of the `x :: h rest` branch.
 
 Lecture 5: **local functions and mutual recursion**.
 
-- Make the `go`-inside-a-function pattern explicit.
-- Write functions that refer to *each other*.
+- The `go`-inside-a-function pattern, made explicit.
+- Functions that refer to each other.
 
 :::
 

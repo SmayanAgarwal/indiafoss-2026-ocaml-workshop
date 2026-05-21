@@ -95,14 +95,12 @@ let () = print_endline "hello, world"
 
 Parsed left to right:
 
-- `let () = ...` binds the result of the right-hand side to the
-  pattern `()` (the only value of the `unit` type).
-- `print_endline "hello, world"` is a function call. The function is
-  `print_endline`. Its argument is the string `"hello, world"`. Its
-  return value is `()`.
-
-The `let () = ...` form says: *evaluate the right-hand side for its
-side effect, and assert that its value is unit*.
+- `let () = ...` binds the right-hand side to the pattern `()`
+  (the only value of `unit`).
+- `print_endline "hello, world"`: function call; writes the string
+  and returns `()`.
+- The `let () = ...` form says: *evaluate for the side effect,
+  assert the value is unit*.
 
 :::
 
@@ -143,9 +141,9 @@ returns `unit`.
 
 ## What is `unit`?
 
-`unit` is OCaml's "no useful value" type. It has exactly one value,
-written `()` (an empty tuple). Functions that exist for their side
-effects (printing, writing a file, mutating a counter) return `unit`.
+- OCaml's "no useful value" type.
+- Exactly one value, written `()` (empty tuple).
+- Functions that exist for their side effects return `unit`.
 
 ```ocaml
 let _ = print_endline "first"
@@ -153,7 +151,7 @@ let _ = print_endline "second"
 let _ = print_endline "third"
 ```
 
-Three side-effecting calls, each returning `()`.
+- Three side-effecting calls, each returning `()`.
 
 :::
 
@@ -226,10 +224,8 @@ let name = "NPTEL"
 let () = print_endline (greeting ^ name)
 ```
 
-Three `let` lines. The first two bind values. The third binds the
-unit result of a print. Run it.
-
-The order matters: each `let` can refer to names bound above it.
+- Three `let` lines: two value bindings, one print.
+- Order matters: each `let` can refer to names bound above it.
 
 :::
 
@@ -293,9 +289,8 @@ let area = pi *. radius *. radius
 let () = print_endline (Printf.sprintf "area = %.4f" area)
 ```
 
-`Printf.sprintf` returns a formatted string; `print_endline` prints
-it. The format specifier `%.4f` means "a float, four digits after the
-decimal point".
+- `Printf.sprintf` returns the formatted string; `print_endline` prints it.
+- `%.4f`: a float, four digits after the decimal point.
 
 :::
 
@@ -339,20 +334,15 @@ It documents intent and catches accidents.
 print_endline "hello"
 ```
 
-This is **a top-level expression** without a `let`. The toplevel will
-accept it (and print). At the *file* level (when you save this to a
-`.ml` file and compile) you need `let () = print_endline "hello"` so
-the compiler knows the result is unit.
-
-A useful habit: even in the toplevel, prefer `let () = ...` for
-side-effecting calls. It documents intent and catches accidents like
-this:
+- Toplevel accepts a bare expression; the file compiler wants `let () = ...`.
+- Habit: always wrap side-effecting calls in `let () = ...`.
+- Documents intent and catches accidents:
 
 ```ocaml skip
 let () = 42
 ```
 
-OCaml refuses to compile that, because `42` is not unit.
+- Refused: `42` is not unit.
 
 :::
 
@@ -403,11 +393,9 @@ let () =
   print_endline (Printf.sprintf "square 5 + cube 5 = %d" (square 5 + cube 5))
 ```
 
-Two helper functions and then a single `let ()` that *sequences*
-three prints. The `;` between statements sequences side-effecting
-expressions.
-
-Run it; expect three lines of output.
+- Two helpers, then one `let ()` that sequences three prints.
+- `;` sequences side-effecting expressions.
+- Run it; expect three lines.
 
 :::
 
@@ -444,12 +432,9 @@ how it differs from `;`. They are very different things.
 
 ## Two semicolons are different from one
 
-- `;` (single) sequences side-effecting expressions: "do this, then
-  that". The left side **must be unit**.
-- `;;` (double) is the toplevel's "end of input" marker. You see it
-  in tutorials and books that show toplevel transcripts. You almost
-  never need it in source files; the compiler infers where each
-  expression ends.
+- `;` (single) sequences side-effecting expressions; left side must be `unit`.
+- `;;` (double) is the toplevel's "end of input" marker.
+- Almost never needed in source files.
 
 ```ocaml
 let () =
@@ -457,7 +442,7 @@ let () =
   print_endline "second"
 ```
 
-One `;`. Two prints. One `let ()`.
+- One `;`. Two prints. One `let ()`.
 
 :::
 
@@ -544,12 +529,10 @@ top-level bindings are a sequence, evaluated in order.
 
 `A`, then `B`, then `C`.
 
-Top-level `let` bindings execute **in order, top to bottom**. The
-first `let ()` runs its sequenced body (`A` then `B`), then the second
-`let ()` runs (`C`).
-
-This is what makes an OCaml program: a sequence of top-level
-bindings, evaluated once each, in source order.
+- Top-level `let` bindings execute **in order, top to bottom**.
+- First `let ()`: sequenced body prints `A` then `B`.
+- Second `let ()`: prints `C`.
+- An OCaml program is a sequence of top-level bindings.
 
 :::
 

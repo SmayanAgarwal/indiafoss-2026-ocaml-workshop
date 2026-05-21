@@ -133,7 +133,7 @@ truncates:
 17 mod 5
 ```
 
-- 63-bit on a 64-bit machine — one bit for runtime tagging.
+- 63-bit on a 64-bit machine; one bit for runtime tagging.
 - For arbitrary precision: `zarith`, not built-in `int`.
 
 :::
@@ -391,9 +391,8 @@ let _ = area_of_circle 2.0
 ```
 
 - Bindings are **immutable** by default.
-- `let pi = 3.14159` does NOT create a variable cell.
-- It just makes the name `pi` refer to the value `3.14159`.
-- Calling a function: just juxtaposition, no parentheses needed.
+- `let pi = 3.14159` does NOT create a variable cell; just names a value.
+- Calling a function: juxtaposition, no parentheses.
 
 :::
 
@@ -504,7 +503,7 @@ let y = x
 
 - After: `y = 2`.
 - The first `x` (`= 1`) is **no longer reachable by name.**
-- If earlier code captured it, that value is still alive — and still `1`.
+- If earlier code captured it, that value is still alive, still `1`.
 
 :::
 
@@ -587,7 +586,7 @@ let add_f x y = x +. y
 
 - Toplevel: `val add_f : float -> float -> float = <fun>`.
 - `+.` constrains the arguments to be `float`.
-- That's the whole trick — no "guess what the user meant" heuristics.
+- That's the whole trick; no "guess what the user meant" heuristics.
 
 :::
 

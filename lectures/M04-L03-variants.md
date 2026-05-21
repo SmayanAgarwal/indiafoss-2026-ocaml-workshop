@@ -72,10 +72,9 @@ let d = North
 ```
 
 - Four *constructors*, separated by `|`.
-- Each is a distinct value of type `direction`.
-- Constructors are **capitalized** (always start with a capital).
+- Constructors are **capitalized**.
 - A `direction` value holds *exactly one* of the four.
-- This is what an `enum` looks like in C or Java.
+- The OCaml equivalent of an `enum`.
 
 :::
 
@@ -141,11 +140,10 @@ let s = Square 5.0
 let r = Rectangle (4.0, 6.0)
 ```
 
-- `Circle` carries one `float` (radius).
-- `Square` carries one `float` (side length).
-- `Rectangle` carries two `float`s (width, height).
-- `Circle 3.0`, `Square 5.0`: both values of type `shape`.
-- Constructor: *which kind* of shape. Payload: data for that kind.
+- `Circle of float`: radius. `Square of float`: side.
+- `Rectangle of float * float`: width, height.
+- All three are values of type `shape`.
+- Constructor says *which kind*; payload is the data for that kind.
 
 :::
 
@@ -207,11 +205,11 @@ let area s =
   | Rectangle (w, h) -> w *. h
 ```
 
-- `match` inspects which constructor was used.
+- `match` dispatches on which constructor was used.
 - Binds the payload to local names.
-- Like a `switch` in C, with two upgrades:
+- Two upgrades over C's `switch`:
   - Compiler checks **every** constructor is handled.
-  - You can **destructure** the payload at the same time.
+  - You **destructure** the payload at the same time.
 
 :::
 
@@ -279,11 +277,9 @@ Here is an example of a case that is not matched:
 Rectangle (_, _)
 ```
 
-- Compiler flags that `Rectangle` is unhandled.
-- Tells you the *shape* of the missing case.
-- Catches a class of bugs **statically**, before any test runs.
-- Stricter projects turn this warning into an **error**.
-- Forgetting a case becomes a compile failure.
+- Compiler flags the missing `Rectangle` case.
+- Catches a class of bugs **statically**.
+- Stricter projects promote this warning to an **error**.
 
 :::
 
@@ -369,14 +365,11 @@ let is_write = function
   | _    -> false
 ```
 
-- Compiles, no warning.
-- `is_write Put` silently returns `false`.
-- The wildcard `_` defeats exhaustiveness checking.
+- Compiles silently; `is_write Put` returns `false`.
+- The wildcard `_` defeated exhaustiveness checking.
 
-**Rule:** prefer to list constructors explicitly, especially in
-small public functions. Use `_` only when the wildcard truly
-captures intent (e.g., `_ -> false` for "anything else is not a
-circle").
+**Rule:** list constructors explicitly. Use `_` only when "anything
+else" is the actual meaning.
 
 :::
 
@@ -429,13 +422,9 @@ type shape =
   | Triangle of float * float * float
 ```
 
-- Compiler warns **every** `match` on `shape` that doesn't handle `Triangle`.
-- You get a punch list of places to update.
-- This is **refactor-with-the-compiler's-help**:
-  1. Add a case.
-  2. Compile.
-  3. Fix every flagged site.
-  4. When warnings stop, the refactor is done.
+- Compiler warns **every** `match` on `shape` that misses `Triangle`.
+- A punch list of sites to update.
+- **Refactor with the compiler:** add, compile, fix, repeat until silent.
 
 :::
 
@@ -491,12 +480,10 @@ type tcp_state =
   | Closed of { reason : string }
 ```
 
-- A connection is in **one of four states**.
-- Each state carries the data relevant to *that* state.
+- Four states; each carries only the data it needs.
 - `Listening`: no payload.
-- Others: carry what they need.
-- `{ ... }` after `of` is an **inline record** payload.
-- Use for multi-field payloads where names are clearer than positions.
+- `{ ... }` after `of`: an **inline record** payload.
+- Use when names beat positions.
 
 :::
 
@@ -569,9 +556,7 @@ type bool = false | true
 type 'a list = [] | (::) of 'a * 'a list
 ```
 
-- `[]`: empty-list constructor.
-- `::`: cons constructor with two payloads (head, tail).
-- List patterns like `x :: rest` are **variant pattern matching**.
+- `[]`: empty. `::`: cons with head and tail.
 
 `option` is a variant:
 
@@ -629,9 +614,8 @@ let t : int tree =
 ```
 
 - Binary tree carrying values of any type `'a`.
-- `Leaf`: empty.
-- `Node (l, v, r)`: left subtree, value, right subtree.
-- Used in M04-L04 (recursive types) and Module 5 (pattern matching).
+- `Leaf`: empty. `Node (l, v, r)`: left, value, right.
+- Used in M04-L04 and Module 5.
 
 :::
 
@@ -742,9 +726,8 @@ let _ = area (Square 3.0)
 let _ = area (Rectangle (4.0, 5.0))
 ```
 
-- Three constructors. Three pattern clauses. One per case.
+- Three constructors, three clauses.
 - `function` is shorthand for `fun x -> match x with ...`.
-- Common when a function's whole body is a `match` on its argument.
 
 :::
 
@@ -761,9 +744,9 @@ see more of `function` (and pattern matching more generally) in
 ## What's next
 
 Lecture 4: **recursive types**. Variants whose payloads include
-the type being defined. Lists and trees both fit this shape, as do
-arithmetic expressions, JSON values, and more. The recursive case
-is what makes algebraic data types *powerful*, not just *labelled*.
+the type being defined. Lists, trees, expressions, JSON values fit
+this shape. The recursive case makes ADTs powerful, not just
+labelled.
 
 :::
 

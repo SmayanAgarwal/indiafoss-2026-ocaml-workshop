@@ -79,9 +79,8 @@ let double = fun x -> x + x
 ```
 
 - `fun x -> x + x` is an **anonymous function** (a lambda).
-- It evaluates to a function value; `let` binds it to `double`.
-- Both definitions produce the same `double`.
-- Use the shorter form for named functions; use `fun` for one-off functions.
+- Evaluates to a function value; `let` binds it.
+- Use the shorter form for named functions, `fun` for one-offs.
 
 :::
 
@@ -134,18 +133,17 @@ let _ = (fun x -> x + 1) 7
 let _ = fun x -> x + 1
 ```
 
-- Toplevel reports `int -> int = <fun>`, binds to `_`.
-- The function exists; we just haven't named it.
+- Toplevel: `int -> int = <fun>`, bound to `_`.
+- The function exists; just unnamed.
 
-We can apply it right there:
+Apply on the spot:
 
 ```ocaml
 let _ = (fun x -> x + 1) 7
 ```
 
 - `int = 8`. Parenthesize, then apply.
-- Rarely done in practice (we'd just write `7 + 1`).
-- Key point: `fun ... -> ...` is a real expression evaluating to a function.
+- Key point: `fun ... -> ...` is a real expression.
 
 :::
 
@@ -180,10 +178,9 @@ let add'' = fun x -> fun y -> x + y
 ```
 
 - All three define the same function.
-- The third form makes something explicit.
-- A "two-argument function" in OCaml is really a *one-argument function returning another one-argument function*.
+- Third form makes it explicit: a "two-argument function" is really
+  a one-argument function returning another one-argument function.
 - Deeper dive: **currying**, Lecture 3.
-- For now: `fun x y -> ...` and `fun x -> fun y -> ...` are the same.
 
 :::
 
@@ -230,8 +227,7 @@ let _ = triple 5
 ```
 
 - Three function values, named with `let`, then applied.
-- Same shape as `let pi = 3.14`.
-- The only difference: the value happens to be a function.
+- Same shape as `let pi = 3.14`; the value just happens to be a function.
 
 :::
 
@@ -269,11 +265,9 @@ let _ = plus_ten 3
 ```
 
 - `make_adder : int -> (int -> int)`.
-- Takes an `int`, returns a function from `int` to `int`.
-- `make_adder 5` produces a *new function* that adds 5.
-- `make_adder 10` produces another that adds 10.
-- This is our first **higher-order function**: takes or returns functions.
-- More in Module 6.
+- `make_adder 5`: a new function that adds 5.
+- `make_adder 10`: another that adds 10.
+- First **higher-order function**: takes or returns functions.
 
 :::
 
@@ -316,12 +310,10 @@ let plus_five = make_adder 5
 let _ = plus_five 100
 ```
 
-- Calling `plus_five 100`, the body is `x + n`. Where does `n` come from?
-- Not a parameter of `plus_five`.
-- It was `make_adder`'s parameter; `make_adder` has long since returned.
-- OCaml functions are **closures**: they capture the values of names they reference, at creation time.
-- `plus_five` remembers that `n` was `5` when it was made.
-- It always adds 5, no matter how the rest of the program changes.
+- In `plus_five 100`, body is `x + n`. Where does `n` come from?
+- It was `make_adder`'s parameter; `make_adder` has long returned.
+- OCaml functions are **closures**: they capture values at creation.
+- `plus_five` remembers `n = 5` forever.
 
 :::
 
@@ -356,11 +348,9 @@ let _ = f 1
 
 What does `f 1` return? `11`.
 
-- `f` was defined when `n` was `10`.
-- It captured the **value** `10`, not "the name `n`".
-- The later `let n = 99` shadows the outer `n`.
-- Shadowing does not retroactively change what `f` saw.
-- Same shadowing-vs-mutation point from Module 2, applied to functions.
+- `f` captured the **value** `10` when defined.
+- Later `let n = 99` shadows the outer `n` but doesn't change what `f` saw.
+- Same shadowing-vs-mutation point from Module 2.
 
 :::
 
@@ -398,11 +388,10 @@ let _ = apply_twice (fun x -> x + 1) 5
 let _ = apply_twice double 5
 ```
 
-- `apply_twice` takes a function `f` and a value `x`, computes `f (f x)`.
-- First call: passes the anonymous `fun x -> x + 1`.
-- Second call: passes `double` (defined earlier).
+- `apply_twice f x = f (f x)`.
+- First call: anonymous `fun x -> x + 1`. Second: `double`.
 - Toplevel: `val apply_twice : ('a -> 'a) -> 'a -> 'a = <fun>`.
-- Read: takes a function from `'a` to itself, plus an `'a`, returns an `'a`.
+- Takes a function from `'a` to `'a`, plus an `'a`, returns an `'a`.
 
 :::
 
@@ -432,8 +421,7 @@ let _ = List.map (fun x -> x * x) nums
 
 ## Anonymous functions are everywhere
 
-- You will write `fun x -> ...` a lot.
-- Standard way to pass a small one-off function to e.g. `List.map`.
+- Standard way to pass a small one-off function (e.g. to `List.map`).
 
 ```ocaml
 let nums = [1; 2; 3; 4; 5]
@@ -447,9 +435,7 @@ let square x = x * x
 let _ = List.map square nums
 ```
 
-- First form is shorter; keeps logic close to where it's used.
-- Both are fine.
-- Idiom leans toward anonymous functions for small, single-use computations.
+- First form is shorter; idiom leans this way for one-offs.
 
 :::
 
@@ -498,14 +484,11 @@ val apply_twice : ('a -> 'a) -> 'a -> 'a
 ```
 
 - Reads as `('a -> 'a) -> ('a -> 'a)`.
-- First argument is itself a function (parens make it explicit).
-- Rest follows right-associativity.
+- First arg is a function; parens make it explicit.
 
-When reading left to right, each arrow says "and given an X, produces":
+Read left-to-right, inserting "and given an X, produces":
 
 > "given an `('a -> 'a)`, produces (given an `'a`, produces an `'a`)"
-
-You'll get fluent with practice.
 
 :::
 
@@ -604,15 +587,14 @@ Predict before binding it.
 - Type: `float -> float`.
 - `+.` forces `x` to be `float`; result is `float`.
 
-Now try a trickier one:
+Trickier:
 
 ```ocaml
 fun f x -> f (f x)
 ```
 
-- Anonymous version of `apply_twice`.
+- Anonymous `apply_twice`.
 - Type: `('a -> 'a) -> 'a -> 'a`.
-- Two arguments: a function (type loops on itself), and a starting value.
 
 :::
 
@@ -642,9 +624,8 @@ mutual recursion. [M03-L06](M03-L06-tutorial.html) is the tutorial.
 
 Lecture 2: **recursion**.
 
-- Pattern for writing functions that process structures (lists, trees, counts).
-- Function calls itself.
-- The bread and butter of functional programming.
+- Functions that call themselves to process structures.
+- Bread and butter of functional programming.
 
 :::
 

@@ -59,10 +59,9 @@ type 'a option =
   | Some of 'a
 ```
 
-- `'a option` is one of two things: `None` (no value) or `Some x` (a value `x : 'a`).
+- `'a option`: `None` or `Some x` (with `x : 'a`).
 - A variant with two constructors, parameterised by the inner type.
-- `int option`: `None` or `Some i` where `i : int`.
-- `string option`: `None` or `Some s` where `s : string`.
+- `int option`: `None` or `Some i`.
 
 ```ocaml
 let x : int option = Some 42
@@ -120,26 +119,24 @@ val lookup : string -> string option  (* might return None *)
 
 ## Why not `null`?
 
-- Many languages use `null` (Java, C, Go) or `undefined` (JavaScript) for "no value".
-- Trouble: **every** reference might secretly be null.
-- The type system doesn't tell you which.
+- Java / C / Go: `null`. JavaScript: `undefined`.
+- Trouble: every reference might secretly be null.
 
 ```
 String name = lookup("alice");
 System.out.println(name.length());
 ```
 
-- Compiles fine.
-- Crashes at runtime if `lookup` returned `null`.
+- Compiles fine. Crashes at runtime if `lookup` returned `null`.
 
-OCaml's `option`:
+OCaml:
 
 ```
 val lookup : string -> string option
 ```
 
-- Type **tells** reader and compiler that the function may not return a value.
-- No way to use the inner string without first inspecting for `None`.
+- Type **tells** caller the function may return no value.
+- No way to use the inner string without inspecting for `None`.
 
 :::
 
@@ -189,8 +186,7 @@ let _ = describe None
 ```
 
 - Results: `"got 7"` and `"no value"`.
-- Can't write `(Some 7) + 1`: that's adding `int option` to `int`, a type error.
-- Must **unwrap** first:
+- `(Some 7) + 1` is a type error. Must **unwrap** first:
 
 ```ocaml skip
 match find_age "alice" with
@@ -198,7 +194,7 @@ match find_age "alice" with
 | Some n -> n + 1
 ```
 
-- Either you handle the missing case, or it doesn't compile.
+- Handle the missing case, or it doesn't compile.
 
 :::
 
@@ -238,14 +234,13 @@ let _ = safe_div 10 2
 let _ = safe_div 10 0
 ```
 
-- Results: `Some 5` and `None`.
-- Type: `int -> int -> int option`.
-- Caller is **forced** to handle the divide-by-zero case explicitly.
+- Results: `Some 5` and `None`. Type: `int -> int -> int option`.
+- Caller **must** handle the divide-by-zero case explicitly.
 
-Compare a C-style version returning `-1` on error:
+Compare a C-style `-1`-on-error sentinel:
 
 - Callers might forget the check.
-- Or mistake a legitimate `-1` result for the error code.
+- A legitimate `-1` collides with the error code.
 
 `option` makes the error case **unmistakable**.
 
@@ -317,8 +312,8 @@ let increment_age name =
   Option.map (fun n -> n + 1) (lookup_age name)
 ```
 
-- `Option.map f`: applies `f` to the value inside, or propagates `None`.
-- `Stdlib.Option` also: `Option.bind`, `Option.get`, `Option.value` (with default).
+- `Option.map f`: apply `f` to the value, or propagate `None`.
+- `Stdlib.Option` also has `bind`, `get`, `value` (with default).
 
 :::
 
@@ -379,9 +374,7 @@ type ('a, 'e) result =
 ```
 
 - Like `option`, but the failure case **carries a value**.
-- That value: error message, error code, structured error type.
-- `Ok 42`: "success with value 42".
-- `Error "out of memory"`: "failure with this reason".
+- `Ok 42`: success with `42`. `Error "..."`: failure with reason.
 
 ```ocaml
 let parse_int s =
@@ -392,7 +385,7 @@ let _ = parse_int "42"
 let _ = parse_int "frog"
 ```
 
-- Use `result` when callers need to know **why** it failed, not just *that* it failed.
+- Use `result` when callers need to know **why** it failed.
 
 :::
 
@@ -445,9 +438,8 @@ type point = float * float
 type points = point list
 ```
 
-- `point` and `(float * float)` are the **same** type.
-- `points` and `(float * float) list` are the same.
-- Names exist purely for **readability**.
+- `point` and `(float * float)`: the **same** type.
+- Names purely for **readability**.
 
 ```ocaml
 type point = float * float
@@ -456,7 +448,6 @@ let origin : point = (0.0, 0.0)
 let triangle : points = [(0.0, 0.0); (1.0, 0.0); (0.5, 1.0)]
 ```
 
-- Type signature documents intent.
 - Compiler treats `point` and `float * float` interchangeably.
 
 :::
@@ -493,23 +484,18 @@ Both let you give a name to a compound type. The difference:
 
 ## Abbreviation vs record
 
-Both let you give a name to a compound type:
+Both name a compound type:
 
-**Type abbreviation** (`type point = float * float`):
+**Abbreviation** (`type point = float * float`):
 
-- Underlying representation **leaks**: `(1.0, 2.0)` and a `point` are the same.
-- Field access is positional (`fst`, `snd`).
+- Representation **leaks**: `(1.0, 2.0)` and `point` are the same.
+- Positional access (`fst`, `snd`).
 
 **Record** (`type point = { x : float; y : float }`):
 
-- A *new* type.
-- Construction requires the type name (or context).
-- Access by field name.
+- A *new* type; access by field name.
 
-- Records: nominally typed, self-documenting.
-- Abbreviations: aliases.
-- Use records for a **real new type**.
-- Use abbreviations to **name** an existing type for readability.
+Records for a **real new type**; abbreviations for **readability**.
 
 :::
 
@@ -621,18 +607,17 @@ let _ = safe_div 100 0
 
 - Results: `Some 14` and `None`.
 
-A common idiom for using it.
+Common idiom for using it:
 
 ```ocaml
 let safe_div a b = if b = 0 then None else Some (a / b)
 let quotient =
   match safe_div 100 7 with
-  | None -> 0  (* or: raise, or: log, or: ask the user *)
+  | None -> 0  (* or raise, or log, or ask *)
   | Some q -> q
 ```
 
 - Compiler enforces **both** branches.
-- Cannot pretend the `None` case won't happen.
 
 :::
 
@@ -646,10 +631,8 @@ type system does not let you forget.
 
 ## What's next
 
-Lecture 6: the **tutorial** for Module 4. We design a small ADT
-for a domain (a tiny JSON-like value type), implement a couple of
-operations on it, and use everything from Module 4: records,
-variants, recursion, `option`.
+Lecture 6: **tutorial** for Module 4. Design a tiny JSON-like
+ADT, implement a few operations, use everything from Module 4.
 
 :::
 

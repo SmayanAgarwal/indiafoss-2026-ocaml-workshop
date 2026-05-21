@@ -69,8 +69,8 @@ let p      = { x = 3.0; y = 4.0 }
 ```
 
 - `point` is a type; `origin` and `p` are values of type `point`.
-- Construction syntax: braces, `field = value`, semicolons between.
-- The order of fields in a literal doesn't matter (`{ y = 4.0; x = 3.0 }` is the same).
+- Construction: braces, `field = value`, `;` between fields.
+- Field order in a literal doesn't matter.
 
 :::
 
@@ -126,7 +126,6 @@ let _ = p.y
 ```
 
 - `p.x` returns `3.0`, `p.y` returns `4.0`.
-- Reads like Java or Python.
 
 ```ocaml
 type point = { x : float; y : float }
@@ -136,9 +135,8 @@ let _ = x
 let _ = y
 ```
 
-- Destructuring pattern: introduces `x`, `y` as local names.
-- Bound to `p.x`, `p.y` respectively.
-- Short form `{ x; y }` is sugar for `{ x = x; y = y }`.
+- Destructuring: introduces `x`, `y` as local names.
+- `{ x; y }` is sugar for `{ x = x; y = y }`.
 
 :::
 
@@ -218,9 +216,8 @@ let distance { x = x1; y = y1 } { x = x2; y = y2 } =
   sqrt (dx *. dx +. dy *. dy)
 ```
 
-- Same function, fields pulled out as named locals up front.
-- Choose whichever reads better.
-- Destructuring form common when you use many fields.
+- Same function, fields pulled out up front.
+- Destructuring is common when you use many fields.
 
 :::
 
@@ -275,7 +272,6 @@ let _ = p2.y
 
 - Results: `4.0` and `10.0`.
 - Immutable equivalent of "mutate this field".
-- You get a new value with the change; you don't edit the old one.
 
 :::
 
@@ -312,19 +308,14 @@ We have now seen both compound types. Here is the practical guidance:
 
 Use a **record** when:
 
-- You have more than three fields.
-- The fields have meaningful names (`first_name`, `last_name`,
-  `phone`).
-- You want to update one or two fields and keep the rest (`with`
-  syntax).
+- More than three fields.
+- Fields have meaningful names (`first_name`, `phone`).
+- You want functional update of a few fields (`with`).
 
 Use a **tuple** when:
 
-- You have two or three components and the positions are
-  self-evident (`(x, y)`, `(key, value)`).
-- The tuple is short-lived (you destructure it right after building
-  it).
-- The shape is "obvious" by convention.
+- Two or three components; positions are self-evident.
+- Short-lived (destructure right after building).
 
 :::
 
@@ -380,8 +371,7 @@ let _ = p1 = p2
 
 - Result: `true`.
 - **Structural equality**: compares field by field.
-- Two records with the same values are equal regardless of memory.
-- Same `=` we use for ints and strings; works on records out of the box.
+- Same `=` as for ints, strings; works on records out of the box.
 
 :::
 
@@ -427,10 +417,9 @@ type point3 = { x : float; y : float; z : float }
 let p = { x = 1.0; y = 2.0 }
 ```
 
-- Inferred type of `p` is `point2`: the **most recently declared** matching type.
-- For `point3` you'd need `{ x = 1.0; y = 2.0; z = 0.0 }` (forced by `z`).
-- Rarely a problem in practice.
-- Record types live in a flat namespace by *field name*.
+- Inferred type of `p` is `point2`: most recently declared matching type.
+- For `point3`, you'd need `{ ...; z = 0.0 }`.
+- Rarely a problem in practice; fix with an annotation if needed.
 
 :::
 
@@ -478,11 +467,10 @@ let _ = c.n
 ```
 
 - Result: `int = 1`.
-- `mutable` on `n` allows `c.n <- new_value` assignment.
-- `<-` is the assignment operator for mutable record fields.
-- Preview only; full mutation coverage in Module 7.
+- `mutable` allows `c.n <- new_value` assignment with `<-`.
+- Full mutation coverage in Module 7.
 - Default: prefer immutable records.
-- Reach for `mutable` for: counters, caches, long-running state machines.
+- `mutable` for counters, caches, state machines.
 
 :::
 
@@ -590,8 +578,7 @@ type book = { title : string; author : string; year : int }
 let book_title { title; _ } = title
 ```
 
-- `_` says "and ignore the other fields".
-- `let { title; _ } = b in title` is exactly what `b.title` is.
+- `_` ignores the other fields.
 
 :::
 

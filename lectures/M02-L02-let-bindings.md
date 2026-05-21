@@ -88,7 +88,7 @@ let _ =
 ```
 
 - Same idea, different scope.
-- The expression form does **not** pollute the outer namespace.
+- Expression form does **not** pollute the outer namespace.
 
 :::
 
@@ -131,10 +131,10 @@ let circle_area r =
 let _ = circle_area 5.0
 ```
 
-- `r_sq` is in scope **inside** `circle_area`'s body.
-- Outside the function it doesn't exist: `let _ = r_sq` would fail with `Unbound value r_sq`.
+- `r_sq` in scope **inside** `circle_area`'s body.
+- Outside, `Unbound value r_sq`.
 - Like a C local variable, except **no mutation**.
-- The name disappears at the end of the expression.
+- Name disappears at the end of the expression.
 
 :::
 
@@ -191,14 +191,14 @@ let x = x + 1
 let x = x * 10
 ```
 
-After these three lines, what is `x`?
+After three lines, what is `x`?
 
-- After line 1: `x` is `1`.
-- After line 2: new `x` bound to `(old x) + 1 = 2`. First `x` still exists; the name now refers to the new binding.
-- After line 3: another new `x`, bound to `(previous x) * 10 = 20`.
+- Line 1: `x = 1`.
+- Line 2: new `x = (old x) + 1 = 2`. First `x` still alive.
+- Line 3: new `x = (previous x) * 10 = 20`.
 - Final: `x = 20`.
 
-- This is **shadowing**: no mutation, three distinct bindings, same name.
+**Shadowing**: no mutation, three bindings, same name.
 
 :::
 
@@ -247,13 +247,11 @@ let x = 99
 let _ = f ()
 ```
 
-What does `f ()` return?
+What does `f ()` return? `1`.
 
-- Answer: `1`.
-- `f` was defined when `x` was `1`: it **captured the value** `1`.
-- Not "the current value of `x`".
-- Later `let x = 99` does **not** retroactively change what `f` sees.
-- If `let` were mutation, `f` would return `99`: language would be much less predictable.
+- `f` captured the **value** `1` when defined, not the name `x`.
+- Later `let x = 99` does **not** change what `f` sees.
+- If `let` were mutation, `f` would return `99`.
 
 :::
 
@@ -376,11 +374,9 @@ let _ = demo ()
 let _ = x
 ```
 
-- `demo ()` returns `1`.
-- Top-level `x` is still `100`.
-- Local binding shadows the outer one **only inside** the function body.
-- Outside, the outer `x` is unchanged.
-- Same shape as nested scopes in C / Java: inner local hides outer within inner scope.
+- `demo ()` returns `1`. Top-level `x` is still `100`.
+- Local binding shadows the outer **only inside** the function body.
+- Same shape as nested scopes in C / Java.
 
 :::
 
@@ -451,10 +447,10 @@ let _ = 3 + 4
 ```
 
 - `_` matches any value and discards it.
-- Use `let _ = ...` when evaluating for:
-  - **side effect** (first line)
-  - **type-check** (second; compiler reports result, no name is taken)
-- Related: `let _name = ...` (leading `_` on a real name) means "binding this, might not use it: don't warn me".
+- Use `let _ = ...` for:
+  - **side effect** (line 1)
+  - **type-check** (line 2; toplevel reports, no binding)
+- `let _name = ...`: bind but don't warn me if unused.
 
 :::
 
@@ -526,9 +522,8 @@ previous.
 - After first inner: `x = 2`
 - After second inner: `x = 20`
 - Result: `20`. Three shadowing bindings, **no mutation**.
-- Original `1` lingers in memory while line 2 evaluates.
-- After that no reachable code refers to it: the GC reclaims it.
-- **Garbage collection** is what lets shadowing-heavy code avoid leaks.
+- Original `1` becomes unreachable; the GC reclaims it.
+- **GC** is what lets shadowing-heavy code avoid leaks.
 
 :::
 

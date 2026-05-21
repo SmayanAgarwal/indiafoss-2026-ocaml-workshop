@@ -52,10 +52,9 @@ int abs_val;
 if (x < 0) abs_val = -x; else abs_val = x;
 ```
 
-- `if`/`else` **does something** (assigns) but has **no value**.
+- `if`/`else` **does something** but has **no value**.
 - Can't write `int abs_val = if (x < 0) -x else x;` in C.
-- Forces a separate declaration plus a separate statement.
-- Two pieces of code where one might do.
+- Forces separate declaration plus separate statement.
 
 :::
 
@@ -93,10 +92,9 @@ let abs_val x = if x < 0 then -x else x
 let abs_val = if x < 0 then -x else x
 ```
 
-- `if x < 0 then -x else x` is an **expression**.
-- Has a type and a value.
-- Can be bound, returned, or passed as an argument.
-- No "first declare, then fill in": the expression **is** the value.
+- `if x < 0 then -x else x` is an **expression** with a value.
+- Bind it, return it, pass it as an argument.
+- No "first declare, then fill in"; the expression **is** the value.
 
 :::
 
@@ -194,8 +192,7 @@ Error: This expression has type float but an expression was expected
 
 - Then-branch `int`, else-branch `float`.
 - Compiler can't assign a **single type** to the whole expression.
-- If accepted, the type would depend on which branch ran: dynamic, not static.
-- OCaml's rule: to mix, **decide up front and convert one side**.
+- Rule: to mix, **decide up front and convert one side**.
 
 :::
 
@@ -230,7 +227,7 @@ let _ = if true then 13 else int_of_float 13.4
 ```
 
 - Result `int = 13`. Both branches now `int`.
-- The choice depends on the answer you want; the **compiler won't pick** for you.
+- The **compiler won't pick** for you.
 
 :::
 
@@ -272,11 +269,9 @@ The **typing rule** for `if`:
         if E1 then E2 else E3 : T
 ```
 
-- Read the bar as "if the things above hold, then the thing below holds".
-- **Premises** (above): `E1 : bool`, `E2 : T`, `E3 : T`.
-- **Conclusion** (below): whole expression has type `T`.
-- Inference rules recur throughout this course.
-- Precise way to write what we've been saying in English.
+- Bar reads as "if the things above hold, then the thing below holds".
+- **Premises** above; **conclusion** below.
+- Same `T` in both branches.
 
 :::
 
@@ -325,9 +320,8 @@ let _ = grade_letter 87
 ```
 
 - Result: `string = "B"`.
-- Chain of `if`/`then`/`else` is **one big expression** of type `string`.
-- The shape for "compute X based on input Y".
-- Replaces `switch` / nested `if`/`else` in an imperative language.
+- Chain of `if`/`then`/`else` is **one expression** of type `string`.
+- Shape for "compute X based on input Y".
 
 :::
 
@@ -358,8 +352,7 @@ let warn_if_negative x =
 
 ## `if` without `else`
 
-- You can write `if cond then expr` with no `else`.
-- The omitted `else` is treated as `else ()` (unit value).
+- `if cond then expr` with no `else`: implicit `else ()`.
 - So `expr` must have type `unit`.
 
 ```ocaml
@@ -368,11 +361,9 @@ let warn_if_negative x =
 ```
 
 - `val warn_if_negative : int -> unit`.
-- Body has type `unit`: then-side prints, else-side is implicit `()`.
-- For positive `x`, nothing is printed; function returns `()`.
-
-- Use one-armed `if` only for **side effects** (printing, mutating).
-- For computing a value, always need both branches.
+- For positive `x`, function returns `()` and prints nothing.
+- Use one-armed `if` only for **side effects**.
+- For computing a value, you need both branches.
 
 :::
 
@@ -409,8 +400,8 @@ let sign x =
   else 0
 ```
 
-- `"else if"` is just `else (if ... then ... else ...)`.
-- Same expression, with parens made explicit:
+- `else if` is just `else (if ... then ... else ...)`.
+- Same expression, parens explicit:
 
 ```ocaml
 let sign x =
@@ -418,8 +409,7 @@ let sign x =
   else (if x < 0 then -1 else 0)
 ```
 
-- Idiomatic OCaml leaves parens off.
-- Reads top-to-bottom: `if`, `else if`, `else if`, `else`.
+- Idiomatic OCaml leaves the parens off.
 
 :::
 
@@ -445,7 +435,7 @@ let _ = f 7
 
 ## Branches can return functions, or lists, or anything
 
-- `if` is an expression: its value can be **anything** of the agreed type.
+- `if` is an expression: value can be **anything** of the agreed type.
 
 ```ocaml
 let pick mode =
@@ -456,12 +446,10 @@ let f = pick "double"
 let _ = f 7
 ```
 
-- Result: `int = 14`.
-- Both branches are functions; whole `if` returns a function.
+- Result: `int = 14`. Both branches are functions.
 - `pick : string -> int -> int`.
-- "Pick which function to apply" pattern is verbose in C / Java.
-  - Needs interfaces, function pointers, or a switch.
-- In OCaml it's just a value: `if`-expression of two functions, picked at runtime.
+- Pattern "pick a function" is verbose in C / Java; in OCaml it's
+  just an `if` of two functions.
 
 :::
 
@@ -570,15 +558,14 @@ Branches don't share a type:
 - Then: `"positive"` is `string`.
 - Else: `0` is `int`.
 
-- Typing rule for `if`: both branches share a type `T`.
-- No `T` is both `string` and `int`. Compiler reports:
+Rule: both branches need a single type `T`. Compiler reports:
 
 ```
 Error: This expression has type int but an expression was expected
        of type string
 ```
 
-- To fix: decide whether `label` returns `string` (else `"non-positive"`) or `int`.
+To fix: decide on `string` or `int`.
 
 :::
 
@@ -601,9 +588,8 @@ you will write.
 ## What's next
 
 - Lecture 6: **tutorial** for Module 2.
-- Work through several small programs end to end.
-- Uses everything from this module: literals, `let`, types, operators, `if`.
-- Meet a few of the type errors that show up in practice.
+- Work through small programs end to end.
+- Uses everything: literals, `let`, types, operators, `if`.
 
 :::
 
