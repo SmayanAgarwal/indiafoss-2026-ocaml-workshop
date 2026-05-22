@@ -470,8 +470,6 @@ let () =
   print_endline "second"
 ```
 
-- One `;`. Two prints. One `let ()`.
-
 :::
 
 If you copy-paste code from an old OCaml tutorial that uses `;;`

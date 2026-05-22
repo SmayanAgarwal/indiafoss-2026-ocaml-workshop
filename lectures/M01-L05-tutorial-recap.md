@@ -6,7 +6,7 @@ duration_target_min: 25
 concepts: [walkthrough, problem solving, debugging type errors, build-and-run loop]
 keywords: [OCaml, tutorial, temperature, conversion, type error, beginner OCaml]
 activity_question: "Write a function [bmi : float -> float -> float] that takes a mass in kilograms and a height in metres, and returns the body mass index (mass divided by height squared). Test it with [bmi 70.0 1.75]."
-think_about_this: "When OCaml gives you a type error, the error message names the file, line, and *expected vs. actual* types. Why does naming what was expected before what was actual matter more than the other way around?"
+think_about_this: "When OCaml gives you a type error, the error message names the file, line, and *actual vs. expected* types. Why does it usually name the offending sub-expression explicitly (e.g., 'The constant 273.15') rather than just pointing at the whole line?"
 reading:
   - title: "Cornell CS3110, Basics chapter (revisit if anything in Module 1 felt thin)"
     url: https://cs3110.github.io/textbook/chapters/basics/index.html
@@ -119,7 +119,7 @@ complained: `+` is integer addition, and `273.15` is not an integer.
 * The error would have read:
 
 ```text
-This expression has type float but an expression was expected of type int
+The constant 273.15 has type float but an expression was expected of type int
 ```
 
 :::
@@ -128,15 +128,16 @@ If you had typed `c + 273.15` (with the wrong, integer operator),
 the compiler would have refused with:
 
 ```text
-This expression has type float but an expression was expected of type int
+The constant 273.15 has type float but an expression was expected of type int
 ```
 
-The error names *what was expected* (`int`) and *what was found*
-(`float`). The expected type comes from context: `+` is integer
-addition, so it expects `int` arguments. The actual type is the
-type of the offending sub-expression: `273.15` is a `float`.
-Reading errors this way (expected vs actual) is the key habit. We
-will come back to it.
+The error names *what was found* (`float` at `273.15`) and *what
+was expected* (`int`). The actual type is the type of the
+offending sub-expression: `273.15` is a `float`. The expected type
+comes from context: `+` is integer addition, so it expects `int`
+arguments. Reading errors this way (actual vs expected, with the
+offending sub-expression named) is the key habit. We will come
+back to it.
 
 ## Problem 2: round-trip
 
@@ -225,13 +226,24 @@ let _ = 0.1 +. 0.2
 
 * Result: `float = 0.300000000000000044`, not `0.3`.
 * True in every IEEE 754 language (Python, JavaScript, Java, C).
-* Error per op bounded by machine epsilon, ≈ 2.2 × 10<sup>-16</sup>
-  for double-precision floats. Small, but it can compound.
-* When comparing floats, use a tolerance:
+
+:::
+
+:::slide
+
+## Comparing floats: use a tolerance
+
+* Error per op bounded by *machine epsilon*, ≈ 2.2 × 10<sup>-16</sup>
+  for double-precision floats.
+  * Small, but it can compound.
+* Don't compare floats with `=`.
+  * Compare with a tolerance:
 
 ```ocaml
 let close a b = abs_float (a -. b) < 1e-9
 ```
+
+* `1e-9` is arbitrary; tighten or loosen for the computation at hand.
 
 :::
 
@@ -335,8 +347,10 @@ functions from smaller ones by feeding outputs to inputs.
 ## Problem 4: combining functions
 
 * Temperatures from a sensor arrive in Kelvin.
-* The comfort check we have is defined in Celsius.
-* Compose: feed the Kelvin->Celsius result into the comfort check.
+  * The comfort check we have is defined in Celsius.
+  * Compose: feed the Kelvin → Celsius result into the comfort check.
+
+:::fragment
 
 ```ocaml
 let kelvin_of_celsius c = c +. 273.15
@@ -346,12 +360,14 @@ let is_comfortable c = c >= 15.0 && c <= 30.0
 let is_comfortable_kelvin k =
   is_comfortable (celsius_of_kelvin k)
 
-let _ = is_comfortable_kelvin 295.15  (* 22 °C *)
+let r = is_comfortable_kelvin 295.15
 ```
 
 * Result: `true`.
 * No new logic; just `is_comfortable` applied to the result of
   `celsius_of_kelvin`.
+
+:::
 
 :::
 
@@ -370,29 +386,29 @@ can read the message together.
 let bad c = c + 273.15
 ```
 
-If you remove the `skip` and try to run it, the toplevel reports
-something like:
+The toplevel refuses with something like:
 
 ```
-Error: This expression has type float but an expression was expected
-       of type int because it is in the result of an integer
-       application
+Error: The constant 273.15 has type float but an expression was
+       expected of type int
 ```
 
-There are four pieces of information in there. Each piece earns
+There are three pieces of information in there. Each piece earns
 its keep:
 
-- **The offending expression.** The error message points at `273.15`.
-  This is the expression whose type was wrong.
+- **The offending sub-expression.** "The constant `273.15`." The
+  message does not just point at the whole line; it names the
+  specific sub-expression whose type was wrong. Useful when the
+  line has several sub-expressions.
 - **The actual type.** `273.15` has type `float`. The compiler
-  computed this from the syntactic form (any literal with a decimal
-  point is `float`).
+  computed this from the syntactic form (any literal with a
+  decimal point is `float`).
 - **The expected type.** `int`. The compiler computed this from
-  context (the operator `+` expects two `int` arguments).
-- **Why the expected type is what it is.** "Because it is in the
-  result of an integer application." This is the compiler telling
-  you which constraint forced the expected type. Without this part,
-  type errors would be guessing games.
+  context: the operator `+` expects two `int` arguments, so the
+  thing in the second slot was expected to be `int`. You have to
+  recover the "why" yourself by looking at the surrounding code,
+  but in practice the cursor position and the named sub-expression
+  make this quick.
 
 :::slide
 
@@ -407,21 +423,19 @@ let bad c = c + 273.15
 The toplevel says:
 
 ```text
-Error: This expression has type float but an expression was expected
-       of type int because it is in the result of an integer
-       application
+Error: The constant 273.15 has type float but an expression was
+       expected of type int
 ```
 
 :::
 
 :::slide
 
-## Four pieces in a type error
+## Three pieces in a type error
 
-* The **offending expression** (`273.15`).
+* The **offending sub-expression** (named: "the constant `273.15`").
 * The **actual type** (`float`).
-* The **expected type** (`int`).
-* **Why** it was expected (here: integer `+`).
+* The **expected type** (`int`, forced here by the integer `+`).
 
 Fix: use `+.` instead of `+`.
 
@@ -429,15 +443,14 @@ Fix: use `+.` instead of `+`.
 
 The fix in this case: change `+` to `+.`. Done.
 
-Why does the error message put "expected" before "actual"? Because
-"expected" is what you committed to (by writing the operator), and
-"actual" is what you delivered. You change your code to match what
-the compiler expected. If the order were reversed, it would read
-more like a complaint than a request: "you delivered a float, but I
-expected int." With "expected first, actual second," it reads as
-"you committed to int (by writing `+`), but you delivered float (by
-using `273.15`)." Either way, the action is the same; the framing
-just makes the action clearer.
+Notice the shape of the sentence: *named sub-expression*, *actual
+type*, "but expected", *expected type*. The actual type comes from
+the thing you wrote (and the message points right at it); the
+expected type comes from context (the operator, the function
+signature, the surrounding `let`). When you read an OCaml type
+error, lock on to those three pieces first, then look at the code
+to see *why* the expected type is what it is. Almost every type
+error you will read in this course follows this shape.
 
 ## Activity: BMI
 
@@ -475,7 +488,7 @@ let bmi mass height =
 let close a b = abs_float (a -. b) < 1e-6
 let check b m = if not b then failwith m
 let () =
-  check (close (bmi 70.0 1.75) 22.857142857142854) "bmi 70 1.75";
+  check (close (bmi 70.0 1.75) 22.8571428571428577) "bmi 70 1.75";
   check (close (bmi 80.0 1.80) 24.691358024691358) "bmi 80 1.8";
   check (close (bmi 60.0 1.65) 22.03856749311295)  "bmi 60 1.65";
   print_endline "all tests passed"
@@ -500,7 +513,7 @@ let bmi mass height = mass /. (height *. height)
 let _ = bmi 70.0 1.75
 ```
 
-* Toplevel reports `float = 22.857142857142854`.
+* Toplevel reports `float = 22.8571428571428577`.
 * Close to the expected `22.86`; trailing digits are float
   precision noise.
 * Inferred type: `float -> float -> float`. Two floats in, one

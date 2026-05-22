@@ -185,6 +185,20 @@ body.mode-slides .reveal .slides section code {
   line-height: 1.4;
 }
 
+/* Inline code in slide prose (bullets, paragraphs) blends into
+   the surrounding monospace-on-white when uncoloured, especially
+   on slides that also show grey-background code blocks. Tint it
+   so identifiers like `is_comfortable` or values like `true` pop
+   from the prose. Block code inside <pre> (and x-ocaml cells)
+   already has its own syntax highlighting; leave that alone. */
+body.mode-slides .reveal .slides section code {
+  color: #0d6b6b;
+}
+body.mode-slides .reveal .slides section pre code,
+body.mode-slides .reveal .slides section x-ocaml code {
+  color: inherit;
+}
+
 /* The .cell-wrap is a block-level div around each cell. In slide
    mode reveal.js gives the section a fixed canvas width and the
    cell otherwise stretches to fill it, which puts the Run button
