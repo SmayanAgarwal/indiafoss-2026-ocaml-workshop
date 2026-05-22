@@ -374,27 +374,6 @@ let x = x * 10
 
 After three lines, the name `x` refers to `20`.
 
-:::slide
-
-## Shadowing
-
-```ocaml
-let x = 1
-let x = x + 1
-let x = x * 10
-```
-
-After three lines, what is `x`?
-
-- Line 1: `x = 1`.
-- Line 2: new `x = (old x) + 1 = 2`. First `x` still alive.
-- Line 3: new `x = (previous x) * 10 = 20`.
-- Final: `x = 20`.
-
-**Shadowing**: no mutation, three bindings, same name.
-
-:::
-
 Read carefully. On line 2, on the *right-hand side* of the `=`,
 `x` still means "the first `x` (which is `1`)". So the right-hand
 side evaluates to `2`. After the line, the name `x` refers to the
