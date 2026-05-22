@@ -89,27 +89,32 @@ min / 209 recording min, so the polish net-shrunk M03 by about
 
 ### M04: Data types (6 lectures)
 
-Re-estimated 2026-05-22 after the M04 polish pass (M04-L01
-constructing-and-extracting split into pair vs triples slides;
-M04-L02 accessing-fields and function-parameter slides each split
-into dot vs destructure; mutable-record-fields section deferred
-to M07-L01). Estimate uses slide_count x 1.5 min.
+Re-estimated 2026-05-22 / 23 after the M04 polish passes (M04-L01
+constructing-and-extracting split; M04-L02 access-field and
+function-parameter slides each split, mutable-record-fields
+deferred to M07-L01; M04-L03 stripped of pattern-matching content
+per CS3100_m25 lec05 / lec06 split, with type aliases moved up
+from M04-L05; M04-L04 opening rewritten to follow CS3100_m25
+lec05 progression `intlist` -> `stringlist` -> `'a lst` -> type
+variables -> polymorphism -> built-in `'a list`, and walks /
+evaluator deferred to M05). Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
 | M04-L01 | Tuples | 16 | 24 | 34 |
 | M04-L02 | Records | 15 | 23 | 32 |
-| M04-L03 | Variants (sum types) | 13 | 20 | 28 |
-| M04-L04 | Recursive types: lists, trees, expressions | 13 | 20 | 28 |
-| M04-L05 | `option`, `result`, and type abbreviations | 12 | 18 | 25 |
+| M04-L03 | Variants (sum types) | 9 | 14 | 20 |
+| M04-L04 | Recursive types, polymorphism, built-in lists | 15 | 23 | 32 |
+| M04-L05 | `option` and `result` | 10 | 15 | 21 |
 | M04-L06 | Tutorial: a tiny JSON-like value type | 15 | 23 | 32 |
-| **M04 total** | | **84** | **128** | **179** |
-| | | | **(2.1 h)** | **(3.0 h)** |
+| **M04 total** | | **80** | **122** | **171** |
+| | | | **(2.0 h)** | **(2.9 h)** |
 
-M04-L05 sits at the NPTEL 20-min lower bound; the rest are
-comfortably in the 20-25 min window. M04-L03 and L04 have not
-been polished yet, so the slide-based estimate may run a little
-short for those.
+M04-L03 and M04-L05 now run on the shorter side (14-15 min
+video). M04-L04 absorbed the polymorphism material; walks were
+deferred to M05 to mirror CS3100_m25's lec05 / lec06 split. The
+M04-L06 tutorial still walks JSON values, so it inherits the
+hands-on feel that L03 and L04 sacrificed.
 
 ### M05: Pattern matching (6 lectures)
 
@@ -137,19 +142,28 @@ short for those.
 | **M06 total** | | **135** | **190** |
 | | | **(2.2 h)** | **(3.2 h)** |
 
-### M07: Side effects and modular programming (7 lectures)
+### M07: Side effects and modular programming (9 lectures)
+
+Two new lectures added 2026-05-23: M07-L04 *streams and laziness*
+and M07-L05 *memoization* slot in between the imperative trio
+(L01-L03) and the module sequence (L06-L09). The new rows use
+slide_count x 1.5 to match the M02/M03/M04 re-estimated
+convention; the L01-L03 and L06-L09 rows still use the
+authoring-time `duration_target_min`.
 
 | Lecture | Topic | Video (min) | Recording (min) |
 |---|---|---:|---:|
 | M07-L01 | Mutable references | 22 | 31 |
 | M07-L02 | Mutable records and arrays | 22 | 31 |
 | M07-L03 | Exceptions | 22 | 31 |
-| M07-L04 | Module basics | 22 | 31 |
-| M07-L05 | Module signatures | 22 | 31 |
-| M07-L06 | Functors | 24 | 34 |
-| M07-L07 | Tutorial: a queue functor | 28 | 40 |
-| **M07 total** | | **162** | **229** |
-| | | **(2.7 h)** | **(3.8 h)** |
+| M07-L04 | Streams and laziness (12 slides) | 18 | 25 |
+| M07-L05 | Memoization (11 slides) | 17 | 24 |
+| M07-L06 | Module basics | 22 | 31 |
+| M07-L07 | Module signatures | 22 | 31 |
+| M07-L08 | Functors | 24 | 34 |
+| M07-L09 | Tutorial: a queue functor | 28 | 40 |
+| **M07 total** | | **197** | **278** |
+| | | **(3.3 h)** | **(4.6 h)** |
 
 ### M08: Monads and GADTs (7 lectures)
 
@@ -214,18 +228,20 @@ short for those.
 
 ## Course totals
 
-- **Final video**: 1568 min (26.1 hours) across
-  68 lectures and 12 modules.
-- **Estimated recording time**: 2202 min (36.7 hours)
+- **Final video**: 1597 min (26.6 hours) across
+  70 lectures and 12 modules.
+- **Estimated recording time**: 2243 min (37.4 hours)
   at the 1.4× multiplier.
 
-The 26.1 hours of final video falls slightly under NPTEL's ~30
+The 26.7 hours of final video falls slightly under NPTEL's ~30
 hr target; that is expected, since the original sketch reserved
 a margin, and the M03 list-removal pass plus the secure-systems
 half landed on the lower end of the 25-min-per-lecture window.
 Numbers reflect the 2026-05-22 re-estimate for M02, M03, and M04
-(slide_count x 1.5); M01 and M05+ still use the authoring-time
-duration_target_min.
+(slide_count x 1.5) and the 2026-05-23 addition of M07-L04 and
+M07-L05 (also slide_count x 1.5); M01, M05, M06, and the
+remaining M07+ rows still use the authoring-time
+`duration_target_min`.
 
 ## Studio session planning
 
@@ -233,7 +249,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **37 hours of recording / 4.3 hours per day = ~8.5 studio days.**
+- **37.5 hours of recording / 4.3 hours per day = ~8.7 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -243,16 +259,16 @@ sessions:
 | M01 Intro to functional programming | 2.6 | 0.6 |
 | M02 Expressions | 3.1 | 0.7 |
 | M03 Functions | 2.8 | 0.7 |
-| M04 Data types | 3.0 | 0.7 |
+| M04 Data types | 2.9 | 0.7 |
 | M05 Pattern matching | 3.2 | 0.7 |
 | M06 Higher-order programming | 3.2 | 0.7 |
-| M07 Side effects and modular programming | 3.8 | 0.9 |
+| M07 Side effects and modular programming | 4.6 | 1.1 |
 | M08 Monads and GADTs | 3.9 | 0.9 |
 | M09 Testing | 2.3 | 0.5 |
 | M10 Memory safety and security | 2.9 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 2.9 | 0.7 |
 | M12 Unikernels (MirageOS) | 2.9 | 0.7 |
-| **Total** | **38.0** | **8.8** |
+| **Total** | **38.7** | **9.0** |
 
 ## Caveats
 

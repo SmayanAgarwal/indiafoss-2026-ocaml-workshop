@@ -40,7 +40,7 @@ tool, [**OUnit2**](https://github.com/gildor478/ounit), and use it
 end to end. We integrate it into a `dune` project, we learn the
 small set of primitives the framework exposes (`assert_equal`,
 `assert_bool`, `assert_raises`), and we build a test suite for a
-real module, the `Stack` from [M07-L04](M07-L04-module-basics.html).
+real module, the `Stack` from [M07-L06](M07-L06-module-basics.html).
 By the end you should be able to write a test file for any module
 you have written so far in the course.
 
@@ -65,7 +65,7 @@ you encounter them; the conceptual content carries over.
 - The primitives: `assert_equal`, `assert_bool`, `assert_raises`.
 - Test organisation: `TestList`, `TestCase`, fixtures.
 - `dune` integration: how to wire tests into a project.
-- Worked example: a test suite for the `Stack` from M07-L04.
+- Worked example: a test suite for the `Stack` from M07-L08.
 
 :::
 
@@ -460,7 +460,7 @@ table of contents to your tests.
 ## Worked example: a test suite for `Stack`
 
 We now write a full test suite for the `Stack` module from
-[M07-L04](M07-L04-module-basics.html). The module under test:
+[M07-L06](M07-L06-module-basics.html). The module under test:
 
 ```ocaml
 exception Empty
@@ -486,7 +486,7 @@ module Stack = struct
 end
 ```
 
-A small change from M07-L04: instead of a single global stack, each
+A small change from M07-L08: instead of a single global stack, each
 call to `Stack.create ()` returns a fresh stack value, and `push`/
 `pop`/`peek`/`is_empty` take that value as an argument. This is
 the standard "value-oriented" shape for a data structure, and it
@@ -1018,7 +1018,7 @@ conceptual source for the OUnit2 API tour and the
 `assert_equal`/`>::` conventions; its prose is CC BY-NC-ND
 licensed and has not been derivatively reused. The `Stack`
 example is the same module as
-[M07-L04](M07-L04-module-basics.html), shifted to a
+[M07-L06](M07-L06-module-basics.html), shifted to a
 value-oriented API to make tests independent. OUnit2 itself is
 MIT-licensed; we link to its repository and use its public
 API surface.

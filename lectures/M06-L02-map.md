@@ -477,7 +477,7 @@ let _ = map_tree (fun x -> x * 10)
 
 The result has the same shape as the input; only the values are
 transformed. We will return to this generalisation in
-[Module 7](M07-L06-functors.html) when we look at how libraries like
+[Module 7](M07-L08-functors.html) when we look at how libraries like
 `Map` and `Set` package these patterns into reusable abstractions.
 
 ## Worked example: producing nicely-formatted strings

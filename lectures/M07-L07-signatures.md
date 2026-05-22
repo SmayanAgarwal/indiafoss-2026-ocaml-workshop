@@ -1,6 +1,6 @@
 ---
 title: "Module signatures"
-lecture_no: 5
+lecture_no: 7
 week: 7
 duration_target_min: 22
 concepts: [signatures, sig...end, .mli files, abstraction, abstract types]
@@ -20,16 +20,16 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Module signatures</h2>
-<p class="title-slide-label">Module 7 &middot; Lecture 5</p>
+<p class="title-slide-label">Module 7 &middot; Lecture 7</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-The [last lecture](M07-L04-module-basics.html) introduced modules:
+The [last lecture](M07-L06-module-basics.html) introduced modules:
 named bundles of definitions you can refer to with dot notation.
 We ran into a
-[limitation right at the end](M07-L04-module-basics.html#hiding-internals-the-natural-limitation).
+[limitation right at the end](M07-L06-module-basics.html#hiding-internals-the-natural-limitation).
 The `Stack` module's internal [`ref`](M07-L01-references.html) was
 visible to the outside world, because everything declared in a
 module is visible by default. There is no way to write a "private"
@@ -336,7 +336,7 @@ start from `Stack.empty` and apply `Stack.push`. The only way to
 
 If you later switch the representation to a `Dynarray`, or to two
 lists for amortised O(1) operations (we will see this in the
-tutorial, [M07-L07](M07-L07-tutorial.html)), no external code
+tutorial, [M07-L09](M07-L09-tutorial.html)), no external code
 notices. The signature is the *only* place the rest of the program
 sees the type.
 
@@ -543,7 +543,7 @@ end
 
 ## A quick check
 
-:::quiz mcq id=M07-L05-q3
+:::quiz mcq id=M07-L07-q3
 Given this module:
 
 ```ocaml
@@ -569,7 +569,7 @@ Which of the following compiles?
 `Unbound value M.y`); `M.z` never existed at all.
 :::
 
-:::quiz mcq id=M07-L05-q2
+:::quiz mcq id=M07-L07-q2
 Given the `STACK` module with abstract `type 'a t`, what happens
 if you try `Stack.empty :: [1]`?
 
@@ -598,7 +598,7 @@ the internal ref directly.
 
 :::
 
-:::quiz code id=M07-L05-q1
+:::quiz code id=M07-L07-q1
 Define a sealed `Counter` module. The signature has been written
 for you; fill in the implementation.
 
@@ -682,7 +682,7 @@ detail.
 
 ## What's next
 
-The [next lecture](M07-L06-functors.html) introduces *functors*:
+The [next lecture](M07-L08-functors.html) introduces *functors*:
 modules parameterized by other modules. A functor is the way OCaml
 writes *generic* code that depends not just on a type but on the
 *operations* on that type. The classic example is the standard
@@ -696,7 +696,7 @@ structures.
 
 ## What's next
 
-Lecture 6: **functors**.
+Lecture 8: **functors**.
 
 - A functor is a module that takes another module as an argument
   and produces a new module.

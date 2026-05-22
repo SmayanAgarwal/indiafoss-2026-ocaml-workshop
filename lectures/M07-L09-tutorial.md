@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: a queue functor"
-lecture_no: 7
+lecture_no: 9
 week: 7
 duration_target_min: 28
 concepts: [worked module, abstract type, functor, two-stack queue]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Tutorial: a queue functor</h2>
-<p class="title-slide-label">Module 7 &middot; Lecture 7</p>
+<p class="title-slide-label">Module 7 &middot; Lecture 9</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -145,7 +145,7 @@ directly, possibly violating our invariant. Even worse, a caller
 can come to *rely on* the two-list shape, so that any future
 change to the representation breaks their code.
 
-The fix from [M07-L05](M07-L05-signatures.html#abstract-types): a
+The fix from [M07-L07](M07-L07-signatures.html#abstract-types): a
 signature with an abstract type.
 
 ```ocaml
@@ -237,7 +237,7 @@ record fields `front` / `back` are inaccessible.
 
 ## Why hide the representation?
 
-The [two reasons from M07-L05](M07-L05-signatures.html#why-hide-internals),
+The [two reasons from M07-L07](M07-L07-signatures.html#why-hide-internals),
 applied here.
 
 :::slide
@@ -277,7 +277,7 @@ with a typed printer attached. (Maybe we want a debugger view, or
 a logger that prints queue contents.) The element type can no
 longer be free: we need a way to turn an element into a string.
 
-The mechanism from [M07-L06](M07-L06-functors.html): a functor. We
+The mechanism from [M07-L08](M07-L08-functors.html): a functor. We
 start by writing a signature describing what we need from the
 element type.
 
@@ -392,7 +392,7 @@ module type fixes `elt = E.t`, so `IQ.elt` is `int` once we
 instantiate with the `int` module.
 
 This is the same shape as
-[`Map.Make`](M07-L06-functors.html#the-pattern-mapmake): a
+[`Map.Make`](M07-L08-functors.html#the-pattern-mapmake): a
 constraint on the element type (via the parameter signature), and
 a generic implementation parameterised by that constraint.
 
@@ -444,7 +444,7 @@ forever.
 
 ## A quick check
 
-:::quiz mcq id=M07-L07-q3
+:::quiz mcq id=M07-L09-q3
 In the two-stack queue, what is the worst-case time complexity of
 a single `dequeue` operation?
 
@@ -460,7 +460,7 @@ Amortised across many operations the cost is O(1) per element
 be O(n).
 :::
 
-:::quiz mcq id=M07-L07-q2
+:::quiz mcq id=M07-L09-q2
 Given `module Make (E : ELT) = struct ... end`, what happens if
 we try `Make (struct type t = int end)` (forgetting `to_string`)?
 
@@ -485,7 +485,7 @@ What does the compiler require?
 
 :::
 
-:::quiz code id=M07-L07-q1
+:::quiz code id=M07-L09-q1
 Add a `length` operation to the queue. Both the signature and the
 struct need updating. The starter has the unsealed version; your
 job is to add `length` everywhere.
@@ -659,10 +659,10 @@ toolkit. [Refs](M07-L01-references.html) and
 algorithm wants it. [Exceptions](M07-L03-exceptions.html) for
 unexpected failures, alongside
 [`option` and `result`](M04-L05-option-and-aliases.html) for
-predictable ones. [Modules](M07-L04-module-basics.html) for
+predictable ones. [Modules](M07-L06-module-basics.html) for
 grouping and namespacing.
-[Signatures](M07-L05-signatures.html) for hiding internals.
-[Functors](M07-L06-functors.html) for writing generic data
+[Signatures](M07-L07-signatures.html) for hiding internals.
+[Functors](M07-L08-functors.html) for writing generic data
 structures parameterised by element operations. Together they are
 enough to structure a real OCaml project at scale.
 

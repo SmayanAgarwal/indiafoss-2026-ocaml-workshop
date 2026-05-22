@@ -619,23 +619,29 @@ easier to read for your case.
 
 ## What's next
 
-That closes the imperative half of Module 7. The
-[next three lectures](M07-L04-module-basics.html) turn to *modules*:
-how OCaml structures code at scale, namespaces large libraries, and
-hides representation behind type signatures. The standard library
-you have been using all course (`List`, `Array`, `String`, `Option`)
-is a tree of modules; we finally meet the machinery that builds it.
+That closes the imperative trio of Module 7. The
+[next two lectures](M07-L04-streams-and-laziness.html) take a
+small detour: *streams* (infinite data structures, built using
+thunks and refs from this module) and *memoization* (caching
+function results, again using a ref to hold the cache). Then
+the [last three lectures](M07-L06-module-basics.html) turn to
+*modules*: how OCaml structures code at scale, namespaces large
+libraries, and hides representation behind type signatures. The
+standard library you have been using all course (`List`,
+`Array`, `String`, `Option`) is a tree of modules; we finally
+meet the machinery that builds it.
 
 :::slide
 
 ## What's next
 
-Lecture 4: **module basics**.
+Lecture 4: **streams and laziness**.
 
-- OCaml has a powerful module system, distinct from the
-  variants/records/functions we've been using.
-- Modules let you **group related definitions**, **hide
-  internals**, and **parameterize over implementations**.
+- Recursive values and infinite data structures.
+- Streams: pausing evaluation with thunks; lazy values; lazy
+  streams.
+- Higher-order ops on streams; primes by the Sieve of
+  Eratosthenes; Fibonacci as a stream.
 
 :::
 

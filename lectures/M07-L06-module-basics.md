@@ -1,6 +1,6 @@
 ---
 title: "Module basics"
-lecture_no: 4
+lecture_no: 6
 week: 7
 duration_target_min: 22
 concepts: [modules, struct, namespacing, opening, naming hygiene]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Module basics</h2>
-<p class="title-slide-label">Module 7 &middot; Lecture 4</p>
+<p class="title-slide-label">Module 7 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -49,11 +49,11 @@ all course is a tree of modules:
 [`Option`](M04-L05-option-and-aliases.html), `Map`, and so on. A
 real OCaml project is a tree of *your* modules using and being used
 by them. This lecture introduces the syntax.
-[Lecture 5](M07-L05-signatures.html) covers *signatures*, the
+[Lecture 7](M07-L07-signatures.html) covers *signatures*, the
 type-level description of a module that lets you hide internals.
-[Lecture 6](M07-L06-functors.html) covers *functors*, modules
+[Lecture 8](M07-L08-functors.html) covers *functors*, modules
 parameterized by other modules.
-[Lecture 7](M07-L07-tutorial.html) is the tutorial.
+[Lecture 9](M07-L09-tutorial.html) is the tutorial.
 
 ## Inline modules
 
@@ -346,17 +346,17 @@ let _ = Counter.next ()
 let _ = !Counter.n  (* leaks: external code pokes at n *)
 ```
 
-`1`, `1`. The `n` ref is visible from outside; Lecture 5 hides it
+`1`, `1`. The `n` ref is visible from outside; Lecture 7 hides it
 with a module signature.
 
 :::
 
 This is the major motivation for the
-[next lecture](M07-L05-signatures.html). The fix is to constrain
+[next lecture](M07-L07-signatures.html). The fix is to constrain
 the module with a *signature*: a type-level description that lists
 exactly which names escape, with which types. Anything not in the
 signature is invisible from the outside. We hold off on the details
-until [M07-L05](M07-L05-signatures.html).
+until [M07-L07](M07-L07-signatures.html).
 
 ## Modules can nest
 
@@ -441,7 +441,7 @@ not for everyday code. For the standard module toolkit this
 lecture introduces, modules live at compile time and are used
 statically. The "function-like" thing that takes a module and
 returns a module is called a *functor*, and we cover it in
-[Lecture 6](M07-L06-functors.html).
+[Lecture 8](M07-L08-functors.html).
 
 :::slide
 
@@ -450,13 +450,13 @@ returns a module is called a *functor*, and we cover it in
 - Not first-class by default; cannot pass them like ints.
 - *First-class modules* are an extension; ignored this week.
 - Modules live at **compile time**, used statically.
-- A function from modules to modules is a **functor** (Lecture 6).
+- A function from modules to modules is a **functor** (Lecture 8).
 
 :::
 
 ## A quick check
 
-:::quiz mcq id=M07-L04-q3
+:::quiz mcq id=M07-L06-q3
 Given this module:
 
 ```ocaml
@@ -479,7 +479,7 @@ What is the value of `M.succ M.zero`?
 both values and types: `M.t` is the type, `M.zero` is the value.
 :::
 
-:::quiz mcq id=M07-L04-q2
+:::quiz mcq id=M07-L06-q2
 Why does the convention `type t` (not `type color`, `type stack`,
 etc.) exist?
 
@@ -506,7 +506,7 @@ Define a module `Stack` with a mutable integer stack: `push : int
 
 :::
 
-:::quiz code id=M07-L04-q1
+:::quiz code id=M07-L06-q1
 Define a `Stack` module holding integer state.
 
 ```ocaml
@@ -591,7 +591,7 @@ let _ = Stack.pop ()
 
 - Push 1, 2, 3; peek gives `Some 3`; pop returns 3 then 2.
 - There's *one* stack, shared by every caller. Simplest design.
-- For multiple independent stacks: parameterize (Lecture 6).
+- For multiple independent stacks: parameterize (Lecture 8).
 
 :::
 
@@ -601,18 +601,18 @@ of an `int list`, held by the module itself. Every caller of
 the program. If you wanted multiple independent stacks, you would
 either (a) make the stack a *type* with operations that take and
 return stacks (the functional style we will see in
-[M07-L07](M07-L07-tutorial.html)), or (b) provide a constructor
+[M07-L09](M07-L09-tutorial.html)), or (b) provide a constructor
 `Stack.make ()` that returns a fresh ref each time.
 
 The other thing to notice: the `s` ref is visible to outside
 code, just like the `n` ref in the `Counter` example earlier.
 Someone could write `Stack.s := []` from outside and break the
 abstraction. Hiding `s` is the job of a signature, which is the
-[next lecture](M07-L05-signatures.html).
+[next lecture](M07-L07-signatures.html).
 
 ## What's next
 
-The [next lecture](M07-L05-signatures.html) introduces *signatures*,
+The [next lecture](M07-L07-signatures.html) introduces *signatures*,
 the type-level description of a module. A signature lists which
 names escape and at what type; everything else is hidden. Once you
 constrain a module by a signature, the internal `ref`s and helper
@@ -624,7 +624,7 @@ encapsulation story.
 
 ## What's next
 
-Lecture 5: **module signatures**.
+Lecture 7: **module signatures**.
 
 - A signature (`sig ... end` or a `.mli` file) is a type-level
   description of a module.

@@ -42,10 +42,12 @@
   M07-L01-references.md
   M07-L02-arrays-and-mutation.md
   M07-L03-exceptions.md
-  M07-L04-module-basics.md
-  M07-L05-signatures.md
-  M07-L06-functors.md
-  M07-L07-tutorial.md
+  M07-L04-streams-and-laziness.md
+  M07-L05-memoization.md
+  M07-L06-module-basics.md
+  M07-L07-signatures.md
+  M07-L08-functors.md
+  M07-L09-tutorial.md
   M08-L01-sequencing.md
   M08-L02-option-monad.md
   M08-L03-result-monad.md

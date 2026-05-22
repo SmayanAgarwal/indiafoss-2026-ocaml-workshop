@@ -414,7 +414,7 @@ garbage.
 Let us combine pieces from across the module into a slightly larger
 example. We count how often each word appears in a piece of text.
 We will return the answer as an *association list* (a list of
-pairs); in [Module 7](M07-L06-functors.html) we will see proper hash
+pairs); in [Module 7](M07-L08-functors.html) we will see proper hash
 tables and balanced maps.
 
 ```ocaml
@@ -447,7 +447,7 @@ toolkit, it is a single pipeline. The trade-off is that this
 implementation is `O(n^2)` in the number of distinct words (each
 `List.assoc` and `List.remove_assoc` is linear); the proper solution
 uses `Map` or `Hashtbl`, which we will meet in
-[Module 7](M07-L06-functors.html). For now, the point is that the
+[Module 7](M07-L08-functors.html). For now, the point is that the
 *shape* of the computation is captured cleanly.
 
 ## A quick check

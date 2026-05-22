@@ -1,0 +1,637 @@
+---
+title: "Streams and laziness"
+lecture_no: 4
+week: 7
+duration_target_min: 22
+concepts: [recursive values, infinite data, thunks, streams, lazy values, lazy streams, sieve of Eratosthenes, lazy Fibonacci]
+keywords: [OCaml, stream, thunk, lazy, Lazy.force, lazy_t, sieve, Fibonacci]
+activity_question: "Write [from n], the infinite stream [n, n+1, n+2, ...] using the thunk-based stream type. Then write [squares_from n], the stream of squares of those numbers. Check that [take 6 (squares_from 0) = [0; 1; 4; 9; 16; 25]]."
+think_about_this: "A thunk and a [lazy] value both delay evaluation. What is the one thing [lazy] gives you that a plain [unit -> 'a] does not? When would that one thing matter, and when would it not?"
+reading:
+  - title: "Cornell CS3110, Lazy evaluation"
+    url: https://cs3110.github.io/textbook/chapters/adv/promises.html
+---
+
+# Streams and laziness
+
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Streams and laziness</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 4</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
+We have spent the course building *finite* data: a list with `n`
+elements, a tree with so many nodes, an array of a fixed length.
+But many problems are naturally described by *infinite* sequences:
+the primes, the Fibonacci numbers, the input lines from a socket,
+the moves available from every position in a game tree. We do not
+want all of them at once (we cannot fit them in memory); we just
+want the first few, on demand.
+
+OCaml is a strict language. `let xs = 1 :: heavy_computation ()`
+runs `heavy_computation ()` immediately, even if we never look at
+the tail. To represent something infinite we need to *delay*
+evaluation: keep the head, hold off on the tail until somebody
+asks. This lecture builds the *stream*, the standard functional
+data structure for that, in two steps. First a stream backed by a
+thunk (a `unit -> 'a` function); then a stream backed by a
+[`Lazy.t`](https://v2.ocaml.org/api/Lazy.html), which adds *memoization*
+so each tail is computed at most once.
+
+## Recursive values
+
+OCaml lets you write `let rec f x = ...` for recursive *functions*.
+A less-discussed feature: `let rec` works for *values* too, as long
+as the recursive occurrence is hidden behind a constructor.
+
+```ocaml
+let rec ones = 1 :: ones
+```
+
+OCaml accepts this. The toplevel reports
+`val ones : int list = [1; <cycle>]`: the value is an infinite
+list whose tail is itself, represented at runtime by a single
+cons cell that points back to itself. Even though the list is
+*conceptually infinite*, it uses *finite* memory.
+
+```ocaml
+let rec zero_ones = 0 :: 1 :: zero_ones
+```
+
+`val zero_ones : int list = [0; 1; <cycle>]`. Two cons cells, the
+second pointing back at the first.
+
+:::slide
+
+## Recursive values
+
+```ocaml
+let rec ones = 1 :: ones
+let rec zero_ones = 0 :: 1 :: zero_ones
+```
+
+- `val ones : int list = [1; <cycle>]`.
+- `val zero_ones : int list = [0; 1; <cycle>]`.
+- Recursive *value*, not just recursive function.
+- Infinite list, *finite* memory: the tail cell loops back.
+
+:::
+
+The catch: this is a *cyclic* list, not a stream. The only way
+the cycle exists is that the recursive occurrence sits behind a
+constructor (`::`); the structure was built once, in finite
+memory, and any traversal will eventually loop. That is enough
+for some uses (a circular buffer of fixed shape) but useless for
+most others. Try to convert `zero_ones` to a string with
+`List.map string_of_int zero_ones` and the call diverges: `List.map`
+is strict and walks the list, the list is infinite, the call
+never returns.
+
+```text
+(* List.map string_of_int zero_ones  (diverges, do not run) *)
+```
+
+We need a data structure where each tail is computed *only on
+demand*.
+
+## Infinite data structures, properly
+
+The fix: make the tail a *function* of type `unit -> 'a stream`,
+not a fully-built `'a stream`. Calling the function "forces" the
+tail; not calling it leaves the rest of the structure unbuilt.
+This is the trick at the heart of streams.
+
+```ocaml
+type 'a stream = Cons of 'a * (unit -> 'a stream)
+```
+
+A stream has a head (a value) and a *thunk* for the tail (a
+zero-argument function that, when called, returns the next
+stream node). There is no `Nil` constructor: every stream is
+infinite. (You can add a `Nil` if you want finite streams; we
+omit it for simplicity.)
+
+The recursive definition of `zero_ones` becomes:
+
+```ocaml
+let rec zero_ones = Cons (0, fun () -> Cons (1, fun () -> zero_ones))
+```
+
+The toplevel reports
+`val zero_ones : int stream = Cons (0, <fun>)`. The tail is a
+function value, displayed as `<fun>`; it has not been called yet.
+
+:::slide
+
+## Streams: type definition
+
+```ocaml
+type 'a stream = Cons of 'a * (unit -> 'a stream)
+
+let rec zero_ones =
+  Cons (0, fun () -> Cons (1, fun () -> zero_ones))
+```
+
+- Head: an `'a` value.
+- Tail: a **thunk** `unit -> 'a stream`. Not evaluated yet.
+- No `Nil`: streams are infinite.
+- Forcing the thunk produces the next node.
+
+:::
+
+Two small accessor functions. `hd` returns the head;`tl` *forces*
+the thunk and returns the next node.
+
+```ocaml
+let hd (Cons (x, _)) = x
+let tl (Cons (_, xs)) = xs ()
+```
+
+`hd zero_ones` gives `0` without forcing anything beyond the
+outer cons. `tl zero_ones` calls the tail thunk, which builds
+the second node `Cons (1, ...)` and returns it.
+
+## Consuming a stream
+
+A stream is infinite, but you almost always want a *finite
+prefix* of it: the first 10 primes, the first 30 Fibonacci
+numbers. The `take` function is the bridge between the infinite
+stream world and the finite list world.
+
+```ocaml
+let rec take n s =
+  if n = 0 then []
+  else hd s :: take (n - 1) (tl s)
+```
+
+`take` walks the stream, forcing one tail per element, building
+up a list of length `n`. The first `n` nodes get computed; the
+rest stay as thunks.
+
+```ocaml
+let _ = take 10 zero_ones
+```
+
+`int list = [0; 1; 0; 1; 0; 1; 0; 1; 0; 1]`.
+
+A companion, `drop`, throws away the first `n` elements and
+returns the rest of the stream:
+
+```ocaml
+let rec drop n s =
+  if n = 0 then s
+  else drop (n - 1) (tl s)
+```
+
+`drop 1 zero_ones` gives a stream whose first element is `1`.
+
+:::slide
+
+## Consuming a stream
+
+```ocaml
+let rec take n s =
+  if n = 0 then []
+  else hd s :: take (n - 1) (tl s)
+
+let rec drop n s =
+  if n = 0 then s else drop (n - 1) (tl s)
+```
+
+- `take n s`: first `n` elements as a list.
+- `drop n s`: stream with the first `n` elements skipped.
+- Both force exactly `n` tails.
+
+:::
+
+## Higher-order functions on streams
+
+The shapes you saw on lists in [Module 6](M06-L02-map.html) carry
+over almost line-for-line. `map` applies a function to every
+element; `filter` keeps only the elements satisfying a predicate;
+`zip` walks two streams in lockstep.
+
+```ocaml
+let rec map f s = Cons (f (hd s), fun () -> map f (tl s))
+
+let rec filter p s =
+  if p (hd s) then Cons (hd s, fun () -> filter p (tl s))
+  else filter p (tl s)
+
+let rec zip f s1 s2 =
+  Cons (f (hd s1) (hd s2), fun () -> zip f (tl s1) (tl s2))
+```
+
+Notice the shape: each builds a `Cons` whose tail is a thunk that
+recurses. The recursion is *not* eager; it happens one tail at a
+time, when the consumer asks for more.
+
+```ocaml
+let zero_ones_str = map string_of_int zero_ones
+let _ = take 6 zero_ones_str
+```
+
+`string list = ["0"; "1"; "0"; "1"; "0"; "1"]`. The mapped stream
+is itself infinite; we extract a finite prefix with `take`.
+
+A subtlety in `filter`: if no element of the stream satisfies the
+predicate, `filter` will spin forever looking for one. (Streams
+are infinite; there is no "end" to give up at.) Use `filter` only
+when you know matching elements occur regularly.
+
+:::slide
+
+## Higher-order: `map`, `filter`, `zip`
+
+```ocaml
+let rec map f s = Cons (f (hd s), fun () -> map f (tl s))
+
+let rec filter p s =
+  if p (hd s) then Cons (hd s, fun () -> filter p (tl s))
+  else filter p (tl s)
+
+let rec zip f s1 s2 =
+  Cons (f (hd s1) (hd s2), fun () -> zip f (tl s1) (tl s2))
+```
+
+- Same shape as list versions; the tail is wrapped in a thunk.
+- Recursion is *demand-driven*: one cons at a time.
+- `filter` on a stream with no matches diverges (no end to stop at).
+
+:::
+
+## Primes by the sieve of Eratosthenes
+
+A famous use of streams: produce the infinite stream of primes
+using the [sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes).
+
+The idea:
+
+- Start with the stream `[2; 3; 4; 5; 6; 7; ...]`.
+- The head is `2`: a prime.
+- Filter out every multiple of `2` from the tail.
+- The new head is `3`: a prime.
+- Filter out every multiple of `3` from the tail.
+- Repeat.
+
+Each step contributes one prime and produces a smaller (still
+infinite) stream of candidates.
+
+First we need a stream of natural numbers from `n` upward:
+
+```ocaml
+let rec from n = Cons (n, fun () -> from (n + 1))
+```
+
+Then the sieve itself:
+
+```ocaml
+let rec sieve s =
+  let p = hd s in
+  Cons (p, fun () -> sieve (filter (fun x -> x mod p <> 0) (tl s)))
+
+let primes = sieve (from 2)
+let _ = take 10 primes
+```
+
+`int list = [2; 3; 5; 7; 11; 13; 17; 19; 23; 29]`.
+
+A clean expression of an algorithm that is awkward to state with
+finite data. The recursion is exactly the recurrence: "the
+primes are `p` followed by the primes of (`tl s` with multiples
+of `p` removed)."
+
+:::slide
+
+## Primes: sieve of Eratosthenes
+
+```ocaml
+let rec from n = Cons (n, fun () -> from (n + 1))
+
+let rec sieve s =
+  let p = hd s in
+  Cons (p, fun () ->
+    sieve (filter (fun x -> x mod p <> 0) (tl s)))
+
+let primes = sieve (from 2)
+let _ = take 10 primes
+```
+
+- `[2; 3; 5; 7; 11; 13; 17; 19; 23; 29]`.
+- Head is the next prime; filter its multiples; recurse.
+- Stream lets the recursive case stay open-ended.
+
+:::
+
+## Lazy values
+
+A `unit -> 'a` thunk is the cheapest way to delay evaluation, but
+it has one cost: every time you force it, the body runs again.
+Forcing the same thunk three times computes the body three times.
+
+```ocaml
+let count = ref 0
+let t () = incr count; "hello"
+let _ = t ()
+let _ = t ()
+let _ = !count
+```
+
+`int = 2`. Two forces, two side effects.
+
+OCaml has a built-in primitive for *memoized* delay: the `lazy`
+keyword. `lazy e` constructs a value of type `'a Lazy.t` that
+wraps the expression `e` *unevaluated*. The first time the value
+is forced (with `Lazy.force`), `e` runs; the result is cached;
+every subsequent force returns the cached value without
+re-running `e`.
+
+```ocaml
+let v = lazy (print_endline "running"; 10 + 20)
+```
+
+`val v : int Lazy.t = <lazy>`. Notice nothing has printed: the
+expression has not run.
+
+```ocaml
+let _ = Lazy.force v
+```
+
+This prints `running` and returns `30`. The result and a "has
+been forced" flag are stored inside the `Lazy.t`.
+
+```ocaml
+let _ = Lazy.force v
+```
+
+This prints *nothing* and returns `30` immediately. The body did
+not run again.
+
+:::slide
+
+## `Lazy.t`: memoized delay
+
+```ocaml
+let v = lazy (print_endline "running"; 10 + 20)
+let _ = Lazy.force v   (* prints "running"; returns 30 *)
+let _ = Lazy.force v   (* prints nothing; returns 30 *)
+```
+
+- `lazy e` delays `e`. Type: `'a Lazy.t`.
+- `Lazy.force` runs the body the **first** time, caches the result.
+- Subsequent forces return the cached value.
+- Difference from thunk: thunk runs **every** force.
+
+:::
+
+The `lazy` keyword is syntactic sugar; under the hood,
+[`'a Lazy.t`](https://v2.ocaml.org/api/Lazy.html) is a small
+mutable record (the cache lives in a [`ref`](M07-L01-references.html)
+slot inside). Forcing reads the slot; if empty, it runs the body
+and fills it. This is *the* simplest example of memoization, and
+we will return to it as a general technique in the
+[next lecture](M07-L05-memoization.html).
+
+## Lazy streams
+
+We can replace the `(unit -> 'a stream)` thunk in the stream type
+with `'a stream Lazy.t`. Each tail is now memoized: forced once,
+cached, and reused.
+
+```ocaml
+type 'a lstream = LCons of 'a * 'a lstream Lazy.t
+
+let lhd (LCons (x, _)) = x
+let ltl (LCons (_, t)) = Lazy.force t
+```
+
+(The `l` prefix is just to keep this type distinct from the
+thunk-based `stream` in this lecture.)
+
+Higher-order functions look almost the same; only the tail
+wrapping changes from `fun () -> ...` to `lazy ...`.
+
+```ocaml
+let rec ltake n s =
+  if n = 0 then [] else lhd s :: ltake (n - 1) (ltl s)
+
+let rec lzip f s1 s2 =
+  LCons (f (lhd s1) (lhd s2),
+         lazy (lzip f (ltl s1) (ltl s2)))
+```
+
+:::slide
+
+## Lazy streams
+
+```text
+type 'a lstream = LCons of 'a * 'a lstream Lazy.t
+
+let lhd (LCons (x, _)) = x
+let ltl (LCons (_, t)) = Lazy.force t
+```
+
+- Tail is `Lazy.t`, not `unit -> ...`.
+- Each tail is computed at most once.
+- The structure remembers, so repeated traversal is free.
+
+:::
+
+## Fibonacci as a lazy stream
+
+A neat trick: the Fibonacci sequence
+`1, 1, 2, 3, 5, 8, 13, 21, ...` satisfies `f(n) = f(n-1) + f(n-2)`.
+If `fibs` is the sequence, then `tl fibs` is the same sequence
+shifted by one. Zipping `fibs` with `tl fibs` element-wise under
+`+` gives the sequence shifted by *two*. Prepending `1; 1` to
+that shifted sum recovers `fibs`. So:
+
+```ocaml
+let rec fibs =
+  LCons (1, lazy (
+    LCons (1, lazy (lzip (+) fibs (ltl fibs)))))
+
+let _ = ltake 10 fibs
+```
+
+`int list = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55]`.
+
+The definition is *recursive*: `fibs` refers to itself inside its
+own body. The `lazy` wrapping is what makes this safe: the inner
+references to `fibs` and `ltl fibs` are inside delayed
+expressions, so they are not forced when `fibs` is being
+constructed.
+
+Why use `Lazy.t` and not just thunks here? Performance. With
+thunks, computing `take 30 fibs` recomputes earlier elements
+exponentially many times (the zip on the right keeps re-traversing
+the same prefix). With memoized `Lazy.t`, each `fibs` node is
+computed once and reused; `take 30 fibs` is linear.
+
+:::slide
+
+## Fibonacci as a stream
+
+```text
+let rec fibs =
+  LCons (1, lazy (
+    LCons (1, lazy (lzip (+) fibs (ltl fibs)))))
+
+let _ = ltake 10 fibs
+```
+
+- `[1; 1; 2; 3; 5; 8; 13; 21; 34; 55]`.
+- Self-referential: `fibs` and `ltl fibs` inside `lazy`.
+- Each node computed **once**; reused on every traversal.
+- Thunked version would be exponential; lazy version is linear.
+
+:::
+
+## A quick check
+
+:::quiz mcq id=M07-L04-q1
+What does `take 4 (map (fun x -> x * x) (from 1))` evaluate to?
+
+- [ ] `[0; 1; 4; 9]`
+- [x] `[1; 4; 9; 16]`
+- [ ] `[1; 2; 3; 4]`
+- [ ] diverges
+
+**Why:** `from 1` is the infinite stream `1, 2, 3, 4, ...`.
+`map (fun x -> x * x)` squares every element, producing
+`1, 4, 9, 16, ...`. `take 4` returns the first four as a list.
+:::
+
+:::quiz mcq id=M07-L04-q2
+Why does `lazy` give you something a plain `unit -> 'a` thunk
+does not?
+
+- [ ] `lazy` is faster to construct than a thunk.
+- [x] `lazy` caches the result; a thunk re-runs the body on each force.
+- [ ] `lazy` works for infinite values; thunks do not.
+- [ ] `lazy` is statically checked; thunks are not.
+
+**Why:** Both delay evaluation. The unique thing `lazy` adds is
+*memoization*: the first force runs the body and stashes the
+result; subsequent forces return the cached value. A thunk has no
+cache; calling it twice runs the body twice.
+:::
+
+## Activity
+
+:::slide
+
+## Activity
+
+Write `from n`, the infinite stream `n, n+1, n+2, ...`
+(thunk-based, not lazy). Then write `squares_from n`, the
+stream of square numbers starting from `n*n`. Verify with
+`take 6 (squares_from 0) = [0; 1; 4; 9; 16; 25]`.
+
+:::
+
+:::quiz code id=M07-L04-q3
+Write a function `from n` that returns the infinite stream
+`n, n+1, n+2, ...`, then a function `squares_from n` that
+returns the squares of that stream.
+
+```ocaml
+type 'a stream = Cons of 'a * (unit -> 'a stream)
+let hd (Cons (x, _)) = x
+let tl (Cons (_, t)) = t ()
+let rec take n s =
+  if n = 0 then [] else hd s :: take (n - 1) (tl s)
+let rec map f s = Cons (f (hd s), fun () -> map f (tl s))
+
+let rec from n =
+  failwith "not implemented"
+
+let squares_from n =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (take 5 (from 0) = [0; 1; 2; 3; 4]) "nats prefix";
+  check (take 4 (from 10) = [10; 11; 12; 13]) "from 10";
+  check (take 6 (squares_from 0) = [0; 1; 4; 9; 16; 25]) "squares";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+Reference solution:
+
+```ocaml
+let rec from n = Cons (n, fun () -> from (n + 1))
+let squares_from n = map (fun x -> x * x) (from n)
+```
+
+:::
+
+:::slide
+
+## Activity solution
+
+```ocaml
+let rec from n = Cons (n, fun () -> from (n + 1))
+let squares_from n = map (fun x -> x * x) (from n)
+
+let _ = take 5 (from 0)
+let _ = take 6 (squares_from 0)
+```
+
+- `from n`: stream of `n, n+1, n+2, ...`.
+- `squares_from n`: derived from `from n` via `map`.
+- All work happens on `take`; construction is constant time.
+
+:::
+
+## What's next
+
+The [next lecture](M07-L05-memoization.html) generalises the
+caching trick that makes `Lazy.t` faster than a plain thunk. We
+write a `memo` combinator that wraps any function with a cache,
+time a memoized Fibonacci against the naive recursive one, and
+use the same idea to make a slow recursive edit-distance
+function fast. We close with the catch that ties memoization,
+laziness, and streams together: all three presume *purity*: a
+function that does I/O cannot be safely cached.
+
+:::slide
+
+## What's next
+
+Lecture 5: **memoization**.
+
+- The general technique behind `Lazy.t`'s caching.
+- A `memo` combinator for any pure function.
+- Memoized Fibonacci, memoized edit distance.
+- Memoization presumes purity: side effects do not replay.
+
+:::
+
+## Reading
+
+- **Cornell CS3110**, *Lazy evaluation*:
+  <https://cs3110.github.io/textbook/chapters/adv/promises.html>
+- **Real World OCaml**, *Lazy values*:
+  <https://dev.realworldocaml.org/imperative-programming.html#scrollNav-3>
+
+## Sources
+
+This lecture follows the structure and worked examples of
+**IIT Madras CS3100**, *Streams, Laziness and Memoization*
+(KC Sivaramakrishnan, Monsoon 2020). The stream type, the
+sieve of Eratosthenes example, the lazy Fibonacci derivation,
+and the framing of thunks vs `Lazy.t` are drawn directly from
+the source lecture; prose is freshly authored for the NPTEL
+format.

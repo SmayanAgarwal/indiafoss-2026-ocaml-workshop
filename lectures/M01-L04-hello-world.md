@@ -269,7 +269,7 @@ This is more like Python or a Bash script in that respect: a file
 of statements that run top-to-bottom. The difference from Python is
 that every "statement" in OCaml is really a `let` binding (or
 sometimes a `module` declaration, which we will see in
-[Module 7](M07-L04-module-basics.html)). There are no bare
+[Module 7](M07-L06-module-basics.html)). There are no bare
 statements; every line of code is binding something to a name. Even
 `let () = print_endline "x"` is "binding the value `()` to the
 pattern `()` (i.e. type-checking it as unit) while evaluating the
@@ -566,7 +566,7 @@ This is what an OCaml program is, in the simplest form: a file of
 `let` bindings, evaluated top to bottom, where some bindings have
 side effects. There is no `main()`. There is no entry point. The
 file is the program; its bindings are the steps. Later, when we
-introduce [modules](M07-L04-module-basics.html) (Module 7), we will
+introduce [modules](M07-L06-module-basics.html) (Module 7), we will
 see how to organise larger programs into structured units, but the
 basic shape stays the same.
 

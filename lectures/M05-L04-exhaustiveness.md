@@ -420,7 +420,7 @@ In real projects, treat partial-match warnings as errors:
   (env (_ (flags (:standard -w +a-3-49))))
   ```
 - `-w +a` makes all warnings into errors; `-3-49` disables a few benign ones.
-- [Module 7](M07-L04-module-basics.html) covers modules; dune is the build tool you use to wire them together.
+- [Module 7](M07-L06-module-basics.html) covers modules; dune is the build tool you use to wire them together.
 
 :::
 

@@ -1,6 +1,6 @@
 ---
 title: "Functors"
-lecture_no: 6
+lecture_no: 8
 week: 7
 duration_target_min: 24
 concepts: [functors, parameterized modules, Map.Make, generic data structures]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Functors</h2>
-<p class="title-slide-label">Module 7 &middot; Lecture 6</p>
+<p class="title-slide-label">Module 7 &middot; Lecture 8</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -28,7 +28,7 @@ reading:
 
 We have been writing [functions](M03-L01-functions-as-values.html)
 that take values and return values all course. Modules, the
-[last](M07-L04-module-basics.html) [two](M07-L05-signatures.html)
+[last](M07-L06-module-basics.html) [two](M07-L07-signatures.html)
 lectures introduced, are collections of values, types, and helpers
 grouped under a name. This lecture introduces the natural next step:
 *functions from modules to modules*. In OCaml these are called
@@ -273,7 +273,7 @@ functor returns a full map.
 
 Here is a toy `Set` functor, building on the `ORDERED` signature
 we wrote at the
-[end of the previous lecture](M07-L05-signatures.html#module-type-aliasing).
+[end of the previous lecture](M07-L07-signatures.html#module-type-aliasing).
 
 ```ocaml
 module type ORDERED = sig
@@ -481,7 +481,7 @@ real OCaml codebases.
 
 ## A quick check
 
-:::quiz mcq id=M07-L06-q3
+:::quiz mcq id=M07-L08-q3
 Why is the standard library's `Set` module a functor (`Set.Make`)
 rather than a plain `Set` type parameterized by `'a`?
 
@@ -499,7 +499,7 @@ argument module, fixing the element type and the ordering in one
 go.
 :::
 
-:::quiz mcq id=M07-L06-q2
+:::quiz mcq id=M07-L08-q2
 What is the result of this snippet, supposing `Stdlib.compare`
 gives the usual lexicographic ordering on strings?
 
@@ -533,7 +533,7 @@ both results.
 
 :::
 
-:::quiz code id=M07-L06-q1
+:::quiz code id=M07-L08-q1
 Build a string-keyed map of ages. Fill in `lookup_known` to return
 the age of an existing key and `lookup_missing` to return `None`
 for a missing one.
@@ -612,7 +612,7 @@ reach for in new code.
 
 ## What's next
 
-[Lecture 7](M07-L07-tutorial.html) is the tutorial for Module 7.
+[Lecture 9](M07-L09-tutorial.html) is the tutorial for Module 7.
 We build a small *functional queue* using the classic two-stack
 trick: keep two lists, one for the front and one for the back in
 reverse order; push onto the back and pop from the front, refilling
@@ -626,7 +626,7 @@ module.
 
 ## What's next
 
-Lecture 7 is the **tutorial** for Module 7.
+Lecture 9 is the **tutorial** for Module 7.
 
 - Build a small "functional queue" using two stacks.
 - Package it as a module with an interface.

@@ -5,7 +5,7 @@ week: 4
 duration_target_min: 25
 concepts: [recursive types, list, tree, ADT, expression trees, structural induction]
 keywords: [OCaml, recursive types, list, tree, ADT, expression]
-activity_question: "Define [type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree]. Write [size : 'a tree -> int] that counts the number of Node constructors."
+activity_question: "Extend the [expr] type with a [Sub] constructor (two sub-expressions, like [Add] and [Mul]) and construct a value representing [(7 - 3) - 2]."
 think_about_this: "If you compare a value of type [int list] and a value of type [int tree], can [=] tell them apart? What property of structural equality lets one operator handle both?"
 reading:
   - title: "Cornell CS3110, Lists"
@@ -52,61 +52,264 @@ for processing structured data.
 combinators like `map` and [`fold`](M06-L04-fold.html). The
 foundation, the *types themselves*, is what we introduce now.
 
-## Lists are a recursive variant
+## A first recursive variant: a list of integers
 
-You have been using lists since
-[Module 3](M03-L02-recursion.html#recursion-on-lists). We will
-now look at how they are *defined*. Conceptually:
+Start with a list of *integers*. Conceptually, a list is either
+empty, or has a head element and a *smaller list* of the same
+kind. As a variant:
 
+```ocaml
+type intlist =
+  | INil
+  | ICons of int * intlist
 ```
+
+`INil` is the empty list. `ICons` carries an `int` (the head) and
+another `intlist` (the tail). The interesting bit is that the type
+`intlist` appears *inside its own definition*; that is the
+"recursive variant" property, and it is what lets one type
+declaration describe lists of any length:
+
+```ocaml
+type intlist = INil | ICons of int * intlist
+
+let ints = ICons (1, ICons (2, ICons (3, INil)))
+```
+
+The names `Nil` and `Cons` (with various prefixes / spellings)
+come from Lisp, which used them in the 1950s for exactly this
+shape.
+
+:::slide
+
+## A first recursive variant: a list of integers
+
+```ocaml
+type intlist =
+  | INil
+  | ICons of int * intlist
+
+let ints = ICons (1, ICons (2, ICons (3, INil)))
+```
+
+- `INil`: empty list.
+- `ICons`: head `int` plus a *tail* `intlist`.
+- `intlist` appears inside its own definition: **recursive
+  variant**.
+- One declaration; any length of integer list.
+
+:::
+
+## A list of strings
+
+Suppose we now want a list of *strings*. The shape is the same;
+only the element type changes:
+
+```ocaml
+type stringlist =
+  | SNil
+  | SCons of string * stringlist
+
+let strs = SCons ("hello", SCons ("world", SNil))
+```
+
+The duplication is starting to feel mechanical. If we also want
+`pointlist`, `shapelist`, `userlist`, every type would have its
+own copy of the same two-case shape. OCaml has a way to write the
+shape *once*, with the element type as a parameter.
+
+:::slide
+
+## A list of strings
+
+```ocaml
+type stringlist =
+  | SNil
+  | SCons of string * stringlist
+
+let strs = SCons ("hello", SCons ("world", SNil))
+```
+
+- Same shape as `intlist`; only the element type changed.
+- Imagine writing `pointlist`, `shapelist`, `userlist`, ...
+- We want **one declaration**, parameterised by the element type.
+
+:::
+
+## Parameterised variants
+
+The trick is to leave the element type as a parameter on the left
+of the `=`, using OCaml's *type-variable* syntax: a single quote
+followed by an identifier.
+
+```ocaml
+type 'a lst =
+  | Nil
+  | Cons of 'a * 'a lst
+
+let ints = Cons (1, Cons (2, Cons (3, Nil)))
+let strs = Cons ("hello", Cons ("world", Nil))
+```
+
+One declaration. The same `Nil` and `Cons` work for integers,
+strings, points, shapes, whatever. The compiler infers the type
+of each value:
+
+- `ints : int lst`
+- `strs : string lst`
+
+The element type is fixed *per value*, not per declaration. There
+is no way to mix integers and strings inside the same list:
+`Cons (1, Cons ("oops", Nil))` would be a type error. Each `'a`
+inside a single value is the *same* type.
+
+:::slide
+
+## Parameterised variants
+
+```ocaml
+type 'a lst =
+  | Nil
+  | Cons of 'a * 'a lst
+
+let ints = Cons (1, Cons (2, Nil))
+let strs = Cons ("hello", Cons ("world", Nil))
+```
+
+- One declaration; any element type.
+- `ints : int lst`, `strs : string lst`.
+- Inside a single value, every `'a` is the **same** type.
+
+:::
+
+## `'a` is a type variable
+
+The `'a` in `'a lst` is OCaml's syntax for a *type variable*. The
+naming convention:
+
+- A regular **variable** is a name standing for an unknown
+  *value*. (We have been writing `x`, `n`, `s` for these.)
+- A **type variable** is a name standing for an unknown *type*.
+
+OCaml writes type variables with a single quote followed by an
+identifier: `'a`, `'b`, `'key`, `'value`. The convention is to
+use `'a` and `'b` most of the time, pronounced "alpha" and "beta"
+(or just "quote a" and "quote b"). Other languages have the same
+idea under different syntax:
+
+- Java: `List<T>`.
+- C++: `std::vector<T>`.
+- Rust: `Vec<T>`.
+
+OCaml's `'a` is to types what `let x = ...` is to values: a name
+standing in for "any one"; the actual choice is made at each use
+site.
+
+:::slide
+
+## `'a` is a type variable
+
+- **Variable**: name standing for an unknown value (`x`, `n`).
+- **Type variable**: name standing for an unknown type (`'a`,
+  `'b`).
+- OCaml syntax: single quote, then identifier.
+  Pronounced "alpha", "beta", or "quote a", "quote b".
+- Same idea: Java `List<T>`, C++ `std::vector<T>`, Rust `Vec<T>`.
+
+:::
+
+## Polymorphism
+
+A definition that contains type variables is *polymorphic*. The
+word decomposes: *poly* = many, *morph* = shape. A polymorphic
+definition has many shapes; a single declaration covers them all.
+
+- `'a lst` is a polymorphic data type. One declaration, many
+  instantiations: `int lst`, `string lst`, `shape lst`, ...
+- In `'a lst`, the `lst` part is called a *type constructor*: it
+  takes a type (like `int`) and constructs a type (`int lst`).
+- This is the same idea as Java generics and C++ template
+  instantiation, where one definition is reused at many element
+  types.
+
+We will see polymorphic *functions* throughout the rest of the
+course. The simplest example is the identity function:
+
+```ocaml
+let id x = x
+```
+
+The toplevel reports `val id : 'a -> 'a`. One definition; works
+at every choice of `'a`.
+
+:::slide
+
+## Polymorphism
+
+- A definition with type variables is **polymorphic**.
+  - *poly* = many, *morph* = shape.
+- `'a lst` is a polymorphic data type:
+  `int lst`, `string lst`, `shape lst`, ...
+- `lst` is a **type constructor**: takes a type, gives a type.
+- Same idea as Java generics, C++ templates, Rust generics.
+
+```ocaml
+let id x = x
+```
+
+- `val id : 'a -> 'a`. One definition; every choice of `'a`.
+
+:::
+
+## OCaml's built-in lists are just variants
+
+The standard library defines `list` as a parameterised recursive
+variant of exactly the shape we just built:
+
+```text
 type 'a list =
   | []
   | (::) of 'a * 'a list
 ```
 
-This is essentially how OCaml's standard library defines `list`,
-with one syntactic concession: the constructor names `[]` and `::`
-have built-in syntactic sugar (you can write `[1; 2; 3]` instead of
-`1 :: 2 :: 3 :: []`, and you can write `::` as an infix operator).
-Modulo that sugar, `list` is a normal recursive variant.
+`[]` and `::` are constructors, just like our `Nil` and `Cons`.
+The only thing special is a small amount of *syntactic sugar*:
+
+- The constructors are written as `[]` and `::` instead of
+  alphabetic identifiers. (Most variant constructors must start
+  with a capital letter; `[]` and `::` are special-cased.)
+- `::` is an infix operator: `1 :: rest` rather than `:: (1, rest)`.
+- The bracket literal `[1; 2; 3]` desugars to
+  `1 :: 2 :: 3 :: []`.
+
+Strip the sugar and `list` is a normal parameterised variant.
+
+:::slide
+
+## OCaml's built-in lists are just variants
+
+```text
+type 'a list =
+  | []
+  | (::) of 'a * 'a list
+```
+
+- `[]` and `::` are constructors.
+- `::` is infix; `[1; 2; 3]` desugars to `1 :: 2 :: 3 :: []`.
+- Strip the sugar and it is a normal parameterised variant.
+
+:::
 
 A value of type `'a list` is one of two shapes:
 
 - `[]`: the empty list.
-- `x :: rest`: an element `x` (of type `'a`) *prepended to* another
+- `x :: rest`: an element `x` (of type `'a`) prepended to another
   `'a list` named `rest`.
 
 The recursion is in the second constructor: the cons cell carries
 a tail, which is itself a list, which can itself be empty or
-another cons cell, and so on, for as long as you want. That single
-self-reference is how lists of arbitrary length fit in a type
-declaration of two cases.
-
-:::slide
-
-## Lists are a recursive variant
-
-```
-type 'a list =
-  | []
-  | (::) of 'a * 'a list
-```
-
-A `'a list` is either:
-
-- `[]`: empty list.
-- `x :: rest`: element `x : 'a` prepended to another `'a list` `rest`.
-
-- The recursive bit: `'a list` inside the cons constructor.
-- Each cons cell points to *another list*; hence any length.
-
-:::
-
-The same shape produces every list you have ever seen in OCaml.
-`[1; 2; 3]` is `1 :: 2 :: 3 :: []`, a chain of three cons cells
-ending in the empty list. `[]` is just `[]`. There is no separate
-"length field" or "array of elements"; the structure of the value
-*is* the data.
+another cons cell, and so on. The single self-reference is how
+lists of arbitrary length fit in a type declaration of two cases.
 
 ## Lists in practice
 
@@ -114,36 +317,50 @@ Because cons prepends an element to an existing list, building a
 new list by adding a head is cheap:
 
 ```ocaml
-let xs = [1; 2; 3]
+let xs = [10; 20; 30]
 let ys = 0 :: xs
 let _ = ys
-let _ = xs
 ```
 
-`ys` is `[0; 1; 2; 3]`. `xs` is still `[1; 2; 3]` afterwards: lists
-are immutable. The new value `ys` *shares* its tail with `xs`. No
-copying happens.
+`ys` is `[0; 10; 20; 30]`. The new value *shares* its tail with
+`xs`: no copying happens. Lists are immutable, so this sharing is
+safe. Now rebind `xs` to something completely different:
+
+```ocaml
+let xs = [99; 99; 99]
+let _ = ys
+```
+
+`ys` is still `[0; 10; 20; 30]`. The earlier `let ys = 0 :: xs`
+captured the *value* `xs` was bound to at that moment (the list
+`[10; 20; 30]`), not the *name* `xs`. Rebinding `xs` later does
+not change what `ys` points at. This is the same shadowing-is-not-mutation
+point from
+[M02-L02](M02-L02-let-bindings.html#why-shadowing-differs-from-mutation-closures-see-the-old-value),
+applied to lists.
 
 :::slide
 
 ## Lists in practice
 
 ```ocaml
-let xs = [1; 2; 3]
+let xs = [10; 20; 30]
 let ys = 0 :: xs
 let _ = ys
 ```
 
-- `int list = [0; 1; 2; 3]`.
-- `0 :: xs` prepends `0` to `xs`; original `xs` **unchanged**.
+- `int list = [0; 10; 20; 30]`.
 - `ys` shares its tail with `xs` (no copy).
 
+Now rebind `xs`:
+
 ```ocaml
-let xs = [1; 2; 3]
-let _ = xs
+let xs = [99; 99; 99]
+let _ = ys
 ```
 
-- `int list = [1; 2; 3]`. Still.
+- `ys` is *still* `[0; 10; 20; 30]`.
+- `ys` captured the **value** at binding time, not the name `xs`.
 
 :::
 
@@ -157,57 +374,6 @@ prepending, you walk them by stripping off the head.
 If you find yourself constantly appending to the end of a list,
 you probably want a different data structure (an array, a Queue,
 or a reversed list that you reverse once at the end).
-
-## A recursive walk
-
-To process a list, you write a function with the *same shape* as
-the type: one clause per constructor.
-
-```ocaml
-let rec sum = function
-  | [] -> 0
-  | x :: rest -> x + sum rest
-
-let _ = sum [1; 2; 3; 4; 5]
-```
-
-The base case (`[] -> 0`) handles the empty list. The recursive
-case (`x :: rest -> x + sum rest`) destructures the cons cell into
-head and tail, computes the sum of the tail recursively, and adds
-the head.
-
-:::slide
-
-## A recursive walk
-
-```ocaml
-let rec sum = function
-  | [] -> 0
-  | x :: rest -> x + sum rest
-
-let _ = sum [1; 2; 3; 4; 5]
-```
-
-- Result: `int = 15`.
-- Two clauses, one per constructor.
-- Recursive case calls `sum` on the *smaller* tail.
-- **Structural recursion**: function mirrors the data type.
-
-:::
-
-This shape (one base case per *terminal* constructor, one recursive
-case per *recursive* constructor) is called *structural recursion*.
-The recursion of the function follows the recursion of the type.
-Once you see this pattern, it works the same way for every
-recursive type you will define: identify the constructors, write
-one clause per constructor, recurse on the recursive payload.
-
-Termination is automatic by induction: each recursive call peels
-off one constructor, so the input is strictly smaller than the
-caller's input. Eventually the recursion bottoms out at a base
-case. There is no way to write structural recursion that fails to
-terminate, as long as you genuinely recurse only on substructures
-of the input.
 
 ## A binary tree
 
@@ -253,7 +419,7 @@ exactly two children, even if one (or both) of them is empty.
 
 :::slide
 
-## A binary tree
+## A binary tree: the type
 
 ```ocaml
 type 'a tree =
@@ -262,12 +428,17 @@ type 'a tree =
 ```
 
 - `Leaf`: empty. `Node`: left, value, right.
-- Like a list, but **two** recursive references.
+- Like a list, but **two** recursive references inside `Node`.
+- `'a tree` works for any element type, just like `'a list`.
+
+:::
+
+:::slide
+
+## A binary tree: an example
 
 ```ocaml
-type 'a tree =
-  | Leaf
-  | Node of 'a tree * 'a * 'a tree
+type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
 let example =
   Node (
     Node (Leaf, 1, Leaf),
@@ -275,9 +446,7 @@ let example =
     Node (Leaf, 3, Node (Leaf, 4, Leaf)))
 ```
 
-Drawing it:
-
-```
+```text
     2
    / \
   1   3
@@ -292,83 +461,6 @@ and *one* successor (the tail). A binary tree has each node with
 *two* successors. You can generalise further: ternary trees, $n$-ary
 trees, even trees with an unbounded number of children (called
 *rose trees*, which we will see in a moment).
-
-## Walking the tree
-
-Two clauses, one per constructor, recurse on each subtree:
-
-```ocaml
-type 'a tree =
-  | Leaf
-  | Node of 'a tree * 'a * 'a tree
-let example =
-  Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Node (Leaf, 4, Leaf)))
-
-let rec size = function
-  | Leaf -> 0
-  | Node (l, _, r) -> 1 + size l + size r
-
-let _ = size example
-```
-
-`size` counts the number of `Node` constructors. Base case: `Leaf
--> 0`. Recursive case: `1 + size left + size right`. The function
-recurses on both subtrees and adds their sizes plus one.
-
-:::slide
-
-## Walking the tree: size
-
-```ocaml
-type 'a tree =
-  | Leaf
-  | Node of 'a tree * 'a * 'a tree
-let example =
-  Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Node (Leaf, 4, Leaf)))
-let rec size = function
-  | Leaf -> 0
-  | Node (l, _, r) -> 1 + size l + size r
-
-let _ = size example
-```
-
-- Result: `int = 4`.
-- Two recursive calls per `Node`.
-
-:::
-
-:::slide
-
-## Walking the tree: sum
-
-```ocaml
-type 'a tree =
-  | Leaf
-  | Node of 'a tree * 'a * 'a tree
-let example =
-  Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Node (Leaf, 4, Leaf)))
-let rec sum_tree = function
-  | Leaf -> 0
-  | Node (l, v, r) -> v + sum_tree l + sum_tree r
-
-let _ = sum_tree example
-```
-
-- Result: `int = 10`. Same shape; adds the node's value.
-- `_` for ignored components, just like with tuples.
-
-:::
-
-The pattern is the same as for lists, just with two recursive
-calls instead of one. For every constructor of the type, you have
-one clause; for every recursive sub-position, you have one
-recursive call. The function structure is *dictated* by the type
-structure.
-
-We are using `_` in the pattern `Node (l, _, r)` because `size`
-does not care about the value at the node. For `sum_tree`, we do
-care about it, so we bind it with `v`. The convention is the same
-as for tuples: use `_` for components you do not use.
 
 ## Mutual recursion at the type level
 
@@ -407,16 +499,17 @@ and  'a rose_tree = Rose of 'a * 'a forest
 
 The same `and` keyword serves three purposes in OCaml: mutual
 recursion of `let` bindings, mutual recursion of `type` declarations,
-and (we will see in [Module 7](M07-L04-module-basics.html)) mutual
+and (we will see in [Module 7](M07-L06-module-basics.html)) mutual
 recursion of `module` declarations. The intuition is the same in
 each case: the names introduced together are all in scope for each
 other.
 
 ## Modelling arithmetic expressions
 
-Here is the example that, in many people's experience, *clicks*:
-a recursive variant for arithmetic expressions, plus a recursive
-function that evaluates them.
+A recursive variant can model entire mini-languages. The classic
+example is arithmetic expressions: a *number*, or an *addition*
+of two sub-expressions, or a *multiplication* of two
+sub-expressions:
 
 ```ocaml
 type expr =
@@ -425,20 +518,22 @@ type expr =
   | Mul of expr * expr
 
 let e = Add (Num 3, Mul (Num 4, Num 5))
-
-let rec eval = function
-  | Num n -> n
-  | Add (a, b) -> eval a + eval b
-  | Mul (a, b) -> eval a * eval b
-
-let _ = eval e
 ```
 
-We have declared an *arithmetic mini-language* and a *one-pass
-interpreter* in twelve lines of code. The expression `Add (Num 3,
-Mul (Num 4, Num 5))` represents the arithmetic expression `3 + (4
-* 5)`, which evaluates to `23`. The evaluator pattern-matches on
-each constructor and recurses on the subexpressions.
+The value `e` represents the arithmetic expression `3 + (4 *
+5)`. The `Add` and `Mul` constructors are recursive: their
+payloads are themselves `expr` values, which can be any shape
+allowed by the type. With three constructors we can describe
+expressions of any depth.
+
+This same recipe (variants for the kinds of node, recursion for
+the nesting) is how interpreters, parsers, type checkers, JSON
+representations, regex ASTs, configuration languages, and network
+protocol decoders are all modelled in OCaml. Once we have pattern
+matching, evaluating one of these shapes is straightforward
+(`Module 5` has the tools; the
+[M05-L06 tutorial](M05-L06-tutorial.html) walks an `expr`
+evaluator end-to-end).
 
 :::slide
 
@@ -451,145 +546,60 @@ type expr =
   | Mul of expr * expr
 
 let e = Add (Num 3, Mul (Num 4, Num 5))
-
-let rec eval = function
-  | Num n -> n
-  | Add (a, b) -> eval a + eval b
-  | Mul (a, b) -> eval a * eval b
-
-let _ = eval e
 ```
 
-- Result: `int = 23`.
-- A mini-language **and** its evaluator in twelve lines.
-- Each constructor: a piece of syntax. Evaluator: match and compute.
+- `e` represents `3 + (4 * 5)`.
+- `Add` and `Mul` are recursive: payloads are themselves `expr`.
 - Same recipe: JSON, regex, configs, network protocols.
+- Walking and evaluating: M05 pattern matching.
 
 :::
 
-This pattern, *variants for the kinds, recursion for the nesting,
-pattern matching for the walks*, is what Module 4 has been
-building toward. Once you can write code like this fluently, you
-can model and process essentially any tree-structured data. The
-tutorial in [M04-L06](M04-L06-tutorial.html) builds a slightly
-larger example along the same lines (a JSON-like value type), and
-we will keep returning to this shape throughout the course. The
-[Module 5 tutorial](M05-L06-tutorial.html) revisits the
-arithmetic-expression example with the full pattern-matching
-toolkit.
+## Where this is going
 
-## Structural induction
+We now have variants for *kinds*, recursion for *nesting*, and
+type variables for *polymorphism*. The missing piece is how to
+*walk* one of these structures: take an `'a list`, an `'a tree`,
+or an `expr` apart and compute something with it. That step is
+*pattern matching*, and it gets a whole module of its own:
 
-The reason these recursive walks "just work," and the reason you
-can reason about their correctness, is *structural induction*. The
-principle is a small generalisation of mathematical induction on
-the natural numbers.
+- [Module 5](M05-L01-basic-patterns.html) introduces pattern
+  matching properly: literals, variables, wildcards, nested
+  patterns, guards, and exhaustiveness.
+- Once we have it, structural recursion (function shape mirrors
+  type shape, base case for terminal constructors, recursive
+  case for recursive ones) becomes the natural way to write
+  every function on a recursive variant.
+- [Module 6](M06-L02-map.html) generalises that pattern with
+  higher-order combinators (`map`, `filter`, `fold`).
 
-To prove (or convince yourself) that a function on a recursive
-type is correct:
-
-1. Show correctness on the *base* constructors (`Leaf`, `[]`, `Num
-   n`). These have no recursive substructure; correctness here is
-   usually direct.
-2. Show that, *assuming* correctness on each immediate substructure,
-   the function is correct on each recursive constructor (`Node`,
-   `::`, `Add`).
-
-:::slide
-
-## Structural induction
-
-To convince yourself a function on a recursive type is correct:
-
-1. Show it on the **base case** (`Leaf`, `[]`, `Num n`).
-2. Assuming substructures work, show each **recursive case**.
-
-- Same principle as school induction, applied to data shapes.
-- If you cover every constructor and trust the recursive call,
-  structural induction guarantees correctness.
-
-:::
-
-This is the same kind of reasoning you used for inductive proofs
-in discrete math, lifted from natural numbers to recursive data
-shapes. The base cases are the "zero" cases of the type; the
-inductive step is the recursive constructor. Together they cover
-*every possible value* of the type, by the same argument that `P(0)`
-and `P(n) -> P(n+1)` cover every natural number.
-
-The practical implication: when you write a structural recursion,
-if you handle every constructor and you "trust" the recursive calls
-to do the right thing on smaller inputs, you are almost certainly
-correct. The compiler enforces the "every constructor handled"
-part (via [exhaustiveness checking](M05-L04-exhaustiveness.html));
-structural induction enforces the "trust the recursive call" part.
+For Module 4, we are done with the *shapes*. Module 5 picks up
+the *walks*.
 
 ## A short check
 
 :::quiz mcq id=M04-L04-q2
-For the function below, what is its type?
+Given:
 
 ```ocaml
-type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
-
-let rec map_tree f = function
-  | Leaf -> Leaf
-  | Node (l, v, r) -> Node (map_tree f l, f v, map_tree f r)
+type expr =
+  | Num of int
+  | Add of expr * expr
+  | Mul of expr * expr
 ```
 
-- [ ] `'a tree -> 'a tree`
-- [ ] `('a -> 'a) -> 'a tree -> 'a tree`
-- [x] `('a -> 'b) -> 'a tree -> 'b tree`
-- [ ] `'a tree -> ('a -> 'b) -> 'b tree`
+Which of these are **valid** values of type `expr`?
 
-**Why:** `f` is applied to the value at each node; its argument is
-of type `'a` (the tree's element type) and its result is of type
-`'b` (a possibly-different type). The output tree has values of
-type `'b`. The function takes `f` first, then the tree, so the
-argument order is `('a -> 'b) -> 'a tree -> 'b tree`.
-:::
+- [x] `Num 0`
+- [x] `Add (Num 1, Num 2)`
+- [x] `Mul (Add (Num 1, Num 2), Num 3)`
+- [ ] `Add (1, 2)`
 
-:::quiz code id=M04-L04-q1
-Define `height : 'a tree -> int` for the binary tree type. The
-height of a `Leaf` is `0`; the height of a `Node` is `1` plus the
-maximum of its two subtree heights.
-
-```ocaml
-type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
-
-let rec height = function
-  | Leaf -> failwith "not implemented"
-  | Node (_, _, _) -> failwith "not implemented"
-```
-
-```ocaml skip
-let check b m = if not b then failwith m
-let t =
-  Node (Node (Leaf, 1, Leaf),
-        2,
-        Node (Leaf, 3, Node (Leaf, 4, Leaf)))
-let () =
-  check (height Leaf = 0) "leaf";
-  check (height (Node (Leaf, 1, Leaf)) = 1) "one";
-  check (height t = 3) "example";
-  print_endline "all tests passed"
-```
-:::
-
-:::solution
-
-Reference solution:
-
-```ocaml
-type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
-let rec height = function
-  | Leaf -> 0
-  | Node (l, _, r) -> 1 + max (height l) (height r)
-```
-
-The `max` function comes from `Stdlib` and works on any comparable
-type.
-
+**Why:** `Num`, `Add`, and `Mul` all take payloads that are
+themselves `expr`. So `Add` accepts two `expr`s, not two `int`s
+directly. `Add (Num 1, Num 2)` is well-typed; `Add (1, 2)` is
+not. The recursive nesting (`Mul` of `Add` of `Num`s) is exactly
+what makes this a *recursive* variant.
 :::
 
 ## Activity
@@ -598,8 +608,17 @@ type.
 
 ## Activity
 
-Define `'a tree` and write `size : 'a tree -> int` that counts the
-number of `Node` constructors. Test on a non-empty tree.
+Extend the `expr` type below with a `Sub` constructor that
+represents subtraction (two sub-expressions, like `Add` and
+`Mul`). Then construct a value representing `(7 - 3) - 2`.
+
+```text
+type expr =
+  | Num of int
+  | Add of expr * expr
+  | Mul of expr * expr
+  (* add Sub here *)
+```
 
 :::
 
@@ -608,27 +627,20 @@ number of `Node` constructors. Test on a non-empty tree.
 ## Activity solution
 
 ```ocaml
-type 'a tree =
-  | Leaf
-  | Node of 'a tree * 'a * 'a tree
+type expr =
+  | Num of int
+  | Add of expr * expr
+  | Mul of expr * expr
+  | Sub of expr * expr
 
-let rec size = function
-  | Leaf -> 0
-  | Node (l, _, r) -> 1 + size l + size r
-
-let t = Node (Node (Leaf, 1, Leaf), 2, Leaf)
-let _ = size t
+let e = Sub (Sub (Num 7, Num 3), Num 2)
 ```
 
-- Result: `int = 2` (root `2`, left child `1`).
-- Base: `Leaf -> 0`. Recursive: `1 + size l + size r`.
-- `Node (l, _, r)` ignores the value (we count, not read).
+- One new constructor, same recursive payload shape.
+- The value nests `Sub` inside `Sub`: `(7 - 3) - 2`.
+- Walking and evaluating this comes in M05.
 
 :::
-
-The pattern `Node (l, _, r)` shows how patterns *project*: we want
-the two subtrees, we do not care about the value, so we use `_` to
-discard the value position. This is the same idiom as in tuples.
 
 ## What's next
 
@@ -636,17 +648,21 @@ discard the value position. This is the same idiom as in tuples.
 
 ## What's next
 
-Lecture 5: **type abbreviations** (short names for longer types)
-and **`option`** ("maybe a value"). Then the tutorial.
+Lecture 5: **`option`** and **`result`** as the two everyday
+utility variants.
+Then the tutorial.
 
 :::
 
-We now have variants, records, tuples, and recursive variants. The
-[next lecture](M04-L05-option-and-aliases.html) adds two small but
-important pieces: type *abbreviations* (short names for existing
-types) and the `option` type (the standard idiom for "maybe a
-value"). Then the [module tutorial](M04-L06-tutorial.html) puts
-all of it together.
+We now have variants, records, tuples, recursive variants, and
+polymorphism. The [next lecture](M04-L05-option-and-aliases.html)
+introduces the two utility variants you will use every day:
+`option` ("maybe a value") and `result` ("a value, or an error").
+Then the [module tutorial](M04-L06-tutorial.html) puts all of it
+together. Walking these data shapes (the step we have been
+deferring throughout M04-L03 and M04-L04) starts in
+[Module 5](M05-L01-basic-patterns.html), where pattern matching
+gets its own treatment.
 
 ## Reading
 

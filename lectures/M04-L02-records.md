@@ -464,7 +464,7 @@ and the ambiguity is resolved.
 A consequence to be aware of: if you have two record types in the
 same scope with overlapping field names, dot-access expressions
 become ambiguous in the same way. We will see in
-[Module 7](M07-L04-module-basics.html) how modules let you put
+[Module 7](M07-L06-module-basics.html) how modules let you put
 each record type in its own namespace, which sidesteps the
 problem entirely.
 

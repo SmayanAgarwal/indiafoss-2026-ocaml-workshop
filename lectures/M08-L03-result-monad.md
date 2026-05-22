@@ -359,7 +359,7 @@ The argument for using `result` everywhere is uniformity: every
 function has the same shape, every caller knows what to do. The
 argument against is that the boilerplate piles up, especially at
 boundaries where you have to map between different error types
-(your [module's](M07-L04-module-basics.html) errors versus the
+(your [module's](M07-L06-module-basics.html) errors versus the
 library's errors). Most real codebases compromise: `result` at the
 API boundary, simpler mechanisms internally.
 

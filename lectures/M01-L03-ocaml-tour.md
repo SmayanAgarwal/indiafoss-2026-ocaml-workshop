@@ -355,7 +355,7 @@ properties, or [`Camomile`](https://github.com/yoriyuki/Camomile)
 for older codebases. Most string code you write will not need any
 of these; plain `String` is fine for concatenating, slicing, and
 searching bytes. We will revisit this when we cover modules in
-[Module 7](M07-L04-module-basics.html).
+[Module 7](M07-L06-module-basics.html).
 
 ## Let bindings
 
@@ -662,7 +662,7 @@ let triple : int -> int = fun x -> x + x + x
 The OCaml community convention is to leave type annotations off
 local helpers and put them on top-level functions in a module's
 public interface (its `.mli` file, which we will cover in
-[Module 7](M07-L05-signatures.html#signatures-in-mli-files)).
+[Module 7](M07-L07-signatures.html#signatures-in-mli-files)).
 Annotations on public APIs are documentation: they tell the reader
 what the function expects without forcing the reader to read its
 body. Annotations on private code clutter without paying their way,

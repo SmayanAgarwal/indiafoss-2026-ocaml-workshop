@@ -1,29 +1,27 @@
 ---
-title: "`option`, `result`, and type abbreviations"
+title: "`option` and `result`"
 lecture_no: 5
 week: 4
 duration_target_min: 22
-concepts: [option type, None, Some, result type, type abbreviation, optional values]
-keywords: [OCaml, option, result, type alias, None, Some, optional values]
+concepts: [option type, None, Some, result type, optional values, error handling]
+keywords: [OCaml, option, result, None, Some, optional values, error handling]
 activity_question: "Write [safe_div : int -> int -> int option] that returns [None] on division by zero and [Some (a / b)] otherwise."
 think_about_this: "Many languages use [null] to mean 'no value'. OCaml uses [option]. What does a function signature like [val find : key -> value option] tell a caller that [val find : key -> value] (with null possible) does not?"
 reading:
   - title: "Cornell CS3110, Options"
     url: https://cs3110.github.io/textbook/chapters/data/options.html
-  - title: "Cornell CS3110, Type synonyms"
-    url: https://cs3110.github.io/textbook/chapters/data/type_synonym.html
   - title: "Real World OCaml, Error handling"
     url: https://dev.realworldocaml.org/error-handling.html
 ---
 
-# `option`, `result`, and type abbreviations
+# `option` and `result`
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">`option`, `result`, and type abbreviations</h2>
+<h2 class="title-slide-lecture">`option` and `result`</h2>
 <p class="title-slide-label">Module 4 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
@@ -39,9 +37,8 @@ is a single type, `option`, that makes "no value" explicit in the
 type system, and a closely related type, `result`, for "no value
 *because*..."
 
-This lecture covers both, plus a small but separate feature:
-*type abbreviations*, which let you give a short name to a longer
-type for readability. Together, these three pieces wrap up Module
+This lecture covers both. Together with the variant and recursive-
+type material from the previous two lectures, they wrap up Module
 4's introduction to OCaml's data-type vocabulary. The
 [tutorial in the next lecture](M04-L06-tutorial.html) puts
 everything together.
@@ -414,107 +411,6 @@ raised by `int_of_string`. We will cover exceptions properly in
 [Module 7](M07-L03-exceptions.html); for now, read
 `try Ok ... with Failure _ -> Error ...` as "do the thing; if it
 raises, convert to `Error`."
-
-## Type abbreviations
-
-Quite separate from `option` and `result`, OCaml lets you give a
-short name to an existing type. This is called a *type
-abbreviation* (or *type synonym*).
-
-```ocaml
-type point = float * float
-type points = point list
-```
-
-After these declarations, `point` and `float * float` are *the
-same type*; the compiler treats them as interchangeable. The name
-exists purely for readability. `points` is `point list`, which is
-`(float * float) list`. Three names for the same type, depending
-on what you want to emphasise at each call site.
-
-```ocaml
-type point = float * float
-type points = point list
-let origin : point = (0.0, 0.0)
-let triangle : points = [(0.0, 0.0); (1.0, 0.0); (0.5, 1.0)]
-```
-
-:::slide
-
-## Type abbreviations
-
-Give a short name to a longer type:
-
-```ocaml
-type point = float * float
-type points = point list
-```
-
-- `point` and `(float * float)`: the **same** type.
-- Names purely for **readability**.
-
-```ocaml
-type point = float * float
-type points = point list
-let origin : point = (0.0, 0.0)
-let triangle : points = [(0.0, 0.0); (1.0, 0.0); (0.5, 1.0)]
-```
-
-- Compiler treats `point` and `float * float` interchangeably.
-
-:::
-
-Abbreviations are useful when:
-
-- The underlying type is verbose: `string -> int -> int option`
-  becomes more readable as `lookup` if you write `type lookup =
-  string -> int -> int option`.
-- The same compound type appears in many signatures, and you want
-  to talk about it in one place.
-- The name carries information beyond the structure: `type ms =
-  int` and `type fps = int` are both `int`, but the names tell the
-  reader (not the compiler!) which one is intended.
-
-Abbreviations are *not* useful when you want type safety between
-two structurally-identical concepts. Because `ms` and `fps` above
-are the same type to the compiler, you can freely substitute one
-for the other; the type system will not warn you. For real type
-safety here, you need a [record](M04-L02-records.html) or a
-[single-constructor variant](M04-L03-variants.html#constructors-with-payload)
-(this last trick of wrapping a base type in a fresh one-constructor
-variant is sometimes called the *newtype* idiom, after the
-Haskell keyword). The cost of a real wrapper is one
-allocation per value and one constructor name in every literal;
-the benefit is the compiler catching `add_durations 30 60` when
-30 is fps and 60 is ms.
-
-## Abbreviation vs record: a choice
-
-Both let you give a name to a compound type. The difference:
-
-:::slide
-
-## Abbreviation vs record
-
-Both name a compound type:
-
-**Abbreviation** (`type point = float * float`):
-
-- Representation **leaks**: `(1.0, 2.0)` and `point` are the same.
-- Positional access (`fst`, `snd`).
-
-**Record** (`type point = { x : float; y : float }`):
-
-- A *new* type; access by field name.
-
-Records for a **real new type**; abbreviations for **readability**.
-
-:::
-
-The rule of thumb: if you genuinely have a new abstraction (a
-"point" is a *kind of thing*, not just a `float * float`), use a
-record. If you are just sparing yourself from writing the long
-form many times in signatures, use an abbreviation.
 
 ## Mini check
 

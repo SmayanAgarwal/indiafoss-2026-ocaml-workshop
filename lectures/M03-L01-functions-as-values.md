@@ -499,7 +499,7 @@ let _ = apply_twice double 5
 - `'a` is a **type variable**: any type, same one each occurrence.
 - Works at `int -> int`, `float -> float`, `string -> string`, ...
 - This is **polymorphism**. Formal treatment:
-  [M06-L01](M06-L01-functions-revisited.html#a-function-that-takes-a-function).
+  [M04-L04](M04-L04-recursive-types.html#polymorphism).
 
 :::
 
@@ -519,9 +519,9 @@ functions, `string -> string` functions, etc.
 
 This is the first time we are seeing a type variable; we will
 return to polymorphism formally in
-[M06-L01](M06-L01-functions-revisited.html#a-function-that-takes-a-function),
-once we have higher-order functions to motivate it. For now, read
-`'a -> 'a` as "any type to itself."
+[M04-L04](M04-L04-recursive-types.html#polymorphism), once we
+have parameterised variants (lists of *anything*) to motivate
+it. For now, read `'a -> 'a` as "any type to itself."
 
 ## Anonymous functions are everywhere
 

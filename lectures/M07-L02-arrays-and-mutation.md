@@ -643,9 +643,12 @@ the third member of the imperative trio (alongside refs and arrays).
 Exceptions let you signal "something went wrong" without threading
 an [option or result](M04-L05-option-and-aliases.html) through every
 layer of code. After that,
-Lectures [4](M07-L04-module-basics.html) through
-[6](M07-L06-functors.html) turn to *modules* and the way OCaml
-organizes code at scale.
+Lectures [4](M07-L04-streams-and-laziness.html) and
+[5](M07-L05-memoization.html) cover *streams and laziness* and
+*memoization* (a pair of techniques that build on refs and
+exceptions). Lectures [6](M07-L06-module-basics.html) through
+[8](M07-L08-functors.html) then turn to *modules* and the way
+OCaml organizes code at scale.
 
 :::slide
 

@@ -125,11 +125,11 @@ and I want your read before changing structure or voice.
   text already explains the deeply-nested-expression motivation
   (lines 192-197) and recommends `|>` as the default. Adding a
   contrived complex example would oversell the operator.
-- [x] **M07-L05** SML ALL-CAPS aside: applied. Reworded the
+- [x] **M07-L09** SML ALL-CAPS aside: applied. Reworded the
   convention paragraph so the slide and chapter agree (uppercase
   conventional; many codebases use ALL CAPS, others CamelCase;
   pick whichever your codebase uses).
-- [~] **M07-L06** functor-as-function hedging: rejected. The
+- [~] **M07-L08** functor-as-function hedging: rejected. The
   framing is consistent across the lecture ("a functor takes a
   module as an argument").
 - [~] **M08-L01..L02** monad-laws hand-off: rejected. L01 line

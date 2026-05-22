@@ -89,7 +89,7 @@ The encapsulation matters more than it might first appear. Once a
 name is part of a file's top-level scope, anyone reading the file
 sees it. It autocompletes. It shows up in error messages. It might
 get exported in an `.mli` (interface file), to be discussed in
-[Module 7](M07-L05-signatures.html). If the helper is genuinely an
+[Module 7](M07-L07-signatures.html). If the helper is genuinely an
 implementation detail of one function, all of that is noise. Local
 definitions keep the top-level surface clean.
 
@@ -144,7 +144,7 @@ languages, or `static` functions in C: by default, hide
 implementation details. Expose only the API. In OCaml the
 hiding-mechanism for functions inside another function is `let ...
 in`; the hiding-mechanism for functions inside a module is the
-[`.mli` file](M07-L05-signatures.html#signatures-in-mli-files).
+[`.mli` file](M07-L07-signatures.html#signatures-in-mli-files).
 Both exist for the same reason: smaller surface, fewer ways for
 callers to misuse the code.
 

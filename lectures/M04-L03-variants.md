@@ -3,9 +3,9 @@ title: "Variants (sum types)"
 lecture_no: 3
 week: 4
 duration_target_min: 24
-concepts: [variants, sum types, constructors, payloads, pattern matching]
+concepts: [variants, sum types, constructors, payloads, parameterised variants]
 keywords: [OCaml, variant, sum type, constructor, ADT, algebraic data type]
-activity_question: "Define a variant type [shape] with three constructors: [Circle of float], [Square of float], [Rectangle of float * float]. Write [area : shape -> float] that returns each shape's area."
+activity_question: "Design a variant [light] for a traffic-light controller with four states: [Red], [Green], [Yellow of int] (seconds remaining), and [Off]. Declare the type and construct one example value of each constructor."
 think_about_this: "If you wanted to add a [Triangle] case to the [shape] type, what files in a real codebase would you have to touch? What does the compiler do for you, and what does it not?"
 reading:
   - title: "Cornell CS3110, Variants"
@@ -77,6 +77,56 @@ ML family, where variants have been around since the 1970s.
 
 :::
 
+## Type aliases
+
+Before getting to variants proper, one bit of supporting syntax.
+OCaml lets you give a short name to an existing type. This is
+called a *type alias* (or *type abbreviation*):
+
+```ocaml
+type point = float * float
+type points = point list
+```
+
+After these declarations, `point` and `float * float` are *the
+same type*; the compiler treats them as interchangeable. The name
+exists purely for readability. `points` is `point list`, which is
+`(float * float) list`. Three names for the same type, depending
+on what you want to emphasise at each call site.
+
+```ocaml
+type point = float * float
+let origin : point = (0.0, 0.0)
+```
+
+:::slide
+
+## Type aliases
+
+```ocaml
+type point = float * float
+type points = point list
+```
+
+- `point` and `float * float`: the **same type**.
+- Compiler treats them interchangeably; names are for
+  *readability*, not type safety.
+
+```ocaml
+let origin : point = (0.0, 0.0)
+```
+
+:::
+
+Aliases are useful when the underlying type is verbose, when the
+same compound type shows up in many signatures, or when the name
+carries information beyond the structure. They are *not* useful
+when you want type safety between two structurally-identical
+concepts. `type ms = int` and `type fps = int` are both `int` to
+the compiler; you can freely substitute one for the other. For
+real type safety here, you need a [record](M04-L02-records.html)
+or a single-constructor variant (see below).
+
 ## Declaring a variant: the enum case
 
 The simplest variant is one whose alternatives carry no data:
@@ -111,8 +161,8 @@ The capitalisation is mandatory: OCaml uses the first character of
 an identifier to distinguish a *constructor* (starts with capital,
 denotes a variant case) from a *variable* (starts with lowercase,
 denotes a binding). The compiler tells the two apart by lexical
-rule alone, which saves you from ambiguity later when you pattern
-match.
+rule alone, which saves you from ambiguity later when we get to
+patterns.
 
 A value of type `direction` is just one of the four named tags.
 There is no implicit numeric encoding (C lets you write `North = 0`
@@ -190,278 +240,25 @@ not "two arguments." This matters for pattern matching: you write
 `Rectangle (w, h)` (one pair-pattern, parens required), not
 `Rectangle w h` (which would not parse).
 
-## Pattern matching on variants
+## Using a variant: forward-pointer to pattern matching
 
-Once you have a variant, the way to use it is to *pattern match*
-on which constructor was used:
+To *use* a variant value, we need a language feature that
+inspects a value and dispatches on which constructor was used,
+binding the payload along the way. That feature is *pattern
+matching*, the subject of
+[Module 5](M05-L01-basic-patterns.html). Pattern matching also
+brings two compiler-checked guarantees you will lean on heavily:
 
-```ocaml
-type shape =
-  | Circle of float
-  | Square of float
-  | Rectangle of float * float
+- **Exhaustiveness**: the compiler tracks every constructor of
+  the variant and warns if your code forgets a case.
+- **Refactor-with-the-compiler**: when you add a new
+  constructor, the compiler flags every site that pattern-matches
+  on the type, giving you a punch list of places to update.
 
-let area s =
-  match s with
-  | Circle r -> Float.pi *. r *. r
-  | Square s -> s *. s
-  | Rectangle (w, h) -> w *. h
-
-let _ = area (Circle 3.0)
-let _ = area (Rectangle (4.0, 6.0))
-```
-
-The `match ... with` expression inspects a value and dispatches
-based on its shape. Each `| PATTERN -> EXPRESSION` clause says
-"if the value matches this pattern, then this expression is the
-result." The patterns here mirror the constructor syntax: `Circle
-r` matches any `Circle` and binds its payload to `r`; `Rectangle
-(w, h)` matches any `Rectangle` and binds its two components.
-
-:::slide
-
-## Pattern matching on variants
-
-```ocaml
-type shape =
-  | Circle of float
-  | Square of float
-  | Rectangle of float * float
-let area s =
-  match s with
-  | Circle r -> Float.pi *. r *. r
-  | Square s -> s *. s
-  | Rectangle (w, h) -> w *. h
-```
-
-- `match` dispatches on which constructor was used.
-- Binds the payload to local names.
-- Two upgrades over C's `switch`:
-  - Compiler checks **every** constructor is handled.
-  - You **destructure** the payload at the same time.
-
-:::
-
-If you have written `switch` in C or `case` in Pascal, this should
-look familiar in structure. Two things make `match` more powerful
-than either:
-
-1. **[Exhaustiveness checking](M05-L04-exhaustiveness.html).** The
-   compiler tracks the variant declaration and warns if you forget
-   a case.
-2. **Destructuring.** You bind the payload data in the pattern,
-   not in a separate statement. This eliminates a class of "I
-   forgot to extract the field" bugs.
-
-This combination of variants and pattern matching is the *engine*
-of nearly every interesting OCaml program. Interpreters, parsers,
-type checkers, compilers, network protocol decoders, configuration
-loaders, web routers: all of these have data that comes in
-*several distinct shapes*, and OCaml's idiom for that is always
-the same: a variant, plus pattern matching.
-
-## Exhaustiveness checking
-
-Forgetting a case in a `match` is a real bug. OCaml's compiler
-catches it for you:
-
-```text
-type shape =
-  | Circle of float
-  | Square of float
-  | Rectangle of float * float
-
-let area s =
-  match s with
-  | Circle r -> Float.pi *. r *. r
-  | Square s -> s *. s
-```
-
-The compiler emits:
-
-```
-Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched:
-Rectangle (_, _)
-```
-
-:::slide
-
-## Exhaustiveness checking
-
-If you forget a case:
-
-```text
-let area s =
-  match s with
-  | Circle r -> Float.pi *. r *. r
-  | Square s -> s *. s
-```
-
-Warning:
-
-```
-Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched:
-Rectangle (_, _)
-```
-
-- Compiler flags the missing `Rectangle` case.
-- Catches a class of bugs **statically**.
-- Stricter projects promote this warning to an **error**.
-
-:::
-
-The warning gives you a counterexample (`Rectangle (_, _)`) to help
-you find what is missing. In real codebases, you almost always
-want to promote this warning to an *error*: a partial match is a
-latent crash, and the compiler is offering to find them for you.
-There is a build-tool setting that does this (we will meet the
-build tool, dune, in [Module 7](M07-L04-module-basics.html)). The
-[exhaustiveness lecture in Module 5](M05-L04-exhaustiveness.html#treating-warnings-as-errors)
-covers turning the warning into an error; for now, just know the
-option exists.
-
-The catch-all wildcard pattern `_` matches anything, and the
-compiler will accept it as covering all remaining cases:
-
-```ocaml
-type shape =
-  | Circle of float
-  | Square of float
-  | Rectangle of float * float
-
-let is_round = function
-  | Circle _ -> true
-  | _ -> false
-```
-
-This is sometimes appropriate (here, we genuinely treat all
-non-circles the same). But it has a dangerous downside, covered
-next.
-
-## The catch-all-case trap
-
-The wildcard `_` defeats exhaustiveness checking. If you later
-add a new constructor to the variant, every `match` that uses
-`_` will *silently* lump the new constructor in with the wildcard
-case, rather than warning that you forgot to handle it. This is a
-real bug pattern.
-
-Suppose you start with:
-
-```ocaml
-type http_method = Get | Post
-
-(* somewhere far away in the codebase: *)
-let is_write = function
-  | Post -> true
-  | _    -> false
-```
-
-Now you add a new method:
-
-```text
-type http_method = Get | Post | Put
-
-let is_write = function
-  | Post -> true
-  | _    -> false
-```
-
-`Put` is a write method too, but `is_write Put` silently returns
-`false`. The compiler does not warn because the match *is*
-exhaustive (the wildcard catches `Put`). You have introduced a
-silent bug.
-
-:::slide
-
-## The catch-all trap
-
-```ocaml
-type http_method = Get | Post
-let is_write = function
-  | Post -> true
-  | _    -> false
-```
-
-Now add `Put`:
-
-```text
-type http_method = Get | Post | Put
-let is_write = function
-  | Post -> true
-  | _    -> false
-```
-
-- Compiles silently; `is_write Put` returns `false`.
-- The wildcard `_` defeated exhaustiveness checking.
-
-**Rule:** list constructors explicitly. Use `_` only when "anything
-else" is the actual meaning.
-
-:::
-
-The lesson, as Real World OCaml puts it: *catch-all cases lead to
-buggy code*. Reach for explicit constructor patterns by default;
-use `_` only when "anything else" is genuinely the meaning, and
-the meaning is stable in the face of future additions to the
-variant. We come back to this trade-off in
-[M05-L04](M05-L04-exhaustiveness.html#when-to-use-a-wildcard-catch-all-on-variants).
-
-## Adding a case: refactor with the compiler
-
-When you *do* list constructors explicitly, adding a new case
-turns into a delightful experience: the compiler tells you exactly
-where else in the codebase needs updating.
-
-Suppose we add `Triangle`:
-
-```text
-type shape =
-  | Circle of float
-  | Square of float
-  | Rectangle of float * float
-  | Triangle of float * float * float
-
-let area s =
-  match s with
-  | Circle r -> Float.pi *. r *. r
-  | Square s -> s *. s
-  | Rectangle (w, h) -> w *. h
-```
-
-The compiler now warns on `area`: "non-exhaustive: missing
-`Triangle (_, _, _)`". It will also warn on every *other* function
-that pattern-matches on `shape`. You add a case, recompile, fix
-each flagged site, repeat until the warnings stop. When the
-warnings stop, the refactor is done.
-
-:::slide
-
-## Adding a case
-
-Add `Triangle`:
-
-```text
-type shape =
-  | Circle of float
-  | Square of float
-  | Rectangle of float * float
-  | Triangle of float * float * float
-```
-
-- Compiler warns **every** `match` on `shape` that misses `Triangle`.
-- A punch list of sites to update.
-- **Refactor with the compiler:** add, compile, fix, repeat until silent.
-
-:::
-
-This is one of the everyday wins of working in a typed functional
-language. In Python or JavaScript, adding a new "kind" of value to
-some category requires you to grep the codebase, hope you found
-every dispatch site, and probably write a test. In OCaml, the
-compiler does the grep for you and refuses to let you forget.
+The combination of variants + pattern matching is the engine of
+nearly every interesting OCaml program: interpreters, parsers,
+type checkers, network protocol decoders, configuration loaders,
+web routers. We will spend Module 5 on it.
 
 ## Constructors with multi-field payloads: inline records
 
@@ -478,24 +275,19 @@ type tcp_state =
   | Closed of { reason : string }
 ```
 
-Each non-trivial state carries the data relevant to that state, and
-each piece of data has a name. To extract the data, pattern matching
-works as before, with the inline-record syntax in the pattern:
+Each non-trivial state carries the data relevant to that state,
+and each piece of data has a name. Constructing values works the
+same as before, but with the field-name syntax:
 
 ```ocaml
-type tcp_state =
-  | Listening
-  | Connecting of { peer : string }
-  | Connected of { peer : string; bytes_sent : int }
-  | Closed of { reason : string }
-
-let describe = function
-  | Listening -> "listening"
-  | Connecting { peer } -> "connecting to " ^ peer
-  | Connected { peer; bytes_sent } ->
-      Printf.sprintf "connected to %s, sent %d bytes" peer bytes_sent
-  | Closed { reason } -> "closed: " ^ reason
+let s1 = Listening
+let s2 = Connecting { peer = "10.0.0.1" }
+let s3 = Connected  { peer = "10.0.0.1"; bytes_sent = 4096 }
 ```
+
+Extracting the data uses pattern matching with the inline-record
+syntax on the pattern side, which we will see in
+[M05](M05-L05-records-variants.html#matching-on-inline-records).
 
 :::slide
 
@@ -529,124 +321,13 @@ The inline record syntax was added to OCaml in 4.03 (2016) and has
 become idiomatic for variant payloads of more than two pieces of
 data.
 
-## Variants you have already used
-
-OCaml's built-in `bool`, `list`, and `option` types are all
-variants. You have been pattern-matching on them since Module 3
-without us calling out that this is *variant pattern matching*.
-
-The `bool` type:
-
-```
-type bool = false | true
-```
-
-(More or less; the constructors are lowercase by special
-dispensation given that `bool` is so primitive. You usually use
-`true` and `false` as values, but they are technically the two
-constructors of the variant `bool`.)
-
-The `list` type:
-
-```
-type 'a list = [] | (::) of 'a * 'a list
-```
-
-`[]` is the empty-list constructor; `::` is the cons constructor,
-which takes a pair of an element and a smaller list. Every list
-pattern you have written: `[] -> ...` or `x :: rest -> ...`, is a
-variant pattern. The reason `list` is a *recursive* variant (the
-type refers to itself inside `::`) is the topic of the
-[next lecture](M04-L04-recursive-types.html).
-
-The `option` type:
-
-```
-type 'a option = None | Some of 'a
-```
-
-`None` is "no value"; `Some x` wraps a value. We will give `option`
-its own treatment in
-[M04-L05](M04-L05-option-and-aliases.html#the-option-type).
-
-:::slide
-
-## Built-in variants
-
-`bool` is a variant:
-
-```
-type bool = false | true
-```
-
-`list` is a recursive variant:
-
-```
-type 'a list = [] | (::) of 'a * 'a list
-```
-
-- `[]`: empty. `::`: cons with head and tail.
-
-`option` is a variant:
-
-```
-type 'a option = None | Some of 'a
-```
-
-- Every list match you've written has been variant pattern matching.
-
-:::
-
-The lesson: variants are not a corner feature you reach for
-occasionally. They are *pervasive* in OCaml. The standard library
-is full of them, and your own code will be too.
-
-## Parameterised variants
-
-A variant declaration can be parameterised by one or more type
-variables, just like a function can be parameterised by its
-arguments. `list` and `option` are examples: `'a list` works for
-any element type `'a`. You can declare your own:
-
-```ocaml
-type 'a tree =
-  | Leaf
-  | Node of 'a tree * 'a * 'a tree
-
-let t : int tree =
-  Node (
-    Node (Leaf, 1, Leaf),
-    2,
-    Node (Leaf, 3, Node (Leaf, 4, Leaf)))
-```
-
-The type `'a tree` is a binary tree carrying values of type `'a`
-at each internal node. `int tree` is a tree of integers, `string
-tree` is a tree of strings, and so on. We will see trees again in
-the [next lecture](M04-L04-recursive-types.html#a-binary-tree)
-(they are the canonical example of a *recursive* variant).
-
-:::slide
-
-## Parameterised variants
-
-```ocaml
-type 'a tree =
-  | Leaf
-  | Node of 'a tree * 'a * 'a tree
-
-let t : int tree =
-  Node (
-    Node (Leaf, 1, Leaf),
-    2,
-    Node (Leaf, 3, Node (Leaf, 4, Leaf)))
-```
-
-- Binary tree carrying values of any type `'a`.
-- `Leaf`: empty. `Node (l, v, r)`: left, value, right.
-- Used in M04-L04 and Module 5.
-
-:::
+Variants are not a corner feature you reach for occasionally.
+They are *pervasive* in OCaml: `bool`, `list`, `option`, and
+`result` are all variants under the hood. We will see the
+recursive ones (`list`, trees, expressions) in the
+[next lecture](M04-L04-recursive-types.html), where they are also
+the natural setting to introduce *parameterised variants* (lists
+of *anything*, trees of *anything*) and *polymorphism*.
 
 The slogan you will hear in functional programming circles is
 *make illegal states unrepresentable*. A well-designed variant
@@ -663,7 +344,7 @@ and rules out the rest by construction. Compare:
 
 This is the design principle Module 4 was put together to teach.
 You will see it again in
-[Module 7](M07-L05-signatures.html#why-hide-internals) when we
+[Module 7](M07-L07-signatures.html#why-hide-internals) when we
 discuss API design.
 
 ## A small check
@@ -672,43 +353,50 @@ discuss API design.
 Given:
 
 ```ocaml
-type result_kind =
-  | Ok of int
-  | Err of string
+type shape =
+  | Circle of float
+  | Square of float
+  | Rectangle of float * float
 ```
 
-Which of these patterns does `Ok 0` match?
+Which of these are **valid** constructor applications?
 
-- [ ] `Err _`
-- [x] `Ok _`
-- [x] `Ok n` (binding `n` to `0`)
-- [ ] Both `Ok` and `Err`.
+- [x] `Circle 3.0`
+- [ ] `Square "5"` (wrong payload type)
+- [x] `Rectangle (4.0, 6.0)`
+- [ ] `Triangle 5.0` (not a constructor of `shape`)
 
-**Why:** `Ok 0` is built from the `Ok` constructor with payload `0`.
-It matches `Ok _` (any `Ok`), and it matches `Ok n` (any `Ok`,
-binding the payload to `n`). It does *not* match `Err _`.
+**Why:** each constructor is applied to a payload that matches its
+declared type. `Circle 3.0` and `Rectangle (4.0, 6.0)` are
+well-typed values of type `shape`. `Square "5"` has a `string`
+payload where the type says `float`; the compiler rejects it.
+`Triangle` is not a constructor of `shape`, so the compiler reports
+`Unbound constructor Triangle`.
 :::
 
 :::quiz code id=M04-L03-q1
-Define the variant `coin` and write `value : coin -> int` returning
-the value in paise: `Paisa1` is `1`, `Paisa5` is `5`, `Paisa10` is
-`10`, `Rupee` is `100`.
+Design a variant `http_response` for HTTP responses. Cover three
+shapes:
+
+- A `Success` carrying the response `body : string`.
+- A `Redirect` carrying the target `url : string`.
+- An `Error` carrying a `code : int` and a `message : string`.
+
+Then construct one example value of each constructor.
 
 ```ocaml
-type coin = Paisa1 | Paisa5 | Paisa10 | Rupee
+(* declare http_response here *)
+type http_response = unit
 
-let value c =
-  failwith "not implemented"
+(* construct one example of each *)
+let example_success  = ()
+let example_redirect = ()
+let example_error    = ()
 ```
 
 ```ocaml skip
-let check b m = if not b then failwith m
-let () =
-  check (value Paisa1 = 1) "1p";
-  check (value Paisa5 = 5) "5p";
-  check (value Paisa10 = 10) "10p";
-  check (value Rupee = 100) "Re";
-  print_endline "all tests passed"
+(* The grader only checks that each example value type-checks
+   against http_response. Decomposing them comes in M05. *)
 ```
 :::
 
@@ -717,13 +405,18 @@ let () =
 Reference solution:
 
 ```ocaml
-type coin = Paisa1 | Paisa5 | Paisa10 | Rupee
-let value = function
-  | Paisa1 -> 1
-  | Paisa5 -> 5
-  | Paisa10 -> 10
-  | Rupee -> 100
+type http_response =
+  | Success of string
+  | Redirect of string
+  | Error of { code : int; message : string }
+
+let example_success  = Success "<html>hello</html>"
+let example_redirect = Redirect "https://example.com/new-page"
+let example_error    = Error { code = 404; message = "not found" }
 ```
+
+The `Error` case uses an inline record because two named fields
+read more cleanly than `Error of int * string`.
 
 :::
 
@@ -733,9 +426,14 @@ let value = function
 
 ## Activity
 
-Define `shape` with three constructors: `Circle of float`,
-`Square of float`, `Rectangle of float * float`. Write `area :
-shape -> float` returning the area for each case.
+Design a variant for a traffic-light controller. Cover four states:
+
+- `Red`, `Green` (no payload).
+- `Yellow of int` (seconds remaining).
+- `Off` (no payload, e.g. an outage).
+
+Declare the type and construct one example value of each
+constructor.
 
 :::
 
@@ -744,31 +442,29 @@ shape -> float` returning the area for each case.
 ## Activity solution
 
 ```ocaml
-type shape =
-  | Circle of float
-  | Square of float
-  | Rectangle of float * float
+type light =
+  | Red
+  | Green
+  | Yellow of int
+  | Off
 
-let area = function
-  | Circle r -> Float.pi *. r *. r
-  | Square s -> s *. s
-  | Rectangle (w, h) -> w *. h
-
-let _ = area (Circle 2.0)
-let _ = area (Square 3.0)
-let _ = area (Rectangle (4.0, 5.0))
+let l1 = Red
+let l2 = Green
+let l3 = Yellow 3
+let l4 = Off
 ```
 
-- Three constructors, three clauses.
-- `function` is shorthand for `fun x -> match x with ...`.
+- Three constructors with no payload; one carries `int`.
+- Each value has type `light`.
+- *How* to use a `light` (dispatching on the state) is M05's job.
 
 :::
 
-The `function` keyword introduces an anonymous function that
-immediately pattern matches on its (single, implicit) argument. It
-is equivalent to `fun x -> match x with ...` but shorter. We will
-see more of `function` (and pattern matching more generally) in
-[Module 5](M05-L01-basic-patterns.html#function-shorthand).
+Notice how the lecture has so far only *declared* variant types
+and *constructed* values of them. We have not written a single
+function that takes a variant apart. That deconstruction step is
+exactly what pattern matching gives us, and we will spend the
+whole of [Module 5](M05-L01-basic-patterns.html) on it.
 
 ## What's next
 

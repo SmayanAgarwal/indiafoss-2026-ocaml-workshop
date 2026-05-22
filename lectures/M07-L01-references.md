@@ -676,11 +676,16 @@ the fixed-size random-access mutable sequence.
 [Lecture 3](M07-L03-exceptions.html) covers exceptions, the other
 major form of "side effect" in OCaml. Together these three (refs,
 arrays, exceptions) give you the imperative subset of the
-language. Lectures [4](M07-L04-module-basics.html) through
-[6](M07-L06-functors.html) turn to *modules*, the unit of
+language. Lectures [4](M07-L04-streams-and-laziness.html) and
+[5](M07-L05-memoization.html) take a small detour: *streams*
+(infinite data, built lazily) and *memoization* (caching
+function results for speed), two techniques that build on the
+ref / exception machinery. Lectures
+[6](M07-L06-module-basics.html) through
+[8](M07-L08-functors.html) then turn to *modules*, the unit of
 program structure: how OCaml organizes code at scale, hides
 representation, and writes generic data structures via functors.
-[Lecture 7](M07-L07-tutorial.html) is the tutorial.
+[Lecture 9](M07-L09-tutorial.html) is the tutorial.
 
 :::slide
 

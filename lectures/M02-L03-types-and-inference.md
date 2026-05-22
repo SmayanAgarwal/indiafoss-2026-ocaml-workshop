@@ -589,7 +589,7 @@ Use annotations when:
   to suspect functions narrows where the error gets reported. The
   compiler now blames *that* function instead of some caller.
 
-[Module signatures](M07-L05-signatures.html) (`.mli` files, Module
+[Module signatures](M07-L07-signatures.html) (`.mli` files, Module
 7) are entirely annotations: they list the types of a module's
 exports, and the compiler enforces them against the module's
 implementation. We will see this in detail later.

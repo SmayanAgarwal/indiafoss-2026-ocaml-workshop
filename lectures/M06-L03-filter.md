@@ -539,7 +539,7 @@ We carry a `seen` list (in reverse, so prepending is cheap), check
 each element against it, and add only the first occurrence. The
 final `List.rev` restores original order. This is `O(n^2)` because
 `List.mem` is linear; for large lists you would use a `Set`
-([Module 7](M07-L06-functors.html)) for `O(n log n)`.
+([Module 7](M07-L08-functors.html)) for `O(n log n)`.
 
 :::
 
@@ -580,7 +580,7 @@ let _ = unique ["a"; "b"; "a"; "c"; "b"]
 - Maintain a `seen` list (in reverse for efficiency).
 - Include each element only if not already seen.
 - `List.mem` is `O(n)` per call: overall `O(n^2)`.
-- Fine for short lists; use a `Set` ([Module 7](M07-L06-functors.html)) for big lists.
+- Fine for short lists; use a `Set` ([Module 7](M07-L08-functors.html)) for big lists.
 
 :::
 

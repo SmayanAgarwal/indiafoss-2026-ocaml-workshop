@@ -1,0 +1,694 @@
+---
+title: "Memoization"
+lecture_no: 5
+week: 7
+duration_target_min: 22
+concepts: [memoization, caching, hash tables, tying the recursive knot, dynamic programming, purity]
+keywords: [OCaml, memoization, Hashtbl, fib, edit distance, dynamic programming, purity]
+activity_question: "Write Fibonacci in open-recursion form: [fib_open : (int -> int) -> int -> int]. Then build [fib_memo = memo_rec fib_open]. Confirm the memoized version computes [fib_memo 30] essentially instantly, with the lecture's [memo] and [memo_rec] in scope."
+think_about_this: "Memoization trades memory for time and only works when the function is *pure*: same input, same output, no side effects. What goes wrong if you memoize a function that reads a file? A function that updates a counter? A function that returns the current time?"
+reading:
+  - title: "Cornell CS3110, Memoization"
+    url: https://cs3110.github.io/textbook/chapters/adv/memoization.html
+---
+
+# Memoization
+
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">Memoization</h2>
+<p class="title-slide-label">Module 7 &middot; Lecture 5</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
+The [previous lecture](M07-L04-streams-and-laziness.html) ended
+on a small puzzle. `Lazy.t` was faster than a plain thunk for
+streams because forcing a `Lazy.t` runs the body *once* and
+caches the result. That trick (compute on first call, save the
+answer, return the saved answer on every subsequent call) has a
+name: **memoization**. It is one of the oldest tricks in
+functional programming, and it has uses well beyond streams.
+
+This lecture lifts memoization to a general technique. We write
+a `memo` combinator that wraps any function with a cache; we
+apply it to a slow expensive function and watch the second call
+become free; we tackle the trickier case of memoizing *recursive*
+functions (which needs a small reshuffling of how the recursion
+is written); we use the recursive form to make a naive O(2^n)
+Fibonacci run in linear time, and a naive edit-distance function
+run in polynomial time. We close on the catch that ties this
+lecture and the previous one together: memoization only works for
+*pure* functions.
+
+## A small helper for timing
+
+To see speedups we need to *measure* them. A short helper:
+
+```ocaml
+let time_it f =
+  let t0 = Sys.time () in
+  let r = f () in
+  let dt = Sys.time () -. t0 in
+  Printf.printf "  time = %.3f seconds\n%!" dt;
+  r
+```
+
+`time_it` takes a thunk, runs it, prints the elapsed CPU time in
+seconds, and returns the result. (`Sys.time ()` is the OCaml
+standard library's portable timer; we use it instead of
+`Unix.gettimeofday` because it is available everywhere, including
+in the browser.) The `%!` in the format string flushes the
+output buffer so the timing line appears immediately.
+
+## The `memo` combinator
+
+A memoized version of `f` should behave just like `f` on every
+input. On the *first* call with a given argument it computes the
+answer and stashes it in a table; on every subsequent call with
+the same argument it returns the stashed answer without
+recomputing. The table is a [`Hashtbl`](https://v2.ocaml.org/api/Hashtbl.html)
+keyed by the argument, holding the answer as the value.
+
+```ocaml
+let memo f =
+  let cache = Hashtbl.create 16 in
+  fun x ->
+    match Hashtbl.find_opt cache x with
+    | Some y -> y
+    | None ->
+      let y = f x in
+      Hashtbl.add cache x y;
+      y
+```
+
+`val memo : ('a -> 'b) -> 'a -> 'b = <fun>`. The type signature
+is identical to the function's own type: the wrapper hides the
+cache and looks like a regular function from the outside.
+
+A few things worth noticing in the implementation:
+
+- The cache is created *once*, inside the call to `memo`, and
+  captured by the returned closure. Every call to the returned
+  function shares the same cache.
+- `Hashtbl.find_opt` returns `Some y` for a hit and `None` for a
+  miss. We pattern-match on it; the hit returns the cached value,
+  the miss computes-then-caches.
+- The cache lives behind a [`ref`](M07-L01-references.html)-like
+  internal: `Hashtbl.add` mutates it. Without the imperative
+  toolkit from earlier in this module, we could not write this.
+
+:::slide
+
+## The `memo` combinator
+
+```ocaml
+let memo f =
+  let cache = Hashtbl.create 16 in
+  fun x ->
+    match Hashtbl.find_opt cache x with
+    | Some y -> y
+    | None ->
+      let y = f x in
+      Hashtbl.add cache x y;
+      y
+```
+
+- Wraps any `'a -> 'b` with a per-argument cache.
+- Hashtbl: `find_opt` for lookup, `add` for insert.
+- Cache lives inside the closure; every call shares it.
+- Type unchanged from outside: `('a -> 'b) -> 'a -> 'b`.
+
+:::
+
+## Memoizing an expensive identity
+
+A toy function that just wastes time and returns its input:
+
+```ocaml
+let rec spin n = if n = 0 then () else spin (n - 1)
+let expensive_id x = spin 5_000_000; x
+```
+
+`spin 5_000_000` takes a measurable fraction of a second to run.
+`expensive_id` does that work then returns its argument unchanged.
+
+```ocaml
+let _ = time_it (fun () -> expensive_id 10)
+let _ = time_it (fun () -> expensive_id 10)
+```
+
+Two calls with the same argument; both run the spin loop; both
+take roughly the same time. The function is *deterministic but
+slow*; it does not know it has been asked the same question
+twice.
+
+Now wrap it:
+
+```ocaml
+let memo_id = memo expensive_id
+
+let _ = time_it (fun () -> memo_id 10)   (* slow: cache miss *)
+let _ = time_it (fun () -> memo_id 10)   (* fast: cache hit *)
+let _ = time_it (fun () -> memo_id 20)   (* slow: different key *)
+let _ = time_it (fun () -> memo_id 10)   (* fast: still cached *)
+```
+
+The first call to `memo_id 10` runs `expensive_id 10` and caches
+the result. The second call hits the cache and returns
+*instantly*. Different inputs (`10` vs `20`) each get one slow
+miss followed by free hits.
+
+:::slide
+
+## Memoizing expensive identity
+
+```ocaml
+let rec spin n = if n = 0 then () else spin (n - 1)
+let expensive_id x = spin 5_000_000; x
+
+let memo_id = memo expensive_id
+
+let _ = time_it (fun () -> memo_id 10)   (* slow *)
+let _ = time_it (fun () -> memo_id 10)   (* fast *)
+let _ = time_it (fun () -> memo_id 20)   (* slow *)
+let _ = time_it (fun () -> memo_id 10)   (* fast *)
+```
+
+- First call per key: cache miss, runs the body.
+- Repeat call with same key: cache hit, returns instantly.
+- New key: another miss.
+- Cache persists across calls (it lives in the closure).
+
+:::
+
+## The wrinkle with recursive functions
+
+Now the more interesting case. Naive recursive Fibonacci:
+
+```ocaml
+let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
+```
+
+`fib 25` is fine. `fib 35` takes seconds. `fib 40` takes minutes.
+The reason: `fib n` calls `fib (n-1)` and `fib (n-2)`; each of
+those calls `fib (n-2)`, `fib (n-3)`, `fib (n-3)`, `fib (n-4)`;
+the recursion tree branches and recomputes overlapping
+subproblems exponentially many times.
+
+This *should* be the classic case for memoization. The same
+arguments come up over and over; if we cached each, the total
+work would drop to O(n). Try the obvious:
+
+```ocaml
+let memo_fib_outer = memo fib
+let _ = time_it (fun () -> memo_fib_outer 35)   (* slow: cache empty *)
+let _ = time_it (fun () -> memo_fib_outer 35)   (* fast: outer hit *)
+let _ = time_it (fun () -> memo_fib_outer 34)   (* slow: not cached *)
+```
+
+The first call is still exponential; only the *outer* call to
+`memo_fib_outer 35` is cached. The internal recursive calls go
+back to the original `fib`, not the memoized version. The
+problem: `fib`'s body says `fib (n-1) + fib (n-2)`; the names
+`fib` inside the body are bound at definition time, to the
+non-memoized version.
+
+:::slide
+
+## Memoizing recursive `fib`: first attempt fails
+
+```ocaml
+let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
+let memo_fib_outer = memo fib
+let _ = time_it (fun () -> memo_fib_outer 35)
+let _ = time_it (fun () -> memo_fib_outer 35)
+let _ = time_it (fun () -> memo_fib_outer 34)
+```
+
+- First call: slow (full recursion).
+- Repeat **same** arg: fast (outer hit).
+- New nearby arg (`34`): slow again.
+- Why: `fib`'s body refers to `fib`, not to the memoized one.
+- Inner recursion never touches the cache.
+
+:::
+
+To fix this we have to rewrite `fib` so the recursive call site
+is *abstracted out*: instead of calling itself by name, it calls
+a function we pass in. This is called *open recursion*.
+
+```ocaml
+let fib_open self n =
+  if n < 2 then 1 else self (n - 1) + self (n - 2)
+```
+
+`val fib_open : (int -> int) -> int -> int = <fun>`. The first
+argument is the "recursive call" function; the second is the
+input. To recover the ordinary recursive `fib`, you would have
+to pass `fib_open` something equal to `fun n -> fib_open self n`,
+which is exactly what `let rec` does automatically.
+
+The trick: we *intercept* the recursive call. If `self` is the
+memoized version, every internal call hits the cache too.
+
+## Tying the recursive knot
+
+The classical trick (this is subtle; read it twice). We want a
+function `f` such that `f n = fib_open f n`, but where every
+call to `f` first checks the cache. We build it in three steps:
+
+1. Create a [`ref`](M07-L01-references.html) holding a *dummy*
+   function. We will fill in the real one in step 3.
+2. Define the memoized function. When it needs to recurse, it
+   reads from the ref and calls *that*. Inside the body, the ref
+   does not yet hold the real function; that is fine, because
+   the read happens *when the function is called*, not when it
+   is defined.
+3. Update the ref to point at the memoized function we just built.
+
+```ocaml
+let memo_rec f_open =
+  let self_ref = ref (fun _ -> assert false) in
+  let f_memo = memo (fun x -> f_open !self_ref x) in
+  self_ref := f_memo;
+  f_memo
+```
+
+`val memo_rec : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b = <fun>`.
+
+Reading it carefully:
+
+- `self_ref` starts pointing at a placeholder that will crash if
+  called. By the time anything calls it, we will have updated it.
+- `f_memo` is `memo` applied to a function that takes `x`, looks
+  up the current value of `self_ref`, and calls `f_open` with
+  that as the recursive function. The `!self_ref` dereference
+  happens *at call time*, by which point the ref has been
+  updated.
+- The last step writes `f_memo` itself into the ref. Now
+  `!self_ref` returns the memoized function, and the open
+  recursion in `f_open` becomes a recursion through the cache.
+
+The `ref` is being used to tie a recursive knot between two
+definitions that cannot be written with plain `let rec` (because
+`memo` does not have the right shape for `let rec` to recurse
+through it).
+
+:::slide
+
+## `memo_rec`: tying the knot
+
+```ocaml
+let memo_rec f_open =
+  let self_ref = ref (fun _ -> assert false) in
+  let f_memo = memo (fun x -> f_open !self_ref x) in
+  self_ref := f_memo;
+  f_memo
+```
+
+- Step 1: ref holds a placeholder.
+- Step 2: build `f_memo` so each call reads ref, then calls
+  `f_open` with it as the recursive function.
+- Step 3: write `f_memo` into the ref. The knot is tied.
+- Open recursion + ref + `memo` = self-memoizing recursion.
+
+:::
+
+It looks like a magic trick the first time you see it. The two
+things to keep straight:
+
+1. **Open recursion is a rewrite.** Instead of `fib` calling
+   itself by name, it takes its own recursive call as a
+   parameter (`self`). This is a mechanical edit.
+2. **The ref is the trick.** OCaml's `let rec` cannot tie the
+   knot for us because `memo` sits in the middle, and `memo` is
+   not transparent to `let rec`. The ref lets us refer to the
+   final function from inside the function's body, after the
+   fact.
+
+## Memoized Fibonacci
+
+The payoff:
+
+```ocaml
+let fib_memo = memo_rec fib_open
+
+let _ = time_it (fun () -> fib_memo 30)
+let _ = time_it (fun () -> fib_memo 30)
+let _ = time_it (fun () -> fib_memo 35)
+```
+
+`fib_memo 30` is fast: the recursive structure visits each
+sub-Fibonacci once, caches it, and the work collapses to O(n).
+The repeated call is faster still: every node is already cached.
+`fib_memo 35` is also fast: it only computes the few nodes not
+already in the cache (35, 34, 33, ..., 31), then reuses the
+sub-results from the earlier call.
+
+Compare against the naive `fib`: where the naive function
+exploded at `n = 35`, the memoized one is fast even for `n` in
+the hundreds (subject to integer overflow, which kicks in
+around `fib 90` for 64-bit OCaml).
+
+:::slide
+
+## Memoized fib
+
+```ocaml
+let fib_memo = memo_rec fib_open
+
+let _ = time_it (fun () -> fib_memo 30)
+let _ = time_it (fun () -> fib_memo 30)
+let _ = time_it (fun () -> fib_memo 35)
+```
+
+- First `fib_memo 30`: O(n), each subproblem computed once.
+- Repeat `fib_memo 30`: instant (already cached).
+- `fib_memo 35`: only the new nodes; rest reused from `30`.
+- Naive: exponential. Memoized: linear after the first call.
+
+:::
+
+## A dynamic-programming case: edit distance
+
+Memoization is the engine behind most of dynamic programming.
+*Edit distance* (also known as
+[Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance))
+between two strings is the minimum number of single-character
+insertions, deletions, or substitutions needed to turn one into
+the other. The recurrence:
+
+$$
+d(s, t) =
+\begin{cases}
+|t| & \text{if } |s| = 0 \\
+|s| & \text{if } |t| = 0 \\
+\min \{ d(s', t)+1,\ d(s, t')+1,\ d(s', t') + c \} & \text{otherwise}
+\end{cases}
+$$
+
+where `s'` and `t'` are `s` and `t` with their last characters
+dropped, and `c` is `0` if the last characters of `s` and `t`
+agree (no substitution) or `1` otherwise.
+
+A direct translation:
+
+```ocaml
+let rec edit_dist (s, t) =
+  let ls = String.length s and lt = String.length t in
+  if ls = 0 then lt
+  else if lt = 0 then ls
+  else
+    let s' = String.sub s 0 (ls - 1) in
+    let t' = String.sub t 0 (lt - 1) in
+    let c = if s.[ls - 1] = t.[lt - 1] then 0 else 1 in
+    min (edit_dist (s', t) + 1)
+      (min (edit_dist (s, t') + 1) (edit_dist (s', t') + c))
+```
+
+`edit_dist ("kitten", "sitting")` is `3`. But try
+`edit_dist ("kitten 4.08", "sitting 4.08")` and the call takes
+*forever*: the recursion tree branches three ways and revisits
+the same prefix pairs over and over.
+
+The same fix from `fib`. Rewrite in open-recursion form, then
+hit with `memo_rec`:
+
+```ocaml
+let edit_dist_open self (s, t) =
+  let ls = String.length s and lt = String.length t in
+  if ls = 0 then lt
+  else if lt = 0 then ls
+  else
+    let s' = String.sub s 0 (ls - 1) in
+    let t' = String.sub t 0 (lt - 1) in
+    let c = if s.[ls - 1] = t.[lt - 1] then 0 else 1 in
+    min (self (s', t) + 1)
+      (min (self (s, t') + 1) (self (s', t') + c))
+
+let edit_dist_memo = memo_rec edit_dist_open
+
+let _ = time_it (fun () -> edit_dist_memo ("kitten", "sitting"))
+let _ = time_it (fun () -> edit_dist_memo ("kitten 4.08", "sitting 4.08"))
+```
+
+Both runs now finish quickly. The memoized version computes
+each `(s', t')` pair at most once; the total work is proportional
+to the number of distinct sub-pairs, which is O(|s| * |t|). This
+is *exactly* the dynamic-programming table you may have seen
+filled in row by row in an algorithms class. The recursive
+formulation plus memoization gives the same complexity without
+the bookkeeping.
+
+:::slide
+
+## Memoized edit distance
+
+```ocaml
+let edit_dist_open self (s, t) =
+  let ls = String.length s and lt = String.length t in
+  if ls = 0 then lt
+  else if lt = 0 then ls
+  else
+    let s' = String.sub s 0 (ls - 1) in
+    let t' = String.sub t 0 (lt - 1) in
+    let c = if s.[ls - 1] = t.[lt - 1] then 0 else 1 in
+    min (self (s', t) + 1)
+      (min (self (s, t') + 1) (self (s', t') + c))
+
+let edit_dist_memo = memo_rec edit_dist_open
+```
+
+- Same recurrence as the naive version, but in open form.
+- `memo_rec` makes each `(s, t)` pair compute at most once.
+- Naive: exponential in `|s| + |t|`. Memoized: O(|s| * |t|).
+- This is dynamic programming, top-down.
+
+:::
+
+## Memoization presumes purity
+
+A caveat that ties memoization to laziness and to functional
+programming generally. The whole trick (cache the answer; on a
+repeat call, return the cached answer) is *only sound* if the
+function is **pure**: same input, same output, no side effects.
+
+What happens if we memoize a function with side effects?
+
+```ocaml
+let counter = ref 0
+let next () = incr counter; !counter
+```
+
+Without memoization, `next ()` returns `1, 2, 3, ...` on
+successive calls. Suppose we memoize it. `Hashtbl.find_opt`
+would key on `()`; the first call returns `1` and stashes it;
+every subsequent call returns the cached `1` without running
+the body. The side effect of incrementing the counter is *lost*
+on every cache hit.
+
+Or a function that reads a file:
+
+```text
+let read_config () =
+  (* read and parse config.json from disk *)
+  ...
+```
+
+Memoizing this freezes the answer the first time you call it.
+If the file changes on disk later, the cached version does not
+notice. That might be what you want (a deliberate "cache this
+once and don't re-read") or it might be a bug (you wanted to
+pick up changes). The point is that the cache cannot tell the
+difference, because the function's *input* did not change; only
+the world did.
+
+The same caveat applies to lazy values from the
+[previous lecture](M07-L04-streams-and-laziness.html). A
+`Lazy.t` runs its body once and caches the result; if the body
+has side effects, those run once and then never again. We saw
+this on the slide for `lazy (print_endline "running"; ...)`: the
+print happened only on the first force.
+
+:::slide
+
+## Memoization presumes purity
+
+- Same input, same output, no side effects.
+- **Caches break side effects**: bodies do not re-run.
+- Counter function: `incr counter` skipped on every cache hit.
+- File-reading function: cached answer frozen against disk changes.
+- Same caveat as `Lazy.t`: print/IO inside `lazy` runs once.
+- Pure code = safe to memoize. Effectful code = caller beware.
+
+:::
+
+OCaml does not track purity in the type system. (Haskell does;
+that is one of its defining features.) Memoizing in OCaml is a
+*you-the-author* judgement: you have to know your function is
+pure before you wrap it. The compiler will not catch a memoized
+side-effecting function for you; the program will just behave
+strangely.
+
+## A quick check
+
+:::quiz mcq id=M07-L05-q1
+What does `memo` do on the *first* call with a new argument?
+
+- [ ] Skips the call body and returns a default.
+- [x] Runs the body, stashes the result in the cache, returns it.
+- [ ] Throws because the cache is empty.
+- [ ] Computes the result twice for safety.
+
+**Why:** A cache *miss* (the `None` branch of `find_opt`) runs
+the wrapped function, stores the result in the hashtable, and
+returns it. Subsequent calls with the same argument hit the
+cache and skip the body.
+:::
+
+:::quiz mcq id=M07-L05-q2
+Why does `let memo_fib = memo fib` *not* speed up the recursive
+`fib`?
+
+- [ ] `memo` only works on non-recursive functions.
+- [ ] The hashtable cannot hold integer keys.
+- [x] The recursive calls inside `fib`'s body refer to the
+      original `fib`, not the memoized one.
+- [ ] `memo` resets the cache on every call.
+
+**Why:** `fib`'s body says `fib (n - 1) + fib (n - 2)`. Those
+internal `fib`s are bound at definition time to the unmemoized
+function; only the *outermost* call goes through the cache. To
+fix this we rewrite `fib` in open-recursion form (taking `self`
+as a parameter) and use `memo_rec` to tie the knot.
+:::
+
+## Activity
+
+:::slide
+
+## Activity
+
+Use `memo_rec` to build a fast Fibonacci.
+
+1. Write `fib_open self n` in open-recursion form.
+2. Define `fib_memo = memo_rec fib_open`.
+3. Use `time_it` to compare `fib_memo 35` against the naive
+   recursive `fib 35`. Confirm the memoized version is
+   dramatically faster.
+
+:::
+
+:::quiz code id=M07-L05-q3
+Fill in the open-recursion Fibonacci and the memoized version.
+
+```ocaml
+let memo f =
+  let cache = Hashtbl.create 16 in
+  fun x ->
+    match Hashtbl.find_opt cache x with
+    | Some y -> y
+    | None -> let y = f x in Hashtbl.add cache x y; y
+
+let memo_rec f_open =
+  let self_ref = ref (fun _ -> assert false) in
+  let f_memo = memo (fun x -> f_open !self_ref x) in
+  self_ref := f_memo;
+  f_memo
+
+let fib_open self n =
+  failwith "not implemented"
+
+let fib_memo = memo_rec fib_open
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (fib_memo 0 = 1) "fib 0";
+  check (fib_memo 1 = 1) "fib 1";
+  check (fib_memo 10 = 89) "fib 10";
+  check (fib_memo 20 = 10946) "fib 20";
+  check (fib_memo 30 = 1346269) "fib 30";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+Reference solution:
+
+```ocaml
+let fib_open self n =
+  if n < 2 then 1 else self (n - 1) + self (n - 2)
+
+let fib_memo = memo_rec fib_open
+```
+
+:::
+
+:::slide
+
+## Activity solution
+
+```ocaml
+let fib_open self n =
+  if n < 2 then 1 else self (n - 1) + self (n - 2)
+
+let fib_memo = memo_rec fib_open
+```
+
+- `fib_open` takes its recursive call as a parameter `self`.
+- `memo_rec` wraps it: every `self`-call goes through the cache.
+- `fib_memo 30` is O(n) work, not exponential.
+- Compare timing against `let rec fib n = ...`: night and day.
+
+:::
+
+## What's next
+
+That closes Module 7's small detour through laziness, streams,
+and memoization. The
+[next lecture](M07-L06-module-basics.html) starts the second
+half of Module 7: OCaml's *module system*, the unit of code
+organisation at scale. Modules group related definitions,
+provide namespacing, and (with signatures) hide internals. The
+standard library you have been using all course is itself a tree
+of modules; we finally meet the language feature that builds it.
+
+:::slide
+
+## What's next
+
+Lecture 6: **module basics**.
+
+- OCaml's module system: how code is organised at scale.
+- `module Name = struct ... end`: grouping definitions.
+- Namespacing, dot access, `open`.
+- The basis for signatures (Lecture 7) and functors (Lecture 8).
+
+:::
+
+## Reading
+
+- **Cornell CS3110**, *Memoization*:
+  <https://cs3110.github.io/textbook/chapters/adv/memoization.html>
+- **Real World OCaml**, *Memoization and dynamic programming*:
+  <https://dev.realworldocaml.org/imperative-programming.html#scrollNav-4>
+
+## Sources
+
+This lecture follows the structure and worked examples of
+**IIT Madras CS3100**, *Streams, Laziness and Memoization*
+(KC Sivaramakrishnan, Monsoon 2020). The `memo` combinator,
+the `memo_rec` knot-tying construction, and the Fibonacci /
+edit-distance demonstrations are drawn directly from the source
+lecture; prose is freshly authored for the NPTEL format. The
+edit-distance code is adapted from Real World OCaml's
+*Imperative programming* chapter (which itself credits the
+standard dynamic-programming presentation).

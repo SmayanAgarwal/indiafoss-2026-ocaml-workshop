@@ -569,7 +569,7 @@ up through [`let` bindings](M02-L02-let-bindings.html),
 [pattern matching](M05-L01-basic-patterns.html),
 [algebraic data types](M04-L03-variants.html),
 [higher-order functions](M06-L01-functions-revisited.html),
-[modules](M07-L04-module-basics.html),
+[modules](M07-L06-module-basics.html),
 [monads](M08-L01-sequencing.html), and
 [GADTs](M08-L05-gadts-basics.html). Each module fed the next: refs
 in M07 gave the imperative ground for the state monad in M08;
