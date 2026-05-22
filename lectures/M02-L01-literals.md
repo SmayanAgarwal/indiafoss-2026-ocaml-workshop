@@ -399,25 +399,14 @@ let _ = true && false
 let _ = true || false
 let _ = not true
 let _ = 3 < 5 && 5 < 10
+let _ = "apple" = "apple"
+let _ = "apple" <> "banana"
 ```
 
 - `&&` and `||` **short-circuit** (as in C and Java).
-- `true || side_effect ()` does **not** call `side_effect`.
-
-:::
-
-:::slide
-
-## Equality: `=`, not `==`
-
-```ocaml
-let _ = "apple" = "apple"
-```
-
-- `=` is **structural** equality: compares by content.
-- Works for strings, lists, records, variants.
-- `==` is **physical** equality (pointer comparison): almost never what you want.
-- Stick with `=`.
+- `=` is equality, `<>` is inequality.
+- Comparison and equality covered properly in
+  [Lecture 4](M02-L04-operators.html#comparison-and-equality).
 
 :::
 
@@ -428,39 +417,12 @@ you safely write things like `x <> 0 && y / x > 1`: the division
 is only attempted when `x` is nonzero. We will lean on this
 behaviour later when we want to guard expensive computations.
 
-Now, the equality operator. OCaml has two of them, written `=` and
-`==`, and they mean *different things*. The everyday operator, the
-one you reach for any time you want to ask "are these two values the
-same?", is **`=`, with a single equals sign.** The other one, `==`,
-is a low-level operator that compares whether two values sit at the
-same memory address. Almost no OCaml code wants that, and the
-mix-up is the single most common subtle bug I see in beginner code:
-the program compiles, runs, and silently produces the wrong answer.
-
-The reason `=` is different from `==` is that OCaml has *structural*
-equality, which inspects values by their content. Two strings are
-`=` if they contain the same bytes. Two lists are `=` if they have
-the same length and their corresponding elements are `=`. Two
-records are `=` if all their corresponding fields are `=`. The
-relation is defined recursively on the structure of the value,
-hence the name. The operator `==`, by contrast, only checks whether
-two values refer to the same allocation in memory; for immutable
-data, this is almost always not the question you wanted to ask.
-
-```ocaml
-let _ = "apple" = "apple"
-```
-
-The expression above is `true`, because both strings have the same
-content. But `"apple" == "apple"` could be either `true` or `false`
-depending on whether the compiler decided to allocate two separate
-string literals or share one. That is the kind of detail you should
-never have to think about; use `=` and the question never comes up.
-
-The corresponding *inequality* operators are `<>` for structural and
-`!=` for physical. Again: stick with `<>`. If you find yourself
-reaching for `==` or `!=`, ask whether you really mean to compare
-identities, not contents.
+The comparison operators (`=`, `<>`, `<`, `<=`, `>`, `>=`) all
+return `bool`. We will look at them properly in
+[M02-L04 (operators)](M02-L04-operators.html#comparison-and-equality),
+where the *structural* vs *physical* equality distinction also
+gets its own treatment. For now: use `=` for equality, the way you
+would use `==` in C.
 
 ## Strings
 
