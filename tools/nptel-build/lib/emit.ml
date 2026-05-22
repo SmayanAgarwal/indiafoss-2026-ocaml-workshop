@@ -88,7 +88,8 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   </script>
   <script async
     src="%s/assets/%s/x-ocaml.js"
-    src-worker="%s/assets/%s/x-ocaml.worker.js"%s></script>
+    src-worker="%s/assets/%s/x-ocaml.worker.js"
+    x-ocamlformat="margin=60"%s></script>
 </head>|}
     (Parse.html_escape commit_sha)
     (Parse.html_escape quiz_api_url)
