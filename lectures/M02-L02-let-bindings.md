@@ -5,7 +5,7 @@ week: 2
 duration_target_min: 22
 concepts: [let bindings, let-in expressions, scope, shadowing, immutability, inference rules]
 keywords: [OCaml, let, let-in, scope, shadowing, immutability, bindings, semantics]
-activity_question: "Given [let x = 1 in let x = x + 1 in let x = x * 10 in x], what is the final value? Trace each step."
+activity_question: "What does [let x = 10 in let y = x in let x = x + 5 in x + y] evaluate to? Trace the bindings; remember that `y` binds to a value, not to the name `x`."
 think_about_this: "If [let x = 1; let x = 2] does not mutate, where does the value [1] go? Can any code reach it after the second binding?"
 reading:
   - title: "Cornell CS3110, Let expressions"
@@ -608,17 +608,17 @@ see this in [Module 5](M05-L01-basic-patterns.html#versus-a-variable-name).
 
 ## Activity
 
-Step through:
+Predict the value, then run:
 
 ```ocaml
 let _ =
-  let x = 1 in
-  let x = x + 1 in
-  let x = x * 10 in
-  x
+  let x = 10 in
+  let y = x in
+  let x = x + 5 in
+  x + y
 ```
 
-What is the final value? Predict, then run.
+What does `x + y` evaluate to at the end?
 
 :::
 
@@ -627,34 +627,37 @@ What is the result of this nested expression?
 
 ```ocaml
 let _ =
-  let x = 1 in
-  let x = x + 1 in
-  let x = x * 10 in
-  x
+  let x = 10 in
+  let y = x in
+  let x = x + 5 in
+  x + y
 ```
 
-- [ ] `1`
-- [ ] `2`
-- [x] `20`
 - [ ] `30`
+- [x] `25`
+- [ ] `20`
+- [ ] `15`
 
-**Why:** trace step by step. First `let x = 1`: `x` is 1. Second
-`let x = x + 1`: the right-hand side uses the outer `x` (=1), so
-the new `x` is 2. Third `let x = x * 10`: the right-hand side uses
-the most recent `x` (=2), so the new `x` is 20. The whole
-expression returns the innermost `x`, which is 20. No mutation
-happens; three new bindings are introduced, each hiding the
-previous.
+**Why:** the first `let x = 10` binds `x` to `10`. The next line
+`let y = x in ...` binds `y` to the current value of `x`, which is
+`10`. *That binding does not refer back to the name `x` later*; it
+captured the value `10`. The third line `let x = x + 5` shadows
+the outer `x`; the new `x` is `15` (using the outer `x = 10` on
+the right-hand side). The body `x + y` is `15 + 10 = 25`. The key
+point: `y` is bound to the *value* `10`, not to "whatever `x`
+means right now," so shadowing the outer `x` does not change `y`.
 :::
 
 :::slide
 
 ## Activity discussion
 
-- Outer: `x = 1`
-- After first inner: `x = 2`
-- After second inner: `x = 20`
-- Result: `20`. Three shadowing bindings, **no mutation**.
+- `let x = 10`: $x = 10$.
+- `let y = x`: $y$ binds to the *value* `10`, not to the name `x`.
+- `let x = x + 5`: shadows; new $x = 15$. $y$ still `10`.
+- $x + y = 15 + 10 = 25$.
+
+**Bindings capture values, not names.**
 
 :::
 
