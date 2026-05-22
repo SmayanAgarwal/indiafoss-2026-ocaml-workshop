@@ -608,6 +608,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -615,6 +617,8 @@ let make_counter () =
   let n = ref 0 in
   fun () -> incr n; !n
 ```
+
+:::
 
 :::slide
 

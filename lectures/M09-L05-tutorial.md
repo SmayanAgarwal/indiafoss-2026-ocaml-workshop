@@ -808,6 +808,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -822,6 +824,8 @@ let test_mul_zero =
 
 Four lines (counting the `assume`): a property whose formal
 statement is just one equation, plus a NaN guard.
+
+:::
 
 :::quiz mcq id=M09-L05-q2
 A colleague writes a single QCheck property for the

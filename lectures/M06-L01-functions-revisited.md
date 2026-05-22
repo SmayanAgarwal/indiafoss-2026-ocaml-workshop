@@ -573,6 +573,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -583,6 +585,8 @@ let rec apply_n n f x =
 
 The base case is `n = 0`: nothing left to do, return `x`. The
 recursive case: apply `f` once, then apply `n - 1` more times.
+
+:::
 
 ## Activity
 

@@ -538,6 +538,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -550,6 +552,8 @@ let sum_of_even_squares xs =
 
 Three steps, all pipelined: filter out the odd elements, square the
 remaining ones, sum. A very common shape.
+
+:::
 
 ## Activity
 

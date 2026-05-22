@@ -508,6 +508,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -524,6 +526,8 @@ The accumulator is an `'a option`, starting at `None`. For each
 element: if the accumulator is `None`, take this element as the
 current best. If it is `Some m`, compare and keep the bigger. The
 result is `None` if the list was empty, `Some v` otherwise.
+
+:::
 
 ## Activity
 

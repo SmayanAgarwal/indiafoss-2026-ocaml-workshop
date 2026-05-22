@@ -505,6 +505,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -517,6 +519,8 @@ The `type a. ...` annotation makes `a` locally abstract so that
 each branch can refine it (`a = int` for `VInt`, `a = bool` for
 `VBool`). Without the annotation, the compiler cannot find a
 single concrete `a` to satisfy both branches.
+
+:::
 
 ## What is next
 

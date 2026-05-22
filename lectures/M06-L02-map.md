@@ -559,6 +559,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -573,6 +575,8 @@ from Module 5: if either list is empty, return the empty list. The
 other case takes one head from each and combines them. If you prefer,
 you can write the two cases separately: `| [], _ -> [] | _, [] -> []
 | ...`.
+
+:::
 
 ## Activity
 

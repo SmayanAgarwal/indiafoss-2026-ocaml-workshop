@@ -473,6 +473,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -486,6 +488,8 @@ Same pattern as the main evaluator: each case refines `a` based
 on the constructor (always `a = int` here, since all three
 constructors return `int expr`), and the right-hand side does the
 arithmetic.
+
+:::
 
 ## A check
 

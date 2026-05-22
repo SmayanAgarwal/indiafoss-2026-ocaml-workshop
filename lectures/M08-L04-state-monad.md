@@ -519,6 +519,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -530,6 +532,8 @@ let incr_state =
 Two lines: read the state into `n`, then set the state to `n + 1`.
 The value of `put` is `()`, which is what `incr_state` should
 produce.
+
+:::
 
 ## What is next
 

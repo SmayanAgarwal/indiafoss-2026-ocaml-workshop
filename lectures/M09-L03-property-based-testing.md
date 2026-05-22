@@ -1616,6 +1616,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -1629,6 +1631,8 @@ let test_concat_empty_right =
 Four lines. The property `xs @ [] = xs` is a one-line statement
 of a list-monoid law; it is exactly the kind of equational
 property functional code makes easy to state.
+
+:::
 
 ## Common pitfalls
 

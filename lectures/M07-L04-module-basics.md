@@ -534,6 +534,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: store the stack in a private `ref` of a list.
 
 ```ocaml
@@ -550,6 +552,8 @@ module Stack = struct
     | x :: _ -> Some x
 end
 ```
+
+:::
 
 :::slide
 

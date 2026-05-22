@@ -569,6 +569,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: the classic two-pointer swap.
 
 ```ocaml
@@ -581,6 +583,8 @@ let reverse_in_place a =
     a.(j) <- tmp
   done
 ```
+
+:::
 
 :::slide
 

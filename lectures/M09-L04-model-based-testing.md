@@ -1168,6 +1168,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -1185,6 +1187,8 @@ let command_to_string = function
 Three constructors mirroring the three stack operations, plus a
 printer that uses `Printf.sprintf` for the parameterised case.
 The same shape generalises to any stateful API.
+
+:::
 
 ## Common pitfalls
 

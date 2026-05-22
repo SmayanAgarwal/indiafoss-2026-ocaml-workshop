@@ -604,6 +604,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -625,6 +627,8 @@ let rec count_nulls = function
 
 Each constructor gets one clause; the recursive ones sum the
 counts from their children using `List.fold_left`.
+
+:::
 
 ## Activity: extending the type
 

@@ -695,6 +695,8 @@ let () =
 ```
 :::
 
+:::solution
+
 One sample solution:
 
 ```
@@ -708,6 +710,8 @@ let four_step n =
 
 Four shadowing bindings, each one transformation step. There is no
 mutation. Each `let x = ... in` is a brand new binding.
+
+:::
 
 ## What's next
 

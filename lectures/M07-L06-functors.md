@@ -560,12 +560,16 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml skip
 let lookup_known () = M.find_opt "alice" ages
 let lookup_missing () = M.find_opt "dave" ages
 ```
+
+:::
 
 :::slide
 

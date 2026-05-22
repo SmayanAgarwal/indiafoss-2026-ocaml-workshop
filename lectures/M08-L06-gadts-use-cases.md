@@ -415,6 +415,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -428,6 +430,8 @@ let convert3 : type a. a t -> a -> string = fun t v ->
 The compiler refines `a` per branch. In the `Bool_t` case, `a =
 bool`, so `v : bool`, and `string_of_bool v` produces the right
 output.
+
+:::
 
 ## What is next
 

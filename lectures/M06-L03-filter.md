@@ -520,6 +520,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -538,6 +540,8 @@ each element against it, and add only the first occurrence. The
 final `List.rev` restores original order. This is `O(n^2)` because
 `List.mem` is linear; for large lists you would use a `Set`
 ([Module 7](M07-L06-functors.html)) for `O(n log n)`.
+
+:::
 
 ## Activity
 

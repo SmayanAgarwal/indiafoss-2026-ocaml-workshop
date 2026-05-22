@@ -557,6 +557,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -568,6 +570,8 @@ let find_first_opt p xs =
   try Some (find_first p xs)
   with Not_found -> None
 ```
+
+:::
 
 :::slide
 

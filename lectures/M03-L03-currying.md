@@ -525,10 +525,14 @@ let () =
 ```
 :::
 
+:::solution
+
 The body is `fun x -> h (g (f x))`, or equivalently
 `let compose3 h g f x = h (g (f x))`. Notice how the three functions
 chain right-to-left: `f` runs first, then `g`, then `h`. This is the
 standard mathematical convention for composition.
+
+:::
 
 ## Activity
 

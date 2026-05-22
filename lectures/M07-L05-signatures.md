@@ -627,6 +627,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml skip
@@ -636,6 +638,8 @@ module Counter : COUNTER = struct
   let reset () = n := 0
 end
 ```
+
+:::
 
 :::slide
 

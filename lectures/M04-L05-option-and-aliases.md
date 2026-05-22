@@ -583,6 +583,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -592,6 +594,8 @@ let rec find_first pred = function
 ```
 
 A standard library equivalent already exists: `List.find_opt`.
+
+:::
 
 ## Activity
 

@@ -495,6 +495,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -509,6 +511,8 @@ let safe_div_chain a b c =
 Two divisions, two `let*`s (well, one `let*` and a tail call), a
 single failure type. The chain short-circuits on the first
 divide-by-zero, which is exactly what we want.
+
+:::
 
 ## What is next
 

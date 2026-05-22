@@ -695,6 +695,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -705,6 +707,8 @@ let value = function
   | Paisa10 -> 10
   | Rupee -> 100
 ```
+
+:::
 
 ## Activity
 

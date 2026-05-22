@@ -516,6 +516,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```
@@ -528,6 +530,8 @@ let lookup_chain table k1 k2 =
 
 Two optional lookups, one `let*` each, a pure final wrap with
 `Some`. If either lookup fails, the chain short-circuits.
+
+:::
 
 ## What is next
 

@@ -527,6 +527,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: extend the signature to add `length` and the
 implementation alongside.
 
@@ -555,6 +557,8 @@ end
 
 let queue_length = Queue.length
 ```
+
+:::
 
 :::slide
 

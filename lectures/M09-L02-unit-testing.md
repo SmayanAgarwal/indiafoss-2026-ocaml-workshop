@@ -910,6 +910,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -921,6 +923,8 @@ let test_push_pop_seven _ =
 
 Three lines: arrange (create + push), act (pop is inside the
 assertion), assert (with a printer). This is the canonical shape.
+
+:::
 
 ## Common pitfalls
 

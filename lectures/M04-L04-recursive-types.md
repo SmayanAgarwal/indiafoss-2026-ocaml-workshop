@@ -576,6 +576,8 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution:
 
 ```ocaml
@@ -587,6 +589,8 @@ let rec height = function
 
 The `max` function comes from `Stdlib` and works on any comparable
 type.
+
+:::
 
 ## Activity
 

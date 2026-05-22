@@ -552,6 +552,8 @@ let () =
 ```
 :::
 
+:::solution
+
 There are several reasonable solutions. One uses mutual recursion
 directly:
 
@@ -570,6 +572,8 @@ Each function walks the list, counting the matches and handing off
 to the other when it sees a non-match. This is contrived (two
 separate walks would be simpler), but it exercises the mutual-recursion
 machinery.
+
+:::
 
 ## What's next
 
