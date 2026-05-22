@@ -444,78 +444,15 @@ combination "take an argument, immediately pattern-match it." So
 being matched. We will see it everywhere; the proper coverage is
 in [M05-L01](M05-L01-basic-patterns.html#function-shorthand).
 
-## When clean tail recursion is hard
-
-Not every recursive function admits a clean rewrite. The classic
-example is `map`:
-
-```ocaml
-let rec map f = function
-  | [] -> []
-  | x :: rest -> f x :: map f rest
-```
-
-After the recursive call, we need to prepend `f x` to the result.
-That is "work after the call," so `map` is not tail-recursive. Worse,
-the natural fix (an accumulator) builds the list in *reverse*: each
-step prepends to the front of the accumulator, but in the original
-the new element was prepended to the result of recursion (which had
-the rest of the elements still to come). The order flips.
-
-The standard workaround is to accumulate in reverse, then reverse at
-the end:
-
-:::slide
-
-## When you can't easily go tail-recursive
-
-- Some functions resist a clean accumulator rewrite.
-
-```ocaml
-let rec map f = function
-  | [] -> []
-  | x :: rest -> f x :: map f rest
-```
-
-- `f x :: map f rest` is *not* tail-recursive.
-- After `map f rest` returns, we still need to `::` `f x` onto it.
-
-:::
-
-:::slide
-
-## Tail-recursive map: build reversed, then reverse
-
-```ocaml
-let map f xs =
-  let rec go acc = function
-    | [] -> List.rev acc
-    | x :: rest -> go (f x :: acc) rest
-  in
-  go [] xs
-```
-
-- Two passes, but constant stack.
-- Stdlib `List.map` is *not* tail-recursive (historical).
-- For long lists, use `List.rev (List.rev_map f xs)`.
-
-:::
-
-Two passes (`go` builds the reversed list; `List.rev` un-reverses)
-instead of one, but constant stack instead of linear. For lists of
-millions of elements, the two-pass tail-recursive version is the only
-one that works; for lists of thousands, the naive one-pass version
-is fine.
-
-Worth knowing: OCaml's standard `List.map` is *not* tail-recursive,
-for historical reasons. On a list of a million elements, it will
-overflow the stack. The standard library provides `List.rev_map` (a
-tail-recursive map that returns the list in reverse order) and
-`List.rev`; the combination `List.rev (List.rev_map f xs)` gives you
-a tail-recursive `map` whose result is in the original order. The
-[Jane Street Base](https://opensource.janestreet.com/base/) library
-provides a tail-recursive `List.map` by default. Pick your library
-accordingly when you have long lists.
+Not every recursive function admits a clean tail-recursive rewrite.
+The classic example is `map`: after the recursive call, we still
+have to prepend `f x` to the result, which is work-after-the-call
+and so not in tail position. The natural accumulator fix builds
+the result in reverse, so a second pass is needed to un-reverse it
+at the end. We defer that story to
+[M06-L02](M06-L02-map.html#tail-recursion-and-list-map), where we
+have `map` itself on the table and can talk about `List.rev_map`,
+`List.rev`, and the two-pass idiom in context.
 
 ## A heuristic for spotting tail calls
 
