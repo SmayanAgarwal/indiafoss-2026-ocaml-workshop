@@ -5,7 +5,7 @@ week: 3
 duration_target_min: 25
 concepts: [tail call, tail-recursive functions, accumulator pattern, stack frames]
 keywords: [OCaml, tail recursion, accumulator, stack overflow, optimization]
-activity_question: "Rewrite [let rec sum n = if n = 0 then 0 else n + sum (n - 1)] as a tail-recursive function using an accumulator."
+activity_question: "Take the [power : int -> int -> int] function from M03-L02 and rewrite it tail-recursively with an accumulator. Same signature; same answers; constant stack."
 think_about_this: "Why does the compiler need to *recognize* a tail call, instead of optimizing every recursive call? What does a non-tail call need to keep on the stack that a tail call doesn't?"
 reading:
   - title: "Cornell CS3110, Tail recursion"
@@ -266,9 +266,9 @@ The structure has three parts worth naming:
 - An inner helper, `go`, with an extra parameter `acc` (idiomatic
   shorthand for "accumulator"). The helper does the real recursion.
 - An initial call `go 0 n` that supplies the starting accumulator.
-  For sums, that is `0`; for products it would be `1`; for list
-  reversal it would be `[]`. In general, the initial accumulator is
-  whatever the base case of the original function returned.
+  For sums, that is `0`; for products (and powers) it would be
+  `1`. In general, the initial accumulator is whatever the base
+  case of the original function returned.
 
 This is the standard shape, and we will use it constantly. We
 will use it again in [M03-L05](M03-L05-local-and-mutual.html)
@@ -380,79 +380,10 @@ and you get a garbage value. For arbitrary-precision arithmetic, the
 which can hold integers of any size. We do not need it in this
 course; just know it exists.
 
-## Length of a list, tail-recursive
-
-The same pattern applied to lists. The original (from
-[M03-L02](M03-L02-recursion.html#recursion-on-lists)) was:
-
-```ocaml
-let rec length xs =
-  match xs with
-  | [] -> 0
-  | _ :: rest -> 1 + length rest
-```
-
-Not tail-recursive: after the call to `length rest` we still need
-to add `1`. The accumulator-passing version counts up instead of
-down:
-
-```ocaml
-let length xs =
-  let rec go acc = function
-    | [] -> acc
-    | _ :: rest -> go (acc + 1) rest
-  in
-  go 0 xs
-
-let _ = length [10; 20; 30; 40]
-```
-
-:::slide
-
-## Length of a list, tail-recursive
-
-```ocaml
-let length xs =
-  let rec go acc = function
-    | [] -> acc
-    | _ :: rest -> go (acc + 1) rest
-  in
-  go 0 xs
-
-let _ = length [10; 20; 30; 40]
-```
-
-- `int = 4`.
-- Accumulator counts elements seen so far.
-- At `[]`, return the count.
-- Same shape as `List.length` in the stdlib; constant stack.
-
-:::
-
-`int = 4`. The accumulator counts elements seen *so far* (not
-remaining). At `[]`, the count is complete; return it. This is the
-form used by `List.length` in the standard library; you can give
-`List.length` a list of a million elements without trouble. The
-naive recursive version would crash.
-
-The slight wrinkle in the code is the use of `function` instead of
-`match xs with`. The keyword `function` is shorthand for the
-combination "take an argument, immediately pattern-match it." So
-`function | [] -> ... | _ :: rest -> ...` is exactly equivalent to
-`fun xs -> match xs with | [] -> ... | _ :: rest -> ...`. The
-`function` form is idiomatic when the last parameter is the one
-being matched. We will see it everywhere; the proper coverage is
-in [M05-L01](M05-L01-basic-patterns.html#function-shorthand).
-
-Not every recursive function admits a clean tail-recursive rewrite.
-The classic example is `map`: after the recursive call, we still
-have to prepend `f x` to the result, which is work-after-the-call
-and so not in tail position. The natural accumulator fix builds
-the result in reverse, so a second pass is needed to un-reverse it
-at the end. We defer that story to
-[M06-L02](M06-L02-map.html#tail-recursion-and-list-map), where we
-have `map` itself on the table and can talk about `List.rev_map`,
-`List.rev`, and the two-pass idiom in context.
+Not every recursive function admits this rewrite cleanly. We will
+see one such case (`map`) in
+[M06-L02](M06-L02-map.html#tail-recursion-and-list-map), once we
+have the right vocabulary to discuss the two-pass workaround.
 
 ## A heuristic for spotting tail calls
 
@@ -469,14 +400,20 @@ After the call returns, is there *any* computation left?
 - Yes: **not** a tail call.
 - No: tail call.
 
+:::
+
+:::slide
+
+## Tail-call heuristic: three examples
+
 ```ocaml
 let rec a n = if n = 0 then 0 else a (n - 1) + 1
 let rec b n = if n = 0 then 0 else 1 + b (n - 1)
 let rec c n = if n = 0 then 0 else if n > 100 then c (n - 100) else c (n - 1)
 ```
 
-- `a`: not tail (adds `1` after).
-- `b`: not tail.
+- `a`: not tail (adds `1` *after* the call).
+- `b`: not tail (the `+` runs *after* the call returns).
 - `c`: tail; both branches' recursive calls are final.
 
 :::
@@ -508,39 +445,41 @@ tail position, because there is an addition after the `if`.
 
 ## Activity
 
-Rewrite this in tail-recursive form using an accumulator:
+Recall `power` from [M03-L02](M03-L02-recursion.html#worked-example-power):
 
 ```ocaml
-let rec sum n =
-  if n = 0 then 0
-  else n + sum (n - 1)
+let rec power x n =
+  if n = 0 then 1
+  else x * power x (n - 1)
 ```
+
+Not tail-recursive (the `*` runs after the call). Rewrite it
+with an accumulator so that it is.
 
 :::
 
 Before reading on, do the rewrite yourself. The shape is the
-`sum_to` one we did above: outer function with the same signature,
-inner helper with an accumulator, base case returns the accumulator.
+`factorial` one we did above: outer function with the original
+signature, inner helper with an extra `acc` parameter, base case
+returns `acc`.
 
 :::slide
 
 ## Activity solution
 
 ```ocaml
-let sum n =
+let power x n =
   let rec go acc n =
     if n = 0 then acc
-    else go (acc + n) (n - 1)
+    else go (acc * x) (n - 1)
   in
-  go 0 n
+  go 1 n
 ```
 
-The shape:
-
-- New top-level function with the original signature.
-- Inner helper `go` with an extra `acc` parameter.
-- Base case returns `acc`; recursive case folds step into `acc`.
-- Muscle memory by Module 4.
+- Outer function keeps the `int -> int -> int` signature.
+- Inner `go` carries an accumulator; `x` stays the same each call.
+- Starting accumulator: `1` (what `power x 0` returned).
+- Recursive case: fold `* x` into `acc` *before* recursing.
 
 :::
 
@@ -551,8 +490,9 @@ a tail-recursive one:
    computes incrementally as it walks the input. Make it a new
    parameter, conventionally `acc`.
 2. *What is its starting value?* Whatever the original function
-   would have returned in the base case. For `sum_to`, that is `0`;
-   for `product`, `1`; for `length`, `0`; for `reverse`, `[]`.
+   would have returned in the base case. For `sum_to`, that is
+   `0`; for `factorial` and `power`, `1`; for `sum_of_squares`,
+   `0`.
 3. *What happens to it at each step?* Whatever the original
    function did *after* the recursive call. Apply it to `acc`
    *before* recursing, so the recursive call sits in tail position.
@@ -568,31 +508,31 @@ end of Module 6, you will rarely write it by hand, because
 ## A small code challenge
 
 :::quiz code id=M03-L04-q2
-Write a tail-recursive `product : int list -> int` that multiplies
-all elements of a list. Empty list product is `1`.
+Write a tail-recursive `sum_of_squares : int -> int` that returns
+`1*1 + 2*2 + ... + n*n` for non-negative `n`. `sum_of_squares 0 = 0`.
 
 ```ocaml
-let product xs =
+let sum_of_squares n =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (product []        = 1)   "empty";
-  check (product [2; 3; 4] = 24)  "small";
-  check (product [5]       = 5)   "singleton";
-  check (product [0; 99]   = 0)   "zero in list";
+  check (sum_of_squares 0 = 0)    "zero";
+  check (sum_of_squares 1 = 1)    "one";
+  check (sum_of_squares 3 = 14)   "small: 1 + 4 + 9";
+  check (sum_of_squares 5 = 55)   "five: 1 + 4 + 9 + 16 + 25";
   print_endline "all tests passed"
 ```
 :::
 
 :::solution
 
-The shape: outer `product xs` calls `let rec go acc = function | []
--> acc | x :: rest -> go (acc * x) rest in go 1 xs`. Initial
-accumulator is `1` (the identity for multiplication); per-step work
-multiplies `x` into the accumulator.
+`let sum_of_squares n = let rec go acc n = if n = 0 then acc else
+go (acc + n * n) (n - 1) in go 0 n`. Initial accumulator is `0`
+(the identity for addition); per-step work adds `n * n` into the
+accumulator before recursing.
 
 :::
 
@@ -600,22 +540,22 @@ multiplies `x` into the accumulator.
 Which of these recursive calls is in tail position?
 
 ```ocaml
-let rec h xs = match xs with
-  | [] -> []
-  | x :: rest -> if x > 0 then x :: h rest else h rest
+let rec h n =
+  if n = 0 then 0
+  else if n mod 2 = 0 then h (n - 1) else 1 + h (n - 1)
 ```
 
-- [ ] Both `x :: h rest` and `h rest`.
-- [ ] Only `x :: h rest`.
-- [x] Only `h rest`.
+- [ ] Both calls to `h (n - 1)`.
+- [ ] Only the one in the `else if n mod 2 = 0` branch.
+- [x] Only the one in the even branch (no `1 +` after).
 - [ ] Neither.
 
-**Why:** in `x :: h rest`, the cons operator runs *after* the
-recursive call returns: we cannot build the cons cell without the
-result. So that call is not in tail position. In the else-branch
-`h rest`, the recursive call's result is returned directly; no
-further work. That one *is* in tail position. The function as a
-whole is not tail-recursive because of the `x :: h rest` branch.
+**Why:** in the even branch, `h (n - 1)` is the result of the
+function directly; the call sits in tail position. In the odd
+branch, `1 + h (n - 1)`: the `+ 1` runs *after* the recursive call
+returns, so the call is not in tail position. The function counts
+the odd integers from `1` to `n`; the point of the question is the
+*shape* of the two recursive calls, not what the function computes.
 :::
 
 ## What's next
@@ -631,9 +571,9 @@ Lecture 5: **local functions and mutual recursion**.
 
 :::
 
-We have used the `let rec go ... in` pattern three times in this
-lecture (in `sum_to`, `factorial`, `length`) without explaining
-what it does. The next lecture,
+We have used the `let rec go ... in` pattern twice in this
+lecture (in `sum_to` and `factorial`) without explaining what it
+does. The next lecture,
 [M03-L05](M03-L05-local-and-mutual.html), is about that pattern:
 *local* function definitions, scoped to inside another function.
 It also covers *mutual recursion*, two or more functions that call
