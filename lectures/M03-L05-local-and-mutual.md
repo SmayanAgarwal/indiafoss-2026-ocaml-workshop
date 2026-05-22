@@ -5,7 +5,7 @@ week: 3
 duration_target_min: 22
 concepts: [local let-bindings of functions, helper functions, mutual recursion, `and` keyword]
 keywords: [OCaml, local functions, mutual recursion, and, helper, let rec ... and]
-activity_question: "Write [is_even] and [is_odd] using mutual recursion, with no arithmetic except subtracting 1 and comparing to 0. What is the keyword that ties the two definitions together?"
+activity_question: "Define [mod3_eq_0], [mod3_eq_1], [mod3_eq_2 : int -> bool] for non-negative [n], using mutual recursion with three functions tied by [and]. The only arithmetic allowed is subtracting 1 and comparing to 0. Why does this need three functions in the same [let rec ... and ... and ...] declaration?"
 think_about_this: "When is a helper function better as a local [let ... in] inside another function vs. a top-level definition? What changes when you make it top-level?"
 reading:
   - title: "Cornell CS3110, Helper functions"
@@ -93,24 +93,12 @@ get exported in an `.mli` (interface file), to be discussed in
 implementation detail of one function, all of that is noise. Local
 definitions keep the top-level surface clean.
 
-The local helper pattern is core to readable OCaml. When you have a
-function that needs an accumulator, or a different argument order
-from what the caller expects, define the helper locally and shape
-the outer function to be the API you want callers to see. Here is
-another standard example, the tail-recursive `reverse`:
-
-```ocaml
-let reverse xs =
-  let rec go acc = function
-    | [] -> acc
-    | x :: rest -> go (x :: acc) rest
-  in
-  go [] xs
-```
-
-The caller sees `reverse : 'a list -> 'a list`. They do not see
-`go`; they do not need to know about `acc`. Local helpers let you
-build that clean external shape.
+The local helper pattern is core to readable OCaml. Any time you
+have a function that needs an accumulator, or a different argument
+order from what the caller expects, define the helper locally and
+shape the outer function to be the API you want callers to see.
+The caller sees `factorial : int -> int`; they never have to know
+about `go` or about the starting accumulator `1`.
 
 ## Why not just top-level?
 
@@ -163,19 +151,19 @@ callers to misuse the code.
 ## When to make a helper top-level
 
 The other end of the trade-off: sometimes the "helper" is genuinely
-useful on its own. If multiple callers want to sum a list, `sum`
-should be top-level. If one caller wants to compute the average and
-needs a sum along the way, you do not want a private accumulator
-hidden inside `average`; you want a public `sum` that anyone can
-reuse.
+useful on its own. The classic pair is `gcd` and `lcm`: the
+greatest common divisor stands on its own (number theory uses it
+constantly), and the least common multiple is defined in terms of
+it. You do not want `gcd` hidden inside `lcm`; you want it
+top-level so anyone can reuse it.
 
 ```ocaml
-let rec sum xs = match xs with
-  | [] -> 0
-  | x :: rest -> x + sum rest
+let rec gcd m n =
+  if n = 0 then m
+  else gcd n (m mod n)
 
-let average xs =
-  sum xs / List.length xs
+let lcm m n =
+  m * n / gcd m n
 ```
 
 :::slide
@@ -185,15 +173,15 @@ let average xs =
 Sometimes the "helper" is useful on its own:
 
 ```ocaml
-let rec sum xs = match xs with
-  | [] -> 0
-  | x :: rest -> x + sum rest
+let rec gcd m n =
+  if n = 0 then m
+  else gcd n (m mod n)
 
-let average xs =
-  sum xs / List.length xs
+let lcm m n =
+  m * n / gcd m n
 ```
 
-- `sum` is general-purpose; `average` uses it.
+- `gcd` stands on its own; `lcm` reuses it.
 - Both top-level, both public.
 
 Rule of thumb:
@@ -205,13 +193,13 @@ Rule of thumb:
 
 The rule of thumb:
 
-- *Top-level* if the helper has a meaningful, reusable name that other
-  callers might want. `sum`, `last`, `find`, `gcd`. The function
-  stands on its own.
-- *Local* if the helper is a tactical aid for one outer function: an
-  accumulator-passing version, an unfolded base case, a renamed-and-reordered
-  variant. `go`, `aux`, `loop`. Nobody outside the
-  outer function would want to call it.
+- *Top-level* if the helper has a meaningful, reusable name that
+  other callers might want. `gcd`, `factorial`, `power`. The
+  function stands on its own.
+- *Local* if the helper is a tactical aid for one outer function:
+  an accumulator-passing version, an unfolded base case, a
+  renamed-and-reordered variant. `go`, `aux`, `loop`. Nobody
+  outside the outer function would want to call it.
 
 You will get a feel for this with practice. The bias in idiomatic
 OCaml is toward locals: if in doubt, hide it. You can always promote
@@ -274,13 +262,13 @@ exactly what mutual recursion needs.
 
 Suppose you tried to write the two functions as separate `let rec`s:
 
-```ocaml
+```text
 let rec is_even n = if n = 0 then true  else is_odd  (n - 1)
 let rec is_odd  n = if n = 0 then false else is_even (n - 1)
 ```
 
-OCaml rejects the first line: `Unbound value is_odd`. The reason is
-the same one we saw for `let rec` vs. plain `let` in
+OCaml rejects the first line: `Unbound value is_odd`. The reason
+is the same one we saw for `let rec` vs. plain `let` in
 [M03-L02](M03-L02-recursion.html#why-let-rec-and-not-just-let):
 a `let rec` brings the name being defined into scope inside its
 own body, but not *other* names that have not been defined yet.
@@ -292,7 +280,7 @@ When the compiler processes the first `let rec is_even`, the name
 
 ## Why `and`, not `let` twice?
 
-```ocaml
+```text
 let rec is_even n = if n = 0 then true  else is_odd  (n - 1)
 let rec is_odd  n = if n = 0 then false else is_even (n - 1)
 ```
@@ -301,7 +289,7 @@ let rec is_odd  n = if n = 0 then false else is_even (n - 1)
 - When `let rec is_even` is processed, `is_odd` doesn't exist yet.
 - `and` threads multiple definitions through one name-resolution step:
 
-```
+```text
 let rec X = ... and Y = ... and Z = ...
 ```
 
@@ -322,80 +310,16 @@ together, with all the names already in scope. There is no left-to-right
 dependency. You can write the definitions in any order; the
 compiler will figure out which calls which.
 
-## A real-world example: a tiny parser
-
 The two-function ping-pong is not as artificial as `is_even` /
 `is_odd` suggests. The shape shows up the moment you write a
-recursive-descent parser, where each grammar rule is a function and
-the rules call each other.
-
-```ocaml
-(* a tiny imaginary parser: read a number, possibly followed by an
-   operator and another number *)
-
-let rec read_number tokens =
-  match tokens with
-  | [] -> None
-  | t :: rest -> read_op (int_of_string t) rest
-and read_op n tokens =
-  match tokens with
-  | [] -> Some n
-  | "+" :: rest -> begin match read_number rest with
-                   | None -> None
-                   | Some m -> Some (n + m)
-                   end
-  | _ -> None
-```
-
-:::slide
-
-## A real-world example: parsing a token
-
-```ocaml
-(* a tiny imaginary parser: read a number, possibly followed by an
-   operator and another number *)
-
-let rec read_number tokens =
-  match tokens with
-  | [] -> None
-  | t :: rest -> read_op (int_of_string t) rest
-and read_op n tokens =
-  match tokens with
-  | [] -> Some n
-  | "+" :: rest -> begin match read_number rest with
-                   | None -> None
-                   | Some m -> Some (n + m)
-                   end
-  | _ -> None
-```
-
-- `read_number` calls `read_op` calls `read_number`.
-- A small recursive-descent parser; mutual recursion is the natural fit.
-
-:::
-
-`read_number` reads a number, then hands off to `read_op` to look
-for an operator. `read_op` reads an operator and a right-hand-side,
-hands back to `read_number` to parse that right-hand-side, and so
-on. The two functions implement two states of a small state machine.
-This is the natural shape; trying to write it as a single function
-with a flag parameter would be uglier and harder to extend to more
-grammar rules.
-
-The same shape arises in:
-
-- Tree walkers where each kind of node has its own handler, and the
-  trees nest. For instance, in a small language with expressions and
-  statements, `eval_expr` may need to call `eval_stmt` (for a block
-  expression) and vice versa.
-- State machines with multiple states.
-- The classic "alternating list" structures (a list of A's and B's
-  where they alternate). The data type itself is mutually recursive,
-  and the functions that walk it are too.
-
-We will see all of these in
+recursive-descent parser (each grammar rule is a function, the
+rules call each other), a tree walker over a language with
+expressions *and* statements (`eval_expr` calls `eval_stmt` and
+vice versa), or any state machine with two or more states. We
+will see those examples in
 [Module 4](M04-L04-recursive-types.html) (recursive data types)
-and [Module 5](M05-L01-basic-patterns.html) (pattern matching).
+and [Module 5](M05-L01-basic-patterns.html) (pattern matching),
+once we have the data shapes to support them.
 
 ## Mutual recursion can be local too
 
@@ -418,19 +342,6 @@ let demo () =
 ## Mutual recursion can also be local
 
 ```ocaml
-let collatz n =
-  let rec step n =
-    if n = 1 then [1]
-    else if n mod 2 = 0 then n :: step (n / 2)
-    else n :: step (3 * n + 1)
-  in
-  step n
-```
-
-- Single-recursive example.
-- `let rec ... and ...` works inside `let ... in` too:
-
-```ocaml
 let demo () =
   let rec ping n =
     if n = 0 then "done"
@@ -440,8 +351,9 @@ let demo () =
   ping 5
 ```
 
-- `string = "done"`.
-- Local helpers can refer to each other.
+- `let rec ... and ...` works inside `let ... in` too.
+- Result: `string = "done"`.
+- Both names local; neither leaks outside `demo`.
 
 :::
 
@@ -449,131 +361,89 @@ The syntax is exactly the same: `let rec X = ... and Y = ... in
 body`. Both `X` and `Y` are local to the surrounding expression.
 Outside `demo ()`, neither `ping` nor `pong` exists.
 
-The slide also shows `collatz`, with a single (not mutual) local
-recursive helper, as a reminder that the local pattern works without
-`and` too. The Collatz function takes a positive integer and
-generates the Collatz sequence: halve it if even, triple-and-add-one
-if odd, stop at 1. The conjecture is that the sequence reaches 1
-for every positive starting value. The conjecture is unproven; for
-our purposes, the function is a small example of `let rec ... in`
-with a list-building recursion.
+For a single (not mutual) local recursive helper, the same `let
+rec ... in` shape works without `and`. The Collatz sequence is a
+classic small example: take a positive integer; halve it if even,
+triple-and-add-one if odd; stop at 1. The conjecture is that the
+sequence reaches 1 for every positive starting value. Unproven,
+but a tidy demonstration of `let rec ... in`:
 
-## Activity: `is_even` and `is_odd` by mutual recursion
+```ocaml
+let collatz n =
+  let rec step n =
+    print_endline (string_of_int n);
+    if n = 1 then ()
+    else if n mod 2 = 0 then step (n / 2)
+    else step (3 * n + 1)
+  in
+  step n
+```
+
+## Activity: mod-3 by three-way mutual recursion
 
 :::slide
 
 ## Activity
 
-Write `is_even` and `is_odd` using mutual recursion, with the only
-arithmetic being "subtract 1 and compare to 0" (no `mod`, no `&&
-even logic`):
+`and` is not limited to two definitions. Define `mod3_eq_0`,
+`mod3_eq_1`, `mod3_eq_2 : int -> bool` for non-negative `n`,
+using **only** "subtract 1, compare to 0" (no `mod`, no `if`-on-
+arithmetic). The three functions must call each other:
 
 ```text
-let rec is_even n = ???
-and is_odd n = ???
+let rec mod3_eq_0 n = ???
+and mod3_eq_1 n = ???
+and mod3_eq_2 n = ???
 ```
 
 :::
 
-Try this yourself before reading the solution. The constraint forbids
-the obvious `n mod 2 = 0` definition, forcing you into mutual
-recursion: `is_even n` calls `is_odd (n - 1)`; `is_odd n` calls
-`is_even (n - 1)`. The base cases pin down the truth: zero is even,
-zero is not odd.
+Try it before reading the solution. Each function's base case is
+fixed by definition (`mod3_eq_0 0` is `true`; the other two are
+`false` on `0`). The recursive case has to hand off in a cycle:
+subtracting 1 from `n` shifts the residue by 1, so
+`mod3_eq_0 n = mod3_eq_2 (n - 1)`, `mod3_eq_1 n = mod3_eq_0 (n -
+1)`, `mod3_eq_2 n = mod3_eq_1 (n - 1)`. Three functions, three
+bases, three tail calls in a cycle.
 
 :::slide
 
 ## Activity solution
 
 ```ocaml
-let rec is_even n =
+let rec mod3_eq_0 n =
   if n = 0 then true
-  else is_odd (n - 1)
-and is_odd n =
+  else mod3_eq_2 (n - 1)
+and mod3_eq_1 n =
   if n = 0 then false
-  else is_even (n - 1)
+  else mod3_eq_0 (n - 1)
+and mod3_eq_2 n =
+  if n = 0 then false
+  else mod3_eq_1 (n - 1)
+
+let _ = mod3_eq_0 9   (* true:  9 mod 3 = 0 *)
+let _ = mod3_eq_1 10  (* true: 10 mod 3 = 1 *)
+let _ = mod3_eq_2 11  (* true: 11 mod 3 = 2 *)
 ```
 
-Trace for `is_even 6`:
-
-- `is_even 6, is_odd 5, is_even 4, is_odd 3, is_even 2, is_odd 1, is_even 0, true`.
-
-- Recursive calls are in tail position (calling the *other* function).
-- TCO works between mutually recursive functions: constant stack.
-- For large `n`, prefer `n mod 2 = 0`; this is just illustration.
+- Three bodies, all in scope inside all bodies.
+- Recursive calls hand off in a cycle: 0 to 2, 2 to 1, 1 to 0.
+- All three calls are in tail position; TCO works across all of them.
 
 :::
 
-One important property of this example: the recursive calls
-(`is_odd (n - 1)` inside `is_even`, and vice versa) are in tail
-position. Recall the rule from
-[M03-L04](M03-L04-tail-recursion.html#what-is-a-tail-call): a
-call is in tail position if its result is the immediate result
-of the enclosing function. In both bodies, the recursive call to
-the *other* function is the last thing that happens; there is no
-further work.
+One important property of this example: every recursive call is
+in tail position. OCaml's tail-call optimisation handles tail
+calls *between* mutually recursive functions, not just self-calls.
+So `mod3_eq_0 1_000_000` runs in constant stack space. The function
+cycles through three frames as it descends, but none of them ever
+stays around; each recursive tail call reuses the current frame for
+the next call.
 
-OCaml's tail-call optimisation handles tail calls *between* mutually
-recursive functions, not just self-calls. So `is_even 1_000_000`
-runs in constant stack space. The function alternates between two
-frames as it descends, but neither frame ever stays around; each
-recursive tail call reuses the current frame for the next call.
-
-In real code you would write `n mod 2 = 0`, of course. The
+In real code you would write `n mod 3 = 0`, of course. The
 mutual-recursion version is here as a clean illustration of the
-pattern: two functions, two base cases, two recursive cases that
-hand off to each other.
-
-## A code challenge
-
-:::quiz code id=M03-L05-q1
-Define `count_evens` and `count_odds` using mutual recursion. Each
-takes an `int list` and returns the count of even (or odd) values.
-Treat negative numbers correctly: `-4` is even, `-3` is odd. Use
-`mod` to test parity of a single element if you wish.
-
-```ocaml
-let rec count_evens xs =
-  failwith "not implemented"
-and count_odds xs =
-  failwith "not implemented"
-```
-
-```ocaml skip
-let check b m = if not b then failwith m
-let () =
-  check (count_evens []           = 0) "empty evens";
-  check (count_odds  []           = 0) "empty odds";
-  check (count_evens [1;2;3;4]    = 2) "1234 evens";
-  check (count_odds  [1;2;3;4]    = 2) "1234 odds";
-  check (count_evens [-2;-3;0;7]  = 2) "negatives evens";
-  check (count_odds  [-2;-3;0;7]  = 2) "negatives odds";
-  print_endline "all tests passed"
-```
-:::
-
-:::solution
-
-There are several reasonable solutions. One uses mutual recursion
-directly:
-
-```text
-let rec count_evens = function
-  | [] -> 0
-  | x :: rest ->
-    if x mod 2 = 0 then 1 + count_evens rest else count_odds rest
-and count_odds = function
-  | [] -> 0
-  | x :: rest ->
-    if x mod 2 = 0 then count_evens rest else 1 + count_odds rest
-```
-
-Each function walks the list, counting the matches and handing off
-to the other when it sees a non-match. This is contrived (two
-separate walks would be simpler), but it exercises the mutual-recursion
-machinery.
-
-:::
+pattern: a cycle of bodies tied together by `and`, every name in
+scope inside every body.
 
 ## What's next
 
@@ -600,6 +470,7 @@ before, and to discuss when each approach is the right choice.
 
 - **Cornell CS3110**, *Helper functions* and *Mutual recursion*:
   <https://cs3110.github.io/textbook/chapters/basics/functions.html>
+  
 ## Sources
 
 This lecture's prose, worked examples, and quizzes are original to
