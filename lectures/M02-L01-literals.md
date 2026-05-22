@@ -493,7 +493,7 @@ and is much faster for many small parts.
 
 :::slide
 
-## String length and access
+## String length and substrings
 
 ```ocaml
 let _ = String.length "OCaml"
@@ -503,37 +503,31 @@ let _ = String.length "OCaml"
 - `String` is the stdlib module for string functions.
 
 ```ocaml
-let _ = String.get "OCaml" 0
+let _ = String.sub "Functional programming" 0 10
 ```
 
-- Result: `char = 'O'`.
-- Single quotes for `char` literals (a single byte).
+- Result: `string = "Functional"`.
+- `String.sub s start len` returns the substring of `s` of length
+  `len` starting at position `start`.
 - Indexing is **zero-based**.
-- Out-of-bounds access raises `Invalid_argument`.
+- Out-of-bounds (`start + len > String.length s`) raises
+  `Invalid_argument`.
 
 :::
 
 `String.length` takes a string and returns the number of bytes in
-it. `String.get` takes a string and an index and returns the byte
-at that index, as a value of type `char`. Indexing is zero-based,
-as in essentially every modern language. There is shorthand syntax
-for the same access: `s.[i]` is sugar for `String.get s i`. You may
-see it in code, especially older code; both forms produce the same
-result.
-
-The `char` type is a separate primitive type we have not given its
-own slide. It is exactly one byte, 0 through 255. Character
-literals are written with single quotes (`'a'`, `'0'`, `'\n'`), to
-distinguish them from one-character strings. So `'a'` is a `char`;
-`"a"` is a `string` of length one. The two types are different and
-not implicitly convertible. To turn a `char` into a one-character
-string, use `String.make 1 c`; to extract a `char` from a string,
-use `String.get` as above or the `.[i]` syntax.
+it. `String.sub` takes a string, a starting index, and a length,
+and returns the substring at that range. Indexing is zero-based,
+as in essentially every modern language. The standard library has
+many other string functions (`String.concat`, `String.trim`,
+`String.split_on_char`, `String.uppercase_ascii`, `String.get` for
+single-character access, ...); we will meet them as needed in
+later modules.
 
 Out-of-bounds access raises an exception, `Invalid_argument`. We
 will see how to [handle exceptions](M07-L03-exceptions.html)
-properly in Module 7; for now, just know that `String.get s i` for
-an `i` outside `0 .. length - 1` is a runtime error.
+properly in Module 7; for now, just know that `String.sub s i n`
+with `i + n` outside `0 .. length s` is a runtime error.
 
 ## Conversions between types
 
