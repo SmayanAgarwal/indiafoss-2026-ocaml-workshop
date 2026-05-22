@@ -350,15 +350,23 @@ It documents intent and catches accidents.
 print_endline "hello"
 ```
 
-- Toplevel accepts a bare expression; the file compiler wants `let () = ...`.
+- Toplevel accepts a bare expression.
+- File compiler wants `let () = ...`.
 - Habit: always wrap side-effecting calls in `let () = ...`.
-- Documents intent and catches accidents:
+
+:::
+
+:::slide
+
+## Why bother: `let () = 42` is refused
 
 ```ocaml skip
 let () = 42
 ```
 
-- Refused: `42` is not unit.
+- The `()` pattern declares the RHS must have type `unit`.
+- `42` is `int`, not `unit`: compile-time error.
+- Documents intent and catches the kind of accident you can't see by eye.
 
 :::
 
@@ -390,9 +398,9 @@ let square x = x * x
 let cube x = x * x * x
 
 let () =
-  print_endline (Printf.sprintf "square 5 = %d" (square 5));
-  print_endline (Printf.sprintf "cube 5   = %d" (cube 5));
-  print_endline (Printf.sprintf "square 5 + cube 5 = %d" (square 5 + cube 5))
+  Printf.printf "square 5 = %d\n" (square 5);
+  Printf.printf "cube 5   = %d\n" (cube 5);
+  Printf.printf "square 5 + cube 5 = %d\n" (square 5 + cube 5)
 ```
 
 :::slide
@@ -404,9 +412,9 @@ let square x = x * x
 let cube x = x * x * x
 
 let () =
-  print_endline (Printf.sprintf "square 5 = %d" (square 5));
-  print_endline (Printf.sprintf "cube 5   = %d" (cube 5));
-  print_endline (Printf.sprintf "square 5 + cube 5 = %d" (square 5 + cube 5))
+  Printf.printf "square 5 = %d\n" (square 5);
+  Printf.printf "cube 5   = %d\n" (cube 5);
+  Printf.printf "square 5 + cube 5 = %d\n" (square 5 + cube 5)
 ```
 
 - Two helpers, then one `let ()` that sequences three prints.
