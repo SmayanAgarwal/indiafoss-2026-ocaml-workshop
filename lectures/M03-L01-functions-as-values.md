@@ -148,13 +148,18 @@ let _ = fun x -> x + 1
 - Toplevel: `int -> int = <fun>`, bound to `_`.
 - The function exists; just unnamed.
 
-Apply on the spot:
+:::
+
+:::slide
+
+## Anonymous functions, applied on the spot
 
 ```ocaml
 let _ = (fun x -> x + 1) 7
 ```
 
 - `int = 8`. Parenthesize, then apply.
+- Parens are needed: application binds tighter than `fun`.
 - Key point: `fun ... -> ...` is a real expression.
 
 :::
@@ -333,6 +338,94 @@ let _ = plus_five 100
 the body. The closure ensures that `plus_five` keeps working even
 after `make_adder` has returned and its activation frame is gone.
 
+## What is a closure?
+
+Here is the definition in precise form. A name that appears in a
+function's body but is not bound by the function's parameters or
+by any `let` inside the body is called a *free variable* of the
+function. When the function is created at runtime, OCaml records
+the current value of each free variable into the function value
+itself; this recording step is called *capture*, and the table
+of captured values is called the *environment of the closure*. A
+*closure*, then, is a function value paired with its environment.
+
+The point of the environment is that the captured values can be
+read *long after* the surrounding scope that originally bound
+them has gone away. The function value is self-contained: body
+plus environment.
+
+One free variable:
+
+```ocaml
+let make_adder n = fun x -> x + n
+```
+
+The inner `fun x -> x + n` has parameter `x` and one free
+variable `n`. Each call `make_adder k` returns a closure whose
+environment contains `n = k`.
+
+Two free variables:
+
+```ocaml
+let between lo hi = fun x -> lo <= x && x <= hi
+```
+
+The inner `fun x -> ...` has parameter `x` and two free
+variables, `lo` and `hi`. `between 0 10` returns a closure whose
+environment contains `lo = 0` and `hi = 10`; that closure then
+takes one `int` and returns a `bool`.
+
+A function with no free variables (`fun x -> x + 1`) is still a
+closure, just with an empty environment.
+
+:::slide
+
+## What is a closure?
+
+A function whose body refers to bindings that are in scope but
+are **not** parameters of the function.
+
+- The referenced name is a **free variable** of the function.
+- When the function is created, the current value of each free
+  variable is **captured**.
+- The captured values form the closure's **environment**.
+
+A function value = its body + its environment.
+
+:::
+
+:::slide
+
+## Closures: one free variable
+
+```ocaml
+let make_adder n = fun x -> x + n
+```
+
+- The inner `fun x -> x + n` has
+  - parameter `x` and
+  - one free variable `n`.
+- `make_adder 5` returns a closure.
+- Environment holds `n = 5`.
+
+:::
+
+:::slide
+
+## Closures: two free variables
+
+```ocaml
+let between lo hi = fun x -> lo <= x && x <= hi
+```
+
+- The inner `fun x -> ...` has
+  - parameter `x` and
+  - two free variables: `lo`, `hi`.
+- `between 0 10` returns a closure.
+- Environment holds `lo = 0`, `hi = 10`.
+
+:::
+
 ## Closures capture values, not names
 
 The capture is of *values at the time of creation*, not of names
@@ -403,7 +496,10 @@ let _ = apply_twice double 5
 - `apply_twice f x = f (f x)`.
 - First call: anonymous `fun x -> x + 1`. Second: `double`.
 - Toplevel: `val apply_twice : ('a -> 'a) -> 'a -> 'a = <fun>`.
-- Takes a function from `'a` to `'a`, plus an `'a`, returns an `'a`.
+- `'a` is a **type variable**: any type, same one each occurrence.
+- Works at `int -> int`, `float -> float`, `string -> string`, ...
+- This is **polymorphism**. Formal treatment:
+  [M06-L01](M06-L01-functions-revisited.html#a-function-that-takes-a-function).
 
 :::
 
@@ -414,10 +510,18 @@ x + 1` (so we get `((5 + 1) + 1) = 7`); the second passes `double`
 
 The toplevel reports `val apply_twice : ('a -> 'a) -> 'a -> 'a =
 <fun>`. Parsed: takes a function from `'a` to `'a`, plus an `'a`,
-and returns an `'a`. The function is polymorphic: it works at any
-type `'a`, as long as `f` maps that type to itself. The same
+and returns an `'a`. The `'a` is a *type variable*: it stands for
+"some type, the same one in each occurrence." A function whose
+type contains type variables is called *polymorphic*: it works at
+every choice of `'a`, with no special-casing per type. The same
 `apply_twice` works for `int -> int` functions, `float -> float`
 functions, `string -> string` functions, etc.
+
+This is the first time we are seeing a type variable; we will
+return to polymorphism formally in
+[M06-L01](M06-L01-functions-revisited.html#a-function-that-takes-a-function),
+once we have higher-order functions to motivate it. For now, read
+`'a -> 'a` as "any type to itself."
 
 ## Anonymous functions are everywhere
 
@@ -484,14 +588,16 @@ val apply_twice : ('a -> 'a) -> 'a -> 'a
 
 ## Type signatures: `->` is right-associative
 
-```ocaml skip
+```text
 val add : int -> int -> int
 ```
 
 - Reads as `int -> (int -> int)`.
 - Arrows associate right.
 
-```ocaml skip
+:::fragment
+
+```text
 val apply_twice : ('a -> 'a) -> 'a -> 'a
 ```
 
@@ -501,6 +607,8 @@ val apply_twice : ('a -> 'a) -> 'a -> 'a
 Read left-to-right, inserting "and given an X, produces":
 
 > "given an `('a -> 'a)`, produces (given an `'a`, produces an `'a`)"
+
+:::
 
 :::
 
