@@ -331,11 +331,9 @@ can read it with `!Counter.n` and even *write* to it with
 
 ## Hiding internals
 
-- Inside a module you can define *helpers* not meant to be called
-  from outside.
-- **Without an interface** (next lecture), every definition is
-  visible.
-- **With an interface**, you control what escapes:
+- Helpers inside a module can be marked as not for outside use.
+- **Without an interface**, every definition is visible.
+- **With an interface** (next lecture), you control what escapes.
 
 ```ocaml
 module Counter = struct
@@ -345,14 +343,11 @@ module Counter = struct
 end
 
 let _ = Counter.next ()
-let _ = Counter.next ()
-let _ = !Counter.n  (* leaks: external code can poke at n directly *)
+let _ = !Counter.n  (* leaks: external code pokes at n *)
 ```
 
-`1`, `2`, `2`.
-
-- The `n` ref is **visible from outside**.
-- We'll see how to hide it in Lecture 5 with module signatures.
+`1`, `1`. The `n` ref is visible from outside; Lecture 5 hides it
+with a module signature.
 
 :::
 
@@ -396,13 +391,11 @@ let _ = p.Geometry.Point.x
 module Geometry = struct
   module Point = struct
     type t = { x : float; y : float }
-    let origin = { x = 0.0; y = 0.0 }
     let make x y = { x; y }
   end
 
   module Vector = struct
     type t = { dx : float; dy : float }
-    let zero = { dx = 0.0; dy = 0.0 }
   end
 end
 
@@ -410,12 +403,19 @@ let p = Geometry.Point.make 3.0 4.0
 let _ = p.Geometry.Point.x
 ```
 
-`float = 3.0`.
+`float = 3.0`. Sub-modules organize a tree of related concepts;
+access goes through the full path.
 
-- **Sub-modules organize a tree** of related concepts.
-- Access goes through the full path.
-- For a real project this is heavy: usually each `.ml` file is one
-  module and the file system gives you the tree.
+:::
+
+:::slide
+
+## In real projects, the file system gives you the tree
+
+- Each `.ml` file is one module.
+- A `geometry/` directory with `point.ml` and `vector.ml` inside is
+  the project-scale form of the nesting above.
+- Inline nesting is mostly for small single-file demos.
 
 :::
 
@@ -579,11 +579,15 @@ let _ = Stack.pop ()
 
 `Some 3`, `Some 3`, `Some 2`.
 
-- We push 1, 2, 3 (top is 3).
-- Peek gives `Some 3`; pop removes and returns 3, then 2.
-- There's *one* stack, shared by every caller: the simplest
-  design.
-- For multiple independent stacks we'd parameterize.
+:::
+
+:::slide
+
+## Notes on the stack solution
+
+- Push 1, 2, 3; peek gives `Some 3`; pop returns 3 then 2.
+- There's *one* stack, shared by every caller. Simplest design.
+- For multiple independent stacks: parameterize (Lecture 6).
 
 :::
 

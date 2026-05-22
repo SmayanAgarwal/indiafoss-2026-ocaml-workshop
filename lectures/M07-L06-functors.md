@@ -252,18 +252,14 @@ module Map = struct
     let empty = ...
     let add k v m = ...
     let find k m = ...
-    let find_opt k m = ...
-    ...
   end
 end
 ```
 
-- `Make` is a functor: takes a module satisfying the small
-  signature (a type `t` and a `compare`) and produces a full map
-  module.
-- The standard library's actual `Map.Make` is a few hundred lines
-  implementing a balanced binary search tree.
-- The *interface* is this same shape.
+`Make` is a functor: takes a module with `(type t, compare)` and
+returns a full map module. The stdlib's `Map.Make` is a few hundred
+lines of balanced-binary-search-tree code; the *interface* is this
+same shape.
 
 :::
 
@@ -321,9 +317,7 @@ parameterized over any ordered type.
 
 :::slide
 
-## Writing your own functor
-
-A toy `Set` functor:
+## Writing your own functor: the declaration
 
 ```ocaml
 module type ORDERED = sig
@@ -351,7 +345,17 @@ module SetLite (E : ORDERED) = struct
         else if c < 0 then x :: ys
         else y :: add x rest
 end
+```
 
+A toy set in maybe twenty lines, parameterized over any ordered type.
+
+:::
+
+:::slide
+
+## Applying the functor
+
+```ocaml
 module Int_set = SetLite (struct
   type t = int
   let compare = Stdlib.compare
@@ -362,10 +366,9 @@ let _ = Int_set.mem 5 s
 let _ = Int_set.mem 99 s
 ```
 
-`true`, `false`.
-
-- A toy set in maybe twenty lines, parameterized over any ordered
-  type.
+`true`, `false`. Apply with `SetLite (M)` where `M` satisfies
+`ORDERED`. `SetLite (String)` would give you a string set the same
+way.
 
 :::
 

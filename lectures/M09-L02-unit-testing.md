@@ -518,9 +518,8 @@ module Stack = struct
 end
 ```
 
-- A *value-oriented* stack: every operation takes a `Stack.t`.
-- Empty-stack operations raise `Empty` (good target for
-  `assert_raises`).
+A value-oriented stack: every operation takes a `Stack.t`;
+empty-stack ops raise `Empty` (target for `assert_raises`).
 
 :::
 

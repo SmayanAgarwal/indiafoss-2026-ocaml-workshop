@@ -68,17 +68,25 @@ let rec show : type a. a ty -> a -> string = fun t v ->
       "(" ^ show a x ^ ", " ^ show b y ^ ")"
   | T_list t' ->
       "[" ^ String.concat "; " (List.map (show t') v) ^ "]"
+```
 
+- `'a ty` is a *witness* for OCaml type `'a`.
+- `show t v` takes a witness and a value of the type it witnesses.
+
+:::
+
+:::slide
+
+## Using the typed pretty-printer
+
+```ocaml
 let _ = show T_int 42
 let _ = show (T_pair (T_int, T_string)) (3, "hi")
 let _ = show (T_list T_int) [1; 2; 3]
 ```
 
-`"42"`, `"(3, \"hi\")"`, `"[1; 2; 3]"`.
-
-- `ty` is a *witness* of the OCaml type of a value.
-- `show` takes a witness and a value of the type it witnesses.
-- Each case refines the type and unpacks the value accordingly.
+`"42"`, `"(3, \"hi\")"`, `"[1; 2; 3]"`. Each case of `show`
+refines the type and unpacks the value accordingly.
 
 :::
 
@@ -124,18 +132,6 @@ type _ hlist =
 
 let example : (int * (string * (bool * unit))) hlist =
   HCons (42, HCons ("hi", HCons (true, HNil)))
-```
-
-- The type spells out the tuple shape: an `int`, a `string`, a `bool`.
-- Pattern matching destructures with the right type per slot.
-
-```ocaml
-type _ hlist =
-  | HNil  : unit hlist
-  | HCons : 'a * 'rest hlist -> ('a * 'rest) hlist
-
-let example : (int * (string * (bool * unit))) hlist =
-  HCons (42, HCons ("hi", HCons (true, HNil)))
 
 let first : type a r. (a * r) hlist -> a = function
   | HCons (x, _) -> x
@@ -143,7 +139,9 @@ let first : type a r. (a * r) hlist -> a = function
 let _ = first example
 ```
 
-`int = 42`.
+`int = 42`. The type `(int * (string * (bool * unit))) hlist`
+spells out the sequence of element types; pattern matching
+destructures with the right type per slot.
 
 :::
 

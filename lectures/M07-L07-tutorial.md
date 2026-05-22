@@ -131,12 +131,9 @@ let q = enqueue 3 (enqueue 2 (enqueue 1 empty))
 let _ = dequeue q
 ```
 
-`Some (1, ...)`.
-
-- The first call to `dequeue` triggers the recursive case (front
-  is empty).
-- Reverses `back` into `front`, and recurses.
-- The next dequeue is O(1).
+`Some (1, ...)`. The first `dequeue` hits the recursive case (front
+empty), reverses `back` into `front`, and recurses. Subsequent
+dequeues are O(1).
 
 :::
 
@@ -195,10 +192,6 @@ surface.
 
 ## The signature
 
-- Callers should see only `'a t`, `empty`, `enqueue`, `dequeue`,
-  `is_empty`.
-- The representation should be **hidden**:
-
 ```ocaml
 module type QUEUE = sig
   type 'a t
@@ -207,14 +200,23 @@ module type QUEUE = sig
   val enqueue : 'a -> 'a t -> 'a t
   val dequeue : 'a t -> ('a * 'a t) option
 end
+```
 
+- Callers see only `'a t`, `empty`, `enqueue`, `dequeue`, `is_empty`.
+- `'a t` is **abstract**: the two-list representation is hidden.
+
+:::
+
+:::slide
+
+## Sealing the implementation
+
+```ocaml
 module Queue : QUEUE = struct
   type 'a t = { front : 'a list; back : 'a list }
 
   let empty = { front = []; back = [] }
-
   let is_empty q = q.front = [] && q.back = []
-
   let enqueue x q = { q with back = x :: q.back }
 
   let rec dequeue q =
@@ -226,14 +228,10 @@ end
 
 let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty))
 let _ = Queue.dequeue q
-let _ = Queue.is_empty Queue.empty
 ```
 
-`Some (1, ...)`, `true`.
-
-- From outside, `Queue.t` is **abstract**.
-- We can construct, enqueue, dequeue, check empty: that's it.
-- The two-list representation is **hidden**.
+`Some (1, ...)`. Outside, only the operations in `QUEUE` work; the
+record fields `front` / `back` are inaccessible.
 
 :::
 
@@ -322,19 +320,26 @@ then 2 then 3."
 
 :::slide
 
-## Turning it into a functor
+## Turning it into a functor: the parameter
 
-- Suppose we want a queue parameterized by element type, with a
-  typed-printer for elements.
-- The element type isn't free anymore.
-- We need a `pp` function on it.
+- Suppose we want a queue parameterised by element type, with a
+  printer for elements.
+- The element type isn't free anymore: we need a `to_string` on it.
 
 ```ocaml
 module type ELT = sig
   type t
   val to_string : t -> string
 end
+```
 
+:::
+
+:::slide
+
+## The functor body
+
+```ocaml
 module Make (E : ELT) = struct
   type elt = E.t
   type t = { front : elt list; back : elt list }
@@ -353,18 +358,29 @@ module Make (E : ELT) = struct
     let b = String.concat ", " (List.map E.to_string (List.rev q.back)) in
     print_endline ("[" ^ f ^ " | " ^ b ^ "]")
 end
+```
 
-module IQ = Make (struct type t = int let to_string = string_of_int end)
+`E.t` is the element type; `E.to_string` is its printer. The body
+is the same two-list queue plus a typed `print`.
+
+:::
+
+:::slide
+
+## Applying the functor
+
+```ocaml
+module IQ = Make (struct
+  type t = int
+  let to_string = string_of_int
+end)
 
 let q = IQ.enqueue 3 (IQ.enqueue 2 (IQ.enqueue 1 IQ.empty))
 let () = IQ.print q
 ```
 
-Prints `[ | 3, 2, 1]`.
-
-- The functor expects an element type with a `to_string`.
-- We pass an inline module providing `int` and `string_of_int`.
-- We get out a fully working int-queue with print capability.
+Prints `[ | 3, 2, 1]`. Pass an inline module providing `int` +
+`string_of_int`; get out a fully working int-queue with printing.
 
 :::
 
@@ -573,13 +589,16 @@ let _ = Queue.length q
 
 `int = 3`.
 
-- The signature now lists `length`; the implementation provides
-  it.
-- **Forget to add `length` to the module** and OCaml errors:
-  `Signature mismatch: missing value 'length'`.
-- **Add `length` to the signature without implementing it** and
-  you get the same error.
-- The compiler enforces both sides.
+:::
+
+:::slide
+
+## The compiler enforces both sides
+
+- Signature lists `length`; implementation provides it.
+- Forget `length` in the module → `Signature mismatch: missing
+  value 'length'`.
+- Forget `length` in the signature → it's inaccessible from outside.
 
 :::
 
@@ -609,20 +628,14 @@ silently.
 
 After Module 7 you can:
 
-- Use `ref`s and mutable record fields when imperative state is
-  the right tool.
+- Use `ref`s and mutable record fields when imperative state is right.
 - Use arrays for O(1) indexed access.
-- Raise and catch exceptions; choose between exceptions and
-  `option`/`result`.
-- Group definitions into modules; access them via `Module.value`.
+- Raise and catch exceptions; pick between exceptions and option/result.
+- Group definitions into modules.
 - Constrain a module by a signature to hide internals.
-- Use functors from the standard library (`Map.Make`, `Set.Make`).
-- Write your own simple functor.
+- Use stdlib functors (`Map.Make`, `Set.Make`); write your own.
 
-Module 8 covers **monads and GADTs**:
-
-- Two abstractions for sequencing computations cleanly.
-- And for encoding richer type-level information.
+Next: Module 8 covers **monads and GADTs**.
 
 :::
 

@@ -107,15 +107,27 @@ let demo s =
           match small y with
           | None -> None
           | Some z -> print_num z
+```
 
+- Four steps, four `match`es, four `None -> None` clauses.
+- Interesting logic buried four levels deep; the `None -> None`
+  arms say nothing about the program.
+
+:::
+
+:::slide
+
+## The pyramid in use
+
+```ocaml
 let _ = demo "5"
 let _ = demo "frog"
 let _ = demo "100"
 ```
 
-- Four steps, four `match`es, four `None -> None` clauses.
-- The interesting logic is buried four levels deep.
-- The `None -> None` arms are pure noise: they say nothing about the program.
+- `"5"` → `Some 10`, printed and returned.
+- `"frog"` → fails at parse; `None`.
+- `"100"` → doubles to 200, fails the `< 100` check; `None`.
 
 :::
 
@@ -233,11 +245,6 @@ let ( let* ) opt f =
   | None -> None
   | Some x -> f x
 
-let parse_int s = int_of_string_opt s
-let twice x = Some (x * 2)
-let small x = if x < 100 then Some x else None
-let print_num x = print_endline (string_of_int x); Some ()
-
 let demo s =
   let* x = parse_int s in
   let* y = twice x in
@@ -247,8 +254,8 @@ let demo s =
 let _ = demo "5"
 ```
 
-- Each step is a `let* name = expression in ...`.
-- Looks almost identical to ordinary `let name = expression in ...`.
+- Each step is `let* name = expression in ...`.
+- Looks almost identical to ordinary `let ... in ...`.
 - Hidden: if any step gives `None`, the rest is skipped.
 - This is what is meant by *the option monad*.
 

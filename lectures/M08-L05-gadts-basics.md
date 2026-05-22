@@ -153,21 +153,23 @@ let e1 : int expr = Add (Int_lit 1, Int_lit 2)
 let e2 : int expr = If (Bool_lit true, Int_lit 5, Int_lit 10)
 ```
 
-- Both compile.
-- `Add` is given two `int expr`s.
-- `If` has a `bool expr` condition and two `int expr` branches.
+Both compile. `Add` is given two `int expr`s; `If` has a
+`bool expr` condition and matching branches.
 
-Try the broken versions:
+:::
+
+:::slide
+
+## The broken versions are caught at compile time
 
 ```
 let bad = Add (Int_lit 1, Bool_lit true)
 let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
 ```
 
-- Type errors.
 - `Add` rejects `Bool_lit true`: it wants `int expr`.
 - `If` rejects `Int_lit 5` as a condition: it wants `bool expr`.
-- A dynamically-typed AST would raise a runtime error here.
+- A dynamically-typed AST raises a *runtime* error here.
 - A GADT-typed AST raises a *compile* error.
 
 :::
@@ -208,12 +210,6 @@ OCaml *refines* the type index based on which one it was.
 ## Pattern matching: type refinement
 
 ```ocaml
-type _ expr =
-  | Int_lit  : int  -> int expr
-  | Bool_lit : bool -> bool expr
-  | Add      : int expr * int expr -> int expr
-  | If       : bool expr * 'a expr * 'a expr -> 'a expr
-
 let rec eval : type a. a expr -> a = function
   | Int_lit  n -> n
   | Bool_lit b -> b
@@ -226,11 +222,10 @@ let _ = eval (If (Bool_lit true, Int_lit 5, Int_lit 10))
 
 `7`, `5`. Two new things:
 
-- `let rec eval : type a. a expr -> a = ...`: a *locally abstract
-  type* annotation. "For any `a`, this function takes an `a expr`
-  and returns an `a`."
-- Each case refines `a`: in `Int_lit n -> n`, the constructor type
-  forces `a = int`, so `n : int` matches the return type.
+- `type a. ...` is a *locally abstract type* annotation: "for any
+  `a`, this function takes an `a expr` and returns an `a`."
+- Each case refines `a`: `Int_lit n -> n` forces `a = int`, so
+  `n : int` matches the return type.
 
 :::
 
@@ -462,23 +457,26 @@ let _ = eval (If (Bool_lit true, Int_lit 5, Int_lit 10))
 let _ = eval (If (Bool_lit false, Bool_lit true, Bool_lit false))
 ```
 
-`5`, `false`.
+`5`, `false`. The `If` constructor's type forces the branches to
+match each other and the condition to be `bool expr`.
 
-Try:
+:::
+
+:::slide
+
+## A bad `If` is a compile error
 
 ```ocaml skip
 let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
 ```
 
-OCaml refuses:
-
 ```
-Error: This expression has type int expr but an expression was
+Error: The constant 5 has type int but an expression was
        expected of type bool expr
 ```
 
-- The compiler enforces that `If`'s condition is `bool expr`.
-- `Int_lit 5 : int expr` does not fit.
+`Int_lit 5 : int expr` does not fit `If`'s `bool expr` slot. The
+compiler enforces it.
 
 :::
 

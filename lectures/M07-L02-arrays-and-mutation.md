@@ -233,10 +233,8 @@ needs to *jump* to arbitrary positions, an array is the right tool.
 | Sharing tails | yes | no |
 | Equational reasoning | yes | no for mutated cells |
 
-- **Arrays**: fast random access by index, size fixed.
-- **Lists**: traversing front-to-back, immutability.
-- **Neither fits dynamic-size, indexed access**: reach for
-  `Dynarray` (OCaml 5.2) or `Buffer` (for byte strings).
+- **Arrays**: fast random access; **lists**: front-to-back + immutability.
+- Dynamic size + indexed access: reach for `Dynarray` or `Buffer`.
 
 :::
 
@@ -608,9 +606,16 @@ let _ = a
 - Returns `unit`; effect is to mutate `a`.
 - **Two-pointer reverse:** swap `a.(i)` and `a.(n-1-i)`, halfway.
 - `for ... to ... do ... done`: OCaml's imperative loop.
-- Destructive: original values are lost.
-- Immutable alternative: `Array.of_list (List.rev (Array.to_list
-  a))`, or keep it as a list.
+
+:::
+
+:::slide
+
+## Destructive vs immutable
+
+- The in-place version *loses* the original ordering of `a`.
+- Immutable alternative: `Array.of_list (List.rev (Array.to_list a))`.
+- Or simpler: keep the data as a list and use `List.rev` directly.
 
 :::
 

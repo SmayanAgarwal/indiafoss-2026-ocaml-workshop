@@ -262,10 +262,8 @@ let suite =
   ]
 ```
 
-- One leaf case.
-- One case per binary operator, with asymmetric inputs.
-- One nested case to exercise recursion.
-- One edge case (division by zero → infinity).
+One leaf case, one per binary operator with asymmetric inputs, one
+nested case to exercise recursion, one edge case (div-by-zero → ∞).
 
 :::
 

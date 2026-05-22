@@ -84,6 +84,12 @@ let ( |> ) x f = f x
 - The only reason it exists: write chains in the order they happen,
   instead of inside-out.
 
+:::
+
+:::slide
+
+## A pipeline in action
+
 ```ocaml
 let _ =
   [1; 2; 3; 4; 5]
@@ -97,7 +103,7 @@ let _ =
 - Squares of 1-5: `[1;4;9;16;25]`.
 - Keep those > 5: `[9;16;25]`.
 - Sum: `50`.
-- Read top-to-bottom: start with a list, square, filter, sum.
+- Read top-to-bottom: list, square, filter, sum.
 
 :::
 
@@ -362,16 +368,8 @@ let _ = normalize_words "  Hello World  "
 
 `["hello"; "world"]`.
 
-Each step is a clear transformation:
-
-- Lowercase the whole string.
-- Split on spaces.
-- Drop empty pieces.
-- Trim each piece.
-
-- `text` is named at the top.
-- Inside the pipeline, each function receives an *unnamed* value
-  (the previous step's output).
+- `text` is named at the top; inside the pipeline, each function
+  receives an *unnamed* value (the previous step's output).
 - Readable middle ground between "tons of lambdas" and "deep parens".
 
 :::

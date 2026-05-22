@@ -152,19 +152,24 @@ let () = Counter.reset ()
 let _ = Counter.next ()
 ```
 
-`1`, `2`, `1`.
+`1`, `2`, `1`. Counter compiles because every value listed in
+`COUNTER` is provided by the struct.
 
-- The module compiles because every value listed in `COUNTER`
-  (`next`, `reset`) is provided by the struct.
-- The internal `n` is **not listed** in the signature, so it's
-  hidden:
+:::
+
+:::slide
+
+## The signature hides what it doesn't mention
+
+The internal `n` is **not listed** in `COUNTER`, so it's hidden:
 
 ```ocaml skip
 let _ = !Counter.n  (* error: Unbound value Counter.n *)
 ```
 
-- The signature acts as a *type-level wall* between the
-  implementation and the outside world.
+- The signature is a *type-level wall* between implementation and
+  the outside world.
+- `n` is not just inaccessible: from the outside, it doesn't exist.
 
 :::
 
@@ -273,8 +278,7 @@ can pass around but cannot look inside.
 
 ## Abstract types
 
-- A signature can hide not just *values* but the **type** of a
-  module's representation:
+A signature can hide the **type** of a module's representation:
 
 ```ocaml
 module type STACK = sig
@@ -292,19 +296,33 @@ module Stack : STACK = struct
     | [] -> None
     | x :: rest -> Some (x, rest)
 end
+```
 
+:::
+
+:::slide
+
+## Using the abstract `Stack`
+
+```ocaml
 let s = Stack.push 1 (Stack.push 2 (Stack.push 3 Stack.empty))
 let _ = Stack.pop s
 ```
 
-`Some (1, ...)`.
+`Some (1, ...)`. From outside, `Stack.t` is opaque; you can only
+build stacks via `empty` + `push` and take them apart via `pop`.
 
-- From outside, `Stack.t` is an **abstract type**: you don't know
-  it's a list.
-- You can only manipulate stacks through the operations `empty`,
+:::
+
+:::slide
+
+## Why abstract types matter
+
+- From outside, `Stack.t` is **abstract**: you can't tell it's a list.
+- The only way to make or take apart a stack is through `empty`,
   `push`, `pop`.
-- If you change the representation later (to a `Dynarray`, to two
-  lists for amortized cost), no external code notices.
+- Change the representation later (Dynarray, two-list amortized,
+  ...) and no external code notices.
 
 :::
 
@@ -361,8 +379,7 @@ abstraction is enforced project-wide.
 
 ## `.mli` files: the same idea, in a separate file
 
-- In a real project, `foo.ml` is the implementation and `foo.mli`
-  is the interface.
+- `foo.ml` is the implementation; `foo.mli` is the interface.
 - The compiler enforces that `foo.ml` matches `foo.mli`.
 
 ```
@@ -376,11 +393,9 @@ let next () = incr n; !n
 let reset () = n := 0
 ```
 
-- Same pattern as the inline signature, with two benefits:
-  - The interface lives in a separate file (a clean read).
-  - Only the things in `.mli` are visible to other modules.
-- For the toplevel cells in these lectures we use inline
-  signatures; in your projects you'll see `.mli` files everywhere.
+Inline `module M : S = struct ... end` is the same idea; `.mli` is
+just the disk-file form. We use inline in lecture cells; you'll
+see `.mli` files in real projects.
 
 :::
 
@@ -513,10 +528,16 @@ module String_ord : ORDERED = struct
 end
 ```
 
-- Two modules implementing the same signature.
-- We've encoded by hand what Haskell calls a "type class" (`Ord`):
-  a module with a `compare` operation on its abstract type.
-- This is the **basis of functors**, which we cover next.
+:::
+
+:::slide
+
+## What `ORDERED` buys you
+
+- Two modules implementing the *same* signature.
+- This is what Haskell calls a "type class" (`Ord`), encoded by
+  hand: a module with `compare` on an abstract `t`.
+- It's the **basis of functors**, which we cover next.
 
 :::
 
@@ -638,12 +659,8 @@ let () = Counter.reset ()
 let _ = Counter.next ()
 ```
 
-`1`, `2`, `1`.
-
-- Try `let _ = !Counter.n` and you get a compile error:
-  `Unbound value Counter.n`.
-- The signature hides it.
-- We can only interact through `next` and `reset`.
+`1`, `2`, `1`. Try `let _ = !Counter.n` and the compiler refuses with
+`Unbound value Counter.n`. The signature has hidden it.
 
 :::
 

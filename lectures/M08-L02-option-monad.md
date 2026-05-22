@@ -129,9 +129,8 @@ let _ = demo "200"
 ```
 
 - Results: `Some 10`, `None`, `None`.
-- Each `let* y = expr in` says: compute `expr`; if `None`, short-circuit.
-- Otherwise bind `y` and continue.
-- Reads like ordinary `let ... in ...` sequencing.
+- Each `let* y = expr in` says: compute `expr`; if `None`,
+  short-circuit; otherwise bind `y` and continue.
 
 :::
 
@@ -224,16 +223,27 @@ let parse_pair s =
         let* y = int_of_string_opt (String.trim b) in
         Some (x, y)
     | _ -> None
+```
 
+- The two `int_of_string_opt` calls can each fail.
+- `let*` short-circuits on the first failure; otherwise the final
+  `Some (x, y)` packages both successes.
+
+:::
+
+:::slide
+
+## Trying the parser
+
+```ocaml
 let _ = parse_pair "(3, 4)"
 let _ = parse_pair "(3, x)"
 let _ = parse_pair "frog"
 ```
 
-- `Some (3, 4)`, `None`, `None`.
-- The two `int_of_string_opt` calls can each fail.
-- `let*` short-circuits on the first failure.
-- The final `Some (x, y)` packages both successes.
+`Some (3, 4)`, `None`, `None`. The inner `let*` short-circuits on
+the bad inner number; the outer `if`/`match` catches malformed
+shapes before we even get to the integers.
 
 :::
 

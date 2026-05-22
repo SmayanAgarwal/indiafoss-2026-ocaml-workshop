@@ -143,10 +143,16 @@ let rec eval : type a. a expr -> a = function
   | If (c, t, e) -> if eval c then eval t else eval e
 ```
 
-- `type a. a expr -> a`: for any `a`, an `a expr` evaluates to an `a`.
-- Each branch refines `a` based on the constructor that matched.
-- `Int_lit n -> n`: `a = int`, `n : int`, returning `int`.
-- `Bool_lit b -> b`: `a = bool`, `b : bool`, returning `bool`.
+`type a. a expr -> a`: for any `a`, an `a expr` evaluates to `a`.
+
+:::
+
+:::slide
+
+## What each branch refines
+
+- `Int_lit n -> n`: `a = int`; return type is `int`.
+- `Bool_lit b -> b`: `a = bool`; return type is `bool`.
 - `Add` and `Mul`: `a = int`, returning the int result.
 - `Eq_int`: `a = bool`, returning the comparison result.
 - `If`: `a` unchanged; both branches evaluate to `a`.
@@ -181,22 +187,6 @@ Let us try the evaluator on a couple of expressions:
 ## Building expressions
 
 ```ocaml
-type _ expr =
-  | Int_lit  : int -> int expr
-  | Bool_lit : bool -> bool expr
-  | Add      : int expr * int expr -> int expr
-  | Mul      : int expr * int expr -> int expr
-  | If       : bool expr * 'a expr * 'a expr -> 'a expr
-  | Eq_int   : int expr * int expr -> bool expr
-
-let rec eval : type a. a expr -> a = function
-  | Int_lit  n  -> n
-  | Bool_lit b  -> b
-  | Add (a, b)  -> eval a + eval b
-  | Mul (a, b)  -> eval a * eval b
-  | Eq_int (a, b) -> eval a = eval b
-  | If (c, t, e) -> if eval c then eval t else eval e
-
 (* (1 + 2) * 3 = 9 *)
 let e1 = Mul (Add (Int_lit 1, Int_lit 2), Int_lit 3)
 
@@ -210,11 +200,8 @@ let _ = eval e1
 let _ = eval e2
 ```
 
-`9` and `100`.
-
-- `e1` is `(1 + 2) * 3`. Type: `int expr`. Evaluation: `9`.
-- `e2` is `if 1 + 2 = 3 then 100 else 200`. Type: `int expr`.
-  Evaluation: `100` (the equality holds).
+`9` and `100`. `e1` is `(1 + 2) * 3` (int expr). `e2` is
+`if 1 + 2 = 3 then 100 else 200` (int expr, equality holds).
 
 :::
 
@@ -279,32 +266,23 @@ expr`s and produces a `bool expr`:
 
 ## Adding a comparison: `<`
 
-```ocaml
-type _ expr =
-  | Int_lit  : int -> int expr
-  | Bool_lit : bool -> bool expr
-  | Add      : int expr * int expr -> int expr
-  | Mul      : int expr * int expr -> int expr
-  | If       : bool expr * 'a expr * 'a expr -> 'a expr
-  | Eq_int   : int expr * int expr -> bool expr
-  | Less     : int expr * int expr -> bool expr
+Add one constructor to `expr` and one case to `eval`:
 
-let rec eval : type a. a expr -> a = function
-  | Int_lit  n  -> n
-  | Bool_lit b  -> b
-  | Add (a, b)  -> eval a + eval b
-  | Mul (a, b)  -> eval a * eval b
-  | Eq_int (a, b) -> eval a = eval b
-  | Less (a, b)   -> eval a < eval b
-  | If (c, t, e) -> if eval c then eval t else eval e
+```ocaml skip
+  | Less : int expr * int expr -> bool expr
+```
 
+```ocaml skip
+  | Less (a, b) -> eval a < eval b
+```
+
+```ocaml skip
 let _ = eval (If (Less (Int_lit 3, Int_lit 5), Int_lit 1, Int_lit 0))
 ```
 
-`1` (3 < 5 is true).
-
-- Compiler made us add a case to `eval` (exhaustiveness warning).
-- Type refinement still works: `a = bool` in the `Less` case.
+`1` (3 < 5 is true). Compiler forces us to add the `eval` case
+via exhaustiveness; type refinement gives us `a = bool` inside
+the `Less` branch.
 
 :::
 
@@ -326,16 +304,7 @@ type index:
 
 ## Adding a pretty printer
 
-```ocaml
-type _ expr =
-  | Int_lit  : int -> int expr
-  | Bool_lit : bool -> bool expr
-  | Add      : int expr * int expr -> int expr
-  | Mul      : int expr * int expr -> int expr
-  | If       : bool expr * 'a expr * 'a expr -> 'a expr
-  | Eq_int   : int expr * int expr -> bool expr
-  | Less     : int expr * int expr -> bool expr
-
+```ocaml skip
 let rec pretty : type a. a expr -> string = function
   | Int_lit n -> string_of_int n
   | Bool_lit b -> string_of_bool b
@@ -352,11 +321,9 @@ let _ = pretty
        Mul (Int_lit 4, Int_lit 5)))
 ```
 
-A string like `"(if (3 < 5) then (1 + 2) else (4 * 5))"`.
-
-- `pretty : 'a expr -> string`.
-- Return type is always `string`, regardless of `a`.
-- The result type does not have to depend on `a`.
+`"(if (3 < 5) then (1 + 2) else (4 * 5))"`. Return type is always
+`string`, regardless of `a`; consume-a-GADT/produce-a-fixed-type
+is a common pattern (hashers, size estimators, printers).
 
 :::
 
@@ -405,12 +372,8 @@ let _ = eval_safe (Div (Int_lit 10, Int_lit 2))
 let _ = eval_safe (Div (Int_lit 10, Int_lit 0))
 ```
 
-`Some 5`, `None`.
-
-- GADT-typed AST handles compile-time type safety.
-- Option monad handles runtime failure (division by zero).
-- The two layers compose: type safety where the type system can
-  prove it, monadic failure where it cannot.
+`Some 5`, `None`. GADT rules out type errors at compile time;
+option monad handles the runtime "divide by zero" case.
 
 :::
 

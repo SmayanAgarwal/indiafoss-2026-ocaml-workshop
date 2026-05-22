@@ -285,11 +285,8 @@ let _ = f ()
 
 `Some "first call"`, `None`, `None`.
 
-- The closure captures `used`.
-- The first call sets it; subsequent calls see it set and return
-  `None`.
-- This pattern (**private mutable state inside a function**, shared
-  by all calls) is one of the cleanest uses of `ref`.
+- The closure captures `used`; first call sets it, later calls see it.
+- **Private mutable state inside a function**: a clean use of `ref`.
 
 :::
 
@@ -341,10 +338,13 @@ The operators `!` and `:=` are just shorthand:
 
 - `!r` is `r.contents`.
 - `r := x` is `r.contents <- x`.
-- `ref` is **not a magic builtin**: it's a record with one mutable
-  field, packaged for convenience.
-- Anywhere you'd want named mutable state, you can use a `mutable`
-  record field directly:
+- `ref` is **not a magic builtin**: a record with one mutable field.
+
+:::
+
+:::slide
+
+## Use a `mutable` field directly when it reads better
 
 ```ocaml
 type counter = { mutable n : int }
@@ -633,12 +633,14 @@ let _ = next ()
 
 `1`, `2`, `3`.
 
-- The closure captures `n`.
-- Each call increments and reads.
-- `incr n` is shorthand for `n := !n + 1`.
-- `decr` exists too for the other direction.
-- Two different counters made from `make_counter ()` have
-  *independent* state:
+- The closure captures `n`; each call increments and reads.
+- `incr n` is shorthand for `n := !n + 1`; `decr` is the other direction.
+
+:::
+
+:::slide
+
+## Two counters have independent state
 
 ```ocaml
 let make_counter () =
@@ -650,7 +652,8 @@ let b = make_counter ()
 let _ = a (), a (), a (), b (), b ()
 ```
 
-`(1, 2, 3, 1, 2)`. The closures don't share their `n`.
+`(1, 2, 3, 1, 2)`. Each call to `make_counter ()` allocates a fresh
+`n` captured by a fresh closure; `a` and `b` don't share state.
 
 :::
 

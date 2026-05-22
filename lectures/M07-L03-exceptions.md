@@ -314,13 +314,8 @@ let _ =
 `120`, `-1`.
 
 - Custom exceptions can carry a **payload**:
-
-```ocaml skip
-exception Parse_error of string * int  (* message, line *)
-```
-
-- Raise: `raise (Parse_error ("unexpected token", 42))`.
-- Catch with `Parse_error (msg, line) -> ...`.
+  `exception Parse_error of string * int`, raised as
+  `raise (Parse_error ("unexpected token", 42))`.
 
 :::
 

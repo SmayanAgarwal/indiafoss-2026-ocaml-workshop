@@ -67,15 +67,20 @@ A "stateful computation that produces an `'a`" is a function:
 state -> ('a * state)
 ```
 
-- Takes the current state.
-- Returns both a value and the *new* state.
-- Each step receives the previous state and produces the next.
-
-We will make the state an `int` (a counter):
+Each step takes the current state and returns both a value and the
+*new* state. We make the state an `int` (a counter):
 
 ```ocaml
 type 'a state = int -> 'a * int
+```
 
+:::
+
+:::slide
+
+## `return` and `bind` for state
+
+```ocaml
 let return x : 'a state = fun s -> (x, s)
 
 let bind (m : 'a state) (f : 'a -> 'b state) : 'b state =
@@ -87,7 +92,7 @@ let ( let* ) = bind
 ```
 
 - `return x`: leave state unchanged, produce value `x`.
-- `bind m f`: run `m`, thread its state into `f`.
+- `bind m f`: run `m`, thread its output state into `f`.
 
 :::
 
@@ -186,7 +191,17 @@ let gensym prefix : string state =
   let* n = get in
   let* () = put (n + 1) in
   return (prefix ^ "_" ^ string_of_int n)
+```
 
+`gensym`: read current counter, increment it, return a fresh name.
+
+:::
+
+:::slide
+
+## Running gensym three times
+
+```ocaml
 let program =
   let* a = gensym "x" in
   let* b = gensym "x" in
@@ -196,11 +211,9 @@ let program =
 let _ = run program 1
 ```
 
-`(("x_1", "x_2", "y_3"), 4)`.
-
-- State starts at `1`, ends at `4` (three calls to `gensym`).
-- The names are fresh and ordered.
-- No `ref`, no mutation: the counter is threaded.
+`(("x_1", "x_2", "y_3"), 4)`. State starts at 1, ends at 4 (three
+calls); names are fresh and ordered; no `ref`, no mutation, the
+counter is threaded through the `let*` chain.
 
 :::
 
@@ -241,22 +254,26 @@ let gensym_ref prefix =
   let n = !counter in
   counter := n + 1;
   prefix ^ "_" ^ string_of_int n
-
-let _ = gensym_ref "x"
-let _ = gensym_ref "x"
-let _ = gensym_ref "y"
 ```
 
-Two-line function. Easy to write. And:
+Two-line function, easy to write. But:
 
-- The function is *not* pure. Calling twice gives different answers.
-- Equational reasoning is gone for any function that touches `counter`.
-- Tests cannot reset the counter without poking the implementation.
-- Parallel computation would race on the counter.
+- Not pure: calling twice gives different answers.
+- Equational reasoning gone for any function touching `counter`.
+- Tests can't reset without poking the implementation.
+- Parallel code races on the counter.
 
-- State monad version is purer (counter is data, not a side effect).
-- At small scales it is overkill.
-- At larger scales (compilers, type inference, parsers) it pays off.
+:::
+
+:::slide
+
+## Pick `ref` vs state monad by scale
+
+- Small one-off counter: `ref` is fine.
+- A whole module of state-threading computations: the monad pays
+  off (state in the type, local reasoning at each step).
+- Parallel / concurrent code: the monad is safer but more painful;
+  `ref` is shorter but races.
 
 :::
 
@@ -286,11 +303,10 @@ in let* () = put (n + 1) in` ritual:
 
 :::slide
 
-## A "labelled" version
+## A "labelled" version: the monad
 
 ```ocaml
 type counter_state = int
-
 type 'a t = counter_state -> 'a * counter_state
 
 let return x : 'a t = fun s -> (x, s)
@@ -304,7 +320,18 @@ let fresh prefix : string t =
   fun s -> (prefix ^ "_" ^ string_of_int s, s + 1)
 
 let run m initial = m initial
+```
 
+`fresh` is a one-liner that names the convention: increments the
+counter and returns the next prefixed name.
+
+:::
+
+:::slide
+
+## Using the labelled version
+
+```ocaml
 let prog =
   let* a = fresh "x" in
   let* b = fresh "y" in
@@ -314,10 +341,8 @@ let prog =
 let _ = run prog 1
 ```
 
-`(["x_1"; "y_2"; "z_3"], 4)`.
-
-- `fresh` is a one-liner that names the convention.
-- The user-facing program is three `let*`s plus a `return`.
+`(["x_1"; "y_2"; "z_3"], 4)`. The user-facing program is three
+`let*`s and a `return`; `get` and `put` don't appear.
 
 :::
 
@@ -418,7 +443,7 @@ it three times and inspect the final state.
 
 :::slide
 
-## Activity solution
+## Activity solution: setup
 
 ```ocaml
 type 'a state = int -> 'a * int
@@ -428,7 +453,17 @@ let ( let* ) = bind
 let get s = (s, s)
 let put n _ = ((), n)
 let run m initial = m initial
+```
 
+The seven definitions: the type, monad operations, and primitives.
+
+:::
+
+:::slide
+
+## Activity solution: gensym
+
+```ocaml
 let gensym prefix : string state =
   let* n = get in
   let* () = put (n + 1) in
@@ -443,11 +478,8 @@ let program =
 let _ = run program 0
 ```
 
-`(["v_0"; "v_1"; "v_2"], 3)`.
-
-- State starts at `0`, ends at `3` (next available).
-- Three fresh names produced.
-- State threaded through the `let*` chain, no `ref` in sight.
+`(["v_0"; "v_1"; "v_2"], 3)`. Counter threaded through `let*`,
+no `ref` in sight.
 
 :::
 

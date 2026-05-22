@@ -100,17 +100,25 @@ let demo s =
   let* x = parse_int_msg s in
   let* y = double_r x in
   small_r y
+```
 
+Same shape as the option monad; failure now carries an informative
+message instead of just `None`.
+
+:::
+
+:::slide
+
+## Trying the result-monad demo
+
+```ocaml
 let _ = demo "5"
 let _ = demo "frog"
 let _ = demo "200"
 ```
 
-`Ok 10`, `Error "not an int: frog"`, `Error "too big"`.
-
-- Same shape as the option monad.
-- The difference: failure carries an *informative* message.
-- The first failure to fire is the one returned.
+`Ok 10`, `Error "not an int: frog"`, `Error "too big"`. The first
+failure to fire is the one returned; later steps don't run.
 
 :::
 
@@ -298,18 +306,14 @@ let combine a b =
   | Error e1, Error e2 -> Error (e1 @ e2)
   | Error e, Ok _ | Ok _, Error e -> Error e
 
-let _ = combine (validate_int "1") (validate_int "2")
-let _ = combine (validate_int "frog") (validate_int "2")
 let _ = combine (validate_int "frog") (validate_int "bar")
 ```
 
-`Ok (1, 2)`, `Error ["frog is not an int"]`,
 `Error ["frog is not an int"; "bar is not an int"]`.
 
-- The error type is a `string list`; `combine` accumulates.
-- This is the *applicative* (validation) shape.
-- Runs both arms regardless and aggregates failures.
-- Not a strict monad (later step does not depend on earlier value).
+- Error type is `string list`; `combine` accumulates.
+- The *applicative* (validation) shape: runs both arms regardless
+  and aggregates failures. Not a strict monad.
 
 :::
 
@@ -437,7 +441,18 @@ let parse_pair_r s =
         let* y = int_or_err "second" (String.trim b) in
         Ok (x, y)
     | _ -> Error "expected exactly one comma"
+```
 
+The two `let*`s short-circuit on the first parse failure; the error
+carries a useful prefix ("first" vs "second").
+
+:::
+
+:::slide
+
+## The activity solution in action
+
+```ocaml
 let _ = parse_pair_r "(3, 4)"
 let _ = parse_pair_r "(3, frog)"
 let _ = parse_pair_r "frog"
@@ -445,9 +460,6 @@ let _ = parse_pair_r "frog"
 
 `Ok (3, 4)`, `Error "second: not an int: frog"`,
 `Error "expected '(... , ...)'"`.
-
-- The two `let*`s short-circuit on the first parse failure.
-- The error carries a useful prefix ("first" vs "second").
 
 :::
 
