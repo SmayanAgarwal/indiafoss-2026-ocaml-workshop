@@ -35,29 +35,57 @@
 
 ### M02: Expressions (6 lectures)
 
-| Lecture | Topic | Video (min) | Recording (min) |
-|---|---|---:|---:|
-| M02-L01 | Literals: integers, floats, booleans, strings | 22 | 31 |
-| M02-L02 | `let` bindings and shadowing | 22 | 31 |
-| M02-L03 | Static vs dynamic semantics, and type inference | 26 | 37 |
-| M02-L04 | Operators, precedence, and common pitfalls | 22 | 31 |
-| M02-L05 | `if`/`then`/`else` as an expression | 25 | 35 |
-| M02-L06 | Tutorial: small expressions, end to end | 28 | 40 |
-| **M02 total** | | **145** | **205** |
-| | | **(2.4 h)** | **(3.4 h)** |
+Re-estimated 2026-05-22 after the M02 polish pass (Expressions /
+Values intro, six primitive literal kinds, derivation tree,
+operator-precedence compaction, in_range quiz, static-block
+parens example, shipping_label demo fix). Estimate uses
+slide_count x 1.5 min, calibrated against M01's per-lecture
+ratio (average 1.49).
+
+| Lecture | Topic | Slides | Video (min) | Recording (min) |
+|---|---|---:|---:|---:|
+| M02-L01 | Literals: integers, floats, booleans, strings | 20 | 30 | 42 |
+| M02-L02 | `let` bindings and shadowing | 16 | 24 | 34 |
+| M02-L03 | Static vs dynamic semantics, and type inference | 15 | 23 | 32 |
+| M02-L04 | Operators, precedence, and common pitfalls | 13 | 20 | 28 |
+| M02-L05 | `if`/`then`/`else` as an expression | 14 | 21 | 29 |
+| M02-L06 | Tutorial: small expressions, end to end | 11 | 17 | 24 |
+| **M02 total** | | **89** | **135** | **189** |
+| | | | **(2.2 h)** | **(3.1 h)** |
+
+M02-L01 sits at the 30 min NPTEL upper bound (the Expressions /
+Values / six-literal-kinds opening grew the lecture). M02-L06 is
+just below the 20 min lower bound; that is fine for a tutorial
+but worth flagging if NPTEL wants strict 20-30 min videos. The
+old M02 estimate was 145 video min / 205 recording min, so the
+polish net-shrunk M02 by about 10 video minutes.
 
 ### M03: Functions (6 lectures)
 
-| Lecture | Topic | Video (min) | Recording (min) |
-|---|---|---:|---:|
-| M03-L01 | Functions as values, and anonymous functions | 24 | 34 |
-| M03-L02 | Recursion | 25 | 35 |
-| M03-L03 | Currying and partial application | 24 | 34 |
-| M03-L04 | Tail recursion and accumulators | 25 | 35 |
-| M03-L05 | Local functions and mutual recursion | 22 | 31 |
-| M03-L06 | Tutorial: Fibonacci, GCD, list helpers | 28 | 40 |
-| **M03 total** | | **148** | **209** |
-| | | **(2.5 h)** | **(3.5 h)** |
+Re-estimated 2026-05-22 after the M03 polish pass (closure
+formalisation, anonymous-fn split, polymorphism forward pointer,
+sum_to demo input 10_000, tail-rec map deferred to M06-L02,
+list-length dropped, M03-L05 list-free with mod3 activity,
+M03-L06 list-free with fast_power and is_prime).
+
+| Lecture | Topic | Slides | Video (min) | Recording (min) |
+|---|---|---:|---:|---:|
+| M03-L01 | Functions as values, and anonymous functions | 18 | 27 | 38 |
+| M03-L02 | Recursion | 15 | 23 | 32 |
+| M03-L03 | Currying and partial application | 14 | 21 | 29 |
+| M03-L04 | Tail recursion and accumulators | 12 | 18 | 25 |
+| M03-L05 | Local functions and mutual recursion | 10 | 15 | 21 |
+| M03-L06 | Tutorial: Fibonacci, GCD, power, digits | 11 | 17 | 24 |
+| **M03 total** | | **80** | **121** | **169** |
+| | | | **(2.0 h)** | **(2.8 h)** |
+
+M03-L05 and M03-L06 drop just below the NPTEL 20 min lower
+bound. Both are post-list-removal, so the shrinkage is real
+content reduction, not slide-density change. Both have headroom
+to grow if NPTEL wants strict 20 min minimums (more worked
+examples, more tracing, etc.). The old M03 estimate was 148 video
+min / 209 recording min, so the polish net-shrunk M03 by about
+27 video minutes, driven by the M03-L04 / L05 / L06 list-removal.
 
 ### M04: Data types (6 lectures)
 
@@ -175,15 +203,18 @@
 
 ## Course totals
 
-- **Final video**: 1620 min (27.0 hours) across
+- **Final video**: 1583 min (26.4 hours) across
   68 lectures and 12 modules.
-- **Estimated recording time**: 2281 min (38.0 hours)
+- **Estimated recording time**: 2225 min (37.1 hours)
   at the 1.4× multiplier.
 
-The 27 hours of final video falls slightly under NPTEL's ~30
-hr target; that's expected, since the original sketch reserved
-a margin and the secure-systems half landed on the lower end
-of the 25-min-per-lecture window.
+The 26.4 hours of final video falls slightly under NPTEL's ~30
+hr target; that is expected, since the original sketch reserved
+a margin, and the M03 list-removal pass plus the secure-systems
+half landed on the lower end of the 25-min-per-lecture window.
+Numbers reflect the 2026-05-22 re-estimate for M02 and M03
+(slide_count x 1.5); M01 and M04+ still use the authoring-time
+duration_target_min.
 
 ## Studio session planning
 
@@ -191,7 +222,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **38 hours of recording / 4.3 hours per day = ~9 studio days.**
+- **37 hours of recording / 4.3 hours per day = ~9 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -199,8 +230,8 @@ sessions:
 | Module | Recording (h) | Studio days @ 4.3 h |
 |---|---:|---:|
 | M01 Intro to functional programming | 2.6 | 0.6 |
-| M02 Expressions | 3.4 | 0.8 |
-| M03 Functions | 3.5 | 0.8 |
+| M02 Expressions | 3.1 | 0.7 |
+| M03 Functions | 2.8 | 0.7 |
 | M04 Data types | 3.4 | 0.8 |
 | M05 Pattern matching | 3.2 | 0.7 |
 | M06 Higher-order programming | 3.2 | 0.7 |

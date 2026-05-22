@@ -351,10 +351,15 @@ let _ = count_digits 12345
 let _ = count_digits (-12345)
 ```
 
-- Returns `1`. Wrong! `(-12345)` is not single-digit.
-- `n < 10` is true for *all* negatives; the recursion stops at
-  once.
-- Guard with `abs` in a wrapper:
+- Returns `1`. Wrong! `(-12345)` has five digits, not one.
+- `n < 10` is true for *all* negatives.
+- The recursion stops at the very first call.
+
+:::
+
+:::slide
+
+## `count_digits`: fix with a wrapper
 
 ```ocaml
 let count_digits n =
@@ -367,7 +372,9 @@ let count_digits n =
 let _ = count_digits (-12345)
 ```
 
-- Now `int = 5`. Outer wrapper strips the sign; `go` sees `n >= 0`.
+- Now `int = 5`.
+- Outer wrapper strips the sign with `abs`.
+- Local `go` only ever sees `n >= 0`; the base case behaves.
 
 :::
 
