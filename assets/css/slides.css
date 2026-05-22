@@ -55,6 +55,30 @@ body.mode-slides .reveal .slides section[data-slide] {
   max-height: 800px;
   overflow-y: auto;
   box-sizing: border-box;
+  /* Firefox: always render a slim scrollbar (only visible when
+     overflow actually happens). */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
+}
+/* Webkit/Blink: force the scrollbar to be visible instead of the
+   macOS overlay default, so the user sees there's more content
+   below when a cell's output pushes the slide past the canvas. */
+body.mode-slides .reveal .slides section.slide::-webkit-scrollbar,
+body.mode-slides .reveal .slides section[data-slide]::-webkit-scrollbar {
+  width: 8px;
+}
+body.mode-slides .reveal .slides section.slide::-webkit-scrollbar-track,
+body.mode-slides .reveal .slides section[data-slide]::-webkit-scrollbar-track {
+  background: transparent;
+}
+body.mode-slides .reveal .slides section.slide::-webkit-scrollbar-thumb,
+body.mode-slides .reveal .slides section[data-slide]::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+body.mode-slides .reveal .slides section.slide::-webkit-scrollbar-thumb:hover,
+body.mode-slides .reveal .slides section[data-slide]::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 /* Bullet lists in slide mode: looser spacing, no decorative wall of text. */

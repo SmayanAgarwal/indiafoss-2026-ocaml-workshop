@@ -933,6 +933,27 @@ let runtime_script ~asset_root =
                   JSON.stringify({ h, v }));
               } catch (_) {}
             });
+            // Reveal computes each section's vertical centering at
+            // slidechange time. If a cell expands its output after
+            // the slide is already on screen (the common case when
+            // the user clicks Run on the current slide), the
+            // section's top stays at the pre-expansion value and the
+            // grown content drifts off the bottom of the canvas. A
+            // ResizeObserver on each section triggers reveal.layout()
+            // when content size changes, recentering the slide.
+            let layoutPending = false;
+            const requestLayout = () => {
+              if (layoutPending) return;
+              layoutPending = true;
+              requestAnimationFrame(() => {
+                layoutPending = false;
+                reveal.layout();
+              });
+            };
+            const ro = new ResizeObserver(requestLayout);
+            for (const sec of document.querySelectorAll('.reveal .slides section[data-slide]')) {
+              ro.observe(sec);
+            }
           });
           // expose for testing / diagnostics
           window.Reveal = reveal;
