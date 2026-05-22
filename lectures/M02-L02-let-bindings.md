@@ -271,13 +271,13 @@ reproduces what the toplevel told us.
 Static semantics gives us the *type* of an expression. *Dynamic*
 semantics gives us its *value*. We use the same inference-rule
 shape, but the judgement is now about evaluation: $e \to v$ reads
-"$e$ evaluates to $v$". And $e_2[v/x]$ means "the result of
+"$e$ evaluates to $v$". And $e_2[x := v]$ means "the result of
 substituting $v$ for every free occurrence of $x$ in $e_2$".
 
 The evaluation rule for `let ... in` is:
 
 $$
-\dfrac{e_1 \to v_1 \qquad e_2[v_1 / x] \to v_2}
+\dfrac{e_1 \to v_1 \qquad e_2[x := v_1] \to v_2}
       {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \to v_2}
 $$
 
@@ -297,7 +297,7 @@ mapping names to values. But for reasoning about what a program
 ## Evaluation rule for `let ... in`
 
 $$
-\dfrac{e_1 \to v_1 \qquad e_2[v_1 / x] \to v_2}
+\dfrac{e_1 \to v_1 \qquad e_2[x := v_1] \to v_2}
       {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \to v_2}
 $$
 
