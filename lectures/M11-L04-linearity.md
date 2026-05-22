@@ -503,7 +503,7 @@ production deployment is recent.
 Given the `Handle` signature in this lecture, which client
 compiles?
 
-```ocaml skip
+```text
 (* A *)
 let a () =
   let t = open_ "f" in
@@ -564,7 +564,7 @@ force `once`.
 ## Activity discussion
 
 Q1: which `Handle` client (A/B/C) compiles?
-```ocaml skip
+```text
 (* A *) let _, t = read t 10 in let _, _ = read t 10 in ()
 (* B *) let _, t = read t 10 in close t
 (* C *) let s1, _ = read t 10 in let s2, _ = read t 10 in s1, s2

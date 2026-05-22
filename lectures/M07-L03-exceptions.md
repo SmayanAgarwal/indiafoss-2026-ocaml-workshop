@@ -334,7 +334,7 @@ through the same `try ... with` mechanism.
 
 The three shapes for "this might fail," compared.
 
-```ocaml skip
+```text
 val find_x : string -> int                    (* may raise *)
 val find_x_opt : string -> int option         (* None on failure *)
 val find_x_result : string -> (int, string) result   (* Error msg *)
@@ -362,7 +362,7 @@ on what went wrong.
 
 Three shapes for "this might fail":
 
-```ocaml skip
+```text
 val find_x : string -> int                    (* may raise *)
 val find_x_opt : string -> int option         (* None on failure *)
 val find_x_result : string -> (int, string) result   (* Error msg *)
@@ -607,7 +607,7 @@ how the standard library's `_opt` forms are typically defined.
 You can also go the other way (a raising version from an optional
 version) with a `match`:
 
-```ocaml skip
+```text
 let find_first p xs =
   match find_first_opt p xs with
   | Some x -> x

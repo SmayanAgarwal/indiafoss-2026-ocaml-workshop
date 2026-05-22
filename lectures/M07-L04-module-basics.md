@@ -296,7 +296,7 @@ There is a middle form, `M.(expr)`, which opens `M` in just the
 parenthesised expression. It is even shorter than a local open
 when you have a tight cluster of references:
 
-```ocaml skip
+```text
 let _ = List.(map (fun x -> x * 2) [1; 2; 3])
 ```
 

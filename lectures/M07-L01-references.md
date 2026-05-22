@@ -308,7 +308,7 @@ exposed and you put them together as needed.
 Once you see what a `ref` does, the implementation is not
 mysterious. The standard library defines `'a ref` as:
 
-```ocaml skip
+```text
 type 'a ref = { mutable contents : 'a }
 ```
 
@@ -330,7 +330,7 @@ when we look at mutable records in their own right.
 
 The type `'a ref` is literally:
 
-```ocaml skip
+```text
 type 'a ref = { mutable contents : 'a }
 ```
 

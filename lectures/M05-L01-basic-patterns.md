@@ -194,7 +194,7 @@ do not warn me."
 Now for the trap that catches almost every student at least once.
 Consider this version of `classify`:
 
-```ocaml skip
+```text
 let classify n =
   match n with
   | x -> "variable: " ^ string_of_int x
@@ -210,7 +210,7 @@ answer is `"variable: 0"`.
 
 ## Order matters
 
-```ocaml skip
+```text
 let classify n =
   match n with
   | x -> "variable: " ^ string_of_int x
@@ -512,7 +512,7 @@ matches like this; we will see the warning in
 Even at this early stage, the compiler is watching for missing
 cases. Here is a non-exhaustive match:
 
-```ocaml skip
+```text
 let label = function
   | 0 -> "zero"
   | 1 -> "one"
@@ -522,7 +522,7 @@ let label = function
 
 ## Exhaustiveness, lightly
 
-```ocaml skip
+```text
 let label = function
   | 0 -> "zero"
   | 1 -> "one"
@@ -626,7 +626,7 @@ let result = f 0
 :::quiz mcq id=M05-L01-q2
 What does this evaluate to?
 
-```ocaml skip
+```text
 let f = function
   | n -> "got " ^ string_of_int n
   | 0 -> "zero"
@@ -719,7 +719,7 @@ match is incomplete.
 Why does the following always return `0`, regardless of clause
 order?
 
-```ocaml skip
+```text
 let f = function
   | x -> x
   | 0 -> 99
@@ -736,7 +736,7 @@ Predict before reading on.
 
 ## Activity discussion
 
-```ocaml skip
+```text
 let f = function
   | x -> x
   | 0 -> 99
@@ -749,7 +749,7 @@ let f = function
 
 The fix:
 
-```ocaml skip
+```text
 let f = function
   | 0 -> 99
   | x -> x

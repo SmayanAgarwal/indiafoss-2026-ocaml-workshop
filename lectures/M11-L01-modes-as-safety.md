@@ -493,7 +493,7 @@ issue and is not what modes address).
 :::quiz mcq id=M11-L01-q2
 Read the type signature carefully:
 
-```ocaml skip
+```text
 val free : 'a t @ unique -> unit
 ```
 

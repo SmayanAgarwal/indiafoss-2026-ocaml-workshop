@@ -328,7 +328,7 @@ let greet (u : [`User] id) = "hello, " ^ u
   implementation (always a `string` underneath).
 - The compiler keeps `` [`User] id `` and `` [`Order] id `` distinct.
 
-```ocaml skip
+```text
 let order = new_order_id "ord-42"
 let _ = greet order  (* error: [`Order] id is not [`User] id *)
 ```
@@ -466,7 +466,7 @@ match each other and the condition to be `bool expr`.
 
 ## A bad `If` is a compile error
 
-```ocaml skip
+```text
 let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
 ```
 

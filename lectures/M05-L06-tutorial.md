@@ -304,7 +304,7 @@ clauses all compute the same thing: `1 + max (depth a) (depth
 b)`. Instead of writing four near-identical clauses, we combine
 them into one with `|`:
 
-```ocaml skip
+```text
 | Add (a, b) | Sub (a, b) | Mul (a, b) | Div (a, b) ->
     1 + max (depth a) (depth b)
 ```
@@ -368,7 +368,7 @@ let _ = fold example
 
 ## Function 4: `fold` (constant folding)
 
-```ocaml skip
+```text
 let rec fold = function
   | Num n -> Num n
   | Add (a, b) ->
@@ -568,7 +568,7 @@ warnings; fix each one.
 
 Adding `Var of string` (variables) and `Neg of expr` (unary minus):
 
-```ocaml skip
+```text
 type expr =
   | Num of float
   | Var of string

@@ -122,7 +122,7 @@ passes.) Second, the compiler *hides* anything not in the
 signature. The internal `n` is not listed, so from the outside,
 `Counter.n` does not exist:
 
-```ocaml skip
+```text
 let _ = !Counter.n  (* error: Unbound value Counter.n *)
 ```
 
@@ -163,7 +163,7 @@ let _ = Counter.next ()
 
 The internal `n` is **not listed** in `COUNTER`, so it's hidden:
 
-```ocaml skip
+```text
 let _ = !Counter.n  (* error: Unbound value Counter.n *)
 ```
 
@@ -178,7 +178,7 @@ not listed is irrevocably hidden from anyone holding the sealed
 module. If you want both a sealed and an unsealed view, you can
 define two names:
 
-```ocaml skip
+```text
 module CounterFull = struct ... end
 module Counter : COUNTER = CounterFull
 ```
@@ -631,7 +631,7 @@ let () =
 
 Reference solution:
 
-```ocaml skip
+```text
 module Counter : COUNTER = struct
   let n = ref 0
   let next () = incr n; !n

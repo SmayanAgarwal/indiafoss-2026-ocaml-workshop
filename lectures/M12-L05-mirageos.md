@@ -390,7 +390,7 @@ as the QCheck-generator `>>=` from
 as "wait for the Lwt computation `e`, then continue with its
 result bound to `x`."
 
-```ocaml skip
+```text
 open Lwt.Infix
 
 module Hello (Time : Mirage_time.S) = struct
@@ -468,7 +468,7 @@ runs as a VM on KVM, with no Linux guest inside it.
 
 ## Hello Unikernel (`unikernel.ml`)
 
-```ocaml skip
+```text
 open Lwt.Infix
 
 module Hello (Time : Mirage_time.S) = struct

@@ -360,7 +360,7 @@ print_endline "hello"
 
 ## Why bother: `let () = 42` is refused
 
-```ocaml skip
+```text
 let () = 42
 ```
 

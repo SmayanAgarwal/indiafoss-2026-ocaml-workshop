@@ -382,7 +382,7 @@ notice the pattern.
 Type errors are noisy at first. Let's write one deliberately so we
 can read the message together.
 
-```ocaml skip
+```text
 let bad c = c + 273.15
 ```
 
@@ -416,7 +416,7 @@ its keep:
 
 * Type errors are noisy at first; write one deliberately.
 
-```ocaml skip
+```text
 let bad c = c + 273.15
 ```
 
@@ -466,7 +466,7 @@ mass divided by height squared.
 * Mass in kilograms, height in metres.
 * Returns mass divided by height squared.
 
-```ocaml skip
+```text
 (* fill in *)
 let bmi mass height = ???
 ```

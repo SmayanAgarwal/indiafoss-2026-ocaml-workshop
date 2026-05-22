@@ -677,7 +677,7 @@ Different axes; different rules; both useful.
 Given the `Unique_ref` signature from this lecture, which of these
 clients fails to type-check?
 
-```ocaml skip
+```text
 (* A *)
 let a r =
   let _v, r = get r in
@@ -713,7 +713,7 @@ which has already been used as unique. The compiler rejects it.
 Suppose we wrote a closure that *aliases* (not consumes) a unique
 reference:
 
-```ocaml skip
+```text
 let read_outside (r : int t @ unique) =
   let f () = get r in
   let _v, _r' = f () in
@@ -745,7 +745,7 @@ consumption, but it is enough to downgrade the closure.
 ## Activity discussion
 
 Q1: which of A/B/C fails to type-check?
-```ocaml skip
+```text
 (* A *) let a r = let _v, r = get r in let _v, _r = get r in ()
 (* B *) let b r = let r = set r 100 in free r
 (* C *) let c r = let _v, _r = get r in free r

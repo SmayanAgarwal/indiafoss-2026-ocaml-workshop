@@ -359,7 +359,7 @@ reach for a loop alongside it.
 
 The two forms:
 
-```ocaml skip
+```text
 for i = lo to hi do
   body
 done

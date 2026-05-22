@@ -408,7 +408,7 @@ a generic implementation parameterised by that constraint.
   type. We wrote it once.
 - **Composable**: a `String_queue` is one line:
 
-```ocaml skip
+```text
 module String_queue = Make (struct
   type t = string
   let to_string s = s
@@ -430,7 +430,7 @@ care what the element type is, except through `E.to_string`.
 
 To build a string queue you write one line:
 
-```ocaml skip
+```text
 module String_queue = Make (struct
   type t = string
   let to_string s = s
@@ -532,7 +532,7 @@ let () =
 Reference solution: extend the signature to add `length` and the
 implementation alongside.
 
-```ocaml skip
+```text
 module type QUEUE = sig
   type 'a t
   val empty : 'a t

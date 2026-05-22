@@ -227,7 +227,7 @@ match) or moves on; there is no backtracking.
 
 Here is the rub. Look at this version of `sign`:
 
-```ocaml skip
+```text
 let classify n =
   match n with
   | n when n > 0 -> "positive"
@@ -247,7 +247,7 @@ Here is an example of a case that is not matched: 0
 
 ## Exhaustiveness with guards is conservative
 
-```ocaml skip
+```text
 let classify n =
   match n with
   | n when n > 0 -> "positive"
@@ -279,7 +279,7 @@ let classify = function
 But notice something deeper. The compiler's check is
 *conservative*: even if you wrote
 
-```ocaml skip
+```text
 let classify n =
   match n with
   | n when n > 0 -> "positive"
@@ -364,7 +364,7 @@ anything else, prefer the pattern.
 A guard is just an expression, and an expression can have side
 effects. Resist the urge.
 
-```ocaml skip
+```text
 let f = function
   | _ when (Printf.printf "checking\n"; true) -> "matched"
   | _ -> "no match"
@@ -433,7 +433,7 @@ and returns `"non-positive"`.
 :::quiz mcq id=M05-L03-q2
 Why does the compiler warn about this match as non-exhaustive?
 
-```ocaml skip
+```text
 let classify = function
   | n when n >= 0 -> "non-negative"
   | n when n < 0 -> "negative"

@@ -224,7 +224,7 @@ Here is where GADTs pay off. Try the obvious mistakes:
 
 ## What cannot be built
 
-```ocaml skip
+```text
 (* error: Add wants int expr, not bool expr *)
 let bad = Add (Bool_lit true, Int_lit 1)
 
@@ -268,15 +268,15 @@ expr`s and produces a `bool expr`:
 
 Add one constructor to `expr` and one case to `eval`:
 
-```ocaml skip
+```text
   | Less : int expr * int expr -> bool expr
 ```
 
-```ocaml skip
+```text
   | Less (a, b) -> eval a < eval b
 ```
 
-```ocaml skip
+```text
 let _ = eval (If (Less (Int_lit 3, Int_lit 5), Int_lit 1, Int_lit 0))
 ```
 
@@ -304,7 +304,7 @@ type index:
 
 ## Adding a pretty printer
 
-```ocaml skip
+```text
 let rec pretty : type a. a expr -> string = function
   | Int_lit n -> string_of_int n
   | Bool_lit b -> string_of_bool b
@@ -418,7 +418,7 @@ for arbitrary `'a`?
 
 ## Activity discussion
 
-```ocaml skip
+```text
 Less : 'a expr * 'a expr -> bool expr
 ```
 

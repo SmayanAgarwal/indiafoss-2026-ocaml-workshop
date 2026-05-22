@@ -652,7 +652,7 @@ What does the compiler tell you about every other function on
 
 Adding a new constructor:
 
-```ocaml skip
+```text
 type json =
   | JNull
   | JBool of bool

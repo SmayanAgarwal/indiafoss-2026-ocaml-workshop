@@ -370,7 +370,7 @@ let _ = 9.0 /. 4.0
 
 Mixing types is a compile-time error:
 
-```ocaml skip
+```text
 let _ = 1 + 2.0
 ```
 

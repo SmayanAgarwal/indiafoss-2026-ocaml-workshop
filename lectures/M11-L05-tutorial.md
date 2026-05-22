@@ -137,7 +137,7 @@ ends the chain.
 
 ## The signature
 
-```ocaml skip
+```text
 val open_ : string -> t @ once @ local
 val read  : t @ once @ local -> int -> string * t @ once @ local
 val write : t @ once @ local -> string -> t @ once @ local
@@ -236,7 +236,7 @@ returned values.
 
 ## The implementation (sketch)
 
-```ocaml skip
+```text
 let open_ _path =
   exclave_ { buf = Bytes.create 0; pos = 0 }
 
@@ -532,7 +532,7 @@ A skeleton signature is provided below. Fill in the modes.
 
 Design `Buffer` with:
 
-```ocaml skip
+```text
 val alloc : int -> ???
 val read  : ??? -> int -> char * ???
 val write : ??? -> int -> char -> ???
@@ -631,7 +631,7 @@ locality error.
 
 ## The intended buffer signature
 
-```ocaml skip
+```text
 val alloc : int -> t @ once @ local
 val read  : t @ once @ local -> int -> char * t @ once @ local
 val write : t @ once @ local -> int -> char -> t @ once @ local

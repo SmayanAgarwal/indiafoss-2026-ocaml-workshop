@@ -212,7 +212,7 @@ let _ = String_map.find_opt "dave" m
 
 Conceptually, `Map.Make` is defined something like this:
 
-```ocaml skip
+```text
 module Map = struct
   module Make (Key : sig
     type t
@@ -241,7 +241,7 @@ to `Key.compare` for ordering comparisons.
 
 Conceptually:
 
-```ocaml skip
+```text
 module Map = struct
   module Make (Key : sig
     type t
@@ -436,7 +436,7 @@ operations of a standard `Map`, *plus* a few of your own. The
 `include` keyword from the previous lecture combines with functor
 application to make this easy.
 
-```ocaml skip
+```text
 module Int_map = struct
   include Map.Make(Int)
   let pp pp_value fmt m =
@@ -457,7 +457,7 @@ given you, plus our `pp`."
 - Build a module from a functor and want to extend it?
 - Use `include` on the result:
 
-```ocaml skip
+```text
 module Int_map = struct
   include Map.Make(Int)
   let pp pp_value fmt m =
@@ -564,7 +564,7 @@ let () =
 
 Reference solution:
 
-```ocaml skip
+```text
 let lookup_known () = M.find_opt "alice" ages
 let lookup_missing () = M.find_opt "dave" ages
 ```

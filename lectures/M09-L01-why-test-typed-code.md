@@ -508,7 +508,7 @@ implementation of `max3` on the very first try.
 :::quiz mcq id=M09-L01-q1
 A colleague gives you this implementation:
 
-```ocaml skip
+```text
 let dedup (xs : 'a list) : 'a list = []
 ```
 

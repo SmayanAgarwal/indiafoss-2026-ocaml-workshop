@@ -633,7 +633,7 @@ Locality is the type-level continuation of the safety story.
 :::quiz mcq id=M11-L02-q1
 Consider:
 
-```ocaml skip
+```text
 let combine (p @ local) : point =
   { x = p.x *. 2.0; y = p.y *. 2.0 }
 ```
@@ -664,7 +664,7 @@ that we did not leak `p` itself.
 :::quiz mcq id=M11-L02-q2
 Why does this fail to compile?
 
-```ocaml skip
+```text
 let cache : point ref = ref { x = 0.0; y = 0.0 }
 
 let save (p @ local) : unit =
@@ -694,12 +694,12 @@ with locality.
 ## Activity discussion
 
 Q1:
-```ocaml skip
+```text
 let combine (p @ local) : point =
   { x = p.x *. 2.0; y = p.y *. 2.0 }
 ```
 Q2:
-```ocaml skip
+```text
 let cache : point ref = ref { x = 0.0; y = 0.0 }
 let save (p @ local) : unit = cache := p
 ```

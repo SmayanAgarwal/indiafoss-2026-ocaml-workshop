@@ -50,7 +50,7 @@ OCaml's standard library defines:
 
 The standard library defines:
 
-```ocaml skip
+```text
 type ('a, 'e) result =
   | Ok of 'a
   | Error of 'e

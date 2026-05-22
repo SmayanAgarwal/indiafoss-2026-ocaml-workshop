@@ -220,7 +220,7 @@ Five pieces:
 
 To run the test:
 
-```ocaml skip
+```text
 (* QCheck_runner lives in the separate [qcheck] opam package and
    is not bundled into the in-browser toplevel; this snippet is
    for the dune-based project setup. In a cell, run a single
@@ -465,7 +465,7 @@ Let us see this in action with a *deliberately buggy* sort. A
 common rookie mistake: forgetting the singleton case in a
 merge-sort-like implementation.
 
-```ocaml skip
+```text
 let rec bad_sort = function
   | [] -> []
   (* missing case: | [x] -> [x] *)
@@ -483,7 +483,7 @@ If `xs` has length 1, then `n = 0`, `left = []`, `right = xs`. So
 We give QCheck the same three properties as before, pointed at
 `bad_sort`:
 
-```ocaml skip
+```text
 let test_bad_sort_sorted =
   QCheck.Test.make
     ~name:"bad_sort produces a sorted list"
@@ -1020,7 +1020,7 @@ self-balancing tree. Use the library's `insert` (and `delete`,
 if you want to test deletion). The invariant is whatever the
 library promises; the generator inherits it from the operations.
 
-```ocaml skip
+```text
 (* Sketch: the same recipe for a red-black tree from a library *)
 let rb_tree_gen : Rb.t QCheck.arbitrary =
   QCheck.(map
@@ -1535,7 +1535,7 @@ curiosity.
 A colleague writes a `dedup : int list -> int list` and a single
 QCheck property:
 
-```ocaml skip
+```text
 let test = QCheck.Test.make QCheck.(list int)
   (fun xs -> List.length (dedup xs) <= List.length xs)
 ```

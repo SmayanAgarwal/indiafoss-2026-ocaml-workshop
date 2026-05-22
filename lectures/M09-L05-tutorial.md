@@ -218,7 +218,7 @@ case with `assert_raises`. The choice depends on your contract.
 
 ### Assembling the OUnit2 suite
 
-```ocaml skip
+```text
 let suite =
   "expr evaluator" >::: [
     "leaf" >:: test_num_leaf;
@@ -473,7 +473,7 @@ Now the dramatic part. Suppose someone "refactors" `eval` and
 introduces a bug. The classic version of this is: they confuse
 left and right operand in `Sub`:
 
-```ocaml skip
+```text
 let rec bad_eval = function
   | Num n      -> n
   | Add (a, b) -> bad_eval a +. bad_eval b
@@ -632,7 +632,7 @@ references for the things they implement.
 
 The complete test file, all parts assembled:
 
-```ocaml skip
+```text
 open OUnit2
 
 type expr =
@@ -831,7 +831,7 @@ statement is just one equation, plus a NaN guard.
 A colleague writes a single QCheck property for the
 [`safe_div` function from M04-L05](M04-L05-option-and-aliases.html):
 
-```ocaml skip
+```text
 let test = QCheck.Test.make QCheck.(pair int int)
   (fun (a, b) ->
      match safe_div a b with

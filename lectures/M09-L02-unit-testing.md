@@ -148,7 +148,7 @@ test gets its own case.
 Before we let `dune` do the work, let us see the smallest possible
 OUnit2 program. The shape:
 
-```ocaml skip
+```text
 open OUnit2
 
 let test_addition _ =
@@ -293,14 +293,14 @@ you want to compare values for which `=` is the wrong notion
 (records of floating point with NaNs, abstract types, etc.), pass
 an explicit `~cmp`:
 
-```ocaml skip
+```text
 assert_equal ~cmp:(fun a b -> abs_float (a -. b) < 1e-9) 0.1 (0.05 +. 0.05)
 ```
 
 And a `~printer` so the failure message shows the values in a
 useful form:
 
-```ocaml skip
+```text
 assert_equal ~printer:string_of_int 6 (1 + 2 + 3)
 ```
 
@@ -316,7 +316,7 @@ Used when the test is not "two things are equal" but "some
 condition is true." First argument is a message printed on failure;
 second argument is the condition.
 
-```ocaml skip
+```text
 assert_bool "list should be empty" (List.length xs = 0)
 ```
 
@@ -331,7 +331,7 @@ The one assertion that has no obvious analogue in equality testing:
 "this expression should raise the following exception." Used to
 test the *negative* path: error cases, contract violations.
 
-```ocaml skip
+```text
 assert_raises Stack.Empty (fun () -> Stack.pop empty_stack)
 ```
 
@@ -373,7 +373,7 @@ ways to do this.
 The *small* way: a helper function that returns a fresh value, and
 each case calls it.
 
-```ocaml skip
+```text
 let fresh_stack () =
   let s = Stack.create () in
   s
@@ -393,7 +393,7 @@ The *bigger* way: OUnit2's `bracket` helper, which makes the
 setup-run-teardown structure explicit and is useful when teardown
 is non-trivial (closing a file, releasing a lock):
 
-```ocaml skip
+```text
 let test_with_file _ =
   bracket
     (fun _ -> open_in "fixture.txt")        (* setup *)
@@ -431,7 +431,7 @@ let test_peek_one _ =
 A real test file has dozens of cases, not one. OUnit2 lets you
 group them into a tree of `TestList` nodes, each with a name:
 
-```ocaml skip
+```text
 let suite =
   "stack" >::: [
     "creation" >::: [
@@ -662,7 +662,7 @@ let test_pop_empty_raises _ =
 
 The cases assemble into a hierarchical suite:
 
-```ocaml skip
+```text
 let suite =
   "stack" >::: [
     "creation" >::: [
@@ -700,7 +700,7 @@ Eight dots, eight passing cases.
 If we deliberately break the implementation, say by changing
 `push` to do nothing:
 
-```ocaml skip
+```text
 let push _ _ = ()        (* deliberately broken *)
 ```
 

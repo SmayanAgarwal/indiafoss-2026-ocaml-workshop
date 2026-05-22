@@ -98,7 +98,7 @@ let add = fun x -> fun y -> x + y
 
 Type confirms:
 
-```
+```text
 val add : int -> int -> int
 ```
 
@@ -245,15 +245,20 @@ let half x = divide x 2  (* not "divide 2 x" *)
 
 - `divide 2`: takes `y`, returns `2 / y`. Not "half".
 - The **first** argument is the easiest to fix.
+
+:::fragment
+
 - Stdlib places arguments accordingly.
 
 `List.map` takes the *function* first, *list* second:
 
-```ocaml skip
+```text
 val List.map : ('a -> 'b) -> 'a list -> 'b list
 ```
 
 - So `List.map (add 10)` partial-applies meaningfully.
+
+:::
 
 :::
 
@@ -383,13 +388,13 @@ does nothing but call it is busywork.
 
 When you have
 
-```ocaml skip
+```text
 let f x = g x
 ```
 
 you can drop the `x`:
 
-```ocaml skip
+```text
 let f = g
 ```
 

@@ -349,7 +349,7 @@ fresh slide here; two more were covered earlier in the module.
 
 ## Reading a type error: int / float confusion
 
-```ocaml skip
+```text
 let bad r = 3.14 * r * r
 ```
 

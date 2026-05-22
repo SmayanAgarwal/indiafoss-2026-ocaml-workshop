@@ -296,7 +296,7 @@ left-associative). So `10 mod 3 * 2` is `(10 mod 3) * 2 = 2`, not
 
 By far the most common type error in your first week:
 
-```ocaml skip
+```text
 let area r = 3.14159 * r * r
 ```
 
@@ -311,7 +311,7 @@ Error: This expression has type float but an expression was expected
 
 ## Pitfall 1: `+` instead of `+.`
 
-```ocaml skip
+```text
 let area r = 3.14159 * r * r
 ```
 
@@ -337,7 +337,7 @@ mismatch tells you which operator is wrong.
 In Python and JavaScript, you can write `"value: " + 5` and the
 language coerces the `int` to a string. OCaml does not:
 
-```ocaml skip
+```text
 let _ = "value: " ^ 5
 ```
 
@@ -345,7 +345,7 @@ let _ = "value: " ^ 5
 
 ## Pitfall 2: implicit conversion that isn't there
 
-```ocaml skip
+```text
 let _ = "value: " ^ 5
 ```
 
@@ -381,7 +381,7 @@ means you read code and know exactly what conversion is happening.
 
 ## Pitfall 3: subtraction looks like unary minus
 
-```ocaml skip
+```text
 let _ = abs -5
 ```
 
@@ -392,7 +392,7 @@ minus 5":
 
 ## Pitfall 3: subtraction syntax
 
-```ocaml skip
+```text
 let _ = abs -5
 ```
 
@@ -422,7 +422,7 @@ In Python, `0 < x < 10` reads as you'd hope: "x is between 0 and
 10." Python is unusual in supporting this; OCaml (like most
 languages) does not:
 
-```ocaml skip
+```text
 let _ = 0 < x < 10
 ```
 
@@ -430,14 +430,14 @@ let _ = 0 < x < 10
 
 ## Pitfall 4: comparison chains aren't a thing
 
-```ocaml skip
+```text
 let _ = 0 < x < 10
 ```
 
 - Parses as `(0 < x) < 10`: `bool` vs `int`. Type error.
 - Spell it out with `&&`:
 
-```ocaml skip
+```text
 let _ = 0 < x && x < 10
 ```
 
@@ -450,7 +450,7 @@ gives `bool`), then compare that `bool` to `10`. Comparing a `bool`
 to an `int` is a type error. The fix is to write the bounded check
 with `&&`:
 
-```ocaml skip
+```text
 let x = 5 in 0 < x && x < 10
 ```
 

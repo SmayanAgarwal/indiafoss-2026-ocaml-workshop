@@ -5,7 +5,7 @@ week: 3
 duration_target_min: 25
 concepts: [recursion, base case, recursive case, structural recursion, termination]
 keywords: [OCaml, recursion, recursive functions, base case, factorial, list length]
-activity_question: "Write a recursive function [count_down : int -> unit] that prints n, n-1, ..., 1, 0. What is the base case?"
+activity_question: "Write a recursive function [count_up : int -> int -> unit] that prints each integer from [lo] up to [hi] (inclusive). What is the base case, and how does the recursive call differ from [count_down]?"
 think_about_this: "Every recursive function needs a base case. What goes wrong if you forget one? What goes wrong if you have one but the recursive call never approaches it?"
 reading:
   - title: "Cornell CS3110, Recursion"
@@ -111,7 +111,7 @@ largely about getting fluent with this shape.
 
 If you forget `rec`, you get a perplexing error. Try:
 
-```ocaml skip
+```text
 let factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
@@ -307,7 +307,7 @@ The most important property of a recursive function is that it
 *terminates*: every recursion eventually hits a base case. Here is
 a function that does not:
 
-```ocaml skip
+```text
 let rec bad n = bad (n + 1)
 ```
 
@@ -317,7 +317,7 @@ let rec bad n = bad (n + 1)
 
 Every recursive function must **terminate**: hit a base case.
 
-```ocaml skip
+```text
 let rec bad n = bad (n + 1)
 ```
 
@@ -358,7 +358,7 @@ sometimes have to think carefully.
 Consider `factorial` again. What if you call it with a negative
 input?
 
-```ocaml skip
+```text
 let rec factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
@@ -370,7 +370,7 @@ let _ = factorial (-1)
 
 ## What if the input is negative?
 
-```ocaml skip
+```text
 let rec factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
@@ -612,9 +612,10 @@ recursive case is "first element plus sum of the rest."
 
 ## Activity
 
-Write a recursive function `count_down : int -> unit` that prints
-each integer from `n` down to `0` (inclusive). What is the base
-case?
+Write a recursive function `count_up : int -> int -> unit` that
+prints each integer from `lo` up to `hi` (inclusive). What is the
+base case, and how does the recursive call differ from
+`count_down`?
 
 :::
 
@@ -622,26 +623,26 @@ case?
 For the function below, what is the base case?
 
 ```ocaml
-let rec count_down n =
-  if n < 0 then ()
+let rec count_up lo hi =
+  if lo > hi then ()
   else begin
-    print_endline (string_of_int n);
-    count_down (n - 1)
+    print_endline (string_of_int lo);
+    count_up (lo + 1) hi
   end
 ```
 
-- [ ] `n = 0`
-- [x] `n < 0`
-- [ ] `n = 5`
+- [ ] `lo = hi`
+- [x] `lo > hi`
+- [ ] `lo = 0`
 - [ ] There is no base case.
 
-**Why:** the function returns `()` (does nothing) when `n < 0`.
-The recursive case prints `n` and then calls `count_down (n - 1)`.
-For `count_down 5`, the prints are `5`, `4`, `3`, `2`, `1`, `0`,
-then `count_down (-1)` hits the base case and stops. If the base
-case were `n = 0`, the function would still print `5..1` then
-print `0` and stop without printing the recursive call for `n =
-0`. The current base case (`n < 0`) is what makes `0` print.
+**Why:** the function returns `()` (does nothing) when `lo > hi`.
+The recursive case prints `lo` and then calls `count_up (lo + 1)
+hi`. For `count_up 1 3`, the prints are `1`, `2`, `3`, then
+`count_up 4 3` hits the base case and stops. If the base case
+were `lo = hi`, the function would print `1`, `2` and stop
+without printing `3`. The current base case (`lo > hi`) is what
+makes `hi` print.
 :::
 
 :::slide
@@ -649,23 +650,17 @@ print `0` and stop without printing the recursive call for `n =
 ## Activity discussion
 
 ```ocaml
-let rec count_down n =
-  if n < 0 then ()
+let rec count_up lo hi =
+  if lo > hi then ()
   else begin
-    print_endline (string_of_int n);
-    count_down (n - 1)
+    print_endline (string_of_int lo);
+    count_up (lo + 1) hi
   end
 ```
 
-- Base case `n < 0`: do nothing.
-- Recursive case: print `n`, recur on `n - 1`.
-
-`count_down 3` trace:
-
-- prints `3`, calls `count_down 2`
-- prints `2`, calls `count_down 1`
-- prints `1`, calls `count_down 0`
-- prints `0`, calls `count_down (-1)`, base case, done.
+- Base case `lo > hi`: do nothing.
+- Recursive case: print `lo`, recur on `(lo + 1) hi` (only `lo` changes).
+- Trace `count_up 1 3`: prints `1, 2, 3`, then `count_up 4 3` hits base.
 
 :::
 

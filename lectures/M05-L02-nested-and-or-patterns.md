@@ -293,7 +293,7 @@ the right-hand side runs.
 
 Without or-patterns, the same logic needs five clauses:
 
-```ocaml skip
+```text
 let is_vowel = function
   | 'a' -> true
   | 'e' -> true
@@ -361,7 +361,7 @@ they are bound regardless of which alternative succeeded.
 
 ## Constraint: alternatives bind the same names
 
-```ocaml skip
+```text
 type tagged = A of int | B of int
 
 let _ =
@@ -586,7 +586,7 @@ two elements. `a` is the head (`1`), `b` is the next element
 :::quiz mcq id=M05-L02-q2
 The compiler rejects this with an error. Why?
 
-```ocaml skip
+```text
 type t = A of int | B of string
 
 let f = function

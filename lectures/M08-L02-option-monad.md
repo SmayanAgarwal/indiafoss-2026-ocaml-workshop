@@ -452,7 +452,7 @@ even though `e` itself may.
 
 Rewrite this using `let*`:
 
-```ocaml skip
+```text
 match parse_int s with
 | None -> None
 | Some x ->

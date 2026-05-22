@@ -200,7 +200,7 @@ let _ = describe None
 - Results: `"got 7"` and `"no value"`.
 - `(Some 7) + 1` is a type error. Must **unwrap** first:
 
-```ocaml skip
+```text
 match find_age "alice" with
 | None -> 0
 | Some n -> n + 1
@@ -292,7 +292,7 @@ let increment_age name =
 The pattern (return `None` if `None`; otherwise unwrap, transform,
 re-wrap) is so common that the standard library has a helper:
 
-```ocaml skip
+```text
 let lookup_age (_name : string) : int option = None
 let increment_age name =
   Option.map (fun n -> n + 1) (lookup_age name)
@@ -319,7 +319,7 @@ let increment_age name =
 
 Standard helper:
 
-```ocaml skip
+```text
 let increment_age name =
   Option.map (fun n -> n + 1) (lookup_age name)
 ```

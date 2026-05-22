@@ -51,7 +51,7 @@ projects.
 
 Take the traffic-light example from [Module 4](M04-L03-variants.html#exhaustiveness-checking):
 
-```ocaml skip
+```text
 type traffic_light = Red | Yellow | Green
 
 let action = function
@@ -70,7 +70,7 @@ Here is an example of a case that is not matched: Yellow
 
 ## A non-exhaustive match
 
-```ocaml skip
+```text
 type traffic_light = Red | Yellow | Green
 
 let action = function
@@ -98,7 +98,7 @@ clause covers, showing you the shape of the gap.
 
 The fix is straightforward: add the missing clause.
 
-```ocaml skip
+```text
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
@@ -129,7 +129,7 @@ value and warns unless you have a wildcard or a variable pattern
 that catches everything else. On `string`, the same: literals
 cover only themselves; you need a catch-all.
 
-```ocaml skip
+```text
 let small = function
   | 0 -> "zero"
   | 1 -> "one"
@@ -176,14 +176,14 @@ bugs (the "forgot a case" bug) from runtime to compile time.
 The reason exhaustiveness pays for itself many times over is
 *refactoring*. Suppose you have a variant in a real codebase:
 
-```ocaml skip
+```text
 type traffic_light = Red | Yellow | Green
 ```
 
 and twelve different functions that pattern-match on it. Now a
 new requirement comes in: add a fourth state, `FlashingRed`.
 
-```ocaml skip
+```text
 type traffic_light = Red | Yellow | Green | FlashingRed
 ```
 
@@ -196,7 +196,7 @@ visit every flagged site and decide what to do for `FlashingRed`.
 
 ## Refactor with the compiler
 
-```ocaml skip
+```text
 type traffic_light = Red | Yellow | Green | FlashingRed
 ```
 
@@ -204,7 +204,7 @@ type traffic_light = Red | Yellow | Green | FlashingRed
 - Compiler prints a punch-list: file + line for each match.
 - Refactoring goes from "grep and pray" to "compile and fix the warnings".
 
-```ocaml skip
+```text
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
@@ -250,7 +250,7 @@ warnings are different in direction (missing vs unreachable)
 but related in spirit: both compare the set of values a type
 admits against the set the clauses cover.
 
-```ocaml skip
+```text
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
@@ -264,7 +264,7 @@ let _ = action Red
 
 ## Redundant clauses (warning 11)
 
-```ocaml skip
+```text
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
@@ -287,7 +287,7 @@ The duplicate `Red` clause can never run, because the first
 in [Lecture 1](M05-L01-basic-patterns.html#why-pattern-order-matters)
 when a variable pattern appeared before a literal:
 
-```ocaml skip
+```text
 let label = function
   | n -> "got " ^ string_of_int n
   | 0 -> "zero"
@@ -304,7 +304,7 @@ flagged, and every dead branch is flagged.
 
 The checker handles nested patterns too. Take a pair of booleans:
 
-```ocaml skip
+```text
 let category = function
   | (true, true)  -> "both"
   | (true, false) -> "only first"
@@ -317,7 +317,7 @@ let _ = category (false, false)
 
 ## Exhaustiveness on nested patterns
 
-```ocaml skip
+```text
 let category = function
   | (true, true)  -> "both"
   | (true, false) -> "only first"
@@ -497,7 +497,7 @@ type grows.
 After adding `FlashingRed` to the type below, what does the
 compiler do for an existing function
 
-```ocaml skip
+```text
 let is_red = function | Red -> true | _ -> false
 ```
 

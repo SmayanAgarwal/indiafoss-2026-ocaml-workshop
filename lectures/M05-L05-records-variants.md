@@ -379,7 +379,7 @@ forms an implicit tuple. The four clauses cover the 2x2 grid of
 option combinations. This is *more readable* than the alternative,
 which would nest a match inside a match:
 
-```ocaml skip
+```text
 let combine a b =
   match a with
   | None ->
@@ -445,7 +445,7 @@ let is_error = function
 
 We could have written this with a wildcard:
 
-```ocaml skip
+```text
 let is_error = function
   | OK -> false
   | _ -> true
@@ -674,7 +674,7 @@ an outer match. We will see this in the tutorial.
 
 Given:
 
-```ocaml skip
+```text
 type event =
   | Click of { x : int; y : int }
   | Key of char

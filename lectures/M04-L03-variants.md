@@ -248,7 +248,7 @@ the same: a variant, plus pattern matching.
 Forgetting a case in a `match` is a real bug. OCaml's compiler
 catches it for you:
 
-```ocaml skip
+```text
 type shape =
   | Circle of float
   | Square of float
@@ -274,7 +274,7 @@ Rectangle (_, _)
 
 If you forget a case:
 
-```ocaml skip
+```text
 let area s =
   match s with
   | Circle r -> Float.pi *. r *. r
@@ -344,7 +344,7 @@ let is_write = function
 
 Now you add a new method:
 
-```ocaml skip
+```text
 type http_method = Get | Post | Put
 
 let is_write = function
@@ -370,7 +370,7 @@ let is_write = function
 
 Now add `Put`:
 
-```ocaml skip
+```text
 type http_method = Get | Post | Put
 let is_write = function
   | Post -> true
@@ -400,7 +400,7 @@ where else in the codebase needs updating.
 
 Suppose we add `Triangle`:
 
-```ocaml skip
+```text
 type shape =
   | Circle of float
   | Square of float
@@ -426,7 +426,7 @@ warnings stop, the refactor is done.
 
 Add `Triangle`:
 
-```ocaml skip
+```text
 type shape =
   | Circle of float
   | Square of float

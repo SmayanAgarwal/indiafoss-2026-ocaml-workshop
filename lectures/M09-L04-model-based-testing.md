@@ -622,7 +622,7 @@ A 23-command failing sequence shrinks to:
 Putting the pieces together (this is the complete file you
 would put in `test/test_ht.ml`):
 
-```ocaml skip
+```text
 type command =
   | Add of int * string
   | Find of int
@@ -724,7 +724,7 @@ worked example for model-based PBT.
 To make this concrete: suppose someone "optimises" `Ht.remove`
 and gets the tombstone logic slightly wrong. They write:
 
-```ocaml skip
+```text
 let remove t k =
   let cap = Array.length t.buckets in
   let rec scan i =
@@ -1113,7 +1113,7 @@ and exercise the algorithm's interesting branches.
 In the hash-table example, the property compares observations
 step-by-step:
 
-```ocaml skip
+```text
 List.for_all (fun c -> run_real real c = run_ref ref_t c) cs
 ```
 

@@ -173,7 +173,7 @@ is `*.`, and so on. The trailing `.` is part of the operator name.
 
 The result is `3.5`, of type `float`. Try this without the dots:
 
-```ocaml skip
+```text
 1.0 + 2.5
 ```
 
@@ -199,7 +199,7 @@ OCaml's float operators are **distinct** from the integer ones:
 
 Mixing them is a *type error*, caught at compile time:
 
-```ocaml skip
+```text
 1 + 2.0
 ```
 
