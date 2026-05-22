@@ -133,8 +133,9 @@ b + a mod b` holds whenever `b` is positive.
 2 + 3 * 4
 ```
 
-Standard precedence. `*` binds tighter than `+`. Integer division
-truncates:
+Standard precedence. `*` binds tighter than `+`.
+
+Integer division truncates:
 
 ```ocaml
 17 / 5
@@ -192,9 +193,9 @@ OCaml's float operators are **distinct** from the integer ones:
 1.0 +. 2.5
 ```
 
-- `+.` instead of `+`.
-- `*.` instead of `*`.
-- `/.` instead of `/`.
+- `+.` instead of `+`
+- `*.` instead of `*`
+- `/.` instead of `/`
 
 Mixing them is a *type error*, caught at compile time:
 
@@ -291,8 +292,9 @@ argument is only evaluated if needed.
 true && (false || true)
 ```
 
-`=` is structural equality; `==` is physical (pointer) equality. Use
-`=`. `&&` and `||` short-circuit.
+- `=` is structural equality; `==` is physical (pointer) equality.
+  - Use `=`.
+- `&&` and `||` short-circuit.
 
 :::
 
@@ -561,8 +563,11 @@ OCaml *infers* types. You almost never have to write them down:
 let add x y = x + y
 ```
 
-The toplevel reports `val add : int -> int -> int = <fun>`. OCaml has
-worked out that:
+The toplevel reports `val add : int -> int -> int = <fun>`.
+
+----
+
+OCaml has worked out that:
 
 - `x + y` uses integer addition, so both `x` and `y` must be `int`.
 - The result of `+` on ints is an `int`, so `add x y` is `int`.

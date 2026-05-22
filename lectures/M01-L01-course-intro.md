@@ -167,7 +167,7 @@ Eight FP modules, then four secure-systems modules.
 - Back the type system up with **tests** (OUnit2, QCheck).
 - Name the C bug classes OCaml rules out.
 - Use [OxCaml](https://oxcaml.org) **modes** to close performance
-  and safety gaps a **garbage collector** (automatic memory
+  and safety gaps a **garbage collector (GC)** (automatic memory
   reclamation) alone cannot.
 - Follow the safety story down to the **OS** ([MirageOS](https://mirage.io)).
 
@@ -317,6 +317,33 @@ over into the mainstream of language design. OCaml is the language
 where you can see them in their natural habitat, where they were
 designed together as a coherent set rather than added later as
 features.
+
+## The course book
+
+There is no separate textbook to buy or download. Every lecture in
+this course is also a page on the course website at
+**<https://fplaunchpad.org/ocaml_nptel>**, and the slides you see in
+the videos are excerpts from those pages. The website is the book:
+the same material, expanded into prose, with the examples runnable
+in place and the quizzes interactive. Open it in any browser; no
+login, no install, nothing to download.
+
+:::slide
+
+## The course book
+
+- Lectures live at **<https://fplaunchpad.org/ocaml_nptel>**
+- Slides are excerpts; the website carries the full prose.
+- Runnable examples and inline quizzes are on the same page.
+- No login, no install: open in any browser.
+
+:::
+
+:::notes
+Point at the URL on screen. Emphasise that the website *is* the
+textbook for this course; there is no PDF to chase, no separate
+chapter to read. The same page you read also runs the code.
+:::
 
 ## Run code right in this page
 

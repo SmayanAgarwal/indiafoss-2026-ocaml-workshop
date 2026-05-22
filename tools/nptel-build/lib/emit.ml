@@ -878,6 +878,9 @@ let runtime_script ~asset_root =
           waitForCellsToSettle();
           reveal = new Reveal({
             embedded: false, hash: false, history: false,
+            // Show "N / M" badge in the bottom-right corner. Counts
+            // every slide including verticals (subslides).
+            slideNumber: 'c/t',
             // Larger canvas than the reveal.js default (960x700)
             // so slides with a tall diagram plus bullets do not
             // overflow. reveal.js then auto-scales the canvas to

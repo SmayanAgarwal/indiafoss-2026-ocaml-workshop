@@ -233,7 +233,6 @@ the rest of this course is about.
 ## What can it compute?
 
 - *Everything.*
-- Three `subleq` instructions implement addition.
 - A few more: copy, move, conditional, multiply.
 - `subleq` is **Turing complete**: same power as any other language.
 
@@ -265,13 +264,12 @@ does. That is fine for a CPU; it is murder for a human reader.
 
 :::slide
 
-## Because language is about more than what you *can* compute
+## Because language is more than what you *can* compute
 
 - A WhatsApp clone in `subleq`: theoretically possible,
   practically catastrophic.
 - Languages exist to let you **say what you mean.**
 - A programming language is for **thinking**, not just running.
-- Richer abstractions: thinking closer to the running code.
 
 :::
 
@@ -405,7 +403,7 @@ let double x = x + x
 
 - `double 21` is `42`. Always. Anywhere.
 - Replace any call with its result; meaning unchanged.
-- This property has a name: **referential transparency**.
+  - This property has a name: **referential transparency**.
 
 :::
 
@@ -792,18 +790,17 @@ to teach both halves of the course in the same language.
 
 ## Activity
 
-Which of these is referentially transparent? (Call can be replaced
-by its result without changing meaning.)
+- Which of these is **referentially transparent**?
+  - Call can be replaced by its result without changing meaning.
 
 - (a) `let f x = x + 1`
 - (b) `let f x = Random.int x`
 - (c) `let counter = ref 0 in let f () = incr counter; !counter`
 - (d) `let f x = print_endline (string_of_int x); x`
 
-You have not seen `Random.int`, `ref`, `incr`, `!`, or
-`print_endline` yet; guess what they do from the names and the
-syntax. The point is not the syntax; the point is which calls
-can be replaced by their results.
+- You have not seen `Random.int`, `ref`, `incr`, `!`, or
+`print_endline` yet
+  - guess what they do from the names and the syntax.
 
 Think before peeking at the next slide.
 
@@ -917,7 +914,7 @@ basic shape of OCaml programs.
 - **Real World OCaml**, Chapter 1 *A Guided Tour*: complementary
   introduction:
   <https://dev.realworldocaml.org/guided-tour.html>
-  
+
 ## Sources
 
 This lecture's prose, worked examples, and quizzes are original to

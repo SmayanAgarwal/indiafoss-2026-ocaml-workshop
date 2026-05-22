@@ -202,8 +202,14 @@ You get `float = 0.30000000000000004`, not `0.3`. This is true in
 every language that uses IEEE 754 floats: Python, JavaScript, Java,
 C, OCaml. The standard binary representation of `0.1` is not
 exact (`0.1` has a non-terminating binary expansion, like `1/3` has
-a non-terminating decimal expansion). The rounding errors are tiny
-(parts in 10^17) but they can compound.
+a non-terminating decimal expansion). The rounding error per
+operation is bounded by *machine epsilon*: for double-precision
+floats this is 2<sup>-52</sup> ≈ 2.2 × 10<sup>-16</sup> (relative
+error). It is tiny in isolation but can compound over long
+computations. Goldberg's classic [*What Every Computer Scientist
+Should Know About Floating-Point
+Arithmetic*](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html)
+is the standard reference if you want the details.
 
 :::slide
 
@@ -219,6 +225,8 @@ let _ = 0.1 +. 0.2
 
 * Result: `float = 0.300000000000000044`, not `0.3`.
 * True in every IEEE 754 language (Python, JavaScript, Java, C).
+* Error per op bounded by machine epsilon, ≈ 2.2 × 10<sup>-16</sup>
+  for double-precision floats. Small, but it can compound.
 * When comparing floats, use a tolerance:
 
 ```ocaml
@@ -579,6 +587,11 @@ every week looks like.
 - **Real World OCaml, A Guided Tour** for an alternative angle on
   the same material:
   <https://dev.realworldocaml.org/guided-tour.html>
+- **Goldberg (1991), *What Every Computer Scientist Should Know
+  About Floating-Point Arithmetic*** for the precise story behind
+  the float-precision aside:
+  <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>
+
 ## Sources
 
 This lecture's prose, worked examples, and quizzes are original to
