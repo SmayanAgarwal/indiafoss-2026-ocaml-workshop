@@ -377,35 +377,80 @@ When you find yourself writing `fun x -> g x` for some function `g`,
 you can usually replace it with just `g`. The two are the same
 function: both take an `x` and call `g` on it.
 
-This simplification is called *eta-reduction* (after the Greek letter
-"eta" used to label this rule in the lambda calculus). It is not a
-deep idea: just notice that wrapping a function in a lambda that
+This simplification is called *eta-reduction* (after the Greek
+letter "eta" used to label this rule in the *lambda calculus*).
+Lambda calculus is a minimal formal system of functions, introduced
+by Alonzo Church in the 1930s, with only three constructs: a
+*variable* (`x`), a *function* (`fun x -> body`, called an
+*abstraction*), and a *function call* (`f x`, called an
+*application*). Despite this minimal vocabulary it is
+Turing-complete, and it is the mathematical foundation of every
+functional language including OCaml. The `fun` keyword we have
+been writing is direct syntax for lambda-calculus abstraction;
+function application is just juxtaposition. Eta-reduction is one
+of three small rewriting rules that this calculus codifies (the
+others are *alpha-conversion*, renaming a bound variable, and
+*beta-reduction*, substituting an argument into a body). Beyond
+the name, the rule is just: wrapping a function in a lambda that
 does nothing but call it is busywork.
 
 :::slide
 
-## Eta-reduction (small but useful)
-
-When you have
+## Eta-reduction: the rule
 
 ```text
 let f x = g x
 ```
 
-you can drop the `x`:
+is the same function as
 
 ```text
 let f = g
 ```
 
-- If `f` just *applies* `g`, the two are equivalent.
+- Wrapping `g` in `fun x -> g x` is busywork.
+- Named after the Greek letter η in **lambda calculus**.
+- Lambda calculus = minimal formal system of functions
+  (Church, 1930s); `fun x -> body` is its native syntax.
+
+:::
+
+:::slide
+
+## Eta-reduction: an example
 
 ```ocaml
-let xs = [1; 2; 3; 4]
-let xs_plus_10 = List.map ((+) 10) xs
+let incr x = x + 1
+let f x = incr x
+let g = incr
 ```
 
-- No `fun x -> List.map ((+) 10) x` wrapper needed.
+- `f` and `g` are the same function.
+- Both have type `int -> int`.
+- The right-hand form reads "`g` *is* `incr`."
+
+:::
+
+:::slide
+
+## Eta-reduction with `List.map`
+
+Build a reusable transformer with `List.map`:
+
+```text
+let add_ten xs = List.map ((+) 10) xs
+```
+
+eta-reduces to:
+
+```ocaml
+let add_ten = List.map ((+) 10)
+
+let _ = add_ten [1; 2; 3; 4]
+```
+
+- Reads cleanly: "`add_ten` *is* map with `+10`."
+- No surplus `fun xs -> ...`.
 
 :::
 
@@ -570,9 +615,9 @@ let add x y = x + y
 - Type of `add 5`: `int -> int`. It's the function `fun y -> 5 + y`.
 - `add 5` evaluates to a function value. Toplevel: `int -> int = <fun>`.
 - `(add 5) 3` evaluates to `8`. First compute `add 5`, then apply to `3`.
-- `add 5 3` (no parens) gives the same `8`.
+  - `add 5 3` (no parens) gives the same `8`.
 - Function application is left-associative: `((add) 5) 3`.
-- The parens version just makes partial application explicit.
+  - The parens version just makes partial application explicit.
 
 :::
 

@@ -64,8 +64,8 @@ let rec sum_to n =
   else n + sum_to (n - 1)
 ```
 
-`sum_to 10` works. `sum_to 1_000` works. `sum_to 100_000` probably
-works. `sum_to 1_000_000` crashes:
+`sum_to 10` works. `sum_to 1_000` works. `sum_to 10_000` crashes
+in the browser:
 
 ```
 Stack overflow during evaluation (looping recursion?).
@@ -73,13 +73,14 @@ Stack overflow during evaluation (looping recursion?).
 
 It is not a looping recursion; the recursion terminates correctly,
 each step reducing `n` by one. The problem is that each call needs
-its own stack frame, and a million frames is more than the operating
-system gave us. To understand why each call needs a frame, look at
-the body of the recursive case: `n + sum_to (n - 1)`. After the
-recursive call returns, we still need to do an addition: take its
-result and add `n` to it. To do that addition, we have to remember
-`n` across the call. That memory has to live somewhere; the standard
-place is the stack.
+its own stack frame, and ten thousand frames is more than the
+browser gave us. (Native OCaml takes longer to fall over but the
+mechanism is the same.) To understand why each call needs a frame,
+look at the body of the recursive case: `n + sum_to (n - 1)`.
+After the recursive call returns, we still need to do an addition:
+take its result and add `n` to it. To do that addition, we have to
+remember `n` across the call. That memory has to live somewhere;
+the standard place is the stack.
 
 :::slide
 
@@ -90,13 +91,13 @@ let rec sum_to n =
   if n = 0 then 0
   else n + sum_to (n - 1)
 
-let _ = sum_to 1_000_000
+let _ = sum_to 10_000
 ```
 
 - Crashes: `Stack overflow during evaluation`.
 - Each call needs a stack frame to remember "what to do with the result".
 - Body `n + sum_to (n - 1)`: must remember `n` across the call.
-- A million frames: stack runs out.
+- Ten thousand frames: stack runs out.
 
 :::
 
@@ -110,11 +111,12 @@ stack unwinds: frame for `n = 1` returns `1 + 0 = 1`; frame for
 `n = 2` returns `2 + 1 = 3`; and so on, building up `15` at the
 top.
 
-For `n = 5` the stack of six frames is fine. For `n = 1_000_000`
-the stack of a million frames is not. The operating system imposes
-a stack size limit (typically 8 megabytes by default on Linux, less
-on macOS). Each frame is some tens of bytes; a million frames is
-some tens of megabytes; we run out of stack and crash.
+For `n = 5` the stack of six frames is fine. For `n = 10_000` in
+the browser, or `n = 1_000_000` natively, the stack runs out. The
+operating system (or, in the browser, the JS engine) imposes a
+stack size limit; the browser's is the strictest, typically room
+for around ten thousand JS frames. Each frame is some tens of
+bytes; enough frames, and we crash.
 
 The problem is not specific to OCaml. Try the equivalent recursive
 sum in Python, in Java, in C: they all crash for large `n`. Python
@@ -225,17 +227,20 @@ let sum_to n =
   in
   go 0 n
 
-let _ = sum_to 1_000_000
+let _ = sum_to 10_000
 ```
 
-`int = 500000500000`. No stack overflow.
+`int = 50005000`. No stack overflow this time, even though the
+non-tail version crashed on the very same input. The recursive
+call no longer needs an enclosing frame, so each call reuses the
+caller's instead of pushing a new one. Ten thousand iterations
+run without growing the stack at all.
 
 :::slide
 
 ## The accumulator pattern
 
-- Move the "work" *before* the recursive call.
-- Pass running total as an extra parameter.
+- Move the work *before* the recursive call; carry a running total.
 
 ```ocaml
 let sum_to n =
@@ -245,12 +250,12 @@ let sum_to n =
   in
   go 0 n
 
-let _ = sum_to 1_000_000
+let _ = sum_to 10_000
 ```
 
-- `int = 500000500000`. No stack overflow.
-- `go` takes accumulator `acc` and remaining `n`.
-- Recursive call is the final expression: tail call.
+- Result: `int = 50005000`. **No stack overflow.**
+- Same input crashed the non-tail version.
+- Tail call: recursive call is the *final* expression.
 
 :::
 
