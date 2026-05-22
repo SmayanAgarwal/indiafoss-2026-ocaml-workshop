@@ -558,6 +558,10 @@ Predict:
 
 ## Activity discussion
 
+```ocaml
+let add x y = x + y
+```
+
 - Type of `add 5`: `int -> int`. It's the function `fun y -> 5 + y`.
 - `add 5` evaluates to a function value. Toplevel: `int -> int = <fun>`.
 - `(add 5) 3` evaluates to `8`. First compute `add 5`, then apply to `3`.

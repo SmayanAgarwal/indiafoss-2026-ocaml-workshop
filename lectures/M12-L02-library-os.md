@@ -474,6 +474,10 @@ virtual-device interface.
 
 ## Activity discussion
 
+Q1: a wild-pointer bug in the network library, library OS vs
+Linux kernel module: where does the blast radius land?
+Q2: why Nemesis and Exokernel did not become production OSes.
+
 - Library OS contains a fault **to its own unikernel** (no
   cross-process blast radius). But **inside** that unikernel,
   there's no MMU wall.

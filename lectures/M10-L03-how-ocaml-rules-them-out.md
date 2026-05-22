@@ -570,6 +570,9 @@ predictable runtime.
 
 ## Activity discussion
 
+The exercises: write `safe_nth`; predict the OCaml analogue of a
+C use-after-free; explain the low-bit pointer tag.
+
 - The "no free" half closes UAF and double-free together: no
   operation exists for the bug.
 - The bounds-checked indexing closes buffer overflow at the

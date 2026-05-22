@@ -247,16 +247,18 @@ about $x$.
 
 :::slide
 
-## Typing rule for `let ... in`
+## Typing rule for `let ... in` (static semantics)
 
 $$
 \dfrac{e_1 : t_1 \qquad x : t_1 \vdash e_2 : t_2}
       {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) : t_2}
 $$
 
+- **Static semantics**: this rule produces a *type*, not a value.
 - $\vdash$ ("turnstile") reads as "assuming".
 - The body's typing uses the assumption $x : t_1$.
 - The whole `let` has the type of its **body** ($t_2$).
+- Dynamic semantics (how it *evaluates*) comes next.
 
 :::
 
@@ -294,13 +296,14 @@ mapping names to values. But for reasoning about what a program
 
 :::slide
 
-## Evaluation rule for `let ... in`
+## Evaluation rule for `let ... in` (dynamic semantics)
 
 $$
 \dfrac{e_1 \to v_1 \qquad e_2[x := v_1] \to v_2}
       {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \to v_2}
 $$
 
+- **Dynamic semantics**: this rule produces a *value*, not a type.
 - $e \to v$ reads "$e$ evaluates to $v$".
 - Evaluate $e_1$ first; substitute $v_1$ for $x$ in $e_2$;
   evaluate the result.
@@ -437,15 +440,15 @@ Shadowing works for `let ... in` too:
 ```ocaml
 let _ =
   let x = 5 in
-  let x = 10 in
+  let x = x + 5 in
   x
 ```
 
-Result: `int = 10`. The inner `let x = 10` introduces a brand new
-binding that hides the outer `x = 5` for the rest of the
-expression. The outer `x` is still alive (and still `5`) outside
-this expression; the inner `let x` only renames inside its own
-body.
+Result: `int = 10`. The right-hand side of the inner `let x = x +
+5` reads the outer `x` (which is `5`), computes `10`, and binds
+that to a *fresh* `x` that hides the outer one for the rest of the
+expression. Two `x` slots: the outer one is read on the RHS, the
+inner one is the new binding the body sees.
 
 :::slide
 
@@ -454,12 +457,13 @@ body.
 ```ocaml
 let _ =
   let x = 5 in
-  let x = 10 in
+  let x = x + 5 in
   x
 ```
 
-`int = 10`. The inner binding hides the outer `x = 5` for the rest
-of the expression. **Two separate $x$'s, no mutation.**
+`int = 10`. The RHS `x + 5` reads the outer `x = 5`; the result
+`10` binds a fresh inner `x` that hides the outer for the body.
+**Two separate $x$ slots, no mutation.**
 
 :::
 
@@ -694,6 +698,14 @@ means right now," so shadowing the outer `x` does not change `y`.
 
 ## Activity discussion
 
+```ocaml
+let _ =
+  let x = 10 in
+  let y = x in
+  let x = x + 5 in
+  x + y
+```
+
 - `let x = 10`: $x = 10$.
 - `let y = x`: $y$ binds to the *value* `10`, not to the name `x`.
 - `let x = x + 5`: shadows; new $x = 15$. $y$ still `10`.
@@ -712,8 +724,9 @@ recognises that nothing reachable refers to the old `x` and frees
 it. GC and immutability fit well together: GC makes immutability
 cheap, and immutability makes GC's job easier (no in-place updates
 means no need for write barriers in the common case). The full GC
-story comes back in [Module 9](M09-L01-why-test.html) when we look
-at what the type system catches and what it doesn't.
+story comes back in
+[Module 10](M10-L03-how-ocaml-rules-them-out.html) when we look at
+how OCaml rules out the memory-safety bugs that haunt C.
 
 ## A small code challenge
 

@@ -566,7 +566,7 @@ warnings; fix each one.
 
 ## Activity discussion: the extended type
 
-After adding the constructors:
+Adding `Var of string` (variables) and `Neg of expr` (unary minus):
 
 ```ocaml skip
 type expr =

@@ -76,11 +76,12 @@ the full table is worth having in one place.
 
 | Operation | `int` | `float` |
 | --- | --- | --- |
-| Power | (`Int.pow a b`, OCaml 5.x) | `a ** b` |
+| Power | (no built-in; write `x * x * x`) | `a ** b` |
 | Negate | `-a` | `-. a` |
 | Absolute | `abs a` | `Float.abs a` |
 
-- `**` is float-only; for small int powers, write `x * x * x`.
+- `**` is float-only; the stdlib has no integer `pow`. Spell out
+  the multiplication, or write a small recursive `pow`.
 - Float negation `-.` is the one prefix-operator-with-a-dot.
 - `abs_float` is deprecated; prefer `Float.abs`.
 
@@ -94,10 +95,11 @@ mod b`, the integer remainder. For floats, `a /. b` is the ordinary
 mathematical division, returning `float`.
 
 **Power.** OCaml's `**` operator is float exponentiation:
-`2.0 ** 10.0 = 1024.0`. There is no built-in integer power
-operator in older OCaml; in OCaml 5.x there is `Int.pow`. For most
-small powers, just spell out the multiplication: `let cube x = x *
-x * x`.
+`2.0 ** 10.0 = 1024.0`. The standard library has no built-in
+integer power. For small powers, spell out the multiplication
+(`let cube x = x * x * x`); for arbitrary integer powers, write a
+small recursive helper (`let rec pow a b = if b = 0 then 1 else
+a * pow a (b - 1)`).
 
 **Negation.** Unary negation on `int` uses the same `-` symbol as
 subtraction, but it sits in front of a single argument: `let x =
@@ -118,144 +120,14 @@ errors. Internalise: `+` for ints, `+.` for floats; `*` for ints,
 floats; if you need float remainder, use `Float.rem a b` from the
 standard library.
 
-## Comparison and equality
-
-The six comparison operators all return `bool`.
-
-```ocaml
-let _ = 1 < 2
-let _ = "apple" = "apple"
-let _ = 3 <> 4
-let _ = 1.5 >= 1.5
-```
-
-:::slide
-
-## Comparison and equality
-
-```ocaml
-let _ = 1 < 2
-let _ = "apple" = "apple"
-let _ = 3 <> 4
-let _ = 1.5 >= 1.5
-```
-
-- Orderings: `<`, `<=`, `>`, `>=`.
-- `=` is **structural** equality; `<>` structural inequality.
-- All five are **polymorphic**: numbers, strings, tuples, lists,
-  variants, records.
-- `==` and `!=` are **physical** identity. Almost never what you want.
-- **Use `=` and `<>`.**
-
-:::
-
-The four ordering operators (`<`, `<=`, `>`, `>=`) work on
-anything orderable in the usual way. Two equality operators worth
-distinguishing precisely:
-
-- `=` is *structural* equality. It compares values by their content,
-  recursively. `"apple" = "apple"` is `true` if the two strings
-  contain the same bytes. `[1;2;3] = [1;2;3]` is `true` if both
-  lists have the same elements in the same order. Records: same
-  fields, same values. This is the operator you want 99% of the
-  time.
-- `==` is *physical* equality. It checks whether two values refer
-  to the same memory allocation. For immutable data, this is almost
-  never the question you want. Two strings with the same content
-  might or might not be the *same allocation* depending on details
-  of how they were constructed. Stick with `=`.
-
-The companion inequalities: `<>` is the structural inequality
-(opposite of `=`); `!=` is the physical inequality (opposite of
-`==`). Same advice: use `<>`, not `!=`.
-
-A historical note. Many languages took the unfortunate path of
-using `==` as everyday equality and `=` as assignment (C inherited
-this from B; Java, JavaScript, Python all followed). OCaml goes
-the other way: `=` is equality, and assignment uses `<-` (for
-[mutable fields](M07-L02-arrays-and-mutation.html#mutable-record-fields),
-which we will see in Module 7). The OCaml choice matches
-mathematical notation, but takes adjusting to if you came from a
-C-family language.
-
-All five comparison operators (`<`, `<=`, `>`, `>=`, `=`) are
-*polymorphic*: they have type `'a -> 'a -> bool`, where `'a` can
-be any type that has a sensible structural comparison. This works
-for numbers, strings, tuples, lists, records, and most variants.
-What it does not work cleanly on is functions (you cannot
-sensibly compare functions for equality) and infinite or cyclic
-data structures (these can hang the comparison). For ordinary
-data, polymorphic comparison "just works."
-
-## Logical operators
-
-```ocaml
-let _ = true && false
-let _ = true || false
-let _ = not true
-```
-
-`&&`, `||`, and `not` are familiar. The two binary ones short-circuit:
-
-```ocaml
-let _ = false && (1 / 0 = 0)
-```
-
-:::slide
-
-## Logical operators
-
-```ocaml
-let _ = true && false
-let _ = true || false
-let _ = not true
-```
-
-`&&` and `||` short-circuit:
-
-```ocaml
-let _ = false && (1 / 0 = 0)
-```
-
-- Result: `false`. RHS never evaluated, so no divide-by-zero.
-- Same for `true || ...`.
-- Identical to C / Java / JavaScript / Python.
-- Quirk: keyword `not` instead of `!`.
-
-:::
-
-`false && X` returns `false` without evaluating `X`. `true || X`
-returns `true` without evaluating `X`. These short-circuit semantics
-are identical to C, Java, JavaScript, Python. The only OCaml-specific
-quirk is that *negation* uses the keyword `not`, not the symbol `!`.
-
-Why does short-circuit matter? Because the right-hand side might
-crash, raise an exception, or simply take a long time, and the
-left-hand side may have decided we do not need the right-hand side.
-Common idiom: guarding against an invalid case before using a
-value:
-
-```ocaml
-let safe_div a b = b <> 0 && a / b > 1
-```
-
-If `b = 0`, the second clause is never evaluated, so we never
-divide by zero. If `&&` were strict (evaluated both sides
-unconditionally), this idiom would crash on `b = 0`. The
-short-circuit semantics is what makes the idiom safe.
-
-A subtle why-question worth thinking about: why does OCaml provide
-short-circuit forms of `&&` and `||` but not of, say, `+`? Two
-reasons:
-
-1. `&&` and `||` have a useful "decided early" semantics: knowing
-   the value of the left operand sometimes uniquely determines the
-   value of the whole expression. `false && X` is always `false`,
-   so we don't need `X`. There is no analogous shortcut for `+`:
-   knowing one operand doesn't determine the sum.
-2. *Boolean values themselves* carry the short-circuit decision:
-   `false` means "stop"; `true` means "continue." There is no analogous
-   stop-decision for arithmetic.
+Comparison (`<`, `<=`, `>`, `>=`, `=`, `<>`) and the logical
+operators (`&&`, `||`, `not`) were introduced in
+[M02-L01](M02-L01-literals.html#booleans). The pertinent facts for
+this lecture are recap: `=` and `<>` are *structural* (compare by
+content) and *polymorphic* (work on any first-order type); `==`
+and `!=` are *physical* identity and almost never what you want;
+`&&` and `||` short-circuit, exactly as in C / Java / Python; and
+negation is the keyword `not`, not the symbol `!`.
 
 ## String concatenation
 
@@ -334,13 +206,13 @@ let _ = max 3 7
 let _ = String.length "hello"
 ```
 
+- Function application is **left-associative**: `f x y` parses as
+  `(f x) y`.
 - Parens only for **grouping**:
 
 ```ocaml
 let _ = succ (max 3 7)
 ```
-
-- Without parens: parses as `(succ max) 3 7`. Wrong.
 
 :::
 
@@ -349,16 +221,16 @@ Function application binds *tighter than any infix operator*, so
 (They give the same answer here by coincidence; in general the
 two parses would differ.)
 
-When you nest calls, you need parentheses to group:
+Function application is *left-associative*: `f x y` means `(f x)
+y`. So when you nest calls, you need parentheses to group:
 
 ```ocaml
 let _ = succ (max 3 7)
 ```
 
-Without the parentheses, OCaml would parse this as
-`(succ max) 3 7`: try to apply `succ` to `max` (a function), then
-apply the result to `3`, then to `7`. That makes no sense (you
-can't apply `succ` to a function), and the compiler complains.
+Without the parentheses, OCaml would parse this as `succ max 3 7`,
+i.e. `((succ max) 3) 7`: try to apply `succ` to `max`, which the
+compiler rejects.
 
 The "no parentheses on function call" rule takes adjusting to if
 you came from C-family languages. The reason OCaml does this is
@@ -375,22 +247,24 @@ levels below.
 
 :::slide
 
-## Operator precedence
+## Operator precedence (tightest to loosest)
 
-From **tightest** to **loosest**:
+<div class="precedence-table">
 
-```
-.       (record / module access)
-function application
-* / mod (and *., /.)
-+ - (and +., -.)
-^ @  (concat operators)
-< = > <= >= <> (comparisons)
-&&
-||
-,       (tuple)
-;       (sequence)
-```
+| Lvl | Operators                                  | Notes              |
+|----:|--------------------------------------------|--------------------|
+|   1 | `.`                                        | record / module access |
+|   2 | $f\ x$                                     | function application |
+|   3 | `*`, `/`, `mod`, `*.`, `/.`                | multiplicative     |
+|   4 | `+`, `-`, `+.`, `-.`                       | additive           |
+|   5 | `^`, `@`                                   | string / list concat |
+|   6 | `<`, `=`, `>`, `<=`, `>=`, `<>`            | comparisons        |
+|   7 | `&&`                                       | logical and        |
+|   8 | <code>&#124;&#124;</code>                  | logical or         |
+|   9 | `,`                                        | tuple constructor  |
+|  10 | `;`                                        | sequence           |
+
+</div>
 
 - When in doubt, **parenthesize**.
 
@@ -622,6 +496,10 @@ What does it evaluate to? Trace through.
 
 ## Activity discussion
 
+```ocaml
+let _ = 1 + 2 * 3 = 7 && true
+```
+
 Parse with precedence:
 
 - `*` tighter than `+`: do `2 * 3` first.
@@ -638,33 +516,33 @@ Any grouping that surprises you: candidate for **explicit parens**.
 A code challenge to close out:
 
 :::quiz code id=M02-L04-q1
-Write `clamp : int -> int -> int -> int` that takes a value and a
-range `[lo, hi]` and clamps the value to the range: if `x` is
-below `lo`, return `lo`; if above `hi`, return `hi`; otherwise
-return `x`. Argument order: `clamp lo hi x`.
+Write `in_range : int -> int -> int -> bool` that returns `true`
+exactly when `x` lies in the closed interval `[lo, hi]`. Use the
+`&&`-idiom this lecture introduced. Argument order:
+`in_range lo hi x`.
 
 ```ocaml
-let clamp lo hi x =
+let in_range lo hi x =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (clamp 0 10 5    = 5)  "in range";
-  check (clamp 0 10 (-3) = 0)  "below range";
-  check (clamp 0 10 20   = 10) "above range";
-  check (clamp 0 10 0    = 0)  "at lower bound";
-  check (clamp 0 10 10   = 10) "at upper bound";
+  check (in_range 0 10 5     = true)  "interior";
+  check (in_range 0 10 0     = true)  "at lower bound";
+  check (in_range 0 10 10    = true)  "at upper bound";
+  check (in_range 0 10 (-1)  = false) "below";
+  check (in_range 0 10 11    = false) "above";
   print_endline "all tests passed"
 ```
 :::
 
 :::solution
 
-One sample solution: `if x < lo then lo else if x > hi then hi
-else x`. We will see `if`-expressions in detail in the
-[next lecture](M02-L05-if-expressions.html).
+`let in_range lo hi x = lo <= x && x <= hi`. The `&&` short-circuits,
+so the upper-bound check only runs when the lower-bound check
+already passed.
 
 :::
 

@@ -693,6 +693,17 @@ with locality.
 
 ## Activity discussion
 
+Q1:
+```ocaml skip
+let combine (p @ local) : point =
+  { x = p.x *. 2.0; y = p.y *. 2.0 }
+```
+Q2:
+```ocaml skip
+let cache : point ref = ref { x = 0.0; y = 0.0 }
+let save (p @ local) : unit = cache := p
+```
+
 - `local` parameters do not poison the function's outputs: fresh
   allocations escape normally.
 - Long-lived cells (global refs, top-level structures) demand

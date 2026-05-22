@@ -28,21 +28,91 @@ reading:
 
 :::
 
-Every program in OCaml is, in the end, an *expression*: a piece of
-syntax that the language can *evaluate* down to a *value*. The
-distinction between expression and value is worth pausing on, because
-it shapes everything that follows. An expression like `2 + 3` is not
-a value: it still has computation left to do. The expression `5`, on
-the other hand, *is* its own value: there is nothing to evaluate. We
-call such self-evaluating expressions *literals*.
+## Expressions
 
-This first content lecture of the course is a short tour of the
-four primitive literal kinds in OCaml: integers, floating-point
-numbers, booleans, and strings. The choice of "primitive" is the
-language designer's: these are the kinds the compiler knows about
-intrinsically, with dedicated syntax and built-in operators. Every
-other value in the language, from a list of pairs to a record of
-records, is ultimately built up out of literals like these.
+Every program in OCaml is, in the end, an *expression*: a piece of
+syntax that the language evaluates to produce a result. An
+expression has two things, *syntax* (how you write it) and
+*semantics* (what it means). The semantics in turn split in two:
+
+- *Static semantics* are the type-checking rules. Before any
+  evaluation happens, OCaml checks the expression and either
+  produces a type or rejects it with an error message.
+- *Dynamic semantics* are the evaluation rules. If type-checking
+  succeeded, OCaml then evaluates the expression to produce a
+  *value* (or it raises an exception, or it runs forever).
+
+Crucially, evaluation rules apply *only to expressions that
+type-check*. This is the static-vs-dynamic-language line:
+statically typed languages like OCaml refuse to run an ill-typed
+expression, where dynamically typed languages (Python, JavaScript)
+start running anyway and may discover the type mismatch only at
+runtime.
+
+:::slide
+
+## Expressions
+
+Every expression has:
+
+- **Syntax**: how you write it.
+- **Semantics**: what it means.
+  - *Static* (type-checking): produces a type, or fails with an
+    error.
+  - *Dynamic* (evaluation): produces a value (or an exception, or
+    diverges).
+- Dynamic rules apply **only to expressions that type-check**.
+  (Static vs. dynamic languages.)
+
+:::
+
+## Values
+
+A *value* is an expression that does not need any further
+evaluation. The literal `5` is already a value: there is nothing
+left to compute. The expression `2 + 3` is *not* a value: it still
+has work to do, namely the dynamic semantics of `+`, which reduces
+it to `5`. Every successful evaluation in OCaml ends at a value.
+
+Values form a *subset* of expressions: every value is an
+expression, but not every expression is a value. Evaluation is the
+process of taking a non-value expression and reducing it to one
+inside that inner ring.
+
+:::slide
+
+## Values
+
+- A **value** is an expression that does not need further
+  evaluation.
+- `5` is a value. `2 + 3` is not: it still has work to do.
+- Evaluation reduces an expression to a value (or fails).
+
+<figure class="diagram values-diagram">
+  <img src="/assets/m02/figures/val-expr.svg"
+       alt="Values are a subset of expressions"
+       style="max-height: 360px;">
+</figure>
+
+:::
+
+## Literals
+
+The simplest expressions are the ones that are *already values*:
+they need no evaluation at all. We call those *literals*. OCaml's
+primitive literal kinds are `int`, `float`, `bool`, `char`,
+`string`, and `unit`. This lecture spends the bulk of its time on
+the four that dominate everyday code: integers, floating-point
+numbers, booleans, and strings. `char` (a single byte, written
+`'a'`) shows up briefly in the strings section, and `unit` (the
+single value `()`, used as a placeholder when there is nothing
+meaningful to return) is covered in Module 3 alongside
+unit-taking functions. The choice of "primitive" is the language
+designer's: these are the kinds the compiler knows about
+intrinsically, with dedicated syntax and built-in operators.
+Every other value in the language, from a list of pairs to a
+record of records, is ultimately built up out of literals like
+these.
 
 It is tempting to skip past this material as obvious; you have
 written `int`s and `string`s in five other languages already. Resist
@@ -61,15 +131,18 @@ read a textbook chapter on the same material.
 
 :::slide
 
-## Four primitive kinds
+## Primitive literal kinds
 
 | Type | Example literal | What it represents |
 | --- | --- | --- |
 | `int` | `42`, `-7`, `0` | Whole number, signed, 63-bit on 64-bit |
 | `float` | `3.14`, `2.0` | IEEE-754 double-precision |
 | `bool` | `true`, `false` | Boolean |
+| `char` | `'a'`, `'\n'` | Single byte |
 | `string` | `"hello"`, `""` | Byte string |
+| `unit` | `()` | The single placeholder value |
 
+- Each literal is its own value.
 - Compiler **infers** every literal's type.
 - No `int x = 5;`. Just `let x = 5`.
 
@@ -263,13 +336,10 @@ let bad = 3
 Scientific notation works as it does in every other language:
 `2.71828e-1` is `2.71828 × 10^(-1)`, which is `0.271828`. You can
 write the exponent with a sign (`e-1`, `e+5`) or without (`e10`).
-The mantissa must still contain a decimal point, even when followed
-by an exponent. `1e10` is *not* legal OCaml; you have to write
-`1.0e10` or `1e10` is... actually, let me correct myself: `1e10` is
-read as a float in OCaml, the exponent makes it unambiguous. The
-strict rule is that *either* a decimal point *or* an exponent suffix
-is enough to mark a literal as `float`. In practice, prefer the
-decimal point: it makes the code easier to read.
+The rule is that *either* a decimal point *or* an exponent suffix
+is enough to mark a literal as `float`. So `1.0`, `1.0e10`, and
+`1e10` are all floats; only `1` is an `int`. In practice, prefer
+the decimal point: it makes the code easier to read.
 
 Now to the design choice that catches every new OCaml programmer at
 least once: the arithmetic operators on `float` are *different
@@ -405,8 +475,6 @@ let _ = "apple" <> "banana"
 
 - `&&` and `||` **short-circuit** (as in C and Java).
 - `=` is equality, `<>` is inequality.
-- Comparison and equality covered properly in
-  [Lecture 4](M02-L04-operators.html#comparison-and-equality).
 
 :::
 
@@ -652,6 +720,11 @@ Predict before running.
 :::slide
 
 ## Activity discussion
+
+What is the type and value of:
+
+- `3 / 2`
+- `3.0 /. 2.0`
 
 - `3 / 2` : `int = 1`. Integer division **truncates**.
 - `3.0 /. 2.0` : `float = 1.5`. Float division as expected.

@@ -736,6 +736,12 @@ Predict before reading on.
 
 ## Activity discussion
 
+```ocaml skip
+let f = function
+  | x -> x
+  | 0 -> 99
+```
+
 - Variable pattern `x` matches *any* integer, including `0`.
 - `x` appears first, so it wins.
 - Second clause is unreachable; warning 11.

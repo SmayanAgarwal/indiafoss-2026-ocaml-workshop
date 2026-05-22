@@ -671,6 +671,11 @@ news.
 
 ## Activity discussion
 
+Q1: `mirage configure -t hvt && make`: what's the output, what
+runs it?
+Q2: why OCaml-TLS is "rigorous engineering" in a way conventional
+TLS libraries are not.
+
 - `mirage configure -t hvt && make` produces a **statically-linked
   ELF** that runs as a **KVM VM via Solo5**.
 - OCaml-TLS's rigorous engineering: same pure code drives prod,

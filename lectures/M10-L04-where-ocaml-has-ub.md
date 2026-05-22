@@ -646,6 +646,11 @@ safe side.
 
 ## Activity discussion
 
+Q1: `let parsed : Config.t = Marshal.from_string raw_bytes 0`
+where `raw_bytes` came from disk.
+Q2: which of `Array.get`, single-domain `ref`, `Obj.magic`, or
+`List.map` is *not* in OCaml's safe fragment.
+
 - `Marshal` at a *version boundary* (disk, network, IPC across
   releases) is structurally the wrong tool. Tagged formats catch
   the mismatch.

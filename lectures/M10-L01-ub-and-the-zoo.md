@@ -498,6 +498,9 @@ exactly the case for tests, which we covered in Module 9.
 
 ## Activity discussion
 
+Q1: a C `if (x + 1 < x)` overflow check at `-O2`.
+Q2: which bug is impossible in safe OCaml.
+
 - The signed-overflow check is a real category of UB-driven
   miscompile. Compilers assume UB does not happen and optimise
   accordingly.

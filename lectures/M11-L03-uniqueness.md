@@ -744,6 +744,14 @@ consumption, but it is enough to downgrade the closure.
 
 ## Activity discussion
 
+Q1: which of A/B/C fails to type-check?
+```ocaml skip
+(* A *) let a r = let _v, r = get r in let _v, _r = get r in ()
+(* B *) let b r = let r = set r 100 in free r
+(* C *) let c r = let _v, _r = get r in free r
+```
+Q2: a closure that captures (not consumes) a unique reference.
+
 - Each unique operation must thread the binding correctly. An
   underscored shadow drops the new handle and leaves the original
   consumed.

@@ -100,8 +100,8 @@ let abs_val x = if x < 0 then -x else x
 
 ## In OCaml, `if` is an expression
 
-```ocaml skip
-let abs_val = if x < 0 then -x else x
+```ocaml
+let abs_val x = if x < 0 then -x else x
 ```
 
 - `if x < 0 then -x else x` is an **expression** with a value.
@@ -450,11 +450,10 @@ let sign x =
 - `else if` is just `else (if ... then ... else ...)`.
 - Same expression, parens explicit:
 
-```ocaml
-let sign x =
-  if x > 0 then 1
-  else (if x < 0 then -1 else 0)
-```
+<pre class="static-code"><code>let sign x =
+  if x &gt; 0 then 1
+  else (if x &lt; 0 then -1 else 0)
+</code></pre>
 
 - Idiomatic OCaml leaves the parens off.
 
@@ -554,6 +553,12 @@ with `1`).
 :::slide
 
 ## Activity discussion
+
+```ocaml skip
+let label x =
+  if x > 0 then "positive"
+  else 0
+```
 
 Branches don't share a type:
 

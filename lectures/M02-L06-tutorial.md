@@ -5,8 +5,8 @@ week: 2
 duration_target_min: 28
 concepts: [expression composition, reading type errors, writing small programs]
 keywords: [OCaml, tutorial, expressions, type errors, beginner exercises]
-activity_question: "Write [signum : int -> int] returning -1, 0, or 1 for negative, zero, positive inputs. Then write [signum_f : float -> float] doing the same for floats. What changes between the two?"
-think_about_this: "If you wrote [signum] without using [if], could you do it with arithmetic alone? What would that program look like, and is it clearer?"
+activity_question: "Write [sign : int -> int] returning -1, 0, or 1 for negative, zero, positive inputs. Then write [sign_f : float -> float] doing the same for floats. What changes between the two?"
+think_about_this: "If you wrote [sign] without using [if], could you do it with arithmetic alone? What would that program look like, and is it clearer?"
 reading:
   - title: "Cornell CS3110, Basics chapter (revisit anything that felt thin)"
     url: https://cs3110.github.io/textbook/chapters/basics/index.html
@@ -163,12 +163,12 @@ let shipping_cost weight =
   else 100.0
 
 let shipping_label weight =
-  let cost = shipping_cost weight in
+  let cost = shipping_cost weight in 
   if cost < 10.0 then "cheap"
   else if cost < 25.0 then "standard"
   else "premium"
 
-let _ = shipping_label 7.5
+let _ = shipping_label 2.5
 ```
 
 :::slide
@@ -202,7 +202,7 @@ let shipping_label weight =
   else if cost < 25.0 then "standard"
   else "premium"
 
-let _ = shipping_label 7.5
+let _ = shipping_label 2.5
 ```
 
 - Result: `string = "standard"`.
@@ -211,7 +211,9 @@ let _ = shipping_label 7.5
 
 :::
 
-Result for `7.5`: `string = "standard"`. The pattern `let cost =
+Result for `2.5`: `string = "standard"` (weight `2.5` falls in the
+`< 5.0` band, so `cost = 10.0`, which is `< 25.0`, so the label
+is "standard"). The pattern `let cost =
 shipping_cost weight in if cost < ... else ...` is idiomatic:
 when you need to inspect the same value at several thresholds,
 name it once and compare repeatedly. Without the `let`, you would
@@ -340,12 +342,12 @@ to set up Modules 4 and 7.
 ## Reading type errors
 
 Type errors are noisy at first. The cure is *repetition*: write
-some code, read the message, fix, repeat. Three errors you will
-meet a lot deserve their own slides.
+some code, read the message, fix, repeat. One error worth a
+fresh slide here; two more were covered earlier in the module.
 
 :::slide
 
-## Type error 1: int / float confusion
+## Reading a type error: int / float confusion
 
 ```ocaml skip
 let bad r = 3.14 * r * r
@@ -362,80 +364,31 @@ Error: This expression has type float but an expression was expected
 
 :::
 
-**Type error 1**: the int/float operator mix-up. You wrote `*`
-when you meant `*.`. The compiler points at the `float` literal as
-the offender, says it expected an `int` (because `*` is integer
-multiplication), and tells you the actual type is `float`. The
-fix: change the operator to `*.`.
+The int/float operator mix-up: you wrote `*` when you meant `*.`.
+The compiler points at the `float` literal as the offender, says
+it expected an `int` (because `*` is integer multiplication), and
+tells you the actual type is `float`. The fix: change the
+operator to `*.`.
 
 The trick to reading the error: *the operator drives the expected
 type*. If you see "expected int", look for an `int` operator
 nearby; that's where the constraint came from.
 
-:::slide
+Two more error shapes you have already seen elsewhere in the
+module are worth re-skimming when you hit them:
 
-## Type error 2: missing conversion
+- [M02-L04, Pitfall 2](M02-L04-operators.html#pitfall-2-implicit-conversion-that-isnt-there):
+  `"value: " ^ 5` fails because OCaml does not silently coerce
+  `int` to `string`. Convert with `string_of_int` or use
+  `Printf.sprintf`.
+- [M02-L05, mismatched branches](M02-L05-if-expressions.html#why-the-branches-must-agree):
+  `if ... then "positive" else 0` fails because the two branches
+  must share a type. Decide which type you want and rewrite the
+  other branch.
 
-```ocaml skip
-let bad x = "value: " ^ x
-let _ = bad 5
-```
-
-```
-Error: This expression has type int but an expression was expected
-       of type string
-```
-
-- `bad` inferred as `string -> string` (because of `^`).
-- Passing an `int`: rejected. Convert with `string_of_int`:
-
-```ocaml skip
-let _ = bad (string_of_int 5)
-```
-
-:::
-
-**Type error 2**: missing conversion. Python and JavaScript would
-silently coerce an `int` to a `string` when you `+`-concatenate
-them; OCaml does not. The fix: convert explicitly with
-`string_of_int`, or use `Printf.sprintf` for richer formatting.
-
-This error often shows up not at the `^` line but at the *call
-site* of a function you wrote. Inference fixed the function's
-parameter to `string` (because of the `^`), so passing an `int`
-fails at the caller. Read the error in context: it might be your
-function that's wrong, or it might be the caller passing the
-wrong thing.
-
-:::slide
-
-## Type error 3: mismatched if branches
-
-```ocaml skip
-let bad x =
-  if x > 0 then "positive"
-  else 0
-```
-
-```
-Error: This expression has type int but an expression was expected
-       of type string
-```
-
-- Both `if` branches must have the **same type**.
-- Decide on `string` or `int` and rewrite the other branch.
-
-:::
-
-**Type error 3**: mismatched `if` branches. Then-branch is
-`"positive"` (type `string`); else-branch is `0` (type `int`); the
-compiler cannot give the whole expression a single type, so it
-rejects it. Decide which type you want and fix the other branch.
-
-These three errors account for most type errors in your first
-week. After your tenth `+`-versus-`+.` slip, you'll start to type
-the right operator without thinking; the others fall into the same
-muscle-memory pattern.
+Together these three shapes (operator mismatch, missing
+conversion, mismatched branches) account for the bulk of first-week
+type errors. After enough repetition the muscle memory takes over.
 
 ## Activity
 
@@ -443,10 +396,12 @@ muscle-memory pattern.
 
 ## Activity
 
-Write two functions:
+Re-implement
+[`sign` from M02-L05](M02-L05-if-expressions.html#a-quick-check),
+then write the float twin:
 
-- `signum : int -> int` returning `-1`, `0`, `1`.
-- `signum_f : float -> float` returning `-1.0`, `0.0`, `1.0`.
+- `sign : int -> int` returning `-1`, `0`, `1`.
+- `sign_f : float -> float` returning `-1.0`, `0.0`, `1.0`.
 
 Compare what changed between the two.
 
@@ -455,40 +410,40 @@ Compare what changed between the two.
 Try this one yourself before reading on.
 
 :::quiz code id=M02-L06-q2
-Write `signum : int -> int` that returns `-1` for negative inputs,
+Write `sign : int -> int` that returns `-1` for negative inputs,
 `0` for zero, and `1` for positive inputs.
 
 ```ocaml
-let signum x =
+let sign x =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (signum 5    =  1) "signum 5";
-  check (signum (-3) = -1) "signum -3";
-  check (signum 0    =  0) "signum 0";
-  check (signum 100  =  1) "signum 100";
+  check (sign 5    =  1) "sign 5";
+  check (sign (-3) = -1) "sign -3";
+  check (sign 0    =  0) "sign 0";
+  check (sign 100  =  1) "sign 100";
   print_endline "all tests passed"
 ```
 :::
 
 :::quiz code id=M02-L06-q1
-Now write the float version: `signum_f : float -> float`
+Now write the float version: `sign_f : float -> float`
 returning `-1.0`, `0.0`, `1.0`.
 
 ```ocaml
-let signum_f x =
+let sign_f x =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (signum_f 5.0    =  1.0) "signum_f 5.0";
-  check (signum_f (-3.7) = -1.0) "signum_f -3.7";
-  check (signum_f 0.0    =  0.0) "signum_f 0.0";
+  check (sign_f 5.0    =  1.0) "sign_f 5.0";
+  check (sign_f (-3.7) = -1.0) "sign_f -3.7";
+  check (sign_f 0.0    =  0.0) "sign_f 0.0";
   print_endline "all tests passed"
 ```
 :::
@@ -498,14 +453,14 @@ let () =
 ## Activity solution
 
 ```ocaml
-let signum x =
+let sign x =
   if x < 0 then -1
   else if x > 0 then 1
   else 0
 ```
 
 ```ocaml
-let signum_f x =
+let sign_f x =
   if x < 0.0 then -1.0
   else if x > 0.0 then 1.0
   else 0.0
@@ -528,16 +483,16 @@ rule. The benefit is that anyone reading either function knows
 unambiguously what types are involved.
 
 A small philosophical aside, since the *think about this* prompt
-invites it. Could you write `signum` using arithmetic alone, no
+invites it. Could you write `sign` using arithmetic alone, no
 `if`? Sure:
 
 ```ocaml
-let signum_arith x =
+let sign_arith x =
   if x = 0 then 0 else x / abs x
 
-let _ = signum_arith 5
-let _ = signum_arith (-3)
-let _ = signum_arith 0
+let _ = sign_arith 5
+let _ = sign_arith (-3)
+let _ = sign_arith 0
 ```
 
 This works: `x / abs x` is `1` for positive and `-1` for negative,
@@ -568,7 +523,7 @@ After Module 2 you can:
 - Read the type the toplevel reports.
 - Recognise the common type errors.
 - Write multi-branch `if` expressions.
-- Compose small functions like `shipping_cost`, `clamp`, `signum`.
+- Compose small functions like `shipping_cost`, `clamp`, `sign`.
 
 **Next, Module 3:** functions as values, currying, recursion.
 

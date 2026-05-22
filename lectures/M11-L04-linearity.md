@@ -563,6 +563,14 @@ force `once`.
 
 ## Activity discussion
 
+Q1: which `Handle` client (A/B/C) compiles?
+```ocaml skip
+(* A *) let _, t = read t 10 in let _, _ = read t 10 in ()
+(* B *) let _, t = read t 10 in close t
+(* C *) let s1, _ = read t 10 in let s2, _ = read t 10 in s1, s2
+```
+Q2: why `f` ends up `once` without an annotation.
+
 - Threading the handle correctly through `read` is the same shape
   as the `Unique_ref` ownership chain.
 - A closure capturing a `once` value becomes `once`. This is the

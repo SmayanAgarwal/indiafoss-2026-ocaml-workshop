@@ -600,6 +600,10 @@ Predict before binding it.
 
 ## Activity discussion
 
+```ocaml
+fun x -> x +. 1.0
+```
+
 - Type: `float -> float`.
 - `+.` forces `x` to be `float`; result is `float`.
 

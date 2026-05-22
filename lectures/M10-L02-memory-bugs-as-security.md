@@ -723,6 +723,9 @@ chain has bootstrapped.
 
 ## Activity discussion
 
+Q1: vendor headline numbers (Microsoft, Chromium, Android).
+Q2: ordering of the UAF exploit pipeline.
+
 - The 70/80/90 numbers are stable across vendors, codebases,
   and years. Not a sample bias; not a fad.
 - The exploit chain is also stable: free, spray, confusion, ROP,

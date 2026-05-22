@@ -505,6 +505,10 @@ the reason to avoid OCaml at the OS layer.
 
 ## Activity discussion
 
+Q1: proportion of high-severity bugs in major C/C++ codebases
+that are memory-safety issues.
+Q2: relative HTTP throughput, OCaml `httpaf_eio` vs Rust Hyper.
+
 - **70-90% of high-severity CVEs** in major C/C++ codebases are
   memory-safety bugs. Stable for over a decade.
 - OCaml's HTTP throughput is **competitive with Rust** and far

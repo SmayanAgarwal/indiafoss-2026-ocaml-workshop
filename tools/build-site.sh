@@ -101,10 +101,9 @@ emit_index() {
 HEAD
 
     # Walk modules in order, then lectures in order. modules.txt
-    # holds "<Mnn>: <title>" lines. Lecture numbers run continuously
-    # across modules: M01 holds L01-L05, M02 holds L06-L11, etc.
+    # holds "<Mnn>: <title>" lines. Lecture numbers are per-module:
+    # each module's lectures start at L01.
     local modules_file="$REPO_ROOT/lectures/modules.txt"
-    local running=0
     while IFS= read -r line; do
       line="${line%$'\r'}"
       case "$line" in
@@ -117,14 +116,15 @@ HEAD
       printf '      <div class="module-no">%s</div>\n' "$mnum"
       printf '      <h2>%s</h2>\n' "$mtitle"
       printf '      <ul>\n'
+      local lnum=0
       for src in "$REPO_ROOT"/lectures/"$mnum"-L*-*.md; do
         [ -f "$src" ] || continue
         local base ltitle
         base=$(basename "$src" .md)
         ltitle=$(awk '/^title:/ { sub(/^title: */, ""); sub(/^"/, ""); sub(/"$/, ""); print; exit }' "$src")
-        running=$((running + 1))
+        lnum=$((lnum + 1))
         printf '        <li><span class="lec-no">L%02d</span> <a href="%s.html">%s</a></li>\n' \
-          "$running" "$base" "$ltitle"
+          "$lnum" "$base" "$ltitle"
       done
       printf '      </ul>\n'
       printf '    </section>\n'

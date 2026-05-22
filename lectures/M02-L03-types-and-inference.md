@@ -325,14 +325,15 @@ for a function you wrote, it ran inference.
 ## Inference for a simple function
 
 ```ocaml
-let add x y = x + y
+let mean x y = (x + y) / 2
 ```
 
-Toplevel reports: `val add : int -> int -> int = <fun>`.
+Toplevel reports: `val mean : int -> int -> int = <fun>`.
 
-- `x + y` uses `(+) : int -> int -> int`.
+- `+` and `/` both have type `int -> int -> int`.
+- The literal `2` is `int`.
 - So `x : int`, `y : int`, result `int`.
-- Therefore `add : int -> int -> int`.
+- Therefore `mean : int -> int -> int`.
 - **Zero annotations written.** Compiler did the work.
 
 :::
@@ -342,12 +343,13 @@ Walk through:
 - `+` has type `int -> int -> int` (the integer addition operator).
 - In `x + y`, both operands of `+` must be `int`. So `x : int` and
   `y : int`.
-- The result of `+` is `int`. So `x + y` has type `int`.
-- The function body is `x + y`, so the body has type `int`.
+- `/` is integer division, type `int -> int -> int`. The literal
+  `2` is `int`. So `(x + y) / 2` is well-typed `int`.
+- The function body has type `int`.
 - The function takes `x` (an `int`) and `y` (an `int`) and returns
-  an `int`. So `add : int -> int -> int`.
+  an `int`. So `mean : int -> int -> int`.
 
-Every step is a constraint generated from an operator or function;
+Every step is a constraint generated from an operator or literal;
 the inference algorithm runs through them all and reports the type.
 We wrote no annotations.
 
@@ -360,11 +362,12 @@ $$
       {e_1 + e_2 : \mathtt{int}}
 $$
 
-For our function body `x + y`, both premises ask `x : int` and `y :
-int`. Those become the *constraints* the algorithm collects.
-Solving them gives the function type `int -> int -> int`. The
-inference engine is essentially building a derivation tree like
-this one and reading the leaves to assign types to the parameters.
+For our function body `(x + y) / 2`, the premises of `+` ask
+`x : int` and `y : int`; the premises of `/` ask its operands to be
+`int`. Those become the *constraints* the algorithm collects.
+Solving them gives `mean : int -> int -> int`. The inference engine
+is essentially building a derivation tree out of these rules and
+reading the leaves to assign types to the parameters.
 
 :::slide
 
@@ -377,32 +380,39 @@ $$
       {e_1 + e_2 : \mathtt{int}}
 $$
 
-For `x + y`, the two premises force `x : int` and `y : int`.
-Solving the collected constraints gives `add : int -> int -> int`.
+For `x + y` (and similarly `... / 2`), the premises force
+`x : int` and `y : int`. Solving the collected constraints gives
+`mean : int -> int -> int`.
 
 :::
 
 ```ocaml
-let add_f x y = x +. y
+let mean_f x y = (x +. y) /. 2.0
 ```
 
-Same shape, different operator. `+.` has type `float -> float ->
-float`. So `x` and `y` are forced to be `float`, the result is
-`float`, and the function has type `float -> float -> float`.
+Same shape, float operators. `+.` and `/.` both have type
+`float -> float -> float`; the literal `2.0` is `float`. So `x`
+and `y` are forced to be `float`, the result is `float`, and the
+function has type `float -> float -> float`.
 
 :::slide
 
 ## A different operator changes everything
 
 ```ocaml
-let add_f x y = x +. y
+let mean_f x y = (x +. y) /. 2.0
 ```
 
-`val add_f : float -> float -> float = <fun>`.
+`val mean_f : float -> float -> float = <fun>`. The typing rule
+for `+.` mirrors the one for `+`, with `float` everywhere:
 
-- Same shape; `+.` instead of `+`.
-- Float operator forces both args to `float`.
-- So `add_f : float -> float -> float`.
+$$
+\dfrac{e_1 : \mathtt{float} \qquad e_2 : \mathtt{float}}
+      {e_1 \mathbin{\mathtt{+.}} e_2 : \mathtt{float}}
+$$
+
+- Same shape; `+.` and `/.` instead of `+` and `/`.
+- Float operators force both args to `float`; result `float`.
 - **Secret**: operators carry type information.
 - Inference propagates it through the rest of the function.
 
@@ -458,38 +468,112 @@ parameters and the return type. In a language without inference
 (Java, C, C++), you would have written `float mag(float x, float y)`
 with all three types explicit. In OCaml the compiler does the work.
 
-## Annotations: when and why
+### As a derivation tree
 
-Annotations are optional and must agree with what inference would
-have produced anyway. So why ever write them?
+We can write the same reasoning out as a *derivation tree*, in the
+formal style introduced earlier. Let $\Gamma$ stand for the
+*context* of assumptions:
 
-```ocaml
-let triple (x : int) : int = x + x + x
-```
+$$
+\Gamma = \mathtt{sqrt} : \mathtt{float} \to \mathtt{float},\ x : \mathtt{float},\ y : \mathtt{float}.
+$$
 
-The `(x : int)` says the parameter is `int`; the `: int` after the
-parameter list says the return type is `int`. Inference would have
-inferred these from `+`; the annotations are redundant. They
-compile fine because they agree with what inference would have
-produced. If you wrote `(x : float) : int` instead, the compiler
-would reject it (`float` does not match the `int` constraint from
-`+`).
+`sqrt` is on the left of the turnstile because it comes from the
+ambient environment (the standard library); `x` and `y` are on
+the left because they are the function's parameters. The *variable
+rule* lets us pull each binding out of $\Gamma$ as its own
+typing judgement:
+
+$$
+\dfrac{(z : t) \in \Gamma}{\Gamma \vdash z : t}
+$$
+
+so $\Gamma \vdash x : \mathtt{float}$, $\Gamma \vdash y : \mathtt{float}$,
+and $\Gamma \vdash \mathtt{sqrt} : \mathtt{float} \to \mathtt{float}$
+are all immediate. With those as leaves, the body of `mag` has
+the derivation:
+
+$$
+\dfrac
+  {\Gamma \vdash \mathtt{sqrt} : \mathtt{float} \to \mathtt{float}
+   \qquad
+   \dfrac
+     {\dfrac{\Gamma \vdash x : \mathtt{float} \qquad \Gamma \vdash x : \mathtt{float}}
+            {\Gamma \vdash x \mathbin{\mathtt{*.}} x : \mathtt{float}}
+      \qquad
+      \dfrac{\Gamma \vdash y : \mathtt{float} \qquad \Gamma \vdash y : \mathtt{float}}
+            {\Gamma \vdash y \mathbin{\mathtt{*.}} y : \mathtt{float}}}
+     {\Gamma \vdash (x \mathbin{\mathtt{*.}} x) \mathbin{\mathtt{+.}} (y \mathbin{\mathtt{*.}} y) : \mathtt{float}}}
+  {\Gamma \vdash \mathtt{sqrt}\ ((x \mathbin{\mathtt{*.}} x) \mathbin{\mathtt{+.}} (y \mathbin{\mathtt{*.}} y)) : \mathtt{float}}
+$$
+
+The bottom is the goal: the whole body has type `float`. The right
+sub-tree applies the `+.` rule, whose two premises (the `*.`
+sub-derivations) each unfold further into a pair of var-rule
+leaves $\Gamma \vdash x : \mathtt{float}$ or $\Gamma \vdash y :
+\mathtt{float}$. The left premise is the var-rule for `sqrt`. The
+conclusion uses the function-application rule:
+
+$$
+\dfrac{e_1 : t_1 \to t_2 \qquad e_2 : t_1}
+      {e_1\ e_2 : t_2}
+$$
+
+Read the whole tree top-down (premises first) and you reproduce
+the constraint-collection-and-solve that inference actually does.
 
 :::slide
 
-## Annotations: when and why
+## Derivation tree for `mag`
 
-- Annotations are optional; must **agree** with what inference would produce.
+Let $\Gamma = \mathtt{sqrt} : \mathtt{float} \to \mathtt{float},\
+x : \mathtt{float},\ y : \mathtt{float}$. Variable rule:
+$\dfrac{(z : t) \in \Gamma}{\Gamma \vdash z : t}$.
 
-```ocaml
-let triple (x : int) : int = x + x + x
-```
+$$
+\scriptsize
+\dfrac
+  {\Gamma \vdash \mathtt{sqrt} : \mathtt{float} \to \mathtt{float}
+   \quad
+   \dfrac
+     {\dfrac{\Gamma \vdash x : \mathtt{float} \quad \Gamma \vdash x : \mathtt{float}}
+            {\Gamma \vdash x \mathbin{\mathtt{*.}} x : \mathtt{float}}
+      \quad
+      \dfrac{\Gamma \vdash y : \mathtt{float} \quad \Gamma \vdash y : \mathtt{float}}
+            {\Gamma \vdash y \mathbin{\mathtt{*.}} y : \mathtt{float}}}
+     {\Gamma \vdash (x \mathbin{\mathtt{*.}} x) \mathbin{\mathtt{+.}} (y \mathbin{\mathtt{*.}} y) : \mathtt{float}}}
+  {\Gamma \vdash \mathtt{sqrt}\ ((x \mathbin{\mathtt{*.}} x) \mathbin{\mathtt{+.}} (y \mathbin{\mathtt{*.}} y)) : \mathtt{float}}
+$$
 
-- Inference would give `int -> int` anyway.
-- Use annotations to: document public APIs, pin down ambiguity,
-  locate type errors.
-- For everyday code, leave them off.
+- Leaves: var-rule lookups for `sqrt`, `x`, `y` from $\Gamma$.
+- Inner steps: the `*.` rule, then the `+.` rule.
+- Bottom step: function application.
+
+:::
+
+## When to write annotations
+
+Type annotations were introduced in
+[M01-L03](M01-L03-ocaml-tour.html#type-annotations-when-you-want-them):
+they are optional, and the compiler checks them against what
+inference would have produced. Now that we have seen what
+inference actually does, the practical question is *when* to
+write them.
+
+:::slide
+
+## When to write annotations
+
+- Introduced in
+  [M01-L03](M01-L03-ocaml-tour.html#type-annotations-when-you-want-them):
+  optional, and they must agree with what inference would
+  produce.
+- **Use annotations** to:
+  - document a public API (the annotation is the contract);
+  - pin down a too-general inferred type;
+  - localise a confusing type error.
 - For `.mli` signatures (Module 7), annotations **are the API**.
+- For everyday local helpers, **leave them off**.
 
 :::
 
@@ -549,6 +633,10 @@ two `int` arguments but the inner expression `y *. 2.0` is
 :::slide
 
 ## Activity discussion
+
+```ocaml
+let f x y = x +. y *. 2.0
+```
 
 `val f : float -> float -> float = <fun>`.
 

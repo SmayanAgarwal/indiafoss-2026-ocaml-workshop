@@ -268,3 +268,14 @@ body.mode-slides .lecture-title {
 .reveal .fragment.visible {
   opacity: 1;
 }
+
+/* Compact precedence table: a tall many-row table needs tighter rows
+   to fit the 1280x800 slide canvas without overflow. */
+body.mode-slides .reveal .slides section .precedence-table table {
+  font-size: 0.85em;
+}
+body.mode-slides .reveal .slides section .precedence-table th,
+body.mode-slides .reveal .slides section .precedence-table td {
+  padding: 0.18rem 0.6rem;
+  line-height: 1.25;
+}

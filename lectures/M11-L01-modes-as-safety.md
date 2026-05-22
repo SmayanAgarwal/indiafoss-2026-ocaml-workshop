@@ -521,6 +521,10 @@ contention axis, which is a *different* axis).
 
 ## Activity discussion
 
+Q1: which bug class is ruled out by *modes* but not by OCaml's
+type system + GC.
+Q2: reading `val free : 'a t @ unique -> unit`.
+
 - Modes catch **behavioural** bugs, not just *value-shape* bugs.
   The double-close example is the prototypical case.
 - Reading a signature like `free : 'a t @ unique -> unit` tells

@@ -418,6 +418,10 @@ for arbitrary `'a`?
 
 ## Activity discussion
 
+```ocaml skip
+Less : 'a expr * 'a expr -> bool expr
+```
+
 - Polymorphic `Less : 'a expr * 'a expr -> bool expr` builds fine.
 - The evaluator fails: `<` needs a concrete type.
 - Inside the GADT branch, `a` and `b` have abstract type `'a`.

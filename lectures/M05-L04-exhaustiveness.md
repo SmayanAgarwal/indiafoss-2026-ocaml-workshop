@@ -595,6 +595,9 @@ Think about both halves before reading on.
 
 ## Activity discussion
 
+`type color = Red | Green | Blue` matched in twelve places; add
+`Yellow`.
+
 The compiler:
 
 - Issues warning 8 at *every* match on `color` that misses `Yellow`.

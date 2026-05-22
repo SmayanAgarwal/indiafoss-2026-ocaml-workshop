@@ -430,6 +430,10 @@ unsafe language means more places for those bugs to live.
 
 ## Activity discussion
 
+Q1: what fraction of a typical Linux kernel does a single-purpose
+HTTPS server actually exercise?
+Q2: strongest reason to care about TCB size.
+
 - Most of a monolithic kernel is unused by any single workload.
 - The kernel is in your TCB whether you use it or not.
 - The bigger the TCB, the more CVEs.

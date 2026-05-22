@@ -59,3 +59,7 @@ _references/profiling_a_programming_language/
 # is in LICENSE and LICENSES.md; LICENSING_AUDIT.md is the private
 # working file with per-lecture verdicts, kept local.
 LICENSING_AUDIT.md
+
+# Editorial review notes produced by per-module sweep agents. Working
+# scratch for polish decisions, not part of the course content.
+_reviews/

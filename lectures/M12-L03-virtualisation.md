@@ -449,6 +449,11 @@ is doing very little besides hosting guests).
 
 ## Activity discussion
 
+Q1: how virtualisation changes the two library-OS criticisms
+(no internal protection, drivers must be rewritten).
+Q2: what most accurately distinguishes a Type-1 from a Type-2
+hypervisor.
+
 - The hypervisor closes the **cross-unikernel** isolation gap.
 - VirtIO closes the **driver-burden** gap.
 - Type-1 vs Type-2 is about *where the hypervisor sits*, not about

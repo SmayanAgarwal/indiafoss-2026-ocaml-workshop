@@ -691,6 +691,10 @@ Write the function.
 
 ## Activity discussion
 
+```ocaml
+let p = (3, true, "hi")
+```
+
 1. `p : int * bool * string`.
 2. Function:
 
