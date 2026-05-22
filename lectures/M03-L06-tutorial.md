@@ -1,11 +1,11 @@
 ---
-title: "Tutorial: Fibonacci, GCD, list helpers"
+title: "Tutorial: Fibonacci, GCD, power, digits"
 lecture_no: 6
 week: 3
 duration_target_min: 28
 concepts: [worked recursive examples, tail vs naive recursion, memoization preview]
-keywords: [OCaml, tutorial, fibonacci, gcd, list, recursion, tail recursion]
-activity_question: "Write a tail-recursive function [last : 'a list -> 'a option] that returns the last element of a list (or [None] if empty). Why does this need an option return type?"
+keywords: [OCaml, tutorial, fibonacci, gcd, power, digits, recursion, tail recursion]
+activity_question: "Write [sum_digits : int -> int] that returns the sum of the base-10 digits of a non-negative integer. [sum_digits 12345 = 15]. Same shape as [count_digits]; what changes in the recursive case?"
 think_about_this: "When a function does not terminate on certain inputs (like negative arguments to factorial), should it crash, return a sentinel, or return an [option] / [result]? What does each choice cost the caller?"
 reading:
   - title: "Cornell CS3110, Recursion examples"
@@ -19,18 +19,17 @@ reading:
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: Fibonacci, GCD, list helpers</h2>
+<h2 class="title-slide-lecture">Tutorial: Fibonacci, GCD, power, digits</h2>
 <p class="title-slide-label">Module 3 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-This tutorial works through six small problems: Fibonacci (naive
-and linear-time), GCD by Euclid, a list indexing function, a
-tail-recursive sum, list reversal, and a digit-counting function.
-None are individually hard; the point is to consolidate the
-techniques from Module 3
+This tutorial works through four small problems: Fibonacci (naive
+and linear-time), GCD by Euclid, fast integer power (by
+square-and-multiply), and digit-counting. None are individually
+hard; the point is to consolidate the techniques from Module 3
 ([recursion](M03-L02-recursion.html),
 [tail calls and accumulators](M03-L04-tail-recursion.html),
 [local helpers](M03-L05-local-and-mutual.html)) and to make
@@ -220,161 +219,73 @@ self-corrects), but the conventional definition of GCD is for
 non-negative inputs, and a defensive version would `abs`-wrap both
 inputs before recursing.
 
-## Problem 3: nth element of a list
+## Problem 3: fast integer power
 
-The classic list indexing function: given a list `xs` and an index
-`n`, return the `n`-th element (zero-indexed).
+The naive `power` we wrote in M03-L02 takes `n` recursive calls to
+compute `x^n`:
 
 ```ocaml
-let rec nth xs n =
-  match xs with
-  | [] -> failwith "nth: index out of range"
-  | x :: rest -> if n = 0 then x else nth rest (n - 1)
+let rec power x n =
+  if n = 0 then 1
+  else x * power x (n - 1)
+```
 
-let _ = nth [10; 20; 30; 40] 2
+For `n = 1_000_000`, that is a million calls. We can do much
+better by *halving* the exponent at each step instead of
+decrementing. Two cases on the parity of `n`:
+
+- `n` even: `x^n = (x^(n/2))^2`. One recursive call.
+- `n` odd: `x^n = x * x^(n-1)`. One recursive call, but the new
+  exponent `n - 1` is even.
+
+```ocaml
+let rec fast_power x n =
+  if n = 0 then 1
+  else if n mod 2 = 0 then
+    let half = fast_power x (n / 2) in
+    half * half
+  else x * fast_power x (n - 1)
+
+let _ = fast_power 2 30
 ```
 
 :::slide
 
-## Problem 3: nth element of a list
+## Problem 3: fast integer power
 
 ```ocaml
-let rec nth xs n =
-  match xs with
-  | [] -> failwith "nth: index out of range"
-  | x :: rest -> if n = 0 then x else nth rest (n - 1)
+let rec fast_power x n =
+  if n = 0 then 1
+  else if n mod 2 = 0 then
+    let half = fast_power x (n / 2) in
+    half * half
+  else x * fast_power x (n - 1)
 
-let _ = nth [10; 20; 30; 40] 2
+let _ = fast_power 2 30
 ```
 
-- `int = 30`. The 0-indexed third element.
-- Tail-recursive: `nth rest (n - 1)` is the final expression.
-- Out-of-bounds: `failwith` raises `Failure`.
-- A nicer API returns `'a option`; see Module 4.
+- `int = 1073741824` (i.e. `2^30`).
+- Even `n`: one squaring of `x^(n/2)`.
+- Odd `n`: multiply by `x`, then the new exponent is even.
+- Calls: about `2 * log2(n)` (`~10` for `n = 30`, vs `30` for naive).
 
 :::
 
-Result: `30`. The function walks down the list and the counter
-together: each step strips one element and decrements `n`. When `n
-hits `0`, the head is the answer. If we run out of list before
-hitting `n = 0`, the index was out of range.
+Result: `1073741824`. The recursion depth is *logarithmic* in `n`,
+not linear. For `n = 1_000_000`, the naive `power` makes a million
+recursive calls; `fast_power` makes about forty. The transformation
+is purely algorithmic: same answer, far fewer calls. The trick
+("decompose by parity") is the same one that underlies fast matrix
+exponentiation, modular exponentiation in cryptography, and many
+related algorithms.
 
-Two design points. First, the recursive call `nth rest (n - 1)` is
-in tail position; the function is tail-recursive without any
-rewriting. The only "post-call work" you might worry about is the
-`if`, but the `if` runs *before* the recursive call (it chooses
-between returning `x` and recursing); after the call, there is
-nothing.
-
-Second, the error handling. `failwith "nth: index out of range"`
-raises a `Failure` exception. This is a common idiom for "the input
-doesn't make sense and there's no reasonable return value." A
-cleaner alternative is to return `'a option`: `Some x` if the index
-is valid, `None` if not. The option-returning variant is what
-`List.nth_opt` in the standard library does. We will see `option`
-properly in [M04-L05](M04-L05-option-and-aliases.html). For this
-tutorial, `failwith` is fine.
-
-## Problem 4: a tail-recursive `sum` for lists
-
-We saw this in passing in
-[M03-L04](M03-L04-tail-recursion.html#the-accumulator-pattern).
-Worth showing alone, because `sum` is the simplest list-fold and a
-useful reference for the shape:
-
-```ocaml
-let sum xs =
-  let rec go acc = function
-    | [] -> acc
-    | x :: rest -> go (acc + x) rest
-  in
-  go 0 xs
-
-let _ = sum [1; 2; 3; 4; 5]
-```
-
-:::slide
-
-## Problem 4: a tail-recursive `sum` for lists
-
-```ocaml
-let sum xs =
-  let rec go acc = function
-    | [] -> acc
-    | x :: rest -> go (acc + x) rest
-  in
-  go 0 xs
-
-let _ = sum [1; 2; 3; 4; 5]
-```
-
-- `int = 15`.
-- Standard accumulator pattern; constant stack.
-- Stdlib's `List.fold_left` generalizes this; see Module 6.
-
-:::
-
-Result: `15`. Standard accumulator pattern, local helper, constant
-stack space. You can sum a list of a million integers without
-worry.
-
-Once you see this shape often enough, you notice that it generalises:
-*walk a list, fold each element into a running result, return the
-result at the end.* The standard library function `List.fold_left`
-captures exactly this pattern, parameterised by the per-step
-operation. With `List.fold_left`, the same sum is one line:
-`List.fold_left (+) 0 xs`. We will see
-[`fold_left`](M06-L04-fold.html) and its relatives in Module 6.
-
-## Problem 5: reverse a list
-
-To reverse a list tail-recursively, accumulate by prepending: each
-element you see goes on the *front* of the accumulator. The first
-element seen ends up *deepest* in the accumulator, which is exactly
-where it belongs in the reversed list.
-
-```ocaml
-let reverse xs =
-  let rec go acc = function
-    | [] -> acc
-    | x :: rest -> go (x :: acc) rest
-  in
-  go [] xs
-
-let _ = reverse [1; 2; 3; 4]
-```
-
-:::slide
-
-## Problem 5: reverse a list
-
-```ocaml
-let reverse xs =
-  let rec go acc = function
-    | [] -> acc
-    | x :: rest -> go (x :: acc) rest
-  in
-  go [] xs
-
-let _ = reverse [1; 2; 3; 4]
-```
-
-- `int list = [4; 3; 2; 1]`.
-- Each element prepended to the accumulator.
-- First input ends up deepest; that's what reverse wants.
-- Stdlib: `List.rev`.
-
-:::
-
-Trace: `go [] [1;2;3;4]` -> `go [1] [2;3;4]` -> `go [2;1] [3;4]` ->
-`go [3;2;1] [4]` -> `go [4;3;2;1] []` -> `[4;3;2;1]`. The first
-element seen (`1`) ends up at the deepest position; the last seen
-(`4`) ends up at the front. That is exactly the reverse.
-
-The standard library provides this as `List.rev`. You should rarely
-write your own; the stdlib version is well-tested and identical in
-structure to the version above. Worth writing once for practice,
-then leaning on the library afterwards.
+A nuance worth flagging: `fast_power` is *not* tail-recursive. The
+even case has `half * half` running *after* the recursive call, and
+the odd case has `x *` running after. The accumulator pattern from
+M03-L04 does not unfold cleanly here: the running result depends
+on values you do not know yet. For typical exponents (`n` up to a
+few thousand), the logarithmic depth is comfortably small (under
+20 frames for `n` up to a million), so non-tail recursion is fine.
 
 ## When naive recursion is fine
 
@@ -400,7 +311,7 @@ For one-off computations on small data, write the natural recursive
 form and move on. You can rewrite to tail-recursive later if a
 profiler or a stack overflow tells you to.
 
-## Problem 6: counting digits
+## Problem 4: counting digits
 
 The number of digits in a non-negative integer is the number of
 times you can divide it by 10 before reaching zero. The natural
@@ -416,7 +327,7 @@ let _ = count_digits 12345
 
 :::slide
 
-## Problem 6: counting digits
+## Problem 4: counting digits
 
 ```ocaml
 let rec count_digits n =
@@ -428,8 +339,22 @@ let _ = count_digits 12345
 
 - `int = 5`.
 - Strips one digit at a time; base case is single-digit.
-- Negative inputs misbehave: `<` is true at once, returning `1`.
-- Guard with `abs`:
+- Each step: `n / 10` shifts right by one place.
+
+:::
+
+:::slide
+
+## `count_digits`: negative inputs misbehave
+
+```ocaml
+let _ = count_digits (-12345)
+```
+
+- Returns `1`. Wrong! `(-12345)` is not single-digit.
+- `n < 10` is true for *all* negatives; the recursion stops at
+  once.
+- Guard with `abs` in a wrapper:
 
 ```ocaml
 let count_digits n =
@@ -438,9 +363,11 @@ let count_digits n =
     else 1 + go (n / 10)
   in
   go (abs n)
+
+let _ = count_digits (-12345)
 ```
 
-- `abs` strips the sign before counting.
+- Now `int = 5`. Outer wrapper strips the sign; `go` sees `n >= 0`.
 
 :::
 
@@ -474,100 +401,106 @@ Note that `count_digits 0` returns `1`, which matches the convention
 that the integer `0` has one digit (the digit `0`). If you wanted a
 different convention you would adjust the base case.
 
-## Activity: `last` for lists
+## Activity: sum of digits
 
 :::slide
 
 ## Activity
 
-Write `last : 'a list -> 'a option`:
+Write `sum_digits : int -> int` that returns the sum of the
+base-10 digits of a non-negative integer. Examples:
 
-- Returns last element, or `None` if empty.
-- Must be tail-recursive (works on a million-element list).
+- `sum_digits 0 = 0`.
+- `sum_digits 9 = 9`.
+- `sum_digits 12345 = 15`.
+
+Same shape as `count_digits` above, with the per-step contribution
+changed.
 
 :::
 
-Try this before reading the solution. The hint: the *last* element
-of a non-empty list is "the head of a singleton," after you have
-stripped the earlier elements. Recursion on the list shape, with a
-special case for the singleton.
+Try this before reading the solution. The shape mirrors
+`count_digits`: strip one digit per step. The base case is `n =
+0`: an empty number has digit sum `0`. The recursive case takes
+the last digit (`n mod 10`) and adds it to the digit sum of the
+rest (`n / 10`).
 
 :::slide
 
 ## Activity solution
 
 ```ocaml
-let rec last = function
-  | [] -> None
-  | [x] -> Some x
-  | _ :: rest -> last rest
+let rec sum_digits n =
+  if n = 0 then 0
+  else (n mod 10) + sum_digits (n / 10)
+
+let _ = sum_digits 12345
 ```
 
-Three cases:
-
-- `[]`: no last element.
-- `[x]`: only element is the last.
-- `_ :: rest`: drop head, recur.
-
-- `last rest` is the final expression: tail-recursive.
-- `option` makes the empty case explicit; covered in Module 4.
+- Base case `n = 0`: empty number, digit sum `0`.
+- Recursive case: last digit + digit sum of the rest.
+- `int = 15`. Same shape as `count_digits`; different per-step.
 
 :::
 
-Three pattern-match cases:
-
-- `[]` -> `None`. The empty list has no last element. Returning
-  `None` is the honest answer.
-- `[x]` -> `Some x`. A singleton list's last element is its only
-  element. The pattern `[x]` matches a list with exactly one
-  element and binds that element to `x`. Equivalent to `x :: []`.
-- `_ :: rest` -> `last rest`. Any longer list: strip the head, recur
-  on the rest. The patterns are tried in order, so we already know
-  this case has at least two elements (otherwise `[x]` would have
-  matched).
-
-The recursive call is in tail position (it is the entire body of its
-case), so the function runs in constant stack space.
-
-The `option` return type is the right choice here because there is
-no sensible value of type `'a` to return for an empty list. We could
-have raised an exception with `failwith`, but `option` makes the
-empty case visible *in the type*, forcing callers to handle it. We
-will see `option` in detail in
-[M04-L05](M04-L05-option-and-aliases.html#the-option-type).
+The recursion uses two integer operations students have already
+seen: `n mod 10` peels off the last digit, `n / 10` shifts the
+number one place right. After enough steps `n` reaches `0` and the
+recursion ends. As with `count_digits`, the function misbehaves on
+negative inputs because of OCaml's truncate-toward-zero division;
+wrap with `abs` if you want the convention `sum_digits (-12) =
+3`.
 
 ## A small code challenge
 
 :::quiz code id=M03-L06-q1
-Write `take : int -> 'a list -> 'a list` that returns the first `n`
-elements of a list. If the list has fewer than `n` elements, return
-the whole list. If `n <= 0`, return `[]`.
+Write `is_prime : int -> bool` by trial division. Returns `true`
+if `n` is prime, `false` otherwise. Edge cases: `is_prime 0` and
+`is_prime 1` are `false`; `is_prime 2` is `true`. Use a *local*
+helper that tries divisors `k = 2, 3, 4, ...` and stops at
+`k * k > n` (no need to look past the square root).
 
 ```ocaml
-let rec take n xs =
+let is_prime n =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (take 0 [1;2;3]    = [])         "n=0";
-  check (take 2 [1;2;3;4]  = [1;2])      "n=2";
-  check (take 5 [1;2;3]    = [1;2;3])    "n exceeds length";
-  check (take 3 ([] : int list) = [])    "empty list";
-  check (take (-1) [1;2;3] = [])         "n negative";
+  check (is_prime 0   = false) "0";
+  check (is_prime 1   = false) "1";
+  check (is_prime 2   = true)  "2";
+  check (is_prime 9   = false) "9 = 3*3";
+  check (is_prime 17  = true)  "17";
+  check (is_prime 100 = false) "100 = 4*25";
+  check (is_prime 101 = true)  "101";
   print_endline "all tests passed"
 ```
 :::
 
 :::solution
 
-The natural recursive shape: three cases. If `n <= 0`, return `[]`.
-If the list is empty, return `[]`. Otherwise, cons the head onto
-`take (n - 1) rest`. This version is *not* tail-recursive (the cons
-runs after the recursive call), which is fine for most uses; a
-tail-recursive version would accumulate-then-reverse like the
-[`map` in M03-L04](M03-L04-tail-recursion.html#when-clean-tail-recursion-is-hard).
+Outer function handles the `n < 2` edge case and calls a local
+`try_divisor` helper that walks `k = 2, 3, 4, ...` upward,
+returning `true` if no divisor was found by the time `k * k > n`:
+
+```text
+let is_prime n =
+  if n < 2 then false
+  else
+    let rec try_divisor k =
+      if k * k > n then true
+      else if n mod k = 0 then false
+      else try_divisor (k + 1)
+    in
+    try_divisor 2
+```
+
+`try_divisor` is tail-recursive (the recursive call is the final
+expression of its branch). The outer wrapper hides the helper from
+callers; the API is just `is_prime : int -> bool`. The
+square-root cap halves the work compared to trying all `k < n`.
 
 :::
 
