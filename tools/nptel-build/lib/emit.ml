@@ -58,6 +58,34 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   <link rel="stylesheet" href="%s/assets/reveal/dist/theme/white.css" id="reveal-theme">
   <link rel="stylesheet" href="%s/assets/css/chapter.css">
   <link rel="stylesheet" href="%s/assets/css/slides.css">
+  <!-- KaTeX for inline / display math. Auto-render walks the DOM after
+       load and rewrites $...$ and \(...\) inline and $$...$$ / \[...\]
+       display delimiters into rendered math. We skip <x-ocaml>, <code>,
+       <pre> so OCaml source / shell output never gets math-rendered. -->
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"
+    crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"
+    crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+    crossorigin="anonymous"
+    onload="renderMathInDocument()"></script>
+  <script>
+    function renderMathInDocument() {
+      if (typeof renderMathInElement !== 'function') return;
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '$', right: '$', display: false }
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea',
+                      'pre', 'code', 'x-ocaml'],
+        throwOnError: false
+      });
+    }
+  </script>
   <script async
     src="%s/assets/%s/x-ocaml.js"
     src-worker="%s/assets/%s/x-ocaml.worker.js"%s></script>
@@ -932,6 +960,12 @@ let runtime_script ~asset_root =
                   'nptel-slide:' + location.pathname,
                   JSON.stringify({ h, v }));
               } catch (_) {}
+              // Re-run KaTeX in case the slide contains math that
+              // wasn't rendered on initial load (e.g. slides hidden
+              // by reveal.js's display:none before first present).
+              if (typeof renderMathInDocument === 'function') {
+                try { renderMathInDocument(); } catch (_) {}
+              }
             });
             // Reveal computes each section's vertical centering at
             // slidechange time. If a cell expands its output after

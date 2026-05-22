@@ -3,8 +3,8 @@ title: "`let` bindings and shadowing"
 lecture_no: 2
 week: 2
 duration_target_min: 22
-concepts: [let bindings, let-in expressions, scope, shadowing, immutability]
-keywords: [OCaml, let, let-in, scope, shadowing, immutability, bindings]
+concepts: [let bindings, let-in expressions, scope, shadowing, immutability, inference rules]
+keywords: [OCaml, let, let-in, scope, shadowing, immutability, bindings, semantics]
 activity_question: "Given [let x = 1 in let x = x + 1 in let x = x * 10 in x], what is the final value? Trace each step."
 think_about_this: "If [let x = 1; let x = 2] does not mutate, where does the value [1] go? Can any code reach it after the second binding?"
 reading:
@@ -28,175 +28,261 @@ reading:
 
 The [previous lecture](M02-L01-literals.html) introduced literals:
 the smallest building blocks of a program. This lecture introduces
-the next layer up: *names*. Names let you build programs that are
-more than expressions written in a single line. Naming a value lets
-you compute it once and use it many times; naming an intermediate
-result lets you break a long calculation into readable steps.
-Almost every line of OCaml contains at least one `let` binding, and
-getting comfortable with them is the precondition for everything
-else.
+the next layer up: *names*. Naming a value lets you compute it once
+and use it many times; naming an intermediate result lets you break
+a long calculation into readable steps. Almost every line of OCaml
+contains at least one `let` binding.
 
-The OCaml `let` has two related forms with slightly different
-purposes. We will introduce both and then look at the property that
-makes OCaml's bindings work differently from variables in C or
-Python: *shadowing*. Shadowing is the ability to reuse a name
-without ever mutating anything. It is one of the more pleasant
-features of working in an immutable language, but it confuses
-people who arrive expecting `let x = 2` to "change" `x`. By the end
-of the lecture you will know exactly what's happening.
+We will treat `let` carefully. OCaml has two related forms with the
+same keyword but different scoping, and the differences matter. We
+will write down their syntax, give the typing rule (static
+semantics) and the evaluation rule (dynamic semantics) for each,
+and then look at *shadowing*, the property that reusing a name
+introduces a new binding rather than mutating an old one.
 
 ## Two forms of `let`
 
-OCaml uses the same keyword `let` for two related constructs.
-Distinguishing them matters because they introduce names with
-different *scope*: how far through the program the name is visible.
-
-The **top-level `let`** introduces a name visible to everything
-that follows it in the file (or in the toplevel session). A
-program is a sequence of top-level `let` bindings, evaluated in
-order; we saw this in
-[M01-L04](M01-L04-hello-world.html#a-program-is-a-sequence-of-let-bindings).
-
-```ocaml
-let pi = 3.14159
-let r  = 5.0
-let _  = pi *. r *. r
-```
+The two forms share the keyword `let` but differ in *scope*: how
+far through the program the bound name is visible.
 
 The **`let ... in` expression** introduces a name *local* to a
-specific expression. The syntax is `let name = value in body`,
-where `name` is in scope inside `body` only. Outside `body`, the
-name does not exist.
+specific expression. Its abstract syntax is:
+
+$$
+\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2
+$$
+
+Here $x$ is the bound identifier, $e_1$ is the *binding expression*
+that supplies the value, and $e_2$ is the *body* in which $x$ is in
+scope. The whole `let ... in` form is itself an expression: it
+denotes the value $e_2$ evaluates to.
 
 ```ocaml
-let _ =
-  let pi = 3.14159 in
-  let r  = 5.0 in
-  pi *. r *. r
+let _ = let x = 5 in x + 5
 ```
 
-:::slide
-
-## Top-level `let`
-
-Introduces a name into the rest of the file:
-
-```ocaml
-let pi = 3.14159
-let r  = 5.0
-let _  = pi *. r *. r
-```
-
-`pi` and `r` stay visible to everything that follows.
-
-:::
+The toplevel reports `int = 10`. The name `x` is bound to `5` inside
+the body `x + 5`. Outside the `let ... in`, `x` is no longer in
+scope.
 
 :::slide
 
 ## `let ... in` expression
 
-Introduces a name scoped to the following expression only:
+$$
+\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2
+$$
+
+- $x$: the bound identifier.
+- $e_1$: the binding expression (value to bind).
+- $e_2$: the body (where $x$ is in scope).
+- The whole form is *itself* an expression.
 
 ```ocaml
-let _ =
-  let pi = 3.14159 in
-  let r  = 5.0 in
-  pi *. r *. r
+let _ = let x = 5 in x + 5
 ```
 
-- Same number, different scope.
-- Expression form does **not** pollute the outer namespace.
+`int = 10`. Outside the `in`, `x` does not exist.
 
 :::
 
-The two examples above compute the same number. The difference is
-that in the top-level form, the names `pi` and `r` are visible
-forever after their definitions; the second form keeps them
-inside the `let _ = ... ` expression.
+The **top-level `let`** introduces a name visible to the rest of
+the file:
 
-When to use which: if you want a name that other parts of your
-program will use, use a top-level binding. If you want a name that
-exists only for the readability of a single expression, use
-`let ... in`. In practice, you will see far more `let ... in` than
-top-level `let` once functions get involved, because function
-bodies are *expressions* and any names you introduce inside a
-function body must be `let ... in`.
+$$
+\mathtt{let}\ x = e
+$$
 
-## Local bindings inside a function
-
-The most common place you see `let ... in` is inside a function.
-The function body is a single expression; if it would be cleaner
-with intermediate names, you introduce them with `let ... in`.
+Read this as "let $x = e$ in *the rest of the program*". The body
+is everything that follows in the same file (or in the toplevel
+session). Top-level `let`s are sometimes called **definitions** to
+emphasise that they bind a name into the program's namespace, not
+into a local expression.
 
 ```ocaml
-let circle_area r =
-  let r_sq = r *. r in
-  3.14159 *. r_sq
-
-let _ = circle_area 5.0
+let a = "Hello"
+let b = "World"
+let c = a ^ " " ^ b
 ```
+
+The toplevel reports `val c : string = "Hello World"`. Each
+top-level `let` binding is in scope for every binding that follows.
 
 :::slide
 
-## Local bindings inside a function
+## Top-level `let` (a *definition*)
+
+$$
+\mathtt{let}\ x = e
+$$
+
+Read as "$\mathtt{let}\ x = e\ \mathtt{in}$ *the rest of the program*."
 
 ```ocaml
-let circle_area r =
-  let r_sq = r *. r in
-  3.14159 *. r_sq
-
-let _ = circle_area 5.0
+let a = "Hello"
+let b = "World"
+let c = a ^ " " ^ b
 ```
 
-- `r_sq` in scope **inside** `circle_area`'s body.
-- Outside, `Unbound value r_sq`.
-- Like a C local variable, except **no mutation**.
-- Name disappears at the end of the expression.
+`val c : string = "Hello World"`. The names `a` and `b` stay in scope
+for every later binding in the file.
 
 :::
 
-`r_sq` is in scope only inside `circle_area`. After the function
-ends, you cannot refer to `r_sq` anywhere else. This is the same
-scoping discipline you know from C local variables, except that
-OCaml's bindings are immutable: `r_sq` does not get a new value
-later in the body; it just stops existing when the body finishes.
+The two forms are deeply related. A top-level `let x = e` is, in
+effect, the same as `let x = e in <the rest of the file>`. The
+language gives the `in` part implicitly at the file level so you
+don't have to keep nesting.
 
-There is also no need to declare anything in advance: a `let ...
-in` *introduces* a name; you do not pre-declare names you might
-use later. The compiler reads each binding in order and knows the
-name from that point on.
+## Static semantics: a typing rule for `let`
 
-## Immutability: the bit you have to internalise
+We can pin down the meaning of `let ... in` more formally.
+*Static semantics* asks: given the types of the parts, what is the
+type of the whole? We write typing judgements with a turnstile,
+$\vdash$. The judgement $e : t$ reads "$e$ has type $t$"; "$x : t_1
+\vdash e : t_2$" reads "assuming $x$ has type $t_1$, the expression
+$e$ has type $t_2$".
 
-The really important property of `let` bindings, and the one that
-takes the longest to internalise if you come from imperative
-languages, is what `let` *doesn't* do: it does not create a mutable
-variable cell. Once you write `let x = 1`, `x` refers to `1`
-forever in that scope. There is no later assignment `x = 2`
-("update the value at `x`'s slot"). In OCaml, to reuse a name for
-a new value, you write a *new* `let` binding. The old binding
-still exists in the parts of the program that came before; the new
-binding takes over from where it is written. We will get to that in
-the shadowing section.
+The typing rule for `let ... in` is:
 
-If you have written C or Python, this distinction can feel
-philosophical at first. "I bound `x` to 1 and then I bound it to
-2. So what?" The "so what" is that any code that captured the old
-`x` (say, a function that takes `x` as a [closure](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment)
-value, which we will see in Module 3) keeps seeing `x = 1`. The
-old binding is *alive*; the new binding just hides it for any code
-written after the new binding.
+$$
+\dfrac{e_1 : t_1 \qquad x : t_1 \vdash e_2 : t_2}
+      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) : t_2}
+$$
+
+Read top-to-bottom: *if* $e_1$ has type $t_1$ and *if* $e_2$ has
+type $t_2$ *under the assumption that $x$ has type $t_1$*, *then*
+the whole expression has type $t_2$. The type of the binding form
+is the type of its body. The bound expression's type flows in
+through the assumption about $x$.
+
+:::slide
+
+## Typing rule for `let ... in`
+
+$$
+\dfrac{e_1 : t_1 \qquad x : t_1 \vdash e_2 : t_2}
+      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) : t_2}
+$$
+
+- *Premises* on top, *conclusion* on the bottom.
+- The bound expression's type ($t_1$) becomes an assumption while
+  typing the body.
+- The whole `let` has the type of its **body** ($t_2$).
+
+:::
+
+For our example `let x = 5 in x + 5`: $e_1$ is `5`, which has type
+`int`. So $t_1$ is `int`. Under the assumption $x : \mathtt{int}$,
+the body `x + 5` has type `int` (because `+` is integer addition).
+So $t_2$ is `int`, and the whole expression has type `int`. The
+typing rule reproduces what the toplevel told us.
+
+## Dynamic semantics: how `let` evaluates
+
+*Dynamic semantics* asks: how does an expression *evaluate* to a
+value? We write $e \Downarrow v$ for "$e$ evaluates to $v$", and
+$e_2[v/x]$ for "the result of substituting $v$ for every free
+occurrence of $x$ in $e_2$".
+
+The evaluation rule for `let ... in` is:
+
+$$
+\dfrac{e_1 \Downarrow v_1 \qquad e_2[v_1 / x] \Downarrow v_2}
+      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \Downarrow v_2}
+$$
+
+Read: evaluate $e_1$ first to a value $v_1$. Substitute $v_1$ for
+every $x$ inside $e_2$. Evaluate the resulting expression to $v_2$.
+That $v_2$ is the value of the whole `let`.
+
+This *substitution model* is a useful mental model for OCaml. To
+work out what an expression evaluates to, you can substitute the
+value into the body and re-evaluate. The real implementation does
+not actually copy values around; it maintains an environment
+mapping names to values. But for reasoning about what a program
+*means*, substitution is the cleaner picture.
+
+:::slide
+
+## Evaluation rule for `let ... in`
+
+$$
+\dfrac{e_1 \Downarrow v_1 \qquad e_2[v_1 / x] \Downarrow v_2}
+      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \Downarrow v_2}
+$$
+
+- $e_1$ evaluates first to a value $v_1$.
+- Substitute $v_1$ for $x$ in $e_2$; evaluate the result.
+- This *substitution model* is how we reason; the implementation
+  uses an environment, but the meaning is the same.
+
+:::
+
+## Nesting `let ... in`
+
+Because `let ... in` is an expression, the body $e_2$ can itself
+be another `let ... in`. Chain them to compute intermediate
+values:
+
+```ocaml
+let _ =
+  let x = 5 in
+  let y = 10 in
+  x + y
+```
+
+Result: `int = 15`. The parsing is right-associative: the chain
+above is `let x = 5 in (let y = 10 in (x + y))`. Each binding is
+in scope for the rest of the chain.
+
+:::slide
+
+## Nested `let ... in`
+
+```ocaml
+let _ =
+  let x = 5 in
+  let y = 10 in
+  x + y
+```
+
+`int = 15`. Parsed right-associatively:
+
+$$
+\mathtt{let}\ x = 5\ \mathtt{in}\ (\mathtt{let}\ y = 10\ \mathtt{in}\ x + y)
+$$
+
+:::
+
+You can also let-bind an entire `let`. The right-hand side of a
+binding is any expression, so:
+
+```ocaml
+let _ =
+  let x = 5 in
+  let y =
+    let z = 10 in z + z
+  in
+  x + y
+```
+
+Result: `int = 25`. The inner `let z = 10 in z + z` evaluates to
+`20`, which becomes the value bound to `y`. Then `x + y` is `25`.
 
 ## Shadowing
 
 OCaml lets you reuse a name in a new binding without mutating
-anything. This is called *shadowing*. Here is the classic example:
+anything. This is called **shadowing**. Here is the classic
+example:
 
 ```ocaml
 let x = 1
 let x = x + 1
 let x = x * 10
 ```
+
+After three lines, the name `x` refers to `20`.
 
 :::slide
 
@@ -234,6 +320,37 @@ This is *not* mutation. There is no single cell named `x` that
 holds successive values. There are three separate values, all
 called `x` for the duration of their existence, with the most
 recent one being the one you reach when you type `x`.
+
+Shadowing works for `let ... in` too:
+
+```ocaml
+let _ =
+  let x = 5 in
+  let x = 10 in
+  x
+```
+
+Result: `int = 10`. The inner `let x = 10` introduces a brand new
+binding that hides the outer `x = 5` for the rest of the
+expression. The outer `x` is still alive (and still `5`) outside
+this expression; the inner `let x` only renames inside its own
+body.
+
+:::slide
+
+## Shadowing in `let ... in`
+
+```ocaml
+let _ =
+  let x = 5 in
+  let x = 10 in
+  x
+```
+
+`int = 10`. The inner binding hides the outer `x = 5` for the rest
+of the expression. **Two separate $x$'s, no mutation.**
+
+:::
 
 ## Why shadowing differs from mutation: closures see the old value
 
@@ -287,102 +404,34 @@ The key fact for this lecture: the *value* gets captured, not "the
 current meaning of the name."
 
 In a language where `let` actually mutates a cell, the same code
-would produce different behaviour. Some languages do work that
-way (Python is closer to this model: a closure captures a
-*reference* to the variable, not its value, so reassignment is
-visible through the closure). OCaml's choice (capture the value)
-is what people mean by *static scoping with value capture*: it is
-more predictable, easier to reason about, and matches what
-mathematical functions do.
-
-## Nested `let ... in`
-
-You can chain `let ... in` bindings to compute intermediate values
-in sequence.
-
-```ocaml
-let _ =
-  let a = 3 in
-  let b = 4 in
-  let c = a * a + b * b in
-  c
-```
-
-:::slide
-
-## Nested `let ... in`
-
-Chain `let ... in`s to compute intermediate values:
-
-```ocaml
-let _ =
-  let a = 3 in
-  let b = 4 in
-  let c = a * a + b * b in
-  c
-```
-
-- Result: `int = 25`.
-- Each `let ... in` introduces a name visible in its body.
-
-:::
-
-:::slide
-
-## Nested `let ... in`: shadowing
-
-Shadowing works in nested bindings too:
-
-```ocaml
-let _ =
-  let x = 10 in
-  let x = x + 1 in
-  let x = x * 2 in
-  x
-```
-
-- Result: `int = 22`.
-- Each rebinding hides the previous `x` for the rest of the scope.
-- Right-hand sides reference the previous binding.
-
-:::
-
-Result: `int = 25` (Pythagoras). Each `let ... in` is its own
-binding, scoped to the rest of the expression. The chain reads
-top-to-bottom like a procedure, but it is a single expression: the
-whole thing is `let a = 3 in (let b = 4 in (let c = a*a + b*b in
-c))`.
-
-Shadowing works inside nested bindings too:
-
-```ocaml
-let _ =
-  let x = 10 in
-  let x = x + 1 in
-  let x = x * 2 in
-  x
-```
-
-Result: `int = 22`. Each `let x = ... in` introduces a new
-binding, hiding the previous `x` for the rest of the scope. The
-right-hand sides reference the previous binding.
+would produce different behaviour. Some languages do work that way
+(Python is closer to this model: a closure captures a *reference*
+to the variable, not its value, so reassignment is visible through
+the closure). OCaml's choice (capture the value) is what people
+mean by *static scoping with value capture*: it is more
+predictable, easier to reason about, and matches what mathematical
+functions do.
 
 ## Scope: outer versus inner
 
-What happens when a local `let ... in` shadows a top-level
-binding? The inner binding is in scope only inside its `in`
-expression. Outside, the outer binding is restored.
+When a local `let ... in` shadows an outer binding, the inner
+binding is in scope only inside its `in` expression. Outside, the
+outer binding is restored.
 
 ```ocaml
 let x = 100
 
-let demo () =
+let _ =
   let x = 1 in
   x
 
-let _ = demo ()
 let _ = x
 ```
+
+The first `let _ = ...` evaluates to `1`: inside the expression,
+the local `x` shadows the outer one. The second `let _ = x`
+evaluates to `100`: the local `x` is out of scope, and the
+top-level binding `x = 100` is what's reachable.
 
 :::slide
 
@@ -391,64 +440,55 @@ let _ = x
 ```ocaml
 let x = 100
 
-let demo () =
+let _ =
   let x = 1 in
   x
 
-let _ = demo ()
 let _ = x
 ```
 
-- `demo ()` returns `1`. Top-level `x` is still `100`.
-- Local binding shadows the outer **only inside** the function body.
-- Same shape as nested scopes in C / Java.
+- First `_` is `1`: inner `x` shadows for the body only.
+- Second `_` is `100`: outer `x` restored after the `in`.
+
+Same shape as nested scopes in C / Java.
 
 :::
 
-`demo ()` returns `1`: inside the function, the local `x` shadows
-the outer one. After `demo` returns, the local `x` is out of
-scope; the outer `x` (still `100`) is what you see. This is the
-same nesting rule you know from C blocks or Java methods: a local
-variable hides any outer variable of the same name, only within
-its own scope.
-
 ## Idiom: shadowing for step-by-step transformations
 
-The shadowing pattern is used a lot in idiomatic OCaml when you
-want to transform a value through several steps. Instead of
-inventing artificial names like `x1`, `x2`, `x3`, you can shadow
-one name (or name each step descriptively).
+A common idiom is to transform a value through several steps and
+rebind the same name at each step. This reads top-to-bottom like
+a procedure, but it is a single expression with three nested
+`let ... in`s:
 
 ```ocaml
-let process input =
-  let cleaned   = String.trim input in
-  let lowered   = String.lowercase_ascii cleaned in
-  let no_spaces =
-    String.concat "" (String.split_on_char ' ' lowered) in
-  no_spaces
-```
-
-Three intermediate names, each named for *what it is*. Each `let
-... in` is visible inside the rest of the function. This reads
-cleanly: "I have an `input`; first I clean it; then I lowercase
-the cleaned version; then I remove spaces from the lowercased
-cleaned version; the result is what I return."
-
-There is also a more compact variant that shadows a single name:
-
-```ocaml
-let process input =
-  let s = String.trim input in
+let _ =
+  let s = "  Hello World  " in
+  let s = String.trim s in
   let s = String.lowercase_ascii s in
-  let s = String.concat "" (String.split_on_char ' ' s) in
   s
 ```
 
-Same computation; one name `s` shadowed three times. Whether you
-prefer this or the earlier variant is taste. Some style guides
-prefer the descriptive-names variant for clarity; others use
-shadowing-of-one-name to emphasise "this is a single value being
-transformed." Both are idiomatic.
+Result: `string = "hello world"`. Each `let s = ... in` introduces
+a new binding of `s`, scoped to the rest of the chain. The
+right-hand sides reference the *previous* binding of `s` (because
+that is the meaning of `s` at the moment the right-hand side is
+evaluated).
+
+You can name each step descriptively instead of shadowing:
+
+```ocaml
+let _ =
+  let raw      = "  Hello World  " in
+  let trimmed  = String.trim raw in
+  let lowered  = String.lowercase_ascii trimmed in
+  lowered
+```
+
+Same computation; three distinct names. Whether you prefer
+shadowing or distinct names is taste. The shadowing version
+emphasises "this is one value being transformed"; the descriptive
+version names what each intermediate is.
 
 ## Underscore: "I don't care about the name"
 
@@ -472,9 +512,8 @@ let _ = 3 + 4
 ```
 
 - `_` matches any value and discards it.
-- Use `let _ = ...` for:
-  - **side effect** (line 1)
-  - **type-check** (line 2; toplevel reports, no binding)
+- `let _ = print_endline ...`: side-effecting call; result is `()`.
+- `let _ = 3 + 4`: toplevel prints, no binding kept.
 - `let _name = ...`: bind but don't warn me if unused.
 
 :::
@@ -600,11 +639,12 @@ mutation. Each `let x = ... in` is a brand new binding.
 
 ## What's next
 
-We have looked at how `let` bindings work and shadowing in detail.
-The [next lecture](M02-L03-types-and-inference.html) covers OCaml's
-type system in more depth: type inference, type unification, the
-type annotations you can write when you want to. After that,
-lectures on [operators](M02-L04-operators.html) and on
+We have written down both forms of `let`, their typing rules, and
+their evaluation rules. The
+[next lecture](M02-L03-types-and-inference.html) takes the static
+side further: type inference, what it can and cannot do for you,
+and when to write annotations. After that, lectures on
+[operators](M02-L04-operators.html) and on
 [`if`/`then`/`else`](M02-L05-if-expressions.html) complete Module
 2. Then [Module 3](M03-L01-functions-as-values.html) starts on
 functions.
@@ -613,7 +653,7 @@ functions.
 
 ## What's next
 
-- Next: **static vs dynamic semantics**.
+- Next: **static vs dynamic semantics**, type inference.
 - What it means to *catch errors before running the program*.
 - Where OCaml lands on that spectrum.
 
@@ -621,16 +661,16 @@ functions.
 
 ## Reading
 
-- **Cornell CS3110**, *Let expressions*: thorough chapter on
-  the same material, with more worked examples:
+- **Cornell CS3110**, *Let expressions*: thorough chapter on the
+  same material with more worked examples:
   <https://cs3110.github.io/textbook/chapters/basics/expressions.html>
 - **Real World OCaml**, *A Guided Tour* (let bindings section):
   <https://dev.realworldocaml.org/guided-tour.html>
+
 ## Sources
 
-This lecture's prose, worked examples, and quizzes are original to
-this course. Materials referenced during preparation are listed in
-the *Reading* section above; Cornell CS3110 and Real World OCaml
+This lecture follows the structure of CS3100 lecture 3
+(*Expressions*) at IIT Madras, including the formal-syntax and
+inference-rule notation. The prose, worked examples, and quizzes
+are original to this course; Cornell CS3110 and Real World OCaml
 are CC BY-NC-ND-licensed and have not been derivatively reused.
-See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
-at the repository root for the full source posture.
