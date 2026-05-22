@@ -658,7 +658,7 @@ toolkit. [Refs](M07-L01-references.html) and
 [arrays](M07-L02-arrays-and-mutation.html) for mutation when the
 algorithm wants it. [Exceptions](M07-L03-exceptions.html) for
 unexpected failures, alongside
-[`option` and `result`](M04-L05-option-and-aliases.html) for
+[`option` and `result`](M04-L04-recursive-types.html) for
 predictable ones. [Modules](M07-L06-module-basics.html) for
 grouping and namespacing.
 [Signatures](M07-L07-signatures.html) for hiding internals.

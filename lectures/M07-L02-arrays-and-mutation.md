@@ -641,7 +641,7 @@ keep the data as a list in the first place.
 The [next lecture](M07-L03-exceptions.html) covers *exceptions*,
 the third member of the imperative trio (alongside refs and arrays).
 Exceptions let you signal "something went wrong" without threading
-an [option or result](M04-L05-option-and-aliases.html) through every
+an [option or result](M04-L04-recursive-types.html) through every
 layer of code. After that,
 Lectures [4](M07-L04-streams-and-laziness.html) and
 [5](M07-L05-memoization.html) cover *streams and laziness* and

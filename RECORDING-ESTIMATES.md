@@ -87,34 +87,42 @@ examples, more tracing, etc.). The old M03 estimate was 148 video
 min / 209 recording min, so the polish net-shrunk M03 by about
 27 video minutes, driven by the M03-L04 / L05 / L06 list-removal.
 
-### M04: Data types (6 lectures)
+### M04: Data types (5 lectures)
 
 Re-estimated 2026-05-22 / 23 after the M04 polish passes (M04-L01
 constructing-and-extracting split; M04-L02 access-field and
 function-parameter slides each split, mutable-record-fields
 deferred to M07-L01; M04-L03 stripped of pattern-matching content
 per CS3100_m25 lec05 / lec06 split, with type aliases moved up
-from M04-L05; M04-L04 opening rewritten to follow CS3100_m25
-lec05 progression `intlist` -> `stringlist` -> `'a lst` -> type
-variables -> polymorphism -> built-in `'a list`, and walks /
-evaluator deferred to M05). Estimate uses slide_count x 1.5 min.
+from the old M04-L05; M04-L04 opening rewritten to follow
+CS3100_m25 lec05 progression `intlist` -> `stringlist` -> `'a
+lst` -> type variables -> polymorphism -> built-in `'a list`, and
+walks / evaluator deferred to M05). The old M04-L05
+(option-and-aliases) was tiny once pattern matching was removed,
+so its option / result content was folded into M04-L04 and the
+tutorial was renumbered down. M04 now has five lectures.
+Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
 | M04-L01 | Tuples | 16 | 24 | 34 |
 | M04-L02 | Records | 15 | 23 | 32 |
 | M04-L03 | Variants (sum types) | 9 | 14 | 20 |
-| M04-L04 | Recursive types, polymorphism, built-in lists | 15 | 23 | 32 |
-| M04-L05 | `option` and `result` | 10 | 15 | 21 |
-| M04-L06 | Tutorial: a tiny JSON-like value type | 15 | 23 | 32 |
-| **M04 total** | | **80** | **122** | **171** |
-| | | | **(2.0 h)** | **(2.9 h)** |
+| M04-L04 | Recursive types, polymorphism, option / result | 22 | 33 | 46 |
+| M04-L05 | Tutorial: a tiny JSON-like value type | 15 | 23 | 32 |
+| **M04 total** | | **77** | **117** | **164** |
+| | | | **(2.0 h)** | **(2.7 h)** |
 
-M04-L03 and M04-L05 now run on the shorter side (14-15 min
-video). M04-L04 absorbed the polymorphism material; walks were
-deferred to M05 to mirror CS3100_m25's lec05 / lec06 split. The
-M04-L06 tutorial still walks JSON values, so it inherits the
-hands-on feel that L03 and L04 sacrificed.
+M04-L04 is the longest lecture in the course at 33 video min;
+it brushes past the NPTEL 30-min upper bound. KC has chosen to
+keep it as one lecture rather than split (the content arc from
+intlist all the way to result is best taken in one sitting).
+
+M04-L03 sits at the NPTEL 20-min lower bound. M04-L04 absorbed
+the polymorphism material and the option / result content; walks
+were deferred to M05 to mirror CS3100_m25's lec05 / lec06 split.
+The M04-L05 tutorial (formerly M04-L06) still walks JSON values,
+so it inherits the hands-on feel that L03 and L04 sacrificed.
 
 ### M05: Pattern matching (6 lectures)
 
@@ -228,9 +236,9 @@ authoring-time `duration_target_min`.
 
 ## Course totals
 
-- **Final video**: 1597 min (26.6 hours) across
-  70 lectures and 12 modules.
-- **Estimated recording time**: 2243 min (37.4 hours)
+- **Final video**: 1592 min (26.5 hours) across
+  69 lectures and 12 modules.
+- **Estimated recording time**: 2236 min (37.3 hours)
   at the 1.4× multiplier.
 
 The 26.7 hours of final video falls slightly under NPTEL's ~30
@@ -259,7 +267,7 @@ sessions:
 | M01 Intro to functional programming | 2.6 | 0.6 |
 | M02 Expressions | 3.1 | 0.7 |
 | M03 Functions | 2.8 | 0.7 |
-| M04 Data types | 2.9 | 0.7 |
+| M04 Data types | 2.7 | 0.6 |
 | M05 Pattern matching | 3.2 | 0.7 |
 | M06 Higher-order programming | 3.2 | 0.7 |
 | M07 Side effects and modular programming | 4.6 | 1.1 |

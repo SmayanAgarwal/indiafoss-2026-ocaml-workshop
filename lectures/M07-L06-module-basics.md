@@ -46,7 +46,7 @@ a named collection of definitions (values, types,
 can refer to as a unit. The standard library you have been using
 all course is a tree of modules:
 [`List`](M04-L04-recursive-types.html), `String`, `Array`,
-[`Option`](M04-L05-option-and-aliases.html), `Map`, and so on. A
+[`Option`](M04-L04-recursive-types.html), `Map`, and so on. A
 real OCaml project is a tree of *your* modules using and being used
 by them. This lecture introduces the syntax.
 [Lecture 7](M07-L07-signatures.html) covers *signatures*, the

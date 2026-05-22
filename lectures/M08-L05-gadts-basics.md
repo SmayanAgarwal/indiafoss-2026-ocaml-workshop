@@ -386,7 +386,7 @@ specifically would go wrong if I used an ordinary variant and
 runtime checks?" If the answer is "I would crash with a
 type-mismatch error after running for hours", GADTs are worth it.
 If the answer is "I would have to add an
-[`option`](M04-L05-option-and-aliases.html#the-option-type) return
+[`option`](M04-L04-recursive-types.html#the-option-type) return
 type and pattern-match in two places", they are probably not.
 
 The [next lecture](M08-L06-gadts-use-cases.html) shows three or

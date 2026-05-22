@@ -311,6 +311,310 @@ a tail, which is itself a list, which can itself be empty or
 another cons cell, and so on. The single self-reference is how
 lists of arbitrary length fit in a type declaration of two cases.
 
+## Null: the billion-dollar mistake
+
+Most mainstream languages have a special value, `null` in
+Java/Go/C, `None` in Python (a single global value, not a
+variant constructor), `nil` in Ruby, `undefined` in JavaScript,
+that means "no value here." This works, but it has a quiet
+structural problem: the *type* of a reference does not tell you
+whether `null` is a legitimate inhabitant. In Java:
+
+```text
+String name = lookup("alice");
+System.out.println(name.length());
+```
+
+Compiles fine. Runs fine if `lookup` returns a real string.
+Crashes with a `NullPointerException` if `lookup` returned
+`null` and the programmer forgot to check. The type system
+offered no help.
+
+[Tony Hoare](https://en.wikipedia.org/wiki/Tony_Hoare), who
+introduced null references in 1965 in his ALGOL W design,
+later called this his *billion-dollar mistake*:
+
+> I call it my billion-dollar mistake. It was the invention of
+> the null reference in 1965. At that time, I was designing the
+> first comprehensive type system for references in an
+> object-oriented language. My goal was to ensure that all use
+> of references should be absolutely safe, with checking
+> performed automatically by the compiler. But I couldn't
+> resist the temptation to put in a null reference, simply
+> because it was so easy to implement. This has led to
+> innumerable errors, vulnerabilities, and system crashes,
+> which have probably caused a billion dollars of pain and
+> damage in the last forty years.
+>
+> -- Sir Tony Hoare,
+> *[Null References: The Billion Dollar Mistake](https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/)*
+> (QCon 2009)
+
+The problem is not that "no value" needs a representation; that
+is a real and common situation. The problem is that the
+representation should be *visible in the type*, so the compiler
+can force the caller to handle it.
+
+:::slide
+
+## Null: the billion-dollar mistake
+
+```text
+String name = lookup("alice");
+System.out.println(name.length());
+```
+
+- Compiles. Crashes at runtime if `lookup` returned `null`.
+- Every reference might secretly be null; every reader has to
+  remember to check.
+
+> I call it my billion-dollar mistake. ... innumerable errors,
+> vulnerabilities, and system crashes ... probably caused a
+> billion dollars of pain and damage in the last forty years.
+>
+> Sir Tony Hoare, who introduced `null` in 1965.
+
+- OCaml's fix: no implicit null. "No value" is its **own type**.
+
+:::
+
+## The `option` type
+
+OCaml's answer to "maybe a value, maybe not" is a built-in
+parameterised variant:
+
+```ocaml
+type 'a option =
+  | None
+  | Some of 'a
+```
+
+Two constructors:
+
+- `None`: there is no value here.
+- `Some x`: there is a value, and that value is `x` (of type
+  `'a`).
+
+The mental model is a *box*. An `'a option` is a box that either
+*contains* one value of type `'a` (the `Some x` case), or is
+*empty* (the `None` case). To use the value, you have to open
+the box and check which case you have. The type system makes
+that check mandatory; the compiler refuses to let you treat the
+box's contents as a plain `'a` without first inspecting which
+case the box is in.
+
+Constructing values is exactly what you would guess:
+
+```ocaml
+let x = None
+let y = Some 10
+let z = Some "hello"
+```
+
+The toplevel reports the types: `x : 'a option` (a `None` could
+be a box of *any* element type; the type stays polymorphic until
+context fixes it), `y : int option`, `z : string option`. As with
+`'a list`, the parameter is fixed *per value*, not per type
+declaration.
+
+A function whose return type involves `option` is *honest* about
+maybe-failing. Compare two signatures:
+
+```text
+val lookup : string -> string         (* never fails, always returns a string *)
+val lookup : string -> string option  (* might return None *)
+```
+
+The second signature tells the caller, in the type, that the
+result might be absent, and the caller cannot get at the inner
+string without first handling the `None` case. The `null`-style
+signature on the first line is silent about that possibility,
+and the failure surfaces as a runtime crash instead of a
+compile-time obligation.
+
+:::slide
+
+## The `option` type
+
+```ocaml
+type 'a option =
+  | None
+  | Some of 'a
+```
+
+- A built-in **parameterised variant**.
+- Mental model: a **box** that is either *empty* (`None`) or
+  *contains a value* (`Some x`).
+
+```ocaml
+let x = None
+let y = Some 10
+let z = Some "hello"
+```
+
+- Types: `int option`, `string option`, ...
+
+:::
+
+:::slide
+
+## `option` in function signatures
+
+Compare:
+
+```text
+val lookup : string -> string         (* never fails *)
+val lookup : string -> string option  (* might return None *)
+```
+
+- The second signature **tells the caller** the result may be
+  absent.
+- Caller cannot get at the inner string without first handling
+  `None`.
+- The type forces the check; the compiler enforces it.
+
+:::
+
+## When to use `option`
+
+Anywhere a domain has a "may be absent" state that is *part of
+the model*, not an exceptional failure. The classic example is a
+record field that is sometimes meaningful and sometimes not. A
+student's exam mark:
+
+```ocaml
+type student = {
+  name : string;
+  roll_no : string;
+  marks : int;
+}
+```
+
+What `marks` value do you put when the student has not yet
+written the exam? `0` is wrong: a student who took the exam and
+scored zero is also stored as `0`, and there is no way for code
+later to tell the two cases apart. `-1` is a sentinel; sentinels
+collide with real values eventually. The honest answer is "no
+value yet," and the type that says so is `int option`:
+
+```ocaml
+type student = {
+  name : string;
+  roll_no : string;
+  marks : int option;
+}
+
+let alice = { name = "Alice"; roll_no = "CS24"; marks = Some 87 }
+let bob   = { name = "Bob";   roll_no = "CS25"; marks = None }
+```
+
+`alice`'s exam mark is `Some 87`; `bob` has not taken the exam.
+The type tells later code to handle both cases. There is no
+sentinel value that means anything other than what its
+constructor says.
+
+:::slide
+
+## When to use `option`: the problem
+
+```ocaml
+type student = {
+  name : string;
+  roll_no : string;
+  marks : int;
+}
+```
+
+- What goes in `marks` when the student has not taken the exam?
+- `0`: collides with "scored zero."
+- `-1`: a brittle sentinel; out-of-range values are accidents
+  waiting to happen.
+
+:::
+
+:::slide
+
+## When to use `option`: the fix
+
+```ocaml
+type student = {
+  name : string;
+  roll_no : string;
+  marks : int option;
+}
+
+let alice = { name = "Alice"; roll_no = "CS24"; marks = Some 87 }
+let bob   = { name = "Bob";   roll_no = "CS25"; marks = None }
+```
+
+- `Some 87`: took the exam, scored 87.
+- `None`: not taken yet.
+- The type forces every reader to handle both cases.
+
+:::
+
+## The `result` type
+
+Sometimes `None` is not informative enough; the caller wants to
+know *why* a function failed. The standard library provides a
+two-parameter variant for that:
+
+```ocaml
+type ('a, 'e) result =
+  | Ok of 'a
+  | Error of 'e
+```
+
+A `result` value is either `Ok v` (success, carrying a value of
+type `'a`) or `Error e` (failure, carrying a value of type `'e`).
+The error payload is typically a string with a human-readable
+message, but it can be any type: a structured error variant, an
+exception, a status code.
+
+```ocaml
+let r1 : (int, string) result = Ok 42
+let r2 : (int, string) result = Error "not an int"
+```
+
+The choice between `option` and `result` is about what the
+caller needs. If the only sensible response to failure is "use a
+default" or "give up," `option` is enough. If the caller might
+distinguish among kinds of failure ("user gave bad input" vs.
+"the disk is full" vs. "network timed out"), `result` lets you
+carry that information through. The `result` type also threads
+nicely through chained computations; we will see that with the
+`let*` sugar in [M08-L03](M08-L03-result-monad.html).
+
+How to *use* an `option` or `result` (the `match` on `None` vs.
+`Some`, or `Ok` vs. `Error`) is the subject of
+[Module 5](M05-L01-basic-patterns.html). For now: know they
+exist, know they replace `null` and ad-hoc error codes,
+construct values of them, and read the types of functions that
+return them.
+
+:::slide
+
+## The `result` type
+
+```ocaml
+type ('a, 'e) result =
+  | Ok of 'a
+  | Error of 'e
+```
+
+- Like `option`, but the failure case **carries a value**.
+- Two type parameters: `'a` for the success, `'e` for the error.
+
+```ocaml
+let r1 : (int, string) result = Ok 42
+let r2 : (int, string) result = Error "not an int"
+```
+
+- Use `option` when "absent" is enough.
+- Use `result` when the caller wants to know **why**.
+
+:::
+
 ## Lists in practice
 
 Because cons prepends an element to an existing list, building a
@@ -341,7 +645,7 @@ applied to lists.
 
 :::slide
 
-## Lists in practice
+## Lists in practice: cons is cheap
 
 ```ocaml
 let xs = [10; 20; 30]
@@ -351,6 +655,13 @@ let _ = ys
 
 - `int list = [0; 10; 20; 30]`.
 - `ys` shares its tail with `xs` (no copy).
+- Prepending is `O(1)`; appending to the end is `O(n)`.
+
+:::
+
+:::slide
+
+## Lists in practice: `ys` captures the value
 
 Now rebind `xs`:
 
@@ -361,6 +672,7 @@ let _ = ys
 
 - `ys` is *still* `[0; 10; 20; 30]`.
 - `ys` captured the **value** at binding time, not the name `xs`.
+- Same shadowing-is-not-mutation point from M02-L02.
 
 :::
 
@@ -648,21 +960,18 @@ let e = Sub (Sub (Num 7, Num 3), Num 2)
 
 ## What's next
 
-Lecture 5: **`option`** and **`result`** as the two everyday
-utility variants.
-Then the tutorial.
+Lecture 5: **tutorial** that ties tuples, records, variants,
+recursive types, `option`, and `result` together.
 
 :::
 
-We now have variants, records, tuples, recursive variants, and
-polymorphism. The [next lecture](M04-L05-option-and-aliases.html)
-introduces the two utility variants you will use every day:
-`option` ("maybe a value") and `result` ("a value, or an error").
-Then the [module tutorial](M04-L06-tutorial.html) puts all of it
-together. Walking these data shapes (the step we have been
-deferring throughout M04-L03 and M04-L04) starts in
-[Module 5](M05-L01-basic-patterns.html), where pattern matching
-gets its own treatment.
+We now have everything Module 4 had to offer: tuples, records,
+variants, recursive variants, polymorphism, `option`, and
+`result`. The [tutorial in the next lecture](M04-L05-tutorial.html)
+ties them together on a small worked example. Walking these data
+shapes (the step we have been deferring throughout M04-L03 and
+M04-L04) starts in [Module 5](M05-L01-basic-patterns.html), where
+pattern matching gets its own treatment.
 
 ## Reading
 

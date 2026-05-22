@@ -401,7 +401,7 @@ escape hatches.
 `List.map` is the most familiar instance of a deeper pattern. *Any*
 container-like type that "holds" elements can have its own `map`.
 
-OCaml's [option type](M04-L05-option-and-aliases.html#the-option-type)
+OCaml's [option type](M04-L04-recursive-types.html#the-option-type)
 is the simplest example after lists. An `'a option` is either `None`
 (no value) or `Some x` (a value of type `'a`). The standard library
 provides `Option.map`:

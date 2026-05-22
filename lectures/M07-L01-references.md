@@ -216,7 +216,7 @@ language, and you use it where the algorithm wants it.
 computed outputs grows across calls. A [`Hashtbl.t`](https://v2.ocaml.org/api/Hashtbl.html)
 is itself mutable; you reach for it directly without wrapping in a
 `ref`. A small inline cache, on the other hand, is often a `ref` of
-an [option](M04-L05-option-and-aliases.html#the-option-type) or a list.
+an [option](M04-L04-recursive-types.html#the-option-type) or a list.
 
 **Recursive references.** Building a cyclic structure (a graph
 with cycles, a doubly-linked list, a function that needs to refer

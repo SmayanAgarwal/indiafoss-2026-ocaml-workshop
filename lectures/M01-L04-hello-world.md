@@ -190,7 +190,7 @@ ecosystem.
 The phrase "no useful value" is doing a lot of work. `unit` is the
 *absence* of information, but it is the absence-as-a-value, not the
 absence-as-a-type-system-feature. This distinction will matter again
-when we get to [`Option`](M04-L05-option-and-aliases.html) (Module 4),
+when we get to [`Option`](M04-L04-recursive-types.html) (Module 4),
 which is the way OCaml handles "this function might or might not
 return a useful value." `Option` is *not* the same as `unit`; the
 two answer different questions.

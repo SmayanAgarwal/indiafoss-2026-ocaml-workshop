@@ -330,8 +330,8 @@ nonsense. The alternatives are:
 - **[Raise an exception](M07-L03-exceptions.html)** (we cover
   exceptions in Module 7) so the caller has to handle the case
   explicitly.
-- **Return an [`option`](M04-L05-option-and-aliases.html#the-option-type)
-  or [`result`](M04-L05-option-and-aliases.html#the-result-type)
+- **Return an [`option`](M04-L04-recursive-types.html#the-option-type)
+  or [`result`](M04-L04-recursive-types.html#the-result-type)
   type** (Module 4) that encodes "this might be a valid number, or
   it might be 'no answer'". Forces the caller to check.
 

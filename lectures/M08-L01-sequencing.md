@@ -29,8 +29,8 @@ reading:
 Module 8 is about a pattern that shows up everywhere in OCaml code,
 once you learn to look for it: *sequencing computations that might
 fail*. We already have the shapes for "something may go wrong":
-[`option`](M04-L05-option-and-aliases.html#the-option-type) from
-Module 4, [`result`](M04-L05-option-and-aliases.html#the-result-type)
+[`option`](M04-L04-recursive-types.html#the-option-type) from
+Module 4, [`result`](M04-L04-recursive-types.html#the-result-type)
 from Module 4 as well, and [exceptions](M07-L03-exceptions.html)
 from Module 7. What we do not yet have is a tidy way to *chain* such
 computations. Without one, code grows into a *pyramid of doom* of
@@ -77,7 +77,7 @@ returns `None` if the string is not a valid integer. The other
 three return `Some` of something, with one of them, `small`,
 choosing `None` when the input is out of range. Each function has
 the same *shape* in its return type: an
-[`'a option`](M04-L05-option-and-aliases.html#the-option-type).
+[`'a option`](M04-L04-recursive-types.html#the-option-type).
 
 Now we want to wire them together: parse, then double, then check,
 then print. At each step, if the previous step said `None`, we want

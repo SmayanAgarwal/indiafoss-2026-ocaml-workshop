@@ -35,12 +35,12 @@ by zero is undefined. `int_of_string "hello"` cannot return an
 `int`: the string is not a number.
 
 We have already seen one way to express this: the
-[`option` type](M04-L05-option-and-aliases.html#the-option-type)
+[`option` type](M04-L04-recursive-types.html#the-option-type)
 (`None` when there is no answer, `Some x` when there is) and the
-[`result` type](M04-L05-option-and-aliases.html#the-result-type)
+[`result` type](M04-L04-recursive-types.html#the-result-type)
 (`Error e` instead of just `None`, so the failure can carry a
 reason). Those were the subjects of
-[Module 4](M04-L05-option-and-aliases.html). They are the *typed*
+[Module 4](M04-L04-recursive-types.html). They are the *typed*
 approach to partial functions: the possibility of failure is right
 there in the return type, and the compiler will not let you forget
 to handle it.
@@ -458,7 +458,7 @@ wrong call.
 
 **For predictable missing values.** "The key might be missing from
 the map" is not an exceptional case, it is the expected behaviour
-of a lookup. Use [`option`](M04-L05-option-and-aliases.html#the-option-type);
+of a lookup. Use [`option`](M04-L04-recursive-types.html#the-option-type);
 the caller will pattern-match cleanly.
 
 **For "this can't happen" assertions.** If a code path is

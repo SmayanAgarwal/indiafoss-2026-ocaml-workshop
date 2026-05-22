@@ -38,7 +38,7 @@ The option monad is the workhorse for "this step may fail, and we
 do not need to say why". A parser that may or may not match. A
 lookup that may or may not find a key. An arithmetic step that may
 or may not produce a sensible answer. Use
-[`option`](M04-L05-option-and-aliases.html#the-option-type) when
+[`option`](M04-L04-recursive-types.html#the-option-type) when
 the *identity* of the failure is the whole story; use `result`
 ([next lecture](M08-L03-result-monad.html)) when callers want a
 message or an error code.

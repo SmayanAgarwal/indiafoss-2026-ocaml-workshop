@@ -33,7 +33,7 @@ is, more than any single other feature, what makes OCaml *feel* like
 OCaml. You will reach for it dozens of times a day: to take apart a
 [tuple](M04-L01-tuples.html), to dispatch on a [constructor](M04-L03-variants.html),
 to walk a [tree](M04-L04-recursive-types.html), to handle an
-[option](M04-L05-option-and-aliases.html), to write the body of
+[option](M04-L04-recursive-types.html), to write the body of
 nearly every interesting function.
 
 The shape we start with is the `match` expression, the way you ask

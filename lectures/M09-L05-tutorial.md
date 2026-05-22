@@ -41,7 +41,7 @@ tree of arithmetic operations to a `float`. We chose it because
 it is small enough to fit on one screen, rich enough to have
 interesting properties, and from a part of the course (Module 5)
 that every student has already seen. Two alternatives would have
-worked: [`safe_div` from M04-L05](M04-L05-option-and-aliases.html)
+worked: [`safe_div` from M04-L05](M04-L04-recursive-types.html)
 or a list reversal function. We chose `expr` because it gives
 us *both* simple-case unit tests AND structural properties that
 exercise the recursive nature of the function. The other two
@@ -829,7 +829,7 @@ statement is just one equation, plus a NaN guard.
 
 :::quiz mcq id=M09-L05-q2
 A colleague writes a single QCheck property for the
-[`safe_div` function from M04-L05](M04-L05-option-and-aliases.html):
+[`safe_div` function from M04-L05](M04-L04-recursive-types.html):
 
 ```text
 let test = QCheck.Test.make QCheck.(pair int int)

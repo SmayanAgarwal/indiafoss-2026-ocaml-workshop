@@ -299,7 +299,7 @@ of which happens to be a pair. It is *not* a function of one
 argument that is a 4-tuple. The difference shows up in the type:
 `float * float -> float * float -> float` vs `float * float * float
 * float -> float`. We will see in
-[M04-L06](M04-L06-tutorial.html) and again in
+[M04-L06](M04-L05-tutorial.html) and again in
 [Module 6](M06-L01-functions-revisited.html) that the choice
 matters when partial application enters the picture.
 
@@ -523,7 +523,7 @@ destructure several layers at once.
 
 The standard library has a function with this exact shape:
 `List.assoc_opt`. We will reach for it in
-[M04-L05](M04-L05-option-and-aliases.html#chained-option-access),
+[M04-L05](M04-L04-recursive-types.html#chained-option-access),
 when we have introduced `option` properly.
 
 ## Tuples and higher-order functions

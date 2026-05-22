@@ -26,9 +26,9 @@ reading:
 
 :::
 
-[`option`](M04-L05-option-and-aliases.html#the-option-type) says
+[`option`](M04-L04-recursive-types.html#the-option-type) says
 "maybe a value, maybe not".
-[`result`](M04-L05-option-and-aliases.html#the-result-type) says
+[`result`](M04-L04-recursive-types.html#the-result-type) says
 "either a value, or an error". Both shapes carry a value on success;
 only `result` carries information on failure. The monadic plumbing
 is identical: same [`bind`](M08-L02-option-monad.html#definition),
