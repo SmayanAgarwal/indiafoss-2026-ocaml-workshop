@@ -134,27 +134,116 @@ effect, the same as `let x = e in <the rest of the file>`. The
 language gives the `in` part implicitly at the file level so you
 don't have to keep nesting.
 
-## Static semantics: a typing rule for `let`
+## Typing judgements
 
-We can pin down the meaning of `let ... in` more formally.
-*Static semantics* asks: given the types of the parts, what is the
-type of the whole? We write typing judgements with a turnstile,
-$\vdash$. The judgement $e : t$ reads "$e$ has type $t$"; "$x : t_1
-\vdash e : t_2$" reads "assuming $x$ has type $t_1$, the expression
-$e$ has type $t_2$".
+Before we write down what the type system says about `let`, we
+need a notation for *what type an expression has*. Programming-
+languages people write this with a colon:
 
-The typing rule for `let ... in` is:
+$$
+e : t
+$$
+
+read as "expression $e$ has type $t$". This is a *typing
+judgement*: a statement *about* a piece of program text. Some
+examples we have already seen:
+
+- $5 : \mathtt{int}$
+- $\mathtt{3.14} : \mathtt{float}$
+- $\mathtt{"hello"} : \mathtt{string}$
+- $\mathtt{true} : \mathtt{bool}$
+- $(\mathtt{let}\ x = 5\ \mathtt{in}\ x + 5) : \mathtt{int}$
+
+Each one is just a fact: the expression on the left has the type
+on the right. The compiler's job, when it type-checks your
+program, is to produce a judgement like this for every expression
+in it.
+
+:::slide
+
+## Typing judgements
+
+$$
+e : t
+$$
+
+reads "expression $e$ has type $t$". Some judgements:
+
+- $5 : \mathtt{int}$
+- $\mathtt{"hello"} : \mathtt{string}$
+- $(\mathtt{let}\ x = 5\ \mathtt{in}\ x + 5) : \mathtt{int}$
+
+The compiler produces a judgement like this for every expression
+it type-checks.
+
+:::
+
+## Inference rules
+
+We rarely state typing judgements in isolation. Most of the time
+we want to say: "*if* you know that these sub-expressions have
+these types, *then* the bigger expression has this type." That is
+exactly the job of an **inference rule**.
+
+An inference rule has *premises* above a horizontal bar and a
+*conclusion* below. Read it as "if every premise holds, then the
+conclusion holds". The bar is shorthand for "implies".
+
+Here is the inference rule that captures what `+` does to types:
+
+$$
+\dfrac{e_1 : \mathtt{int} \qquad e_2 : \mathtt{int}}
+      {e_1 + e_2 : \mathtt{int}}
+$$
+
+Read top-to-bottom: *if* $e_1$ has type `int` *and* $e_2$ has type
+`int`, *then* `e_1 + e_2` has type `int`. The whole type system is
+a collection of such rules, one per language construct.
+
+:::slide
+
+## Inference rules
+
+$$
+\dfrac{\text{premise}_1 \qquad \text{premise}_2 \qquad \cdots
+       \qquad \text{premise}_n}
+      {\text{conclusion}}
+$$
+
+- Read as "if every premise holds, the conclusion holds".
+- The horizontal bar is shorthand for "implies".
+
+Example: the rule for integer `+`:
+
+$$
+\dfrac{e_1 : \mathtt{int} \qquad e_2 : \mathtt{int}}
+      {e_1 + e_2 : \mathtt{int}}
+$$
+
+:::
+
+## A typing rule for `let`
+
+The `let ... in` rule is slightly more interesting than `+`,
+because the body $e_2$ is type-checked *under an assumption*: it
+gets to use the name $x$, which has the type the bound expression
+$e_1$ produced. We write that assumption with a turnstile,
+$\vdash$. The judgement $x : t_1 \vdash e_2 : t_2$ reads:
+"*assuming* $x$ has type $t_1$, the expression $e_2$ has type
+$t_2$."
+
+With that, the typing rule for `let ... in` is:
 
 $$
 \dfrac{e_1 : t_1 \qquad x : t_1 \vdash e_2 : t_2}
       {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) : t_2}
 $$
 
-Read top-to-bottom: *if* $e_1$ has type $t_1$ and *if* $e_2$ has
-type $t_2$ *under the assumption that $x$ has type $t_1$*, *then*
-the whole expression has type $t_2$. The type of the binding form
-is the type of its body. The bound expression's type flows in
-through the assumption about $x$.
+Read top-to-bottom: *if* $e_1$ has type $t_1$ *and* $e_2$ has type
+$t_2$ *under the assumption that $x : t_1$*, *then* the whole `let`
+has type $t_2$. The type of the binding form is the type of its
+body. The bound expression's type flows in through the assumption
+about $x$.
 
 :::slide
 
@@ -165,31 +254,31 @@ $$
       {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) : t_2}
 $$
 
-- *Premises* on top, *conclusion* on the bottom.
-- The bound expression's type ($t_1$) becomes an assumption while
-  typing the body.
+- $\vdash$ ("turnstile") reads as "assuming".
+- The body's typing uses the assumption $x : t_1$.
 - The whole `let` has the type of its **body** ($t_2$).
 
 :::
 
 For our example `let x = 5 in x + 5`: $e_1$ is `5`, which has type
-`int`. So $t_1$ is `int`. Under the assumption $x : \mathtt{int}$,
-the body `x + 5` has type `int` (because `+` is integer addition).
-So $t_2$ is `int`, and the whole expression has type `int`. The
-typing rule reproduces what the toplevel told us.
+`int`, so $t_1$ is `int`. Under the assumption $x : \mathtt{int}$,
+the body `x + 5` has type `int` (by the rule for `+`). So $t_2$ is
+`int`, and the whole expression has type `int`. The typing rule
+reproduces what the toplevel told us.
 
 ## Dynamic semantics: how `let` evaluates
 
-*Dynamic semantics* asks: how does an expression *evaluate* to a
-value? We write $e \Downarrow v$ for "$e$ evaluates to $v$", and
-$e_2[v/x]$ for "the result of substituting $v$ for every free
-occurrence of $x$ in $e_2$".
+Static semantics gives us the *type* of an expression. *Dynamic*
+semantics gives us its *value*. We use the same inference-rule
+shape, but the judgement is now about evaluation: $e \to v$ reads
+"$e$ evaluates to $v$". And $e_2[v/x]$ means "the result of
+substituting $v$ for every free occurrence of $x$ in $e_2$".
 
 The evaluation rule for `let ... in` is:
 
 $$
-\dfrac{e_1 \Downarrow v_1 \qquad e_2[v_1 / x] \Downarrow v_2}
-      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \Downarrow v_2}
+\dfrac{e_1 \to v_1 \qquad e_2[v_1 / x] \to v_2}
+      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \to v_2}
 $$
 
 Read: evaluate $e_1$ first to a value $v_1$. Substitute $v_1$ for
@@ -208,14 +297,15 @@ mapping names to values. But for reasoning about what a program
 ## Evaluation rule for `let ... in`
 
 $$
-\dfrac{e_1 \Downarrow v_1 \qquad e_2[v_1 / x] \Downarrow v_2}
-      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \Downarrow v_2}
+\dfrac{e_1 \to v_1 \qquad e_2[v_1 / x] \to v_2}
+      {(\mathtt{let}\ x = e_1\ \mathtt{in}\ e_2) \to v_2}
 $$
 
-- $e_1$ evaluates first to a value $v_1$.
-- Substitute $v_1$ for $x$ in $e_2$; evaluate the result.
-- This *substitution model* is how we reason; the implementation
-  uses an environment, but the meaning is the same.
+- $e \to v$ reads "$e$ evaluates to $v$".
+- Evaluate $e_1$ first; substitute $v_1$ for $x$ in $e_2$;
+  evaluate the result.
+- The *substitution model*. The implementation uses an environment,
+  but the meaning is the same.
 
 :::
 

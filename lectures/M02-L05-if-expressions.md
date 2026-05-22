@@ -294,15 +294,14 @@ $$
 :::
 
 The evaluation rule comes in two halves, one per branch the
-condition might choose. Write $e \Downarrow v$ for "$e$ evaluates
-to $v$".
+condition might choose. Write $e \to v$ for "$e$ evaluates to $v$".
 
 $$
-\dfrac{e_1 \Downarrow \mathtt{true} \qquad e_2 \Downarrow v}
-      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) \Downarrow v}
+\dfrac{e_1 \to \mathtt{true} \qquad e_2 \to v}
+      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) \to v}
 \qquad
-\dfrac{e_1 \Downarrow \mathtt{false} \qquad e_3 \Downarrow v}
-      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) \Downarrow v}
+\dfrac{e_1 \to \mathtt{false} \qquad e_3 \to v}
+      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) \to v}
 $$
 
 The left rule fires when the condition evaluates to `true` (the
@@ -316,13 +315,13 @@ not fire is not evaluated*; OCaml does not run dead code under
 ## Evaluation rules for `if`
 
 $$
-\dfrac{e_1 \Downarrow \mathtt{true} \qquad e_2 \Downarrow v}
-      {\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3 \Downarrow v}
+\dfrac{e_1 \to \mathtt{true} \qquad e_2 \to v}
+      {\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3 \to v}
 $$
 
 $$
-\dfrac{e_1 \Downarrow \mathtt{false} \qquad e_3 \Downarrow v}
-      {\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3 \Downarrow v}
+\dfrac{e_1 \to \mathtt{false} \qquad e_3 \to v}
+      {\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3 \to v}
 $$
 
 - Two rules; condition picks which fires.
