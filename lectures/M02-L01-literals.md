@@ -493,16 +493,22 @@ let quote = "she said \"hi\""
 let path  = "C:\\Users\\kc"
 ```
 
-- Escape sequences (same as C):
-  - `\n` newline, `\t` tab, `\\` backslash, `\"` quote
-  - `\NNN` decimal byte, `\xHH` hex byte
+- Escape sequences (same as C): `\n` newline, `\t` tab,
+  `\\` backslash, `\"` quote, `\NNN` decimal byte, `\xHH` hex byte.
+
+:::
+
+:::slide
+
+## String concatenation: `^`
 
 ```ocaml
 let s = "first" ^ " " ^ "second"
 ```
 
-- `^` is concatenation.
-- Separate from `+` because strings and numbers are different operations.
+- `^` is the concatenation operator (not `+`).
+- Separate from `+` because strings and numbers are different
+  operations; each operator has one fixed meaning.
 
 :::
 

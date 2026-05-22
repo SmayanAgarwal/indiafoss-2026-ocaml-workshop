@@ -418,7 +418,7 @@ returns informative error messages. Use `let*`.
 
 :::slide
 
-## Activity solution
+## Activity solution: the helpers
 
 ```ocaml
 let ( let* ) = Result.bind
@@ -427,7 +427,17 @@ let int_or_err prefix s =
   match int_of_string_opt s with
   | Some n -> Ok n
   | None -> Error (prefix ^ ": not an int: " ^ s)
+```
 
+`int_or_err` produces a labelled `Error` if parsing fails.
+
+:::
+
+:::slide
+
+## Activity solution: `parse_pair_r`
+
+```ocaml
 let parse_pair_r s =
   let s = String.trim s in
   let n = String.length s in
@@ -443,8 +453,7 @@ let parse_pair_r s =
     | _ -> Error "expected exactly one comma"
 ```
 
-The two `let*`s short-circuit on the first parse failure; the error
-carries a useful prefix ("first" vs "second").
+Two `let*`s short-circuit on first parse failure.
 
 :::
 

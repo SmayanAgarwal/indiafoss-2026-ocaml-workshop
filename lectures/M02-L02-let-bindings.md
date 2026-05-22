@@ -77,11 +77,9 @@ let _ =
 
 :::slide
 
-## Two forms of `let`
+## Top-level `let`
 
-- Same keyword, two related uses:
-
-**Top-level `let`:** introduces a name into the rest of the file.
+Introduces a name into the rest of the file:
 
 ```ocaml
 let pi = 3.14159
@@ -89,8 +87,15 @@ let r  = 5.0
 let _  = pi *. r *. r
 ```
 
-**`let ... in` expression:** introduces a name scoped to the
-following expression only.
+`pi` and `r` stay visible to everything that follows.
+
+:::
+
+:::slide
+
+## `let ... in` expression
+
+Introduces a name scoped to the following expression only:
 
 ```ocaml
 let _ =
@@ -99,7 +104,7 @@ let _ =
   pi *. r *. r
 ```
 
-- Same idea, different scope.
+- Same number, different scope.
 - Expression form does **not** pollute the outer namespace.
 
 :::

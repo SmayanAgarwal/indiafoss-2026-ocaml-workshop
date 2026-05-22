@@ -558,7 +558,7 @@ let queue_length = Queue.length
 
 :::slide
 
-## Activity solution
+## Activity solution: the signature
 
 ```ocaml
 module type QUEUE = sig
@@ -569,7 +569,17 @@ module type QUEUE = sig
   val enqueue : 'a -> 'a t -> 'a t
   val dequeue : 'a t -> ('a * 'a t) option
 end
+```
 
+One new `val`: `length : 'a t -> int`.
+
+:::
+
+:::slide
+
+## Activity solution: the module
+
+```ocaml
 module Queue : QUEUE = struct
   type 'a t = { front : 'a list; back : 'a list }
   let empty = { front = []; back = [] }
