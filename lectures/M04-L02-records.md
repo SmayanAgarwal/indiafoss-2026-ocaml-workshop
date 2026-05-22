@@ -126,9 +126,7 @@ computed value.
 
 :::slide
 
-## Accessing fields
-
-Two ways: dot syntax, or destructuring.
+## Accessing fields: dot syntax
 
 ```ocaml
 type point = { x : float; y : float }
@@ -138,6 +136,14 @@ let _ = p.y
 ```
 
 - `p.x` returns `3.0`, `p.y` returns `4.0`.
+- The thing after `.` must be a literal field name (no
+  `p.(expr)`).
+
+:::
+
+:::slide
+
+## Accessing fields: destructuring
 
 ```ocaml
 type point = { x : float; y : float }
@@ -147,8 +153,10 @@ let _ = x
 let _ = y
 ```
 
-- Destructuring: introduces `x`, `y` as local names.
-- `{ x; y }` is sugar for `{ x = x; y = y }`.
+- `let { x; y } = p` matches `p` against the pattern and binds
+  `x` and `y` as local names.
+- `{ x; y }` is sugar for `{ x = x; y = y }` (field-name = bound
+  name).
 
 :::
 
@@ -208,7 +216,7 @@ let distance { x = x1; y = y1 } { x = x2; y = y2 } =
 
 :::slide
 
-## Records in function parameters
+## Records in function parameters: dot syntax
 
 ```ocaml
 type point = { x : float; y : float }
@@ -218,7 +226,14 @@ let distance p q =
   sqrt (dx *. dx +. dy *. dy)
 ```
 
-Or, with destructuring in the parameters:
+- Parameters `p` and `q` are records.
+- Each field accessed at the call site with `.x` / `.y`.
+
+:::
+
+:::slide
+
+## Records in function parameters: destructure
 
 ```ocaml
 type point = { x : float; y : float }
@@ -228,8 +243,8 @@ let distance { x = x1; y = y1 } { x = x2; y = y2 } =
   sqrt (dx *. dx +. dy *. dy)
 ```
 
-- Same function, fields pulled out up front.
-- Destructuring is common when you use many fields.
+- Same function, fields pulled out up front in the parameter list.
+- Common when the body uses many fields.
 
 :::
 
@@ -453,60 +468,14 @@ become ambiguous in the same way. We will see in
 each record type in its own namespace, which sidesteps the
 problem entirely.
 
-## Mutable record fields
-
-Records are immutable *by default*. You can opt in to mutability
-on a per-field basis with the `mutable` keyword in the type
-declaration.
-
-```ocaml
-type counter = { mutable n : int }
-
-let c = { n = 0 }
-let () = c.n <- c.n + 1
-let _ = c.n
-```
-
-The `mutable` annotation on `n` permits the assignment syntax `c.n
-<- new_value`. The arrow `<-` is OCaml's assignment operator for
-mutable record fields; it is a *statement* (well, a `unit`-typed
-expression), not an expression with a value.
-
-:::slide
-
-## Mutable record fields
-
-```ocaml
-type counter = { mutable n : int }
-
-let c = { n = 0 }
-let () = c.n <- c.n + 1
-let _ = c.n
-```
-
-- Result: `int = 1`.
-- `mutable` allows `c.n <- new_value` assignment with `<-`.
-- Full mutation coverage in Module 7.
-- Default: prefer immutable records.
-- `mutable` for counters, caches, state machines.
-
-:::
-
-Mutability is a separate Pandora's box that we open carefully in
-[Module 7](M07-L01-references.html). For now, the rule is:
-*prefer immutable records, by default*. Use `mutable` only when
-you specifically need the in-place update semantics (typically for
-a counter, a cache, or a piece of long-lived state that
-conceptually has identity).
-
-The default-immutable choice is deliberate. Immutable records
-support equational reasoning, can be shared across threads without
-locks (a property we will lean on heavily in
-[Module 6](M06-L01-functions-revisited.html) and beyond), and
-avoid an entire class of bugs where one piece of code modifies a
-value another piece is still depending on. The cost is one extra
-allocation per "update"; OCaml's garbage collector is well-tuned
-for the resulting allocation pattern.
+Records are *immutable by default*. OCaml does allow individual
+fields to be opted into in-place mutation (with a `mutable`
+keyword in the type declaration and a `<-` assignment operator),
+but we defer that to [Module 7](M07-L01-references.html#mutable-record-fields),
+where references and the rest of the mutation story land
+together. For Module 4, every record is immutable, and the
+functional-update form above (`{ p with ... }`) is how you
+"change" a field.
 
 ## A small check
 
@@ -551,6 +520,7 @@ let () =
   check (approx_eq (circle_area { cx = 0.0; cy = 0.0; radius = 0.0 }) 0.0) "zero";
   print_endline "all tests passed"
 ```
+
 :::
 
 :::solution

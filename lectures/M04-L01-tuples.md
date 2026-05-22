@@ -189,7 +189,7 @@ and larger, OCaml expects you to *destructure*.
 
 :::slide
 
-## Constructing and extracting
+## Extracting from a pair: `fst` and `snd`
 
 ```ocaml
 let p = (10, 20)
@@ -198,8 +198,14 @@ let _ = snd p
 ```
 
 - `fst : 'a * 'b -> 'a`, `snd : 'a * 'b -> 'b`.
-- Work on **pairs only**.
-- For triples or larger: **destructure**.
+- Polymorphic; work on any pair regardless of element types.
+- **Pairs only**: no `fst` / `snd` for triples or larger.
+
+:::
+
+:::slide
+
+## Triples and larger: destructure
 
 ```ocaml
 let (x, y, z) = (1, 2, 3)
@@ -208,7 +214,9 @@ let _ = y
 let _ = z
 ```
 
-- `(x, y, z)` is a **pattern**; binds three names at once.
+- `(x, y, z)` on the left is a **pattern**, not a tuple expression.
+- Binds three names at once, in one `let`.
+- Works at any arity; the standard way past pairs.
 
 :::
 
