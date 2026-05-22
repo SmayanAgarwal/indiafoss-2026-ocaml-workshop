@@ -357,12 +357,10 @@ Written as a sequence of substitution steps:
 
 $$
 \begin{aligned}
-\mathtt{let}\ x = 5\ \mathtt{in}\ \mathtt{let}\ y = 10\ \mathtt{in}\ x + y
-& \to \mathtt{let}\ y = 10\ \mathtt{in}\ 5 + y
-& \quad [x := 5] \\
-& \to 5 + 10
-& \quad [y := 10] \\
-& \to 15
+& \mathtt{let}\ x = 5\ \mathtt{in}\ (\mathtt{let}\ y = 10\ \mathtt{in}\ x + y) \\
+\to\ & \mathtt{let}\ y = 10\ \mathtt{in}\ (5 + y) \qquad [x := 5] \\
+\to\ & 5 + 10 \qquad [y := 10] \\
+\to\ & 15
 \end{aligned}
 $$
 
@@ -376,12 +374,10 @@ delivers the next state).
 
 $$
 \begin{aligned}
-\mathtt{let}\ x = 5\ \mathtt{in}\ \mathtt{let}\ y = 10\ \mathtt{in}\ x + y
-& \to \mathtt{let}\ y = 10\ \mathtt{in}\ 5 + y
-& [x := 5] \\
-& \to 5 + 10
-& [y := 10] \\
-& \to 15
+& \mathtt{let}\ x = 5\ \mathtt{in}\ (\mathtt{let}\ y = 10\ \mathtt{in}\ x + y) \\
+\to\ & \mathtt{let}\ y = 10\ \mathtt{in}\ (5 + y) \qquad [x := 5] \\
+\to\ & 5 + 10 \qquad [y := 10] \\
+\to\ & 15
 \end{aligned}
 $$
 
