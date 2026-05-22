@@ -60,6 +60,23 @@ sealed interfaces or Kotlin with sealed classes, the same idea
 appears there too. Each of these is following the lead of the
 ML family, where variants have been around since the 1970s.
 
+:::slide
+
+## Product types vs. sum types
+
+- [Tuples](M04-L01-tuples.html) and
+  [records](M04-L02-records.html) are **product types**: AND.
+  - A `point` has an `x` *and* a `y`.
+  - A `person` has a `name` *and* an `age` *and* an `email`.
+- **Variants** are **sum types**: OR.
+  - A `shape` is a `Circle` *or* a `Square` *or* a `Rectangle`.
+  - A parse result is `Ok` *or* `Error`.
+- Like a C / Java `enum`, but each alternative can carry data.
+- Most useful data types combine both: variants for the *kinds*,
+  records / tuples for the data inside each kind.
+
+:::
+
 ## Declaring a variant: the enum case
 
 The simplest variant is one whose alternatives carry no data:

@@ -89,16 +89,27 @@ min / 209 recording min, so the polish net-shrunk M03 by about
 
 ### M04: Data types (6 lectures)
 
-| Lecture | Topic | Video (min) | Recording (min) |
-|---|---|---:|---:|
-| M04-L01 | Tuples | 22 | 31 |
-| M04-L02 | Records | 22 | 31 |
-| M04-L03 | Variants (sum types) | 24 | 34 |
-| M04-L04 | Recursive types: lists, trees, expressions | 25 | 35 |
-| M04-L05 | `option`, `result`, and type abbreviations | 22 | 31 |
-| M04-L06 | Tutorial: a tiny JSON-like value type | 28 | 40 |
-| **M04 total** | | **143** | **202** |
-| | | **(2.4 h)** | **(3.4 h)** |
+Re-estimated 2026-05-22 after the M04 polish pass (M04-L01
+constructing-and-extracting split into pair vs triples slides;
+M04-L02 accessing-fields and function-parameter slides each split
+into dot vs destructure; mutable-record-fields section deferred
+to M07-L01). Estimate uses slide_count x 1.5 min.
+
+| Lecture | Topic | Slides | Video (min) | Recording (min) |
+|---|---|---:|---:|---:|
+| M04-L01 | Tuples | 16 | 24 | 34 |
+| M04-L02 | Records | 15 | 23 | 32 |
+| M04-L03 | Variants (sum types) | 13 | 20 | 28 |
+| M04-L04 | Recursive types: lists, trees, expressions | 13 | 20 | 28 |
+| M04-L05 | `option`, `result`, and type abbreviations | 12 | 18 | 25 |
+| M04-L06 | Tutorial: a tiny JSON-like value type | 15 | 23 | 32 |
+| **M04 total** | | **84** | **128** | **179** |
+| | | | **(2.1 h)** | **(3.0 h)** |
+
+M04-L05 sits at the NPTEL 20-min lower bound; the rest are
+comfortably in the 20-25 min window. M04-L03 and L04 have not
+been polished yet, so the slide-based estimate may run a little
+short for those.
 
 ### M05: Pattern matching (6 lectures)
 
@@ -203,17 +214,17 @@ min / 209 recording min, so the polish net-shrunk M03 by about
 
 ## Course totals
 
-- **Final video**: 1583 min (26.4 hours) across
+- **Final video**: 1568 min (26.1 hours) across
   68 lectures and 12 modules.
-- **Estimated recording time**: 2225 min (37.1 hours)
+- **Estimated recording time**: 2202 min (36.7 hours)
   at the 1.4× multiplier.
 
-The 26.4 hours of final video falls slightly under NPTEL's ~30
+The 26.1 hours of final video falls slightly under NPTEL's ~30
 hr target; that is expected, since the original sketch reserved
 a margin, and the M03 list-removal pass plus the secure-systems
 half landed on the lower end of the 25-min-per-lecture window.
-Numbers reflect the 2026-05-22 re-estimate for M02 and M03
-(slide_count x 1.5); M01 and M04+ still use the authoring-time
+Numbers reflect the 2026-05-22 re-estimate for M02, M03, and M04
+(slide_count x 1.5); M01 and M05+ still use the authoring-time
 duration_target_min.
 
 ## Studio session planning
@@ -222,7 +233,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **37 hours of recording / 4.3 hours per day = ~9 studio days.**
+- **37 hours of recording / 4.3 hours per day = ~8.5 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -232,7 +243,7 @@ sessions:
 | M01 Intro to functional programming | 2.6 | 0.6 |
 | M02 Expressions | 3.1 | 0.7 |
 | M03 Functions | 2.8 | 0.7 |
-| M04 Data types | 3.4 | 0.8 |
+| M04 Data types | 3.0 | 0.7 |
 | M05 Pattern matching | 3.2 | 0.7 |
 | M06 Higher-order programming | 3.2 | 0.7 |
 | M07 Side effects and modular programming | 3.8 | 0.9 |
