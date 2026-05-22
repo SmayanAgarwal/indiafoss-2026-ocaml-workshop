@@ -113,18 +113,16 @@ let fib n =
   in
   go 0 1 0
 
-let _ = fib 50
+let _ = fib 46
 ```
 
 :::slide
 
 ## Why is naive Fibonacci so slow?
 
-- `fib 5` computes `fib 4 + fib 3`.
-- `fib 4` recomputes `fib 3 + fib 2`. `fib 3` is computed twice.
+- `fib 4` recomputes the `fib 3` that `fib 5` already needed.
 - Overlapping sub-problems blow up the work.
-
-Faster: keep a pair `(a, b) = (fib (n-2), fib (n-1))`:
+- Faster: carry a pair `(a, b) = (fib (k-2), fib (k-1))`:
 
 ```ocaml
 let fib n =
@@ -134,15 +132,18 @@ let fib n =
   in
   go 0 1 0
 
-let _ = fib 50
+let _ = fib 46
 ```
 
-- `int = 12586269025`. Linear in `n`, constant work per step.
-- Tail-recursive accumulator-pair pattern.
+- `int = 1836311903`. Linear in `n`.
 
 :::
 
-`fib 50` now returns `12586269025` immediately. The trick: the
+`fib 46` now returns `1836311903` immediately. (We use 46 rather
+than 50 because the in-browser `int` is 32-bit and `fib 47`
+already overflows it; `fib 46` is the largest Fibonacci that fits.
+On a native 64-bit OCaml, `fib 50 = 12_586_269_025` fits fine.)
+The trick: the
 accumulator holds *two* values rather than one. At each step, `a`
 is `fib k` and `b` is `fib (k+1)`. The recursive call advances both:
 the new `a` is `b` (the previous `fib (k+1)`), the new `b` is `a +
