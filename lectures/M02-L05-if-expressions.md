@@ -134,12 +134,18 @@ non-negative number from `n`). The `if`-expression inside the
 
 ## The shape and type rule
 
-The general form is `if E1 then E2 else E3`, where:
+The abstract syntax is:
 
-- `E1` is the **condition**: it must have type `bool`.
-- `E2` is the **then-branch**: it has some type `T`.
-- `E3` is the **else-branch**: it must have the *same* type `T`.
-- The whole expression has type `T`.
+$$
+\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3
+$$
+
+with three sub-expressions:
+
+- $e_1$ is the **condition**: it must have type `bool`.
+- $e_2$ is the **then-branch**: it has some type $t$.
+- $e_3$ is the **else-branch**: it must have the *same* type $t$.
+- The whole expression has type $t$.
 
 ```ocaml
 let _ = if true then 13 else 14
@@ -149,21 +155,20 @@ let _ = if true then 13 else 14
 
 ## The shape
 
-```
-if E1 then E2 else E3
-```
+$$
+\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3
+$$
 
-- `E1` **condition**: must be `bool`.
-- `E2` **then-branch**: some type `T`.
-- `E3` **else-branch**: must be the **same `T`** as `E2`.
-- Whole expression: type `T`.
+- $e_1$ **condition**: must be `bool`.
+- $e_2$ **then-branch**: some type $t$.
+- $e_3$ **else-branch**: must be the **same $t$** as $e_2$.
+- Whole expression: type $t$.
 
 ```ocaml
 let _ = if true then 13 else 14
 ```
 
-- Result `int = 13`.
-- Condition `bool`, both branches `int`, whole expression `int`.
+`int = 13`. Both branches `int`, whole expression `int`.
 
 :::
 
@@ -259,46 +264,77 @@ rule is "both branches the same type", full stop.
 
 ## The typing rule, written out
 
-Programming-languages people write rules like this with horizontal
-bars, where the lines above the bar are *premises* and the line
-below is the *conclusion*:
+Programming-languages people write typing rules with horizontal
+bars: the lines above the bar are *premises* and the line below is
+the *conclusion*.
 
-```
-  E1 : bool      E2 : T      E3 : T
-  ---------------------------------
-        if E1 then E2 else E3 : T
-```
+$$
+\dfrac{e_1 : \mathtt{bool} \qquad e_2 : t \qquad e_3 : t}
+      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) : t}
+$$
+
+Read as: *if* $e_1$ has type `bool`, *and* $e_2$ has type $t$, *and*
+$e_3$ has type $t$ (the same $t$), *then* the whole expression `if
+e1 then e2 else e3` has type $t$. This is the precise statement of
+what the type checker is enforcing.
 
 :::slide
 
-## Inference rule, written out
+## Typing rule for `if`
 
-The **typing rule** for `if`:
+$$
+\dfrac{e_1 : \mathtt{bool} \qquad e_2 : t \qquad e_3 : t}
+      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) : t}
+$$
 
-```
-  E1 : bool      E2 : T      E3 : T
-  ---------------------------------
-        if E1 then E2 else E3 : T
-```
-
-- Bar reads as "if the things above hold, then the thing below holds".
-- **Premises** above; **conclusion** below.
-- Same `T` in both branches.
+- **Premises** above the bar; **conclusion** below.
+- Same $t$ in both branches: that's the "branches must agree" rule.
+- Whole expression has the branches' type, $t$.
 
 :::
 
-Read as: "if `E1` has type `bool`, and `E2` has type `T`, and `E3`
-has type `T` (the same `T`), then the whole expression `if E1 then
-E2 else E3` has type `T`." This is one of the standard rules of
-the OCaml type system, and we will see more such rules as we
-introduce more constructs. They are the precise statement of what
-the compiler is checking.
+The evaluation rule comes in two halves, one per branch the
+condition might choose. Write $e \Downarrow v$ for "$e$ evaluates
+to $v$".
+
+$$
+\dfrac{e_1 \Downarrow \mathtt{true} \qquad e_2 \Downarrow v}
+      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) \Downarrow v}
+\qquad
+\dfrac{e_1 \Downarrow \mathtt{false} \qquad e_3 \Downarrow v}
+      {(\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3) \Downarrow v}
+$$
+
+The left rule fires when the condition evaluates to `true` (the
+then-branch supplies the value); the right rule fires when it
+evaluates to `false` (the else-branch does). The *branch that does
+not fire is not evaluated*; OCaml does not run dead code under
+`if`.
+
+:::slide
+
+## Evaluation rules for `if`
+
+$$
+\dfrac{e_1 \Downarrow \mathtt{true} \qquad e_2 \Downarrow v}
+      {\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3 \Downarrow v}
+$$
+
+$$
+\dfrac{e_1 \Downarrow \mathtt{false} \qquad e_3 \Downarrow v}
+      {\mathtt{if}\ e_1\ \mathtt{then}\ e_2\ \mathtt{else}\ e_3 \Downarrow v}
+$$
+
+- Two rules; condition picks which fires.
+- The other branch is **not evaluated**.
+
+:::
 
 You do not have to read these rules to use OCaml. They are useful
 notation when we need to be precise about *exactly* what the type
-checker does. [Module 4](M04-L01-tuples.html) (data types) and
-[Module 5](M05-L01-basic-patterns.html) (pattern matching)
-introduce more constructs with their own rules.
+checker does and what the program does. [Module 4](M04-L01-tuples.html)
+(data types) and [Module 5](M05-L01-basic-patterns.html) (pattern
+matching) introduce more constructs with their own rules.
 
 ## A typical use: multi-way branching
 
