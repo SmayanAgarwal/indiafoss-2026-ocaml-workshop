@@ -351,6 +351,37 @@ Every step is a constraint generated from an operator or function;
 the inference algorithm runs through them all and reports the type.
 We wrote no annotations.
 
+### As an inference rule
+
+The same reasoning, written formally. The typing rule for `+` is:
+
+$$
+\dfrac{e_1 : \mathtt{int} \qquad e_2 : \mathtt{int}}
+      {e_1 + e_2 : \mathtt{int}}
+$$
+
+For our function body `x + y`, both premises ask `x : int` and `y :
+int`. Those become the *constraints* the algorithm collects.
+Solving them gives the function type `int -> int -> int`. The
+inference engine is essentially building a derivation tree like
+this one and reading the leaves to assign types to the parameters.
+
+:::slide
+
+### As an inference rule
+
+The typing rule for `+`:
+
+$$
+\dfrac{e_1 : \mathtt{int} \qquad e_2 : \mathtt{int}}
+      {e_1 + e_2 : \mathtt{int}}
+$$
+
+For `x + y`, the two premises force `x : int` and `y : int`.
+Solving the collected constraints gives `add : int -> int -> int`.
+
+:::
+
 ```ocaml
 let add_f x y = x +. y
 ```
