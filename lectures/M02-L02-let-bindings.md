@@ -320,6 +320,12 @@ let _ =
 - Result: `int = 25`.
 - Each `let ... in` introduces a name visible in its body.
 
+:::
+
+:::slide
+
+## Nested `let ... in`: shadowing
+
 Shadowing works in nested bindings too:
 
 ```ocaml
@@ -331,6 +337,8 @@ let _ =
 ```
 
 - Result: `int = 22`.
+- Each rebinding hides the previous `x` for the rest of the scope.
+- Right-hand sides reference the previous binding.
 
 :::
 
@@ -534,21 +542,20 @@ previous.
 - After first inner: `x = 2`
 - After second inner: `x = 20`
 - Result: `20`. Three shadowing bindings, **no mutation**.
-- Original `1` becomes unreachable; the GC reclaims it.
-- **GC** is what lets shadowing-heavy code avoid leaks.
 
 :::
 
-The aside about garbage collection is worth flagging. In a language
-without GC (like C), reusing names by shadowing-style allocation
-would leak: every "old `x`" you stopped referring to would still
-take space. In OCaml the garbage collector recognises that nothing
-reachable refers to the old `x` and frees it. This is one of the
-reasons GC and immutability fit so well together: GC makes
-immutability cheap, and immutability makes GC's job easier
-(no in-place updates means no need for write barriers in the
-common case). We will see the full GC story in the secure-systems
-half of the course (Module 9).
+An aside about garbage collection that's worth flagging in passing,
+without dwelling on it (the full story comes in the secure-systems
+half). In a language without GC (like C), reusing names by
+shadowing-style allocation would leak: every "old `x`" you stopped
+referring to would still take space. In OCaml the garbage collector
+recognises that nothing reachable refers to the old `x` and frees
+it. GC and immutability fit well together: GC makes immutability
+cheap, and immutability makes GC's job easier (no in-place updates
+means no need for write barriers in the common case). The full GC
+story comes back in [Module 9](M09-L01-why-test.html) when we look
+at what the type system catches and what it doesn't.
 
 ## A small code challenge
 

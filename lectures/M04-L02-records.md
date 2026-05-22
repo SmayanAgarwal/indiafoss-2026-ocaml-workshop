@@ -274,6 +274,12 @@ let p2 = { p with y = 10.0 }
 - `with` produces a *new* record, identical to `p` except `y = 10.0`.
 - `p` is **unchanged**.
 
+:::
+
+:::slide
+
+## Functional update: confirming `p` is unchanged
+
 ```ocaml
 type point = { x : float; y : float }
 let p = { x = 3.0; y = 4.0 }
@@ -583,7 +589,13 @@ let _ = book_title real_world_ocaml
 
 - Result: `string = "Real World OCaml"`.
 
-More idiomatic: destructure in the parameter.
+:::
+
+:::slide
+
+## Activity solution: destructure in the parameter
+
+More idiomatic: pattern-match the record in the parameter list.
 
 ```ocaml
 type book = { title : string; author : string; year : int }
@@ -591,6 +603,7 @@ let book_title { title; _ } = title
 ```
 
 - `_` ignores the other fields.
+- Without the `_`, OCaml warns the pattern is incomplete.
 
 :::
 

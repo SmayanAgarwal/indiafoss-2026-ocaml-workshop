@@ -560,7 +560,7 @@ warnings; fix each one.
 
 :::slide
 
-## Activity discussion
+## Activity discussion: the extended type
 
 After adding the constructors:
 
@@ -575,22 +575,40 @@ type expr =
   | Div of expr * expr
 ```
 
-- Compiler warns *every match on `expr`*: `eval`, `pretty`, `depth`, `fold`.
+- Compiler warns *every match on `expr`*: `eval`, `pretty`,
+  `depth`, `fold`.
 - Each needs new clauses for `Var` and `Neg`.
 
-Per-function notes:
+:::
 
-- `pretty`: stringify the variable name; prefix `Neg`'s recursive result.
+:::slide
+
+## Activity discussion: the easy three
+
+- `pretty`: stringify the variable name; prefix `Neg`'s recursive
+  result.
 - `depth`: `Var _ -> 0`, `Neg e -> 1 + depth e`.
-- `fold`: for `Neg`, if inside is `Num x` return `Num (-. x)`; else keep as `Neg (fold e)`. For `Var`, no folding (it stays).
-- `eval`: **shape changes.** Needs an environment to look up variables.
-  - Signature grows from `expr -> float` to `(string -> float) -> expr -> float`.
-  - Or `(string * float) list -> expr -> float`.
+- `fold`: for `Neg`, if inside is `Num x` return `Num (-. x)`;
+  else keep as `Neg (fold e)`. For `Var`, no folding (it stays).
+
+Each clause is short; the compiler tells you which match needs
+updating.
+
+:::
+
+:::slide
+
+## Activity discussion: `eval` changes shape
+
+- `eval` needs an environment to look up variables.
+- Signature grows from `expr -> float` to
+  `(string -> float) -> expr -> float`.
+- Or `(string * float) list -> expr -> float`.
 
 Takeaway:
 
 - Compiler points at every place needing attention.
-- It surfaces *deeper* changes (eval's signature must grow).
+- It surfaces *deeper* changes (`eval`'s signature must grow).
 - You make design calls; the punch list comes from the compiler.
 
 :::

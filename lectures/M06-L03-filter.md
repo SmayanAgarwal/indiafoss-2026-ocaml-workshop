@@ -382,27 +382,21 @@ let _ = List.map (fun b -> b.title) modern_long
 
 ```ocaml
 type book = { title : string; year : int; pages : int }
-
 let library = [
-  { title = "OCaml";   year = 2020; pages = 350 };
-  { title = "Rust";    year = 2024; pages = 600 };
-  { title = "Old";     year = 1985; pages = 200 };
-  { title = "Recent";  year = 2023; pages = 50 };
+  { title = "OCaml";  year = 2020; pages = 350 };
+  { title = "Rust";   year = 2024; pages = 600 };
+  { title = "Old";    year = 1985; pages = 200 };
+  { title = "Recent"; year = 2023; pages = 50 };
 ]
-
 let modern_long = List.filter
-  (fun b -> b.year >= 2020 && b.pages > 100)
-  library
-
+  (fun b -> b.year >= 2020 && b.pages > 100) library
 let _ = List.map (fun b -> b.title) modern_long
 ```
 
 `["OCaml"; "Rust"]`.
 
-- Filter on a compound predicate (modern *and* long).
-- Then map to titles.
-- This filter-then-map pattern is sometimes called *select-where* or
-  *project-select*. In OCaml: two chained function calls.
+- Filter on a compound predicate, then map to titles.
+- "Select-where" in database lingo, two chained calls in OCaml.
 
 :::
 

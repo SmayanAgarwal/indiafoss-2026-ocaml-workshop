@@ -317,7 +317,7 @@ recurses on both subtrees and adds their sizes plus one.
 
 :::slide
 
-## Walking the tree
+## Walking the tree: size
 
 ```ocaml
 type 'a tree =
@@ -335,6 +335,12 @@ let _ = size example
 - Result: `int = 4`.
 - Two recursive calls per `Node`.
 
+:::
+
+:::slide
+
+## Walking the tree: sum
+
 ```ocaml
 type 'a tree =
   | Leaf
@@ -349,6 +355,7 @@ let _ = sum_tree example
 ```
 
 - Result: `int = 10`. Same shape; adds the node's value.
+- `_` for ignored components, just like with tuples.
 
 :::
 

@@ -484,7 +484,11 @@ let pairs = [(1, "one"); (2, "two"); (3, "three")]
 
 - Type: `(int * string) list`.
 
-To search:
+:::
+
+:::slide
+
+## Tuples in collections: searching
 
 ```ocaml
 let pairs = [(1, "one"); (2, "two"); (3, "three")]

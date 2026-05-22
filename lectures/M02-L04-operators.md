@@ -63,13 +63,26 @@ the full table is worth having in one place.
 | Multiply | `a * b` | `a *. b` |
 | Divide | `a / b` (truncating) | `a /. b` |
 | Remainder | `a mod b` | (`Float.rem a b`) |
-| Power | (`Int.pow a b`, OCaml 5.x) | `a ** b` |
-| Negate | `-a` | `-. a` |
-| Absolute | `abs a` | `Float.abs a` |
 
 - Float operators all end in `.`.
 - Mixing `int` and `float`: **type error**.
 - Convert with `float_of_int` or `int_of_float`.
+
+:::
+
+:::slide
+
+## Arithmetic, by type: power, negate, abs
+
+| Operation | `int` | `float` |
+| --- | --- | --- |
+| Power | (`Int.pow a b`, OCaml 5.x) | `a ** b` |
+| Negate | `-a` | `-. a` |
+| Absolute | `abs a` | `Float.abs a` |
+
+- `**` is float-only; for small int powers, write `x * x * x`.
+- Float negation `-.` is the one prefix-operator-with-a-dot.
+- `abs_float` is deprecated; prefer `Float.abs`.
 
 :::
 

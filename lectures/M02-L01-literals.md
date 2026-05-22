@@ -130,7 +130,11 @@ let bin = 0b11111111
 - All four bindings: type `int`, value `255`.
 - Base prefix is **syntactic only**: same number under the hood.
 
-Underscores are allowed for readability:
+:::
+
+:::slide
+
+## Underscores for readability
 
 ```ocaml
 let million = 1_000_000
@@ -138,6 +142,7 @@ let mask    = 0xff_ff_ff_ff
 ```
 
 - `_` is purely visual; the compiler ignores it.
+- Use it wherever a long literal benefits from grouping.
 
 :::
 
@@ -171,14 +176,17 @@ let _ = 17 mod 5
 - `/` does **truncating integer division**: `17 / 5 = 3` (remainder dropped).
 - `mod` gives the remainder: `17 mod 5 = 2`.
 
-Negative integer division truncates toward zero, not toward minus
-infinity:
+:::
+
+:::slide
+
+## Negative integer division: toward zero
 
 ```ocaml
 let _ = (-17) / 5
 ```
 
-- Result: `int = -3`.
+- Result: `int = -3` (truncates toward zero, not toward minus infinity).
 - Python rounds toward minus infinity: gives `-4`. Be aware.
 
 :::
@@ -230,13 +238,18 @@ without a digit after it.
 ```ocaml
 let pi    = 3.14159
 let half  = 0.5
-let e_neg = 2.71828e-1   (* scientific: 2.71828 × 10⁻¹ *)
+let e_neg = 2.71828e-1   (* scientific: 2.71828 x 10^-1 *)
 let tau   = 6.283185
 ```
 
 - All `float`.
 - `e-1` is the exponent suffix.
-- A number with **no decimal point** is an `int`, not a `float`:
+
+:::
+
+:::slide
+
+## No decimal point: it's an `int`
 
 ```ocaml
 let bad = 3
@@ -279,15 +292,20 @@ let _ = 9.0 /. 4.0
 - Float operators: `+.`, `-.`, `*.`, `/.`.
 - The trailing `.` is **part of the operator name**.
 
+:::
+
+:::slide
+
+## No implicit `int` / `float` promotion
+
 Mixing types is a compile-time error:
 
 ```ocaml skip
 let _ = 1 + 2.0
 ```
 
-- Error: `This expression has type float but an expression was expected of type int`.
-- **No implicit promotion** in OCaml.
-- To add `int` and `float`, convert explicitly:
+- Error: `The constant 2.0 has type float but an expression was expected of type int`.
+- To add an `int` and a `float`, convert explicitly:
 
 ```ocaml
 let _ = float_of_int 1 +. 2.0
@@ -386,7 +404,11 @@ let _ = 3 < 5 && 5 < 10
 - `&&` and `||` **short-circuit** (as in C and Java).
 - `true || side_effect ()` does **not** call `side_effect`.
 
-Equality uses **`=`**, not `==`:
+:::
+
+:::slide
+
+## Equality: `=`, not `==`
 
 ```ocaml
 let _ = "apple" = "apple"
@@ -622,8 +644,9 @@ of this course. None are deep, but each costs about half an hour to
 recover from if you make it for the first time mid-assignment.
 
 **Pitfall 1: mixing `int` and `float`.** The error message
-`This expression has type float but an expression was expected of type int`
-(or its mirror) is the most common compile error in week 1. Look
+`The constant 2.0 has type float but an expression was expected of type int`
+(or its mirror, when the offending literal is an `int`) is the most
+common compile error in week 1. Look
 at the surrounding code and figure out which side is supposed to
 be a `float`. Insert a `float_of_int` (or `int_of_float`) as needed.
 Resist the urge to "fix" this by sprinkling dots randomly; understand

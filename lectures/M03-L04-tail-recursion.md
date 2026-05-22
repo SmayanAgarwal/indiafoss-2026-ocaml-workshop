@@ -473,7 +473,13 @@ let rec map f = function
 ```
 
 - `f x :: map f rest` is *not* tail-recursive.
-- A tail-recursive version builds in reverse, then reverses:
+- After `map f rest` returns, we still need to `::` `f x` onto it.
+
+:::
+
+:::slide
+
+## Tail-recursive map: build reversed, then reverse
 
 ```ocaml
 let map f xs =

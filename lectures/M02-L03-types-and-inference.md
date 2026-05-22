@@ -181,8 +181,8 @@ let _ = 23 = 45.0
 - `=` requires both sides to have the **same type**.
 
 ```
-Error: This expression has type float but an expression was expected
-       of type int because it is in the right operand of equality.
+Error: The constant 45.0 has type float but an expression was
+       expected of type int
 ```
 
 - Program does not run; static check fails first.
@@ -190,10 +190,9 @@ Error: This expression has type float but an expression was expected
 :::
 
 The left operand of `=` is an `int`, the right is a `float`. The
-equality operator `(=)` has type `'a -> 'a -> bool`: both operands
-must be the *same* type (any type, but the same). `int` and
-`float` are different types; the constraint cannot be satisfied;
-the compiler rejects the program.
+equality operator `(=)` requires both operands to be of the *same*
+type. `int` and `float` are different types; the constraint cannot
+be satisfied; the compiler rejects the program.
 
 This is helpful behaviour, not annoying. The program author
 probably intended to compare two numbers of the same type;
@@ -428,85 +427,6 @@ parameters and the return type. In a language without inference
 (Java, C, C++), you would have written `float mag(float x, float y)`
 with all three types explicit. In OCaml the compiler does the work.
 
-## Polymorphism for free
-
-Some functions cannot be pinned to a single concrete type, because
-they work *at any type*. Here is the simplest example:
-
-```ocaml
-let identity x = x
-```
-
-What is the type of `identity`?
-
-:::slide
-
-## Polymorphism for free
-
-```ocaml
-let identity x = x
-```
-
-`val identity : 'a -> 'a = <fun>`.
-
-- Read `'a` as "some type, filled in by the caller".
-- **Parametric polymorphism** (like Java generics or C++ templates).
-- Functions that don't constrain their arg type stay polymorphic.
-
-```ocaml
-let _ = identity 7
-let _ = identity 3.14
-let _ = identity [1; 2; 3]
-```
-
-- Each call instantiates `'a` differently. **No casting.**
-
-:::
-
-The toplevel reports `val identity : 'a -> 'a = <fun>`. The `'a`
-(read "alpha") is a *type variable*: a placeholder for "some type,
-chosen by the caller." The same `'a` appears in the argument and
-return positions, meaning "whatever type the caller passes in is
-also the return type."
-
-This is *parametric polymorphism*. Other languages call this
-"generics" (Java, C#, Swift), "templates" (C++), or "type
-parameters" (Rust, Haskell). The OCaml version is particularly
-pleasant: there is no syntax to opt in. You just write a function;
-if it does not constrain its argument's type, inference assigns it
-a polymorphic type automatically.
-
-Each call instantiates the type variable to the concrete type of
-the argument. `identity 7` instantiates `'a` to `int`; `identity
-3.14` instantiates it to `float`; `identity [1; 2; 3]` to `int
-list`. No casting, no boxing, no special syntax. The function
-works.
-
-When you see `'a`, `'b`, `'c` in inferred types, those are type
-variables; the function is polymorphic in them. The names start at
-`'a` and go alphabetically.
-
-:::quiz mcq id=M02-L03-q2
-What type does OCaml infer for this function?
-
-```ocaml
-let swap (a, b) = (b, a)
-```
-
-- [ ] `int * int -> int * int`
-- [ ] `'a * 'a -> 'a * 'a`
-- [x] `'a * 'b -> 'b * 'a`
-- [ ] `'a -> 'a`
-
-**Why:** `swap` takes a pair (note the *single* parenthesised
-argument, which is destructured into `a` and `b`) and returns the
-elements in reversed order. Nothing constrains `a` and `b` to be
-the same type, so they get distinct type variables `'a` and `'b`.
-The return is the pair with positions swapped: first element is
-`b` (type `'b`), second is `a` (type `'a`). Total: `'a * 'b -> 'b
-* 'a`. The function is polymorphic in *two* type variables.
-:::
-
 ## Annotations: when and why
 
 Annotations are optional and must agree with what inference would
@@ -548,8 +468,8 @@ Use annotations when:
   documentation: it tells a reader what the function expects without
   forcing them to read the body.
 - **You want to constrain inference.** Occasionally inference would
-  produce a more general type than you want (we will see an example
-  next). Annotating constrains it.
+  produce a more general type than you want. Annotating constrains
+  it.
 - **You are debugging a confusing type error.** Adding annotations
   to suspect functions narrows where the error gets reported. The
   compiler now blames *that* function instead of some caller.
@@ -560,66 +480,6 @@ exports, and the compiler enforces them against the module's
 implementation. We will see this in detail later.
 
 For ordinary local helpers, leave annotations off. They clutter.
-
-## When inference is more general than you wanted
-
-Sometimes inference gives you a more polymorphic type than you
-intended. Here is the canonical example:
-
-```ocaml
-let first (x, _) = x
-```
-
-What is the inferred type?
-
-:::slide
-
-## When inference reports a surprising type
-
-Sometimes inferred type is more general than expected:
-
-```ocaml
-let first (x, _) = x
-```
-
-`val first : 'a * 'b -> 'a = <fun>`.
-
-- Works on any pair; result is the first element.
-- We didn't ask for genericity; inference gave it.
-
-To **constrain**, annotate:
-
-```ocaml
-let first_int ((x, _) : int * int) = x
-```
-
-- `val first_int : int * int -> int = <fun>`.
-- Inner parens matter: `: int * int` annotates the whole pattern.
-
-:::
-
-`first : 'a * 'b -> 'a`. The function takes a pair (any types,
-possibly different) and returns the first element. We did not ask
-for genericity; we just did not do anything that would constrain
-the types. Inference gave us the most general type that fits.
-
-This is usually what you want. Sometimes it is not: if you
-specifically wanted `first` to work only on `int * int` (to catch
-accidental misuse), you would annotate:
-
-```ocaml
-let first_int ((x, _) : int * int) = x
-```
-
-The inner parentheses around `(x, _)` matter: the annotation
-`: int * int` applies to the *whole* pattern, not just to `_`.
-Without the inner parentheses you get the same behaviour, but
-the parse is subtle and easier to misread.
-
-Now the function is `int * int -> int`, less general but more
-constrained. Whether to constrain is a judgement call; in
-practice, leaving things polymorphic is usually fine and sometimes
-useful (you can pass any pair).
 
 ## Activity
 
@@ -641,7 +501,7 @@ Predict, then run.
 What type does OCaml infer for `let f x y = x +. y *. 2.0`?
 
 - [ ] `int -> int -> int`
-- [ ] `'a -> 'a -> 'a`
+- [ ] `bool -> bool -> bool`
 - [x] `float -> float -> float`
 - [ ] `float -> int -> float`
 

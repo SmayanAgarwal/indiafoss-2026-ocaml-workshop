@@ -486,12 +486,27 @@ let category = function
 
 ## Many constructors: group with helpers
 
+A type with many constructors makes any single `match` long. The
+fix: helper functions that group constructors into buckets.
+
 ```ocaml
 type status =
   | S_200 | S_201 | S_204
   | S_301 | S_302
   | S_400 | S_401 | S_404
   | S_500 | S_502 | S_503
+```
+
+:::
+
+:::slide
+
+## Many constructors: a bucketing helper
+
+```ocaml
+type status =
+  | S_200 | S_201 | S_204 | S_301 | S_302
+  | S_400 | S_401 | S_404 | S_500 | S_502 | S_503
 
 let category = function
   | S_200 | S_201 | S_204 -> `Success
@@ -500,9 +515,8 @@ let category = function
   | S_500 | S_502 | S_503 -> `Server_error
 ```
 
-- Group constructors into broad buckets.
-- Return values use a **polymorphic variant** (`` `Success ``); separate feature, mentioned in passing.
-- Point: helper functions tame large variants.
+`` `Success `` is a polymorphic variant (mentioned in passing).
+Point: helper functions tame large variants.
 
 :::
 

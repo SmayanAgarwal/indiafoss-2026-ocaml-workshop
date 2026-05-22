@@ -99,7 +99,11 @@ type json =
 - Six constructors: the standard JSON kinds.
 - Recursive: `JArray of json list`; `JObject of (string * json) list`.
 
-A small example:
+:::
+
+:::slide
+
+## The type: an example value
 
 ```ocaml
 type json =
@@ -117,6 +121,8 @@ let value =
     "alive", JBool true
   ]
 ```
+
+- Nesting just falls out: `"pets"` is itself a `JArray` of `JString`s.
 
 :::
 
@@ -170,21 +176,26 @@ array adds another 1, the inner strings give 1. Total 3.
 
 ## Operation 1: depth
 
+The maximum nesting depth: scalars depth 1, containers `1 + max
+depth of contents`.
+
+- Scalars (`JNull` / `JBool` / `JNumber` / `JString`): depth 1.
+- `JArray` or `JObject`: 1 + max depth of contents.
+- `A | B | C` is an **or-pattern**: matches any listed constructor.
+
+:::
+
+:::slide
+
+## Operation 1: depth, the code
+
 ```ocaml
 type json =
-  | JNull
-  | JBool of bool
-  | JNumber of float
-  | JString of string
-  | JArray of json list
-  | JObject of (string * json) list
+  | JNull | JBool of bool | JNumber of float | JString of string
+  | JArray of json list | JObject of (string * json) list
 let value =
-  JObject [
-    "name", JString "Alice";
-    "age",  JNumber 30.0;
-    "pets", JArray [JString "cat"; JString "dog"];
-    "alive", JBool true
-  ]
+  JObject [ "name", JString "Alice";
+            "pets", JArray [JString "cat"; JString "dog"] ]
 let rec depth = function
   | JNull | JBool _ | JNumber _ | JString _ -> 1
   | JArray xs ->
@@ -194,10 +205,6 @@ let rec depth = function
 
 let _ = depth value
 ```
-
-- Scalars (`JNull` / `JBool` / `JNumber` / `JString`): depth 1.
-- `JArray` or `JObject`: 1 + max depth of contents.
-- `A | B | C` is an **or-pattern**: matches any listed constructor.
 
 :::
 
@@ -268,7 +275,18 @@ object."
 
 ## Operation 2: lookup
 
-A function that finds a top-level field in a `JObject`:
+Find a top-level field in a `JObject`. Signature:
+`lookup : string -> json -> json option`.
+
+- Returns `json option`.
+- `None` when input isn't a `JObject` or the key isn't present.
+- `List.assoc_opt`: stdlib helper for association-list lookup.
+
+:::
+
+:::slide
+
+## Operation 2: lookup, the code
 
 ```ocaml
 type json =
@@ -293,9 +311,6 @@ let _ = lookup "name" (JString "not an object")
 ```
 
 - Results: `Some (JString "Alice")`, `None`, `None`.
-- Returns `json option`.
-- `None` when input isn't a `JObject` or the key isn't present.
-- `List.assoc_opt`: stdlib helper for association-list lookup.
 
 :::
 
@@ -356,6 +371,19 @@ The output for `value` is something like:
 
 ## Operation 3: a pretty printer
 
+Turn a `json` value into a string. Signature:
+`pretty : json -> string`.
+
+- One clause per constructor.
+- Arrays and objects **recurse**.
+- We skip string escaping. A real printer escapes `\`, `"`, etc.
+
+:::
+
+:::slide
+
+## Operation 3: pretty printer, the code
+
 ```ocaml
 type json =
   | JNull
@@ -376,10 +404,6 @@ let rec pretty = function
       let one (k, v) = "\"" ^ k ^ "\": " ^ pretty v in
       "{" ^ String.concat ", " (List.map one fields) ^ "}"
 ```
-
-- Each constructor: one clause.
-- Arrays and objects **recurse**.
-- We skipped string escaping. A real printer escapes `\`, `"`, etc.
 
 :::
 
@@ -454,18 +478,25 @@ with the `phone` field added.
 
 ## Operation 4: shallow update
 
+Produce a new JSON value with a top-level field either replaced
+or added. Functional update, mirroring records but for an
+association list.
+
+- Returns a new `json` (immutable update).
+- Structural recursion over the list of fields.
+- `when k = key`: a **guard** on the pattern. Covered in Module 5.
+
+:::
+
+:::slide
+
+## Operation 4: shallow update, the code
+
 ```ocaml
 type json =
-  | JNull
-  | JBool of bool
-  | JNumber of float
-  | JString of string
-  | JArray of json list
-  | JObject of (string * json) list
+  | JNull | JBool of bool | JNumber of float | JString of string
+  | JArray of json list | JObject of (string * json) list
 let value = JObject [ "name", JString "Alice"; "age", JNumber 30.0 ]
-let lookup key = function
-  | JObject fields -> List.assoc_opt key fields
-  | _ -> None
 let set_field key new_value = function
   | JObject fields ->
       let rec go = function
@@ -477,10 +508,6 @@ let set_field key new_value = function
       JObject (go fields)
   | other -> other
 ```
-
-- Returns a new `json` (immutable update).
-- Structural recursion over the list of fields.
-- `when k = key`: a **guard** on the pattern. Covered in Module 5.
 
 :::
 

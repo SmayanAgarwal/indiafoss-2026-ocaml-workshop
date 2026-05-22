@@ -177,6 +177,14 @@ let _ = bmi_category 70.0 1.75
   - 25 to 30: overweight
   - 30 and above: obese
 
+We want a function `bmi_category : float -> float -> string`.
+
+:::
+
+:::slide
+
+## Problem 3: BMI category, solution
+
 ```ocaml
 let bmi mass height = mass /. (height *. height)
 

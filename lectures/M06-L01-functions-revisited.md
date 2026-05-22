@@ -226,10 +226,13 @@ let rec all_plus_one = function
   | x :: rest -> (x + 1) :: all_plus_one rest
 ```
 
-- Same shape.
-- Only the per-element work differs.
+- Same shape; only the per-element work differs.
 
-Factor the work out as a parameter:
+:::
+
+:::slide
+
+## The same shape, three times: factor the work out
 
 ```ocaml
 let rec map f = function
@@ -317,12 +320,7 @@ let _ =
 - `on_click` calls its argument `handler` with an event description.
 - You pass a function that decides *what to do* with the event.
 - That function is a **callback**.
-
-Across languages:
-
-- **Java**: needs an interface (`OnClickListener`).
-- **JavaScript**: pass a lambda.
-- **OCaml**: pass a function (functions are values).
+- Java needs an interface; JS / OCaml pass a lambda directly.
 
 :::
 

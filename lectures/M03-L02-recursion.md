@@ -380,7 +380,7 @@ let _ = factorial (-1)
 
 - Stack overflow: `-1, -2, -3, ...` never reaches `0`.
 
-Two fixes:
+Fix 1: loosen the base case.
 
 ```ocaml
 let rec factorial n =
@@ -390,7 +390,13 @@ let rec factorial n =
 
 - `<= 0`: treat all non-positive inputs as base.
 
-Or be strict:
+:::
+
+:::slide
+
+## What if the input is negative?: be strict
+
+Fix 2: reject bad inputs.
 
 ```ocaml
 let rec factorial n =
@@ -400,6 +406,9 @@ let rec factorial n =
 ```
 
 - Rejects negative inputs; surfaces the bug.
+- Permissive `<= 0` silently accepts nonsense; strict version
+  catches it early.
+- Library code: prefer strict. Quick script: permissive is fine.
 
 :::
 

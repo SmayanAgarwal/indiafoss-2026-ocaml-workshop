@@ -183,8 +183,8 @@ let _ = if true then 13 else 13.4
 OCaml rejects this with:
 
 ```
-Error: This expression has type float but an expression was expected
-       of type int
+Error: The constant 13.4 has type float
+       but an expression was expected of type int
 ```
 
 :::slide
@@ -198,8 +198,8 @@ let _ = if true then 13 else 13.4
 OCaml rejects this:
 
 ```
-Error: This expression has type float but an expression was expected
-       of type int
+Error: The constant 13.4 has type float
+       but an expression was expected of type int
 ```
 
 - Then-branch `int`, else-branch `float`.
@@ -428,55 +428,6 @@ let sign x =
 As we said: `else if` is sugar for `else (if ... then ... else
 ...)`. Either form is fine; the unparenthesised form reads more
 naturally for a chain.
-
-## Branches can be anything
-
-`if` returns a value of *any* type, as long as both branches agree.
-The value can be a function, a list, a record, a tuple, anything.
-
-```ocaml
-let pick mode =
-  if mode = "double" then (fun x -> x * 2)
-  else (fun x -> x + 1)
-
-let f = pick "double"
-let _ = f 7
-```
-
-:::slide
-
-## Branches can return functions, or lists, or anything
-
-- `if` is an expression: value can be **anything** of the agreed type.
-
-```ocaml
-let pick mode =
-  if mode = "double" then (fun x -> x * 2)
-  else (fun x -> x + 1)
-
-let f = pick "double"
-let _ = f 7
-```
-
-- Result: `int = 14`. Both branches are functions.
-- `pick : string -> int -> int`.
-- Pattern "pick a function" is verbose in C / Java; in OCaml it's
-  just an `if` of two functions.
-
-:::
-
-Result: `int = 14`. The `if`-expression picks one of two
-functions based on `mode`, and we then apply the picked function
-to `7`. The whole pattern is *one expression* in OCaml. Doing
-this in Java would require a `switch` on `mode`, or an interface
-with two implementations, or function-pointer bookkeeping. In
-OCaml, "pick a function based on a condition" is just an `if` of
-two functions.
-
-This kind of compactness pays dividends through the rest of the
-course. Once you internalise that `if` returns *anything*, you
-start writing programs that pick out values, functions, even
-modules conditionally.
 
 ## A quick check
 

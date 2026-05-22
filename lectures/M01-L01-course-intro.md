@@ -57,10 +57,11 @@ material, read the chapter afterwards.
 
 ## Functional Programming with OCaml
 
-A 12-week NPTEL course on functional programming, taught through OCaml,
-with a strong second half on secure systems software.
+- A 12-week NPTEL course on functional programming,
+  - taught through OCaml,
+  - with a strong second half on secure systems software.
 
-KC Sivaramakrishnan, IIT Madras. Most students call me KC.
+- KC Sivaramakrishnan, IIT Madras. Most students call me "KC".
 
 :::
 

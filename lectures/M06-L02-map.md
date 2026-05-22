@@ -322,7 +322,11 @@ let rec map f = function
 - `List.map` handles "reasonable" lengths gracefully.
 - For very long inputs, prefer `List.rev (List.rev_map f xs)`.
 
-A tail-recursive version with an accumulator:
+:::
+
+:::slide
+
+## A tail-recursive `map`
 
 ```ocaml
 let map f xs =
