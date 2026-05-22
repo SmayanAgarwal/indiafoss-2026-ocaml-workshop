@@ -345,6 +345,52 @@ $$
 
 :::
 
+Trace through the evaluation rule for this expression, applying
+substitution at each step. The outer `let` is the first to fire:
+$e_1$ is `5`, $e_2$ is `let y = 10 in x + y`. Evaluating $e_1$ gives
+`5`; the rule substitutes `5` for `x` in $e_2$ and re-evaluates.
+That gives us the inner `let`, where $e_1$ is `10`, $e_2$ is
+`5 + y`. Evaluating $e_1$ gives `10`; substitute and we have
+`5 + 10`, which evaluates to `15`.
+
+Written as a sequence of substitution steps:
+
+$$
+\begin{aligned}
+\mathtt{let}\ x = 5\ \mathtt{in}\ \mathtt{let}\ y = 10\ \mathtt{in}\ x + y
+& \to \mathtt{let}\ y = 10\ \mathtt{in}\ 5 + y
+& \quad [x := 5] \\
+& \to 5 + 10
+& \quad [y := 10] \\
+& \to 15
+\end{aligned}
+$$
+
+Each `→` is one application of the `let` evaluation rule (the
+$e_1 \to v_1$ premise resolves the bound expression; substitution
+delivers the next state).
+
+:::slide
+
+## Tracing the substitution
+
+$$
+\begin{aligned}
+\mathtt{let}\ x = 5\ \mathtt{in}\ \mathtt{let}\ y = 10\ \mathtt{in}\ x + y
+& \to \mathtt{let}\ y = 10\ \mathtt{in}\ 5 + y
+& [x := 5] \\
+& \to 5 + 10
+& [y := 10] \\
+& \to 15
+\end{aligned}
+$$
+
+Each `→` applies the `let` evaluation rule once: evaluate the
+bound expression, substitute its value for the name in the body,
+evaluate the result.
+
+:::
+
 You can also let-bind an entire `let`. The right-hand side of a
 binding is any expression, so:
 
