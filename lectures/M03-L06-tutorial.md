@@ -559,12 +559,16 @@ let () =
 ```
 :::
 
+:::solution
+
 The natural recursive shape: three cases. If `n <= 0`, return `[]`.
 If the list is empty, return `[]`. Otherwise, cons the head onto
 `take (n - 1) rest`. This version is *not* tail-recursive (the cons
 runs after the recursive call), which is fine for most uses; a
 tail-recursive version would accumulate-then-reverse like the
 [`map` in M03-L04](M03-L04-tail-recursion.html#when-clean-tail-recursion-is-hard).
+
+:::
 
 ## What you should be able to do now
 

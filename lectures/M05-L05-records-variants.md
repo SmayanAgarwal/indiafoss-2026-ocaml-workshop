@@ -635,9 +635,13 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: one clause per constructor, each destructuring the
 payload as needed. Note: use `Printf.sprintf "click at (%d, %d)"
 x y` for the click, `Printf.sprintf "key: %c" c` for the key.
+
+:::
 
 ## Common pitfalls
 

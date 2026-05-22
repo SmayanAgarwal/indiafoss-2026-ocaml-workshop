@@ -504,8 +504,12 @@ let () =
 ```
 :::
 
+:::solution
+
 The reference implementation is `if x > 0 then 1 else if x < 0
 then -1 else 0`. Three branches, two thresholds.
+
+:::
 
 ## Activity
 

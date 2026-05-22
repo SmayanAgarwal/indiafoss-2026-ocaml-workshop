@@ -645,10 +645,14 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: outer `product xs` calls `let rec go acc = function | []
 -> acc | x :: rest -> go (acc * x) rest in go 1 xs`. Initial
 accumulator is `1` (the identity for multiplication); per-step work
 multiplies `x` into the accumulator.
+
+:::
 
 :::quiz mcq id=M03-L04-q1
 Which of these recursive calls is in tail position?

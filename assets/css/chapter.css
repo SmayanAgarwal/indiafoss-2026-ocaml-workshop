@@ -645,6 +645,30 @@ x-ocaml {
 .quiz-explanation p:first-child { margin-top: 0; }
 .quiz-explanation p:last-child { margin-bottom: 0; }
 
+/* Reference-solution disclosure: collapsed by default. Authored with
+   :::solution. Used right after a :::quiz code so self-readers do not
+   see the answer immediately below the question. */
+.chapter details.solution {
+  margin: 0.8rem 0;
+  padding: 0.4rem 0.8rem;
+  background: #fafafa;
+  border-left: 3px solid var(--accent, #6e8acc);
+  border-radius: 2px;
+}
+.chapter details.solution > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent, #4a6da1);
+  user-select: none;
+  padding: 0.2rem 0;
+}
+.chapter details.solution > summary::marker { color: var(--muted, #888); }
+.chapter details.solution[open] > summary {
+  margin-bottom: 0.4rem;
+}
+.chapter details.solution > *:not(summary):first-child { margin-top: 0; }
+.chapter details.solution > *:last-child { margin-bottom: 0; }
+
 /* Code quiz */
 .quiz-code .quiz-controls {
   display: flex;

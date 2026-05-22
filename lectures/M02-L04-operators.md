@@ -660,9 +660,13 @@ let () =
 ```
 :::
 
+:::solution
+
 One sample solution: `if x < lo then lo else if x > hi then hi
 else x`. We will see `if`-expressions in detail in the
 [next lecture](M02-L05-if-expressions.html).
+
+:::
 
 ## What's next
 

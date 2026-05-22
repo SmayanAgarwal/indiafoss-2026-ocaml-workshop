@@ -553,10 +553,14 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: `let circle_area c = Float.pi *. c.radius *.
 c.radius`, or with destructuring `let circle_area { radius; _ } =
 Float.pi *. radius *. radius`. Either works; the second ignores
 the centre fields explicitly.
+
+:::
 
 ## Activity
 

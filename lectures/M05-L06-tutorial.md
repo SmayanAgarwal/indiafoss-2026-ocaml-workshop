@@ -535,8 +535,12 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: six clauses, one per constructor, matching the
 skeleton from earlier.
+
+:::
 
 ## Activity: extend the type
 

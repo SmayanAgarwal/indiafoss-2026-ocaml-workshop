@@ -571,10 +571,14 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: `let compose g f = fun x -> g (f x)`, or
 equivalently `let compose g f x = g (f x)`. Function composition is
 one of the most useful tools in functional programming; we will
 return to it in [Module 6](M06-L05-pipelines.html#function-composition).
+
+:::
 
 ## Activity
 

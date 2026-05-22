@@ -664,8 +664,12 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: `let pair_max (x, y) = if x > y then x else y`.
 Pattern destructure in the argument; one `if`-expression body.
+
+:::
 
 ## Activity
 

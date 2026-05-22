@@ -675,9 +675,13 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: four literal patterns followed by a wildcard. This is
 the same skeleton as `direction_label` earlier; what changes is
 just the strings.
+
+:::
 
 ## Common pitfalls
 

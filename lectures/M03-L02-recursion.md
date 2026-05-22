@@ -598,9 +598,13 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: `match xs with | [] -> 0 | x :: rest -> x + sum_list
 rest`. Structural recursion on the list: base case is `[]`,
 recursive case is "first element plus sum of the rest."
+
+:::
 
 ## Activity
 

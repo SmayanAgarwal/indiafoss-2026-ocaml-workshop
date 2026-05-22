@@ -474,7 +474,11 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: two guarded clauses followed by a wildcard for zero.
+
+:::
 
 ## Common pitfalls
 

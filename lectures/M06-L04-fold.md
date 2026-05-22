@@ -645,9 +645,13 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: `let my_length xs = List.fold_left (fun n _ -> n
 + 1) 0 xs`. We ignore each element (the `_`) and just bump the
 counter. Tail-recursive, constant stack.
+
+:::
 
 ## Activity
 

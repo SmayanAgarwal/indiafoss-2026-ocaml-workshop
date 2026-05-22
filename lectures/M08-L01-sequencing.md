@@ -455,11 +455,15 @@ let () =
 ```
 :::
 
+:::solution
+
 Reference solution: `let bind_opt opt f = match opt with | None ->
 None | Some x -> f x`. This is exactly the helper we built up over
 the lecture. We will give it a sugared name (`let*`) in the next
 lecture and start using it as our default vocabulary for
 option-flavoured sequencing.
+
+:::
 
 ## A pitfall to flag now
 

@@ -628,9 +628,13 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: `function | (x, _) :: _ -> Some x | [] -> None`. The
 nested pattern in the first clause extracts the first component
 of the first pair in one step.
+
+:::
 
 ## Common pitfalls
 

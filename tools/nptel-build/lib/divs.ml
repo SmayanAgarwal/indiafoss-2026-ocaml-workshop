@@ -15,6 +15,12 @@
      notes      -> <aside class="notes">...</aside>
      quiz mcq   -> <div class="quiz quiz-mcq" data-quiz-id="qN">...</div>
      quiz code  -> <div class="quiz quiz-code" data-quiz-id="qN">...</div>
+     solution   -> <details class="solution"><summary>Show reference
+                   solution</summary>...</details>
+                   Collapsed by default in chapter mode so self-readers
+                   don't see the answer immediately after the quiz.
+                   Hidden entirely in slide mode (the slides don't show
+                   quizzes anyway).
 
    Quizzes get a sequential auto-id ("q1", "q2", ...) so the runtime
    JS can key localStorage by it without the author having to invent
@@ -43,6 +49,7 @@ type kind =
   | Subslide
   | Fragment
   | Notes
+  | Solution
   | Quiz_mcq of string * int  (* id, 1-based source line of the opening ::: *)
   | Quiz_code of string * int
 
@@ -117,6 +124,7 @@ let parse_open ~quiz_counter ~line_no line =
     | "subslide" -> Some Subslide
     | "fragment" -> Some Fragment
     | "notes" -> Some Notes
+    | "solution" -> Some Solution
     | _ ->
       (match parse_quiz_kind rest with
        | Some (kind, explicit_id) ->
@@ -139,6 +147,8 @@ let open_tag = function
   | Subslide -> "<section class=\"slide subslide\" data-subslide>"
   | Fragment -> "<div class=\"fragment\">"
   | Notes -> "<aside class=\"notes\">"
+  | Solution ->
+      "<details class=\"solution\"><summary>Show reference solution</summary>"
   | Quiz_mcq (id, line) ->
       Printf.sprintf
         "<div class=\"quiz quiz-mcq\" data-quiz-id=\"%s\" data-quiz-line=\"%d\">"
@@ -152,6 +162,7 @@ let close_tag = function
   | Slide | Subslide -> "</section>"
   | Fragment -> "</div>"
   | Notes -> "</aside>"
+  | Solution -> "</details>"
   | Quiz_mcq _ | Quiz_code _ -> "</div>"
 
 (* Inside [:::quiz code], the FIRST ocaml fence is the student cell

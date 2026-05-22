@@ -546,12 +546,16 @@ let () =
 ```
 :::
 
+:::solution
+
 The shape: `function | Sat | Sun -> true | Mon | Tue | Wed | Thu
 | Fri -> false`. Listing all five weekday constructors explicitly
 keeps the compiler in the loop: if anyone later adds `Holiday`
 to the `day` type, every match on `day` (including this one) will
 warn. With a wildcard `| _ -> false`, the warning would not
 appear, and `Holiday` would silently be treated as a weekday.
+
+:::
 
 ## Common pitfalls
 
