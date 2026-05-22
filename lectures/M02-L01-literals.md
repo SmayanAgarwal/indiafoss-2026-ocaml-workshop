@@ -604,36 +604,36 @@ have seen:
 ## A larger expression
 
 ```ocaml
-let temperature_label c =
-  if c < 0.0 then "freezing"
-  else if c < 18.0 then "cold"
-  else if c < 26.0 then "comfortable"
-  else "hot"
+let password_strength len =
+  if len < 8 then "weak"
+  else if len < 12 then "ok"
+  else if len < 16 then "good"
+  else "strong"
 
-let _ = temperature_label 22.5
+let _ = password_strength 14
 ```
 
-- Function of type `float -> string`.
+- Function of type `int -> string`.
 - Body is **one expression**: a chain of `if`/`then`/`else`.
 - Full `if` lecture in Lecture 5.
-- Literals (`0.0`, `18.0`, `"freezing"`) combine into a working function.
+- Literals (`8`, `12`, `"weak"`) combine into a working function.
 
 :::
 
-Notice three things. First, the function takes a `float` (the
-temperature in Celsius) and returns a `string` (the label). The
-compiler figured this out automatically from the function body,
-because the comparisons are against `float` literals and the `then`
-and `else` branches return `string` literals. We did not have to
-write a single type. Second, the body is a chain of nested
+Notice three things. First, the function takes an `int` (the
+password length) and returns a `string` (the label). The compiler
+figured this out automatically from the function body, because
+the comparisons are against `int` literals and the `then` and
+`else` branches return `string` literals. We did not have to write
+a single type annotation. Second, the body is a chain of nested
 `if`-`then`-`else` expressions, and the whole chain is *one
 expression*. This is the same point we made earlier about OCaml
 being expression-based: even something that looks like a multi-way
 branch is a value-producing expression you can pass to a function
 or bind to a name. We give `if` its own dedicated lecture later in
 this module ([M02-L05](M02-L05-if-expressions.html)). Third, every
-comparison is against the same type: `c < 0.0`, where `c` is
-`float` and `0.0` is `float`, never mixing `int` and `float`.
+comparison is against the same type: `len < 8`, where `len` is
+`int` and `8` is `int`, never mixing `int` and `float`.
 
 A C programmer reading this might object that the `if`s could be
 rewritten as a `switch`. In OCaml, the equivalent of `switch` is

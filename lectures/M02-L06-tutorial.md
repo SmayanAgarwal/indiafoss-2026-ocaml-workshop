@@ -42,58 +42,60 @@ deliberate mistakes; see what the compiler says; fix them. The
 five-minute frustration of "why won't this compile" is the
 fastest path to fluency.
 
-## Problem 1: classify a temperature
+## Problem 1: classify a response time
 
-A function that returns a label for a Celsius temperature. The
-classification: below 0 is "freezing", up to 15 is "cold", up to
-26 is "comfortable", anything else is "hot".
+A function that returns a label for an HTTP response time in
+milliseconds. The classification: under 50ms is "instant", under
+200ms is "fast", under 1000ms is "noticeable", anything else is
+"slow".
 
 ```ocaml
-let temperature_label c =
-  if c < 0.0 then "freezing"
-  else if c < 15.0 then "cold"
-  else if c < 26.0 then "comfortable"
-  else "hot"
+let response_class ms =
+  if ms < 50.0 then "instant"
+  else if ms < 200.0 then "fast"
+  else if ms < 1000.0 then "noticeable"
+  else "slow"
 
-let _ = temperature_label 22.5
+let _ = response_class 180.0
 ```
 
 :::slide
 
-## Problem 1: the classic temperature classifier
+## Problem 1: classify a response time
 
-- Return a label for a Celsius temperature.
-- Labels: "freezing", "cold", "comfortable", "hot".
+- Return a label for an HTTP response in milliseconds.
+- Labels: "instant", "fast", "noticeable", "slow".
 
 ```ocaml
-let temperature_label c =
-  if c < 0.0 then "freezing"
-  else if c < 15.0 then "cold"
-  else if c < 26.0 then "comfortable"
-  else "hot"
+let response_class ms =
+  if ms < 50.0 then "instant"
+  else if ms < 200.0 then "fast"
+  else if ms < 1000.0 then "noticeable"
+  else "slow"
 
-let _ = temperature_label 22.5
+let _ = response_class 180.0
 ```
 
-- Result: `string = "comfortable"`.
-- Try `30.0`, `-2.0`, `10.0`.
-- Boundary: `15.0` is "comfortable"; `<` is **strict**.
+- Result: `string = "fast"`.
+- Try `5.0`, `500.0`, `3000.0`.
+- Boundary: `50.0` is "fast"; `<` is **strict**.
 
 :::
 
-Result for `22.5`: `string = "comfortable"`. Try the boundaries:
-`temperature_label 15.0` returns `"comfortable"` (because `<` is
-strict; 15 is not less than 15); `temperature_label 26.0` returns
-`"hot"`. The choice of `<` vs `<=` at thresholds is a judgement
-call. Both are right; this version treats 15 as "comfortable" and
-26 as "hot". If you would rather it be the other way (treat 15 as
-"cold"), swap `<` for `<=`. The point is to be deliberate.
+Result for `180.0`: `string = "fast"`. Try the boundaries:
+`response_class 50.0` returns `"fast"` (because `<` is strict; 50
+is not less than 50); `response_class 200.0` returns
+`"noticeable"`. The choice of `<` vs `<=` at thresholds is a
+judgement call. Both are right; this version treats 50 ms as
+"fast" and 200 ms as "noticeable". If you would rather it be the
+other way (treat 50 ms as "instant"), swap `<` for `<=`. The
+point is to be deliberate.
 
 This is also a good example of a function that has type `float
 -> string`: the operator drives inference. The comparisons are
-against `float` literals (`0.0`, `15.0`, etc.), so `c` is `float`;
-the branches return string literals, so the body has type
-`string`; the function is `float -> string`.
+against `float` literals (`50.0`, `200.0`, etc.), so `ms` is
+`float`; the branches return string literals, so the body has
+type `string`; the function is `float -> string`.
 
 ## Problem 2: leap year
 
@@ -147,73 +149,79 @@ which we then compare with `=`. The comparisons are all
 `int = int`, so they all type-check; the `&&` and `||` glue them
 into one `bool`-typed expression.
 
-## Problem 3: BMI category
+## Problem 3: shipping cost label
 
-BMI = mass / height². The standard categories: under 18.5 is
-"underweight", 18.5 to 25 is "normal", 25 to 30 is "overweight",
-30 and above is "obese". Here is a two-function solution:
+A two-function problem: a shipping table that computes cost from
+a package's weight (kg), and a labeller that categorises the cost
+as "cheap", "standard", or "premium". Here is the solution:
 
 ```ocaml
-let bmi mass height = mass /. (height *. height)
+let shipping_cost weight =
+  if weight < 1.0 then 5.0
+  else if weight < 5.0 then 10.0
+  else if weight < 20.0 then 25.0
+  else 100.0
 
-let bmi_category mass height =
-  let b = bmi mass height in
-  if b < 18.5 then "underweight"
-  else if b < 25.0 then "normal"
-  else if b < 30.0 then "overweight"
-  else "obese"
+let shipping_label weight =
+  let cost = shipping_cost weight in
+  if cost < 10.0 then "cheap"
+  else if cost < 25.0 then "standard"
+  else "premium"
 
-let _ = bmi_category 70.0 1.75
+let _ = shipping_label 7.5
 ```
 
 :::slide
 
-## Problem 3: BMI category
+## Problem 3: shipping cost label
 
-- BMI = `mass / height²`.
-- Standard categories:
-  - under 18.5: underweight
-  - 18.5 to 25: normal
-  - 25 to 30: overweight
-  - 30 and above: obese
-
-We want a function `bmi_category : float -> float -> string`.
+- `shipping_cost weight` returns the cost in currency units:
+  - under 1 kg → 5
+  - under 5 kg → 10
+  - under 20 kg → 25
+  - else → 100
+- `shipping_label weight` categorises that cost as
+  "cheap" / "standard" / "premium".
 
 :::
 
 :::slide
 
-## Problem 3: BMI category, solution
+## Problem 3: shipping cost label, solution
 
 ```ocaml
-let bmi mass height = mass /. (height *. height)
+let shipping_cost weight =
+  if weight < 1.0 then 5.0
+  else if weight < 5.0 then 10.0
+  else if weight < 20.0 then 25.0
+  else 100.0
 
-let bmi_category mass height =
-  let b = bmi mass height in
-  if b < 18.5 then "underweight"
-  else if b < 25.0 then "normal"
-  else if b < 30.0 then "overweight"
-  else "obese"
+let shipping_label weight =
+  let cost = shipping_cost weight in
+  if cost < 10.0 then "cheap"
+  else if cost < 25.0 then "standard"
+  else "premium"
 
-let _ = bmi_category 70.0 1.75
+let _ = shipping_label 7.5
 ```
 
-- Result: `string = "normal"`.
-- `let b = bmi mass height in`: compute BMI **once**, then branch.
+- Result: `string = "standard"`.
+- `let cost = shipping_cost weight in`: compute **once**,
+  then branch.
 
 :::
 
-Result for `70.0 1.75`: `string = "normal"`. The pattern `let b =
-bmi mass height in if b < ... else ...` is idiomatic: when you
-need to inspect the same value at several thresholds, name it
-once and compare repeatedly. Without the `let`, you would compute
-`bmi mass height` four times in the if-chain (once for each
-threshold), which is wasteful and clutters the code.
+Result for `7.5`: `string = "standard"`. The pattern `let cost =
+shipping_cost weight in if cost < ... else ...` is idiomatic:
+when you need to inspect the same value at several thresholds,
+name it once and compare repeatedly. Without the `let`, you would
+compute `shipping_cost weight` three times in the if-chain (once
+for each threshold), which is wasteful and clutters the code.
 
-The function `bmi_category` is built by composing two smaller
-functions, `bmi` and an if-chain. This is the rhythm of
-functional programming: small, focused functions, combined into
-larger behaviours. [Module 6](M06-L05-pipelines.html#function-composition)
+The function `shipping_label` is built by composing two smaller
+functions, `shipping_cost` and an if-chain. This is the rhythm
+of functional programming: small, focused functions, combined
+into larger behaviours. [Module 6](M06-L05-pipelines.html#function-composition)
 will give us tools to make this composition explicit; here it is
 just `let` + function call.
 
@@ -560,7 +568,7 @@ After Module 2 you can:
 - Read the type the toplevel reports.
 - Recognise the common type errors.
 - Write multi-branch `if` expressions.
-- Compose small functions like `bmi`, `clamp`, `signum`.
+- Compose small functions like `shipping_cost`, `clamp`, `signum`.
 
 **Next, Module 3:** functions as values, currying, recursion.
 
