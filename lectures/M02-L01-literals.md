@@ -373,7 +373,7 @@ let _ = 9.0 /. 4.0
 
 Mixing types is a compile-time error:
 
-```text
+```ocaml skip
 let _ = 1 + 2.0
 ```
 
@@ -573,6 +573,8 @@ let _ = String.length "OCaml"
 - Result: `int = 5`.
 - `String` is the stdlib module for string functions.
 
+:::fragment
+
 ```ocaml
 let _ = String.sub "Functional programming" 0 10
 ```
@@ -583,6 +585,8 @@ let _ = String.sub "Functional programming" 0 10
 - Indexing is **zero-based**.
 - Out-of-bounds (`start + len > String.length s`) raises
   `Invalid_argument`.
+
+:::
 
 :::
 
@@ -727,10 +731,9 @@ Predict before running.
 What is the type and value of:
 
 - `3 / 2`
+  - `3 / 2` : `int = 1`. Integer division **truncates**.
 - `3.0 /. 2.0`
-
-- `3 / 2` : `int = 1`. Integer division **truncates**.
-- `3.0 /. 2.0` : `float = 1.5`. Float division as expected.
+  - `3.0 /. 2.0` : `float = 1.5`. Float division as expected.
 - **Python 3 contrast**: there `/` is true division, `//` is floor.
 - OCaml is the reverse: `/` on `int` truncates, **no implicit cast**.
 

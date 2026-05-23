@@ -361,7 +361,7 @@ they are bound regardless of which alternative succeeded.
 
 ## Constraint: alternatives bind the same names
 
-```text
+```ocaml skip
 type tagged = A of int | B of int
 
 let _ =
@@ -586,7 +586,7 @@ two elements. `a` is the head (`1`), `b` is the next element
 :::quiz mcq id=M05-L02-q2
 The compiler rejects this with an error. Why?
 
-```text
+```ocaml skip
 type t = A of int | B of string
 
 let f = function

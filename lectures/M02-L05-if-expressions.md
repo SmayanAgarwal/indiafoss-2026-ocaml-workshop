@@ -181,7 +181,7 @@ the rule has to be this way.
 
 ## Why the branches must agree
 
-```text
+```ocaml skip
 let _ = if true then 13 else 13.4
 ```
 
@@ -196,7 +196,7 @@ Error: The constant 13.4 has type float
 
 ## The branches must agree
 
-```text
+```ocaml skip
 let _ = if true then 13 else 13.4
 ```
 
@@ -519,7 +519,7 @@ then -1 else 0`. Three branches, two thresholds.
 Why does OCaml reject the following? Be precise about which rule is
 violated.
 
-```text
+```ocaml skip
 let label x =
   if x > 0 then "positive"
   else 0
@@ -530,7 +530,7 @@ let label x =
 :::quiz mcq id=M02-L05-q1
 Why does OCaml reject this?
 
-```text
+```ocaml skip
 let label x =
   if x > 0 then "positive"
   else 0
@@ -554,7 +554,7 @@ with `1`).
 
 ## Activity discussion
 
-```text
+```ocaml skip
 let label x =
   if x > 0 then "positive"
   else 0

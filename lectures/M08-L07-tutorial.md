@@ -224,7 +224,7 @@ Here is where GADTs pay off. Try the obvious mistakes:
 
 ## What cannot be built
 
-```text
+```ocaml skip
 (* error: Add wants int expr, not bool expr *)
 let bad = Add (Bool_lit true, Int_lit 1)
 

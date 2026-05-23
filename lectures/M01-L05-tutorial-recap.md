@@ -382,7 +382,7 @@ notice the pattern.
 Type errors are noisy at first. Let's write one deliberately so we
 can read the message together.
 
-```text
+```ocaml skip
 let bad c = c + 273.15
 ```
 
@@ -416,7 +416,7 @@ its keep:
 
 * Type errors are noisy at first; write one deliberately.
 
-```text
+```ocaml skip
 let bad c = c + 273.15
 ```
 

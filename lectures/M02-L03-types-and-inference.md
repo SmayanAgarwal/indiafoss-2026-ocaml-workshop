@@ -165,7 +165,7 @@ bet underlies Rust and Haskell.
 Here is a small program that does not even compile, because of a
 static-semantics violation.
 
-```text
+```ocaml skip
 let _ = 23 = 45.0
 ```
 
@@ -173,7 +173,7 @@ let _ = 23 = 45.0
 
 ## A static error
 
-```text
+```ocaml skip
 let _ = 23 = 45.0
 ```
 

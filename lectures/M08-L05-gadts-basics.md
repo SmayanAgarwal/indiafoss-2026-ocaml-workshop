@@ -466,7 +466,7 @@ match each other and the condition to be `bool expr`.
 
 ## A bad `If` is a compile error
 
-```text
+```ocaml skip
 let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
 ```
 
