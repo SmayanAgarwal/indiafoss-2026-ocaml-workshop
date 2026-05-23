@@ -30,10 +30,13 @@ reading:
 
 ## Expressions
 
-Every program in OCaml is, in the end, an *expression*: a piece of
-syntax that the language evaluates to produce a result. An
-expression has two things, *syntax* (how you write it) and
-*semantics* (what it means). The semantics in turn split in two:
+Almost every meaningful piece of an OCaml program is an
+*expression*: a piece of syntax that the language evaluates to
+produce a value. (Top-level declarations like `let x = e` bind
+names; the interesting part of each declaration is the expression
+`e` on the right-hand side.) An expression has two things,
+*syntax* (how you write it) and *semantics* (what it means). The
+semantics in turn split in two:
 
 - *Static semantics* are the type-checking rules. Before any
   evaluation happens, OCaml checks the expression and either
