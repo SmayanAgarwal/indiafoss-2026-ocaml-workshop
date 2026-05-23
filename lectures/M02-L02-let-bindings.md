@@ -58,11 +58,11 @@ scope. The whole `let ... in` form is itself an expression: it
 denotes the value $e_2$ evaluates to.
 
 ```ocaml
-let _ = let x = 5 in x + 5
+let _ = let y = 5 in y + 5
 ```
 
-The toplevel reports `int = 10`. The name `x` is bound to `5` inside
-the body `x + 5`. Outside the `let ... in`, `x` is no longer in
+The toplevel reports `int = 10`. The name `y` is bound to `5` inside
+the body `y + 5`. Outside the `let ... in`, `y` is no longer in
 scope.
 
 :::slide
@@ -79,10 +79,10 @@ $$
 - The whole form is *itself* an expression.
 
 ```ocaml
-let _ = let x = 5 in x + 5
+let _ = let y = 5 in y + 5
 ```
 
-`int = 10`. Outside the `in`, `x` does not exist.
+`int = 10`. Outside the `in`, `y` does not exist.
 
 :::
 
@@ -262,9 +262,9 @@ $$
 
 :::
 
-For our example `let x = 5 in x + 5`: $e_1$ is `5`, which has type
-`int`, so $t_1$ is `int`. Under the assumption $x : \mathtt{int}$,
-the body `x + 5` has type `int` (by the rule for `+`). So $t_2$ is
+For our example `let y = 5 in y + 5`: $e_1$ is `5`, which has type
+`int`, so $t_1$ is `int`. Under the assumption $y : \mathtt{int}$,
+the body `y + 5` has type `int` (by the rule for `+`). So $t_2$ is
 `int`, and the whole expression has type `int`. The typing rule
 reproduces what the toplevel told us.
 
@@ -647,6 +647,68 @@ tells the compiler "I am binding this, but I might not use it; do
 not warn me." This is useful in pattern matching when you want to
 *name* something for documentation but never reference it. We will
 see this in [Module 5](M05-L01-basic-patterns.html#versus-a-variable-name).
+
+## Sequencing with `;`
+
+When you want to evaluate two expressions in order and keep only
+the result of the second, OCaml offers a short form:
+
+```ocaml
+let _ = print_endline "hi"; 6
+```
+
+The semicolon is the *sequencing operator*. `e1; e2` is an
+expression: evaluate `e1`, discard its value, then evaluate `e2`,
+and the whole expression takes the value of `e2`. Above, the line
+prints `hi`, then evaluates to `6`.
+
+Mechanically, `e1; e2` is just *syntactic sugar* for
+`let _ = e1 in e2`. Same evaluation, same result. The semicolon
+is shorter, which is why you will see it in most real code.
+
+Because the value of `e1` is thrown away, the compiler expects
+`e1` to have type `unit`: a value with nothing useful to discard.
+If it does not, OCaml issues a *warning*, not an error:
+
+```ocaml skip
+let _ = 5; 6
+```
+
+The compiler emits `Warning 10 [non-unit-statement]: this
+expression should have type unit.` The program still compiles and
+runs (and produces `6`); the warning is OCaml suggesting that
+discarding an `int` is probably a mistake.
+
+:::slide
+
+## Sequencing with `;`
+
+```ocaml
+let _ = print_endline "hi"; 6
+```
+
+- `e1; e2`: evaluate `e1`, discard, then `e2`; result is `e2`.
+- Sugar for `let _ = e1 in e2`.
+- Prints `hi`, then evaluates to `int = 6`.
+
+:::
+
+:::slide
+
+## `;`: the unit expectation
+
+- `e1; e2` expects `e1` to have type `unit`.
+- Not enforced; it's a **warning**, not an error.
+
+```ocaml skip
+let _ = 5; 6
+```
+
+- Compiles, evaluates to `int = 6`, but warns:
+  `Warning 10 [non-unit-statement]: this expression should have
+  type unit.`
+
+:::
 
 ## Activity
 
