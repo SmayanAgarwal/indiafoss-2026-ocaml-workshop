@@ -374,18 +374,16 @@ wins even at small arity.
 ## Why named fields: rectangles
 
 :::cols
-:::col 65%
+:::col 72%
 
 A rectangle from two corner points:
 
 ```ocaml
-type point = int * int
-
-type rect_tuple = point * point
+type rect_tuple = (int * int) * (int * int)
 
 type rectangle = {
-  bottom_left : point;
-  top_right   : point;
+  bottom_left : int * int;
+  top_right   : int * int;
 }
 ```
 
@@ -394,7 +392,7 @@ type rectangle = {
 - Two components, positions not self-evident.
 
 :::
-:::col 35%
+:::col 28%
 
 <svg viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 320px;">
   <rect x="40" y="40" width="180" height="120"
