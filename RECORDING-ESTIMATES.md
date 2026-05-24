@@ -87,11 +87,11 @@ examples, more tracing, etc.). The old M03 estimate was 148 video
 min / 209 recording min, so the polish net-shrunk M03 by about
 27 video minutes, driven by the M03-L04 / L05 / L06 list-removal.
 
-### M04: Data types (5 lectures)
+### M04: Data types (6 lectures)
 
-Re-estimated 2026-05-22 / 23 after the M04 polish passes (M04-L01
-constructing-and-extracting split; M04-L02 access-field and
-function-parameter slides each split, mutable-record-fields
+Re-estimated 2026-05-22 / 23 / 24 after the M04 polish passes
+(M04-L01 constructing-and-extracting split; M04-L02 access-field
+and function-parameter slides each split, mutable-record-fields
 deferred to M07-L01; M04-L03 stripped of pattern-matching content
 per CS3100_m25 lec05 / lec06 split, with type aliases moved up
 from the old M04-L05; M04-L04 opening rewritten to follow
@@ -99,8 +99,10 @@ CS3100_m25 lec05 progression `intlist` -> `stringlist` -> `'a
 lst` -> type variables -> polymorphism -> built-in `'a list`, and
 walks / evaluator deferred to M05). The old M04-L05
 (option-and-aliases) was tiny once pattern matching was removed,
-so its option / result content was folded into M04-L04 and the
-tutorial was renumbered down. M04 now has five lectures.
+so its option / result content was folded into M04-L04. The single
+JSON tutorial was retired on 2026-05-24 in favour of two more
+domain-relevant tutorials: M04-L05 (a tiny AST for OCaml) and
+M04-L06 (a tiny file system). M04 now has six lectures.
 Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
@@ -109,9 +111,10 @@ Estimate uses slide_count x 1.5 min.
 | M04-L02 | Records | 15 | 23 | 32 |
 | M04-L03 | Variants (sum types) | 9 | 14 | 20 |
 | M04-L04 | Recursive types, polymorphism, option / result | 22 | 33 | 46 |
-| M04-L05 | Tutorial: a tiny JSON-like value type | 15 | 23 | 32 |
-| **M04 total** | | **77** | **117** | **164** |
-| | | | **(2.0 h)** | **(2.7 h)** |
+| M04-L05 | Tutorial: a tiny AST for OCaml | 16 | 24 | 34 |
+| M04-L06 | Tutorial: a tiny file system | 14 | 21 | 30 |
+| **M04 total** | | **92** | **139** | **196** |
+| | | | **(2.3 h)** | **(3.3 h)** |
 
 M04-L04 is the longest lecture in the course at 33 video min;
 it brushes past the NPTEL 30-min upper bound. KC has chosen to
@@ -121,8 +124,9 @@ intlist all the way to result is best taken in one sitting).
 M04-L03 sits at the NPTEL 20-min lower bound. M04-L04 absorbed
 the polymorphism material and the option / result content; walks
 were deferred to M05 to mirror CS3100_m25's lec05 / lec06 split.
-The M04-L05 tutorial (formerly M04-L06) still walks JSON values,
-so it inherits the hands-on feel that L03 and L04 sacrificed.
+M04-L05 and M04-L06 are construction-only tutorials on two
+different domains so the audience sees the same toolkit twice;
+walks / evaluators for both ASTs and file systems land in M05.
 
 ### M05: Pattern matching (6 lectures)
 
@@ -236,20 +240,21 @@ authoring-time `duration_target_min`.
 
 ## Course totals
 
-- **Final video**: 1592 min (26.5 hours) across
-  69 lectures and 12 modules.
-- **Estimated recording time**: 2236 min (37.3 hours)
+- **Final video**: 1614 min (26.9 hours) across
+  70 lectures and 12 modules.
+- **Estimated recording time**: 2268 min (37.8 hours)
   at the 1.4× multiplier.
 
-The 26.7 hours of final video falls slightly under NPTEL's ~30
+The 26.8 hours of final video falls slightly under NPTEL's ~30
 hr target; that is expected, since the original sketch reserved
 a margin, and the M03 list-removal pass plus the secure-systems
 half landed on the lower end of the 25-min-per-lecture window.
 Numbers reflect the 2026-05-22 re-estimate for M02, M03, and M04
-(slide_count x 1.5) and the 2026-05-23 addition of M07-L04 and
-M07-L05 (also slide_count x 1.5); M01, M05, M06, and the
-remaining M07+ rows still use the authoring-time
-`duration_target_min`.
+(slide_count x 1.5), the 2026-05-23 addition of M07-L04 and
+M07-L05, and the 2026-05-24 M04 tutorial swap (JSON tutorial
+retired; M04-L05 AST + M04-L06 file-system tutorials added).
+M01, M05, M06, and the remaining M07+ rows still use the
+authoring-time `duration_target_min`.
 
 ## Studio session planning
 
@@ -267,7 +272,7 @@ sessions:
 | M01 Intro to functional programming | 2.6 | 0.6 |
 | M02 Expressions | 3.1 | 0.7 |
 | M03 Functions | 2.8 | 0.7 |
-| M04 Data types | 2.7 | 0.6 |
+| M04 Data types | 3.2 | 0.7 |
 | M05 Pattern matching | 3.2 | 0.7 |
 | M06 Higher-order programming | 3.2 | 0.7 |
 | M07 Side effects and modular programming | 4.6 | 1.1 |

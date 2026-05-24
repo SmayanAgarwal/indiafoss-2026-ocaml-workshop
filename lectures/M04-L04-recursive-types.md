@@ -967,11 +967,15 @@ recursive types, `option`, and `result` together.
 
 We now have everything Module 4 had to offer: tuples, records,
 variants, recursive variants, polymorphism, `option`, and
-`result`. The [tutorial in the next lecture](M04-L05-tutorial.html)
-ties them together on a small worked example. Walking these data
-shapes (the step we have been deferring throughout M04-L03 and
-M04-L04) starts in [Module 5](M05-L01-basic-patterns.html), where
-pattern matching gets its own treatment.
+`result`. The next two lectures are tutorials that tie these
+pieces together on worked examples: the
+[AST tutorial](M04-L05-tutorial.html) models a tiny abstract
+syntax tree for OCaml itself, and the
+[file system tutorial](M04-L06-tutorial-fs.html) reapplies the
+same toolkit to a different domain. Walking these data shapes
+(the step we have been deferring throughout M04-L03 and M04-L04)
+starts in [Module 5](M05-L01-basic-patterns.html), where pattern
+matching gets its own treatment.
 
 ## Reading
 

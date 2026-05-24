@@ -38,6 +38,19 @@ return value from "divide with remainder" is a quotient *and* a
 remainder. Module 4 is about how OCaml lets you build, name, and
 take apart such aggregates.
 
+:::slide
+
+## So far: one value at a time
+
+- Modules 1-3 moved single values: `int`, `string`, `bool`.
+- Real programs deal with *aggregates*:
+  - a 2D point bundles `x` and `y`
+  - a dictionary entry bundles a key with its value
+  - "divide with remainder" returns a quotient *and* a remainder
+- Module 4: how OCaml builds, names, and takes apart aggregates.
+
+:::
+
 This first lecture covers the simplest aggregate the language
 offers: the *tuple*. A tuple is a fixed-size bundle of values,
 possibly of different types, identified by *position*. The pair
@@ -48,6 +61,20 @@ and [*variants*](M04-L03-variants.html) (a different kind of
 aggregate: "one of several shapes" rather than "this and that").
 Together, tuples, records, and variants are the three building
 blocks of *every* data type you will design in OCaml.
+
+:::slide
+
+## The plan for Module 4
+
+Three building blocks for *every* data type in OCaml:
+
+- **Tuples** (this lecture): bundle by position, e.g. `(3, "hi")`.
+- **Records** ([L2](M04-L02-records.html)): bundle by name, e.g. `{x = 3; y = 4}`.
+- **Variants** ([L3](M04-L03-variants.html)): "one of several shapes", e.g. `Some 3` vs `None`.
+
+Then [recursive types](M04-L04-recursive-types.html) and two tutorial lectures put them to work.
+
+:::
 
 If you have used Python or Go, you have seen tuples before. OCaml
 tuples are similar in spirit but differ in one important way: their
@@ -299,7 +326,6 @@ of which happens to be a pair. It is *not* a function of one
 argument that is a 4-tuple. The difference shows up in the type:
 `float * float -> float * float -> float` vs `float * float * float
 * float -> float`. We will see in
-[M04-L06](M04-L05-tutorial.html) and again in
 [Module 6](M06-L01-functions-revisited.html) that the choice
 matters when partial application enters the picture.
 
@@ -523,7 +549,7 @@ destructure several layers at once.
 
 The standard library has a function with this exact shape:
 `List.assoc_opt`. We will reach for it in
-[M04-L05](M04-L04-recursive-types.html#chained-option-access),
+[M04-L04](M04-L04-recursive-types.html#chained-option-access),
 when we have introduced `option` properly.
 
 ## Tuples and higher-order functions

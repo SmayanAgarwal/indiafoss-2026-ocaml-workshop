@@ -1,12 +1,12 @@
 ---
-title: "Tutorial: a tiny JSON-like value type"
+title: "Tutorial: a tiny AST for OCaml"
 lecture_no: 5
 week: 4
-duration_target_min: 28
-concepts: [worked ADT design, recursive variants, structural recursion, pretty printing]
-keywords: [OCaml, ADT, JSON, recursive variant, structural recursion, tutorial]
-activity_question: "Extend the [json] type with a [JDate of string] constructor and construct a JSON object with fields [release], [authors], and [version]."
-think_about_this: "Would you represent a JSON object as an association list, a Map, or a record? Each is a different design choice; what does each cost the consumer, and what does each cost the implementer?"
+duration_target_min: 25
+concepts: [worked ADT design, recursive variants, abstract syntax, AST]
+keywords: [OCaml, AST, abstract syntax tree, ADT, recursive variant, tutorial]
+activity_question: "Extend [expr] with a [Print of expr] constructor representing a top-level print of an expression's value, then build the AST for [let x = 10 in print x]."
+think_about_this: "Why does a compiler convert source text to an AST before doing anything else with it? What goes wrong if you try to operate on the raw string?"
 reading:
   - title: "Cornell CS3110, Algebraic data types"
     url: https://cs3110.github.io/textbook/chapters/data/algebraic_data_types.html
@@ -14,418 +14,622 @@ reading:
     url: https://dev.realworldocaml.org/variants.html
 ---
 
-# Tutorial for Module 4
+# Tutorial for Module 4 (part 1)
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: a tiny JSON-like value type</h2>
+<h2 class="title-slide-lecture">Tutorial: a tiny AST for OCaml</h2>
 <p class="title-slide-label">Module 4 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-The five preceding lectures introduced the pieces:
-[tuples](M04-L01-tuples.html), [records](M04-L02-records.html),
-[variants](M04-L03-variants.html),
-[recursive variants](M04-L04-recursive-types.html),
-[`option`](M04-L04-recursive-types.html), and
-[type abbreviations](M04-L04-recursive-types.html#type-abbreviations).
-This tutorial puts them all together by walking through the
-design of a small algebraic data type, building a handful of
-operations on it, and showing the rhythm of writing data-driven
-OCaml code.
+Module 4 introduced [tuples](M04-L01-tuples.html),
+[records](M04-L02-records.html), [variants](M04-L03-variants.html),
+[recursive variants and polymorphism](M04-L04-recursive-types.html),
+and [`option` / `result`](M04-L04-recursive-types.html). This
+tutorial puts those pieces to work on a worked example, building a
+small algebraic data type and a handful of concrete values on it.
 
-The example is a *JSON-like value type*: a single OCaml type
-that represents arbitrary JSON values (numbers, strings,
-booleans, arrays, objects, null). [JSON](https://www.json.org/)
-is a small enough format to fit in one lecture but rich enough
-to exercise every piece of Module 4. We will design the type,
-construct several concrete values, weigh a couple of design
-decisions, and finish by extending the type with a new
-constructor.
+The example: a *tiny abstract syntax tree (AST) for OCaml itself*.
+Every OCaml expression you have written so far (`5`, `x + 3`, `if y
+< 0 then 0 else y`, `let x = 5 in x + x`) is, internally, a value
+of a variant type inside the OCaml compiler. The compiler reads
+source text, parses it into a tree of constructors, and then every
+later stage (type checking, optimisation, code generation) is
+*just* recursive functions on that tree. For this lecture we are
+going to *be* a tiny version of that compiler: we will design the
+tree.
 
-We are deliberately staying on the *design* side of the toolkit.
-Walking a JSON value (writing `depth`, `lookup`, or a pretty
-printer) needs pattern matching, which gets its full treatment
-in [Module 5](M05-L01-basic-patterns.html); we will return to
-`json` there.
+We are deliberately staying on the design side: type definitions
+and constructed values, no tree walks. Walking an AST (writing an
+*evaluator*, a *type checker*, or a *pretty printer*) needs
+pattern matching, which gets its full treatment in
+[Module 5](M05-L01-basic-patterns.html). We will return to this
+exact `expr` type there and write `eval`, `vars_used`, and a
+pretty printer on it.
 
-## What is JSON?
+## What is an AST?
 
-[JSON](https://www.json.org/) (JavaScript Object Notation) is the
-data format used to carry structured data between programs. Every
-web API, configuration file, and inter-service message format you
-have used likely speaks JSON. It is built from six kinds of
-value:
+An **abstract syntax tree** is the tree-shaped data representation
+of a program. "Abstract" because it throws away surface details
+that do not matter for meaning (whitespace, comments, parentheses
+that the parser already resolved); "syntax" because it captures
+the structure of how the program is written; "tree" because nested
+expressions become nested constructors.
 
-- `null`: the explicit "no value."
-- Booleans: `true` or `false`.
-- Numbers: integers or decimals (JSON does not distinguish).
-- Strings: text in double quotes.
-- Arrays: ordered lists of JSON values inside `[...]`.
-- Objects: key-value bags inside `{...}` where keys are strings.
-
-A couple of concrete examples. A single number is already a
-valid JSON value:
-
-```json
-3.14
-```
-
-A web request for a single user might look like:
-
-```json
-{
-  "name": "Alice",
-  "age": 30,
-  "admin": true
-}
-```
-
-And nesting (arrays and objects inside other values) is what
-makes the format expressive. A book with multiple authors:
-
-```json
-{
-  "title": "Real World OCaml",
-  "authors": ["Yaron Minsky", "Anil Madhavapeddy", "Jason Hickey"],
-  "year": 2022,
-  "out_of_print": false
-}
-```
-
-A JSON value can nest *any* of the six kinds inside arrays or
-objects. The grammar is genuinely recursive: an object's value can
-itself be an array, whose elements can themselves be objects, and
-so on.
+Concretely: the expression `5 + 3` is, as text, a five-character
+string. As an AST, it is a tree with `+` at the root and two leaves
+`5` and `3`. The expression `(5 + 3) * 2` is a tree with `*` at the
+root, one leaf `2`, and one subtree (the `+` node) as the other
+child. Parentheses do not appear in the tree: the structure already
+encodes which operator binds first.
 
 :::slide
 
-## What is JSON?
+## What is an AST?
 
-Six kinds of value:
-
-- `null`
-- booleans (`true`, `false`)
-- numbers (`3.14`, `42`)
-- strings (`"hello"`)
-- arrays (`[...]`)
-- objects (`{key: value, ...}`)
-
-Used by every web API and most configuration files.
+- AST = **abstract syntax tree**, the tree representation of a
+  program.
+- Source text -> parser -> tree of constructors.
+- Every later compiler stage operates on the tree, not the text.
+- Today: we **design** the tree. Walking it is Module 5.
 
 :::
 
 :::slide
 
-## JSON: an object example
+## Source vs tree: `5 + 3`
 
-```json
-{
-  "title": "Real World OCaml",
-  "authors": ["Minsky", "Madhavapeddy", "Hickey"],
-  "year": 2022,
-  "out_of_print": false
-}
+Source: `5 + 3`
+
+Tree:
+
+```text
+   +
+  / \
+ 5   3
 ```
 
-- An *object* with four keys.
-- Values are: string, array of strings, number, boolean.
+- Operator at the root, operands at the leaves.
+- Parens disappear: the structure already encodes binding.
 
 :::
 
 :::slide
 
-## JSON nests
+## Source vs tree: `(5 + 3) * 2`
 
-```json
-{
-  "user": {
-    "name": "Alice",
-    "address": {
-      "city": "Chennai",
-      "pin": 600036
-    }
-  },
-  "orders": [
-    { "id": 7, "total": 250.0 },
-    { "id": 9, "total": 80.5 }
-  ]
-}
+Source: `(5 + 3) * 2`
+
+Tree:
+
+```text
+       *
+      / \
+     +   2
+    / \
+   5   3
 ```
 
-- Objects inside objects, arrays of objects.
-- A value's children can be **any** JSON value.
-- Grammar is genuinely **recursive**; we will model that
-  directly in OCaml next.
+- `*` is the root; one of its children is itself a `+` node.
+- A node's child can be any expression; the grammar is
+  **recursive**.
 
 :::
 
-## The type
+## A first cut: literals and arithmetic
 
-A JSON value is one of: `null`, a boolean, a number, a string, an
-array of JSON values, or an object (a map from strings to JSON
-values). In OCaml that maps directly to a variant with six
-constructors:
+Let's start with the smallest useful AST: integer literals and
+addition.
 
 ```ocaml
-type json =
-  | JNull
-  | JBool of bool
-  | JNumber of float
-  | JString of string
-  | JArray of json list
-  | JObject of (string * json) list
+type expr =
+  | Int of int
+  | Add of expr * expr
 ```
 
-Notice the recursion: `JArray` carries a `json list`, and
-`JObject` carries a `(string * json) list`. Both refer back to
-`json`. That self-reference is what allows JSON values to nest
-arbitrarily.
+Two constructors. `Int` carries an OCaml `int`; `Add` carries
+*two* sub-expressions. That second one is the key piece: the
+recursion is what lets us build arbitrarily nested arithmetic.
 
-Notice also the *tuple* `(string * json)` for object entries:
-each entry is a key (string) and a value (json). We could have
-defined a small record `type field = { key : string; value : json }`
-instead; the tuple is more concise for this short-lived pair, and
-matches the standard library's *association list* convention used
-by `List.assoc_opt`.
+A few example trees:
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+
+let e1 = Int 5
+let e2 = Add (Int 5, Int 3)
+let e3 = Add (Add (Int 1, Int 2), Int 4)
+```
+
+`e1` is the literal `5`; `e2` is `5 + 3`; `e3` is `(1 + 2) + 4`.
+Notice how `e3`'s left child is itself an `Add` node, exactly
+mirroring the parenthesised source.
 
 :::slide
 
-## The type
+## A first cut
 
 ```ocaml
-type json =
-  | JNull
-  | JBool of bool
-  | JNumber of float
-  | JString of string
-  | JArray of json list
-  | JObject of (string * json) list
+type expr =
+  | Int of int
+  | Add of expr * expr
 ```
 
-- Six constructors: the standard JSON kinds.
-- Recursive: `JArray of json list`; `JObject of (string * json) list`.
+- `Int`: a literal integer.
+- `Add`: carries **two** `expr` sub-trees. Recursive.
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+
+let e1 = Int 5                                (* 5         *)
+let e2 = Add (Int 5, Int 3)                   (* 5 + 3     *)
+let e3 = Add (Add (Int 1, Int 2), Int 4)      (* (1+2)+4   *)
+```
+
+:::
+
+## Adding more operators
+
+Real programs use more than `+`. The simplest extension is one
+constructor per operator:
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+```
+
+Now we can build `(5 + 3) * 2`:
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+
+let e_a = Mul (Add (Int 5, Int 3), Int 2)
+```
+
+The shape of the OCaml value mirrors the shape of the tree we drew
+earlier. `Mul` at the root, `Add (Int 5, Int 3)` on the left,
+`Int 2` on the right.
+
+:::slide
+
+## More arithmetic
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+```
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+
+(* (5 + 3) * 2 *)
+let e_a = Mul (Add (Int 5, Int 3), Int 2)
+```
+
+- One constructor per operator. Verbose, but every shape is
+  named explicitly.
+- We will look at a more compact alternative shortly.
+
+:::
+
+## Adding variables and `let ... in`
+
+So far our ASTs are *closed*: every leaf is a literal. To talk
+about names we need a `Var` constructor (a reference to a bound
+name) and a `Let_in` constructor (a binding form):
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+```
+
+`Var` carries just a string (the name being referenced). `Let_in`
+carries three pieces: the *name* being bound, the *binding
+expression* whose value gets bound to that name, and the *body*
+in which the name is in scope. That is the same `let name = e1 in
+e2` shape from M02-L02, now expressed as data.
+
+The AST for `let x = 5 in x + 3`:
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+
+let e_let =
+  Let_in ("x",
+          Int 5,
+          Add (Var "x", Int 3))
+```
+
+The bound name is `"x"`, the binding is `Int 5`, the body is
+`Add (Var "x", Int 3)`. Notice how the body references the bound
+name as `Var "x"`, not as a special token: the AST treats names
+as ordinary strings, and the compiler's later stages decide what
+each `Var` *resolves* to.
+
+Nested let bindings become nested `Let_in` constructors. The AST
+for `let x = 5 in let y = 10 in x + y`:
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+
+let e_let_nested =
+  Let_in ("x", Int 5,
+    Let_in ("y", Int 10,
+      Add (Var "x", Var "y")))
+```
+
+The body of the outer `Let_in` is another `Let_in`; that one's
+body is the addition. Exactly the right-associative nesting of
+source `let` chains we saw in M02-L02.
+
+:::slide
+
+## Variables and `let ... in`
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+```
+
+- `Var "x"`: a reference to a bound name.
+- `Let_in (name, bound_expr, body)`: the three-piece `let ... in`.
+
+```ocaml
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+
+(* let x = 5 in x + 3 *)
+let e_let =
+  Let_in ("x", Int 5, Add (Var "x", Int 3))
+```
 
 :::
 
 :::slide
 
-## The type: an example value
+## Nested `let ... in`
 
 ```ocaml
-type json =
-  | JNull
-  | JBool of bool
-  | JNumber of float
-  | JString of string
-  | JArray of json list
-  | JObject of (string * json) list
-let value =
-  JObject [
-    "name", JString "Alice";
-    "age",  JNumber 30.0;
-    "pets", JArray [JString "cat"; JString "dog"];
-    "alive", JBool true
-  ]
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+
+(* let x = 5 in let y = 10 in x + y *)
+let e_let_nested =
+  Let_in ("x", Int 5,
+    Let_in ("y", Int 10,
+      Add (Var "x", Var "y")))
 ```
 
-- Nesting just falls out: `"pets"` is itself a `JArray` of `JString`s.
+- The body of the outer `Let_in` is another `Let_in`.
+- Right-associative nesting, exactly mirroring the source.
 
 :::
 
-The example value, modelled as a JSON object, has four fields. One
-of those fields (`"pets"`) is itself a `JArray` of `JString`s. The
-type lets all of these nest naturally; the constructors carry the
-structure.
+## Adding `if`, booleans, and comparison
 
-The
-["make illegal states unrepresentable" slogan from M04-L03](M04-L03-variants.html#parameterised-variants)
-applies here. There is no way to build a `json` that has, say, a
-"key" without a "value": each object entry is a pair, and a pair
-must have both components. There is no way to use a value where a
-key is expected: the type forces strings as keys. The compiler
-enforces all of this at construction time.
-
-## Constructing more JSON values
-
-Let's build a few more concrete values to make the type feel
-ordinary. A flat object:
+Conditionals need a boolean kind of value and a way to compare. We
+add `Bool`, two comparison constructors (`Lt` and `Eq`), and an
+`If` constructor with three sub-expressions:
 
 ```ocaml
-type json =
-  | JNull
-  | JBool of bool
-  | JNumber of float
-  | JString of string
-  | JArray of json list
-  | JObject of (string * json) list
-
-let book =
-  JObject [
-    "title",  JString "Real World OCaml";
-    "year",   JNumber 2022.0;
-    "online", JBool true
-  ]
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Lt  of expr * expr
+  | Eq  of expr * expr
+  | If  of expr * expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
 ```
 
-An array of scalars:
+`If (cond, then_branch, else_branch)` carries three children: the
+test, the value when the test is true, and the value when the test
+is false. That matches the three slots in OCaml's
+`if ... then ... else ...` expression from M02-L05.
+
+The AST for `if x < 0 then 0 else x`:
 
 ```ocaml
-let primes = JArray [JNumber 2.0; JNumber 3.0; JNumber 5.0; JNumber 7.0]
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Lt  of expr * expr
+  | Eq  of expr * expr
+  | If  of expr * expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+
+let e_clamp =
+  If (Lt (Var "x", Int 0),
+      Int 0,
+      Var "x")
 ```
 
-A deeply nested value, mirroring the JSON nesting example from the
-intro:
-
-```ocaml
-let order =
-  JObject [
-    "user", JObject [
-      "name", JString "Alice";
-      "address", JObject [
-        "city", JString "Chennai";
-        "pin",  JNumber 600036.0;
-      ]
-    ];
-    "items", JArray [
-      JObject ["id", JNumber 7.0; "total", JNumber 250.0];
-      JObject ["id", JNumber 9.0; "total", JNumber 80.5];
-    ];
-    "delivered", JNull;
-  ]
-```
-
-The OCaml value is the JSON value. The constructors carry the
-shape; the compiler enforces it. There is no way to build a
-`JObject` whose "key" is a `JNumber`, or a `JArray` containing a
-mix of `json` and raw OCaml `string`s; the type rules those out.
+The condition is `Lt (Var "x", Int 0)`, a comparison subtree; the
+then-branch is `Int 0`; the else-branch is `Var "x"`. Each branch
+is just another `expr`, so they can themselves be arbitrarily
+nested.
 
 :::slide
 
-## Constructing more JSON values
+## `if`, booleans, comparison
 
 ```ocaml
-let book =
-  JObject [
-    "title",  JString "Real World OCaml";
-    "year",   JNumber 2022.0;
-    "online", JBool true
-  ]
-
-let primes = JArray [JNumber 2.0; JNumber 3.0; JNumber 5.0; JNumber 7.0]
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Lt  of expr * expr
+  | Eq  of expr * expr
+  | If  of expr * expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
 ```
 
-- A flat object and a flat array.
-- Each `JObject` entry is a tuple `(string, json)`.
+- `If (cond, then_branch, else_branch)`: three sub-expressions.
+- Each branch is itself an `expr` (so can nest arbitrarily).
 
 :::
 
 :::slide
 
-## Constructing more JSON values: nesting
+## Building `if x < 0 then 0 else x`
 
 ```ocaml
-let order =
-  JObject [
-    "user",  JObject ["name", JString "Alice"];
-    "items", JArray [
-      JObject ["id", JNumber 7.0; "total", JNumber 250.0];
-      JObject ["id", JNumber 9.0; "total", JNumber  80.5];
-    ];
-    "delivered", JNull;
-  ]
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Lt  of expr * expr
+  | Eq  of expr * expr
+  | If  of expr * expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+
+let e_clamp =
+  If (Lt (Var "x", Int 0),
+      Int 0,
+      Var "x")
 ```
 
-- Object inside object, array of objects; the OCaml value *is*
-  the JSON, recursive structure and all.
+- One AST value for the whole expression.
+- `Lt` subtree at the test position; integer / variable at the
+  branches.
 
 :::
 
-## Design decision: representing objects
+## Design decision: per-operator vs `Binop`
 
-Why did we use `(string * json) list` for objects, rather than
-something else? The choices on the table for "map from string keys
-to JSON values" include:
+We chose **one constructor per operator** above: `Add`, `Sub`,
+`Mul`, `Lt`, `Eq`. The alternative is **a single `Binop`
+constructor** that carries an operator tag plus two sub-expressions.
+The two designs:
 
-- Association list: `(string * json) list`. What we picked.
-- Map from `Stdlib.Map`: `string -> json` view via a tree
-  structure. Faster lookup, more imports.
-- Hashtable: `(string, json) Hashtbl.t`. Faster lookup, but
-  mutable; we avoided that.
+```text
+(* Per-operator. *)
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Lt  of expr * expr
+  | Eq  of expr * expr
+  | ...
+```
 
-For pedagogy and JSON's typical "a few keys per object" shape, the
-association list is plenty. For a production-grade JSON library,
-you would reach for a `Map` or hashtable. The type expresses the
-choice; consumers see it and program accordingly.
+```text
+(* Single Binop, with an operator tag. *)
+type op =
+  | Plus | Minus | Times | Less | Equal
 
-A second decision worth flagging: a JSON object's keys are
-*unordered* in the spec, but a `(string * json) list` *is*
-ordered. Our representation preserves whatever order the
-constructor was called with. That can be a feature (round-trip
-print stable order) or a bug (two equivalent JSON values compare
-unequal because their keys are listed in different orders). The
-spec is permissive; the OCaml type, more specific.
+type expr =
+  | Int of int
+  | Binop of op * expr * expr
+  | ...
+```
+
+Trade-offs:
+
+- The per-operator type is **more explicit**. Each operator gets a
+  name; the type system makes you spell it out at construction.
+- The `Binop` type is **more compact**. Five constructors collapse
+  into one. Consumers of the AST (the eval function, the pretty
+  printer) match one case and dispatch on `op` internally.
+- The per-operator type **scales worse**: adding a new operator is
+  a new constructor and a new pattern-match arm everywhere. The
+  `Binop` type adds a new operator as just a new `op` variant.
+- The `Binop` type **groups related shapes**: if every binary
+  operator has the same `expr * expr` payload, it captures that
+  regularity in one place.
+
+Real OCaml compilers use the `Binop` style, with the operator (or
+"primitive") tag as a richer variant. For our tiny AST either
+choice is reasonable; we will keep the per-operator design for the
+rest of this lecture because it makes each example tree easier to
+read at first glance.
 
 :::slide
 
-## Design decision: representing objects
+## Design decision: per-op vs `Binop`
 
-`JObject of (string * json) list` is one of several choices:
+Two ways to represent binary operators:
 
-- Association list: `(string * json) list`. *Our choice.* Simple,
-  small.
-- Stdlib `Map`: `(string, json) Map.t`. Faster lookup.
-- `Hashtbl.t`: faster lookup, but **mutable**.
+```text
+| Add of expr * expr
+| Sub of expr * expr
+| Mul of expr * expr
+| ...
+```
 
-- For a tutorial / few-key objects, the assoc list is fine.
-- Production JSON libraries reach for `Map` or `Hashtbl`.
+vs
+
+```text
+type op = Plus | Minus | Times | ...
+| Binop of op * expr * expr
+```
+
+- Per-op: more explicit, less compact.
+- `Binop`: groups regular shapes, scales better to many operators.
+
+Real compilers use `Binop`-style. For a tiny tree, per-op reads
+clearer.
 
 :::
 
-## Design decision: `JNull` vs `json option`
+## Design decision: optional type annotations
 
-We chose to have a `JNull` constructor inside `json` rather than
-expressing "maybe a JSON value" as `json option`. Why?
+OCaml `let` lets you annotate the binding with a type:
+`let x : int = 5 in ...`. The annotation is **optional**: when
+absent, the type checker infers; when present, it must agree with
+inference.
 
-`option` would force the caller to handle absence even when the
-JSON spec *itself* says null is a value. Consider a key whose
-value is intentionally `null`:
+That "may or may not be there" is exactly what `option` is for. We
+add a `ty` type for the small set of types our AST knows about, and
+weave a `ty option` into the `Let_in` payload:
 
-```json
-{ "spouse": null }
+```ocaml
+type ty =
+  | T_int
+  | T_bool
+
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
 ```
 
-The JSON value at `"spouse"` *is* `null`; it is not "no value."
-Representing it as `JObject [("spouse", JNull)]` carries that
-distinction cleanly. Compare with `JObject [("spouse", None)]`,
-which conflates "the value is JSON null" with "the key has no
-associated value."
+Two example trees, one with and one without an annotation:
 
-The general rule: use `option` when the *consumer* of an API may
-need to handle absence; use a dedicated constructor when *the
-domain itself* has an explicit "null" or "empty" notion.
+```ocaml
+type ty =
+  | T_int
+  | T_bool
+
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
+
+(* let x = 5 in x + 3 *)
+let e_unannotated =
+  Let_in ("x", None, Int 5, Add (Var "x", Int 3))
+
+(* let x : int = 5 in x + 3 *)
+let e_annotated =
+  Let_in ("x", Some T_int, Int 5, Add (Var "x", Int 3))
+```
+
+The `option` cleanly captures "the source either wrote a type or
+did not." This is exactly the kind of *consumer uncertainty* the
+[M04-L04 rule of thumb](M04-L04-recursive-types.html) covers: a
+later stage (the type checker) has to decide what to do when the
+annotation is missing vs present.
 
 :::slide
 
-## Design decision: `JNull` vs `json option`
+## Design decision: optional annotations
 
-- We chose `JNull` *inside* the `json` variant.
-- Alternative: leave it out; force callers to use `json option`.
+OCaml: `let x = 5 in ...` or `let x : int = 5 in ...`.
 
-Why a constructor:
+The annotation is optional - perfect fit for `option`:
 
-- JSON null is a **first-class value** in the spec.
-- `JObject [("spouse", JNull)]` says "value present, equals null."
-- `JObject [("spouse", None)]` would conflate that with "key
-  missing."
+```ocaml
+type ty = T_int | T_bool
 
-Rule of thumb: `option` for *consumer* uncertainty, a dedicated
-constructor for *domain* nullness.
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
+```
+
+```ocaml
+type ty = T_int | T_bool
+
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
+
+(* let x = 5 in x + 3 *)
+let e_u = Let_in ("x", None,        Int 5, Add (Var "x", Int 3))
+
+(* let x : int = 5 in x + 3 *)
+let e_a = Let_in ("x", Some T_int,  Int 5, Add (Var "x", Int 3))
+```
 
 :::
 
@@ -433,18 +637,24 @@ constructor for *domain* nullness.
 
 This tutorial used every Module 4 idea:
 
-- **Tuples** for object entries (`string * json`).
-- **Records** would also fit (we will use them in the activity).
-- **Variants** with payloads for the `json` constructors.
-- **Recursive variants** for nested arrays and objects.
-- **Parameterised variants** in the underlying `'a list`.
-- **`option`** when we needed to express "maybe."
+- **Variants** with payloads (every `expr` constructor).
+- **Recursive variants** (sub-expressions are themselves `expr`s).
+- **Tuples** in constructor payloads (`expr * expr` for binary ops).
+- **`option`** for the optional type annotation.
+- **Type abbreviations** would fit naturally for an `id = string`
+  alias, if we wanted to make `Var` self-documenting.
 
-What we have *not* used yet is pattern matching, the standard way
-to take any of these values apart. That is the whole of
-[Module 5](M05-L01-basic-patterns.html). With pattern matching
-in hand, we can write `depth`, `lookup`, `pretty`, and
-"refactor-with-the-compiler" workflows for evolving the variant.
+The next tutorial ([M04-L06](M04-L06-tutorial-fs.html)) builds a
+second worked example on a different domain (a tiny file system),
+so you see the same toolkit applied to data with a very different
+shape.
+
+What we have **not** done yet is take any of these trees apart. To
+evaluate `e_clamp`, to substitute a value for `Var`, or to
+pretty-print an `expr` back to source: each of those is a recursive
+function that needs pattern matching. That is the whole of
+[Module 5](M05-L01-basic-patterns.html). We will return to this
+exact AST there.
 
 :::slide
 
@@ -452,15 +662,14 @@ in hand, we can write `depth`, `lookup`, `pretty`, and
 
 This tutorial used:
 
-- **Tuples** (string * json for entries).
-- **Variants** with payloads (the json constructors).
-- **Recursive variants** (nested arrays and objects).
-- **Parameterised variants** (`'a list`).
-- **`option`** when "maybe" is in play.
+- **Variants** with payloads (each `expr` constructor).
+- **Recursive variants** (sub-expressions are themselves `expr`).
+- **Tuples** in payloads (`expr * expr`).
+- **`option`** for optional annotations.
 
-What we have not used yet: **pattern matching**. That is the
-whole of [Module 5](M05-L01-basic-patterns.html); we will write
-`depth`, `lookup`, and `pretty` for `json` then.
+Next tutorial ([M04-L06](M04-L06-tutorial-fs.html)) reapplies the
+toolkit to a file system. Walking ASTs (evaluator, pretty-printer)
+is [Module 5](M05-L01-basic-patterns.html).
 
 :::
 
@@ -470,14 +679,43 @@ whole of [Module 5](M05-L01-basic-patterns.html); we will write
 
 ## Activity
 
-Extend `json` with a new constructor `JDate of string` that
-represents an ISO-8601 date string (e.g., `"2026-06-15"`) as a
-distinct kind of value. Then construct a JSON object with:
+Extend `expr` with a new constructor `Print of expr` that
+represents printing the value of a sub-expression. Then build the
+AST for the program:
 
-- A `release` field whose value is `JDate "2026-06-15"`.
-- An `authors` field whose value is a JSON array of two strings.
-- A `version` field whose value is the number `1.0`.
+```text
+let x = 10 in print x
+```
 
+Treat `print x` as `Print (Var "x")` (the body of the `let`).
+
+:::
+
+:::quiz mcq id=M04-L05-q1
+Which is the correct AST for `let x = 10 in print x`?
+
+```text
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Var of string
+  | Let_in of string * expr * expr
+  | Print of expr             (* new *)
+```
+
+- [x] `Let_in ("x", Int 10, Print (Var "x"))`
+- [ ] `Let_in ("x", Print (Int 10), Var "x")`
+- [ ] `Print (Let_in ("x", Int 10, Var "x"))`
+- [ ] `Let_in (Print "x", Int 10, Var "x")`
+
+**Why:** `Let_in` is `(name, bound_expr, body)`. The bound name is
+`"x"`, the bound expression is `Int 10`, and the body is what
+`print x` parses to, namely `Print (Var "x")`. The third option
+prints the result of the *whole* let; the second prints the bound
+value before the binding even happens; the fourth puts a `Print`
+in the *name* slot, which is type-wrong because the slot expects
+a `string`, not an `expr`.
 :::
 
 :::slide
@@ -487,25 +725,27 @@ distinct kind of value. Then construct a JSON object with:
 Add one constructor:
 
 ```text
-type json =
+type expr =
   ...
-  | JDate of string                  (* new *)
+  | Print of expr            (* new *)
 ```
 
-Construct:
+Build:
 
 ```ocaml
-let release_notes =
-  JObject [
-    "release", JDate "2026-06-15";
-    "authors", JArray [JString "Alice"; JString "Bob"];
-    "version", JNumber 1.0;
-  ]
+type expr =
+  | Int of int
+  | Var of string
+  | Let_in of string * expr * expr
+  | Print of expr                          (* new *)
+
+let prog =
+  Let_in ("x", Int 10, Print (Var "x"))
 ```
 
-- One new constructor; everything else is unchanged.
-- The type checker accepts the new value; nothing else needs
-  to compile differently.
+- One new constructor, taking the expression to print.
+- `Let_in`'s body slot accepts any `expr`, so `Print (Var "x")`
+  drops straight in.
 
 :::
 
@@ -519,9 +759,9 @@ After Module 4 you can:
 
 - Bundle values with tuples and records.
 - Express "this or that" with variants.
-- Build recursive types like lists, trees, expressions.
-- Use `option` and `result` instead of nulls.
-- Design a domain type with the right mix of these pieces.
+- Model recursive shapes (lists, trees, ASTs).
+- Reach for `option` and `result` instead of nulls.
+- Design a domain type by combining the pieces.
 
 Module 5: **pattern matching** (the way to take any of these
 values apart) in depth.
@@ -529,12 +769,10 @@ values apart) in depth.
 :::
 
 You now have the full vocabulary for modelling data in OCaml. The
-combination of records, variants, tuples, and recursion is enough
-to express essentially any data shape you encounter.
-[Module 5](M05-L01-basic-patterns.html) sharpens the
-*consumption* side: pattern matching has more features than we
-have used in this module, and they are the everyday tools for
-writing concise code on these data types.
+combination of records, variants, tuples, recursion, and
+polymorphism is enough to express essentially any data shape you
+will encounter; [Module 5](M05-L01-basic-patterns.html) gives you
+the everyday machinery for taking these values apart.
 
 ## Reading
 
@@ -542,6 +780,7 @@ writing concise code on these data types.
   <https://cs3110.github.io/textbook/chapters/data/algebraic_data_types.html>
 - **Real World OCaml**, *Variants*:
   <https://dev.realworldocaml.org/variants.html>
+
 ## Sources
 
 This lecture's prose, worked examples, and quizzes are original to
