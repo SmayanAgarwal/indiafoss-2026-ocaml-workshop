@@ -268,11 +268,20 @@ at every choice of `'a`.
 - `lst` is a **type constructor**: takes a type, gives a type.
 - Same idea as Java generics, C++ templates, Rust generics.
 
+:::
+
+:::slide
+
+## A polymorphic function: `id`
+
 ```ocaml
 let id x = x
 ```
 
-- `val id : 'a -> 'a`. One definition; every choice of `'a`.
+- Toplevel: `val id : 'a -> 'a`.
+- One definition; works at every choice of `'a`.
+- Same shape as `'a lst`: type variable in the signature, many
+  instantiations from one declaration.
 
 :::
 
@@ -288,7 +297,11 @@ type 'a list =
 ```
 
 `[]` and `::` are constructors, just like our `Nil` and `Cons`.
-The only thing special is a small amount of *syntactic sugar*:
+In fact `[]` is informally called *nil* and `::` is informally
+called *cons* (the names come from Lisp), and you will see
+`Nil` and `Cons` used as constructor names in OCaml code that
+defines its own list-like type. The standard library just uses
+`[]` and `::` because of a small amount of *syntactic sugar*:
 
 - The constructors are written as `[]` and `::` instead of
   alphabetic identifiers. (Most variant constructors must start
@@ -310,6 +323,8 @@ type 'a list =
 ```
 
 - `[]` and `::` are constructors.
+- Informally called *nil* and *cons* (from Lisp); you will see
+  `Nil` and `Cons` used as constructor names in OCaml code.
 - `::` is infix; `[1; 2; 3]` desugars to `1 :: 2 :: 3 :: []`.
 - Strip the sugar and it is a normal parameterised variant.
 

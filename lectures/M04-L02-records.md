@@ -492,7 +492,7 @@ compares the entire memory block including padding bytes). OCaml's
 `=` does the right thing on records and gives you correct equality
 "for free."
 
-## Type inference for records is brittle
+## Type inference for records can surprise you
 
 There is one wrinkle that catches people, related to how the
 compiler infers the *type* of a record literal. Tuples are
@@ -517,7 +517,7 @@ to `point2`, the next match, and `p` gets type `point2`.
 
 :::slide
 
-## Type inference for records is brittle
+## Type inference for records can surprise you
 
 ```ocaml
 type point2 = { x : float; y : float }
