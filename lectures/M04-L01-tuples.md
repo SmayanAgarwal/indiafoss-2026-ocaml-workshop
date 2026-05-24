@@ -53,9 +53,11 @@ take apart such aggregates.
 
 This first lecture covers the simplest aggregate the language
 offers: the *tuple*. A tuple is a fixed-size bundle of values,
-possibly of different types, identified by *position*. The pair
-`(3, "hello")` is a tuple of arity two; the triple `(1, 2.0, true)`
-is a tuple of arity three. The next two lectures cover
+possibly of different types, identified by *position*. The number
+of components a tuple carries is called its *arity* (borrowed
+from logic: "arity" is the number of arguments a relation takes).
+The pair `(3, "hello")` is a tuple of arity two; the triple
+`(1, 2.0, true)` is a tuple of arity three. The next two lectures cover
 [*records*](M04-L02-records.html) (aggregates with named fields)
 and [*variants*](M04-L03-variants.html) (a different kind of
 aggregate: "one of several shapes" rather than "this and that").
@@ -160,7 +162,8 @@ let _ : int * int       = (1, 2)
 let _ : int * int * int = (1, 2, 3)
 ```
 
-- These are *different types*.
+- *Arity* = number of components a tuple carries.
+- These are *different types*: arity 2 vs arity 3.
 - Can't pass an `int * int * int` where `int * int` is expected.
 - Contrast Python: 2-tuple and 3-tuple are both `tuple`.
 - OCaml: static checking, but a fresh type for every shape.
