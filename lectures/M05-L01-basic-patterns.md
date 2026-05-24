@@ -509,10 +509,35 @@ let _ = sum (3, 4)
 
 :::
 
-Function parameters are also patterns. `let sum (a, b) = a + b`
-defines a function whose single parameter is a pair, and the
-pattern `(a, b)` immediately splits the pair into its components.
-You could equivalently write:
+Function parameters are also patterns, and *any* pattern OCaml can
+write fits there. Four shapes you will see constantly:
+
+```ocaml
+type point = {x : int; y : int}
+
+let f () = "called"           (* unit pattern *)
+let g (a, b) = a + b          (* tuple pattern *)
+let h {x; y} = x + y          (* record pattern *)
+```
+
+The variant case is similar but comes with a caveat. Try it in
+the live cell below:
+
+```ocaml skip
+let k (Some n) = n
+```
+
+The compiler warns that the pattern is *not exhaustive*: the
+argument might be `None`, which the pattern does not cover.
+Calling `k None` raises `Match_failure` at runtime. So the rule
+on `let`-bindings and function-parameter patterns is: they accept
+*one* pattern and the value had better match it. Tuples and
+records are always safe (every value of `int * int` is a pair,
+every value of `point` has an `x` and a `y`); variants with more
+than one constructor are not. We come back to this in
+[Lecture 4](M05-L04-exhaustiveness.html).
+
+You can write the destructure separately if you prefer:
 
 ```ocaml
 let sum p =
@@ -520,19 +545,34 @@ let sum p =
   a + b
 ```
 
-Both desugar to roughly the same code. The pattern-in-parameter
-form is shorter; use it when the function expects a structured
-argument and you want the pieces named right away.
+The pattern-in-parameter form is just shorter; both desugar to
+roughly the same code. Use the parameter form when the function
+expects a structured argument and you want the pieces named right
+away.
 
-One important constraint on these "patterns elsewhere": unlike
-`match`, where you have many clauses and the compiler picks one,
-a `let` pattern or function-parameter pattern has *only one*
-shape, and the value had better match it. If it does not, the
-program raises `Match_failure` at runtime. So `let (x, y) = z`
-works only if `z` is a pair; `let Some n = opt` works only if
-`opt` is `Some _`. The compiler will warn you about partial
-matches like this; we will see the warning in
-[Lecture 4](M05-L04-exhaustiveness.html).
+:::slide
+
+## Function-parameter patterns: four shapes
+
+```ocaml
+type point = {x : int; y : int}
+
+let f () = "called"
+let g (a, b) = a + b
+let h {x; y} = x + y
+```
+
+```ocaml skip
+let k (Some n) = n
+```
+
+- Any pattern fits in a parameter position.
+- `()`, `(a, b)`, `{x; y}`: total for their type, always safe.
+- `Some n`: variant with > 1 constructor: *non-exhaustive*.
+- Click **Run**: compile-time warning; `k None` raises at runtime.
+- Total patterns in [Lecture 4](M05-L04-exhaustiveness.html).
+
+:::
 
 ## A quick taste of exhaustiveness
 

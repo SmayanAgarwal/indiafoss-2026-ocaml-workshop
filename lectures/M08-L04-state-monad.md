@@ -52,6 +52,21 @@ you one solution: use a `ref` and mutate it. The state monad gives
 you a different solution: encode the threading in the type, and let
 the monad plumbing do it. We will compare both at the end.
 
+:::slide
+
+## This lecture: the state monad
+
+- Previous two monads encoded *failure*: `option` and `result`.
+- The state monad encodes *threaded state*.
+- Each step receives the current state and returns a new one.
+- Use cases: fresh-identifier counters, parsers tracking unread
+  input, PRNGs, type checkers with environments.
+- Alternative: a `ref`. We will compare both at the end.
+- The state monad keeps the threading in the *type* rather than
+  in a mutable cell.
+
+:::
+
 ## The type
 
 A *stateful computation* that produces an `'a` is a function from

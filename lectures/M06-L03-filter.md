@@ -41,6 +41,18 @@ definition, the common variations (`filter_map`, `partition`), and
 the points where you should pause and reach for `filter` rather than
 something else.
 
+:::slide
+
+## This lecture: `filter`
+
+- `filter p xs`: keep the elements for which `p` is `true`, drop the rest.
+- Type: `('a -> bool) -> 'a list -> 'a list`. No transformation; selection.
+- The predicate is a `bool`-returning function.
+- `map` + `filter` covers a remarkable amount of list manipulation.
+- Also today: `filter_map`, `partition`, when to reach for `filter`.
+
+:::
+
 ## Writing `filter` from scratch
 
 Just as we did with [`map`](M06-L02-map.html#writing-map-from-scratch),

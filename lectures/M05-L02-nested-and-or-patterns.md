@@ -49,6 +49,21 @@ This lecture covers two extensions:
 Both forms compose, and you will use them heavily. Almost every
 nontrivial pattern match you write uses one or both.
 
+:::slide
+
+## This lecture: nested and or-patterns
+
+- L1's patterns matched at *one level* (literal, variable, wildcard).
+- Real values are built of pieces: tuples, constructors, lists.
+- Patterns mirror that nested structure: a pattern can contain
+  other patterns.
+- Two extensions covered here:
+  - *Nested* patterns: `Some (x, _)`, `(0, _) :: _`.
+  - *Or-patterns*: `1 | 2 | 3`, alternation with one right-hand side.
+- Both compose; almost every nontrivial match uses one or both.
+
+:::
+
 ## Patterns inside constructors
 
 The most common nested pattern is to look inside a constructor's

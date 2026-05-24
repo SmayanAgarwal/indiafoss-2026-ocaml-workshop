@@ -55,6 +55,24 @@ type-level description of a module that lets you hide internals.
 parameterized by other modules.
 [Lecture 9](M07-L09-tutorial.html) is the tutorial.
 
+:::slide
+
+## This lecture: module basics
+
+- Everything so far has lived at the top level: one shared
+  global namespace.
+- Real programs need *structure*: hundreds of definitions,
+  many files, name collisions everywhere.
+- OCaml's answer: the *module system*.
+- A module is a named collection of definitions (values, types,
+  exceptions, sub-modules) referred to as a unit.
+- The standard library is a tree of modules (`List`, `String`,
+  `Array`, `Option`, `Map`, ...).
+- This lecture: the syntax. Signatures, functors, and the
+  tutorial come next.
+
+:::
+
 ## Inline modules
 
 The simplest way to define a module is right at the toplevel,

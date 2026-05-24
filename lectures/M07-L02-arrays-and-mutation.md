@@ -42,6 +42,20 @@ them.
 The decision of when in-place mutation pays for the equational
 reasoning you give up runs through both halves of the lecture.
 
+:::slide
+
+## This lecture: arrays and mutation
+
+- Beyond `ref`: two more mutable building blocks in OCaml.
+- *Mutable record fields*: mark individual fields with `mutable`.
+- *Arrays*: fixed-size, O(1) indexed, in-place update.
+- How arrays compare with the lists we have used all course.
+- The loop syntax (`for`, `while`) that lives alongside them.
+- Running question: when does in-place mutation pay for the
+  equational reasoning you give up?
+
+:::
+
 ## Mutable record fields
 
 You mark a [record](M04-L02-records.html) field `mutable` when you

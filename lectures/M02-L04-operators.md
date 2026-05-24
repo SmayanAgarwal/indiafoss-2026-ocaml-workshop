@@ -26,6 +26,21 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: operators
+
+- The comprehensive reference for OCaml's operators.
+- Three unusual choices that catch beginners:
+  - separate arithmetic for `int` and `float` (`+` vs `+.`);
+  - structural equality `=`, not physical `==`;
+  - restricted polymorphic comparison.
+- Precedence: which binds tighter than which.
+- The pitfalls every first-week student hits.
+- Nothing deep here, but sharp-edged.
+
+:::
+
 You already know most of OCaml's operators from school arithmetic
 and from previous lectures (the
 [tour](M01-L03-ocaml-tour.html#integers) introduced `+`, `*`, `/`,

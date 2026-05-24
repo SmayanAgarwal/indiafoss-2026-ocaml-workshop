@@ -269,6 +269,44 @@ body.mode-slides .lecture-title {
   opacity: 1;
 }
 
+/* Two-column (or N-column) slide layout. Authored as :::cols /
+   :::col [<n>%] in markdown. .col items use flex: 1 1 0 by default;
+   the parser emits an inline style="flex: 0 0 N%;" to pin a width.
+   align-items: center vertically centers a short RHS image against
+   taller LHS bullets -- the common text+image case. Rules are
+   unscoped so the same layout applies in chapter mode, where
+   slides also appear inline. */
+.cols {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin: 0.8rem 0;
+}
+.cols > .col {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Inside a column, images should fill the column width rather than
+   the slide-wide 92%/1140px cap. Drop the canvas-height cap too: the
+   column is already bounded by its sibling's height. */
+.cols > .col img,
+.cols > .col svg {
+  display: block;
+  max-width: 100%;
+  max-height: none;
+  margin: 0 auto;
+  height: auto;
+}
+
+
+/* Narrow viewports: stack columns. !important defeats the inline
+   style="flex: 0 0 N%;" so a 60%-pinned column does not become a
+   60%-height stripe once flex-direction flips. */
+@media (max-width: 700px) {
+  .cols { flex-direction: column; align-items: stretch; }
+  .cols > .col { flex: 0 0 auto !important; }
+}
+
 /* Compact precedence table: a tall many-row table needs tighter rows
    to fit the 1280x800 slide canvas without overflow. */
 body.mode-slides .reveal .slides section .precedence-table table {

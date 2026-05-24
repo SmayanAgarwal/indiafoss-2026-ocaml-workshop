@@ -50,6 +50,21 @@ function on the spot, you should reach for `map`, `filter`, or
 
 We will work through eight problems, increasing in subtlety.
 
+:::slide
+
+## This tutorial: rebuild the standard library
+
+- The capstone of M06: put the toolkit to work.
+- Toolkit: higher-order functions, `map`, `filter`, `fold`, `|>`, composition.
+- Thesis: this small toolkit covers a surprising amount of list work
+  without hand-coded recursion.
+- Pick a `List` function from the standard library; rebuild it from the toolkit.
+- Not that you should re-derive these in real code; the point is to *see*
+  how few primitives the rest follows from.
+- Eight problems, increasing in subtlety.
+
+:::
+
 ## Problem 1: `length`
 
 Given a list, return how many elements it has.
@@ -424,7 +439,10 @@ let word_counts text =
   |> String.split_on_char ' '
   |> List.filter (fun s -> s <> "")
   |> List.fold_left (fun counts w ->
-       let n = try List.assoc w counts with Not_found -> 0 in
+       let n = match List.assoc_opt w counts with
+         | Some n -> n
+         | None -> 0
+       in
        (w, n + 1) :: List.remove_assoc w counts
      ) []
 

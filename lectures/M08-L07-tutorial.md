@@ -55,6 +55,23 @@ By the end of this lecture you should be able to read GADT-typed
 ASTs comfortably, write evaluators over them, and extend the
 language with new constructors without confusion.
 
+:::slide
+
+## What this tutorial does
+
+- Capstone for the OCaml half of the course.
+- Build a small expression language combining almost everything
+  from Module 8:
+  - A GADT for the AST (ill-typed programs cannot be built).
+  - A pattern-matching evaluator using GADT type refinement.
+  - An optional-failure layer (option-monad style) for runtime
+    problems like division by zero.
+  - Two pretty-printers and an extension exercise (adding `<`).
+- Ties together monads, GADTs, and pattern matching in one
+  worked example.
+
+:::
+
 ## The typed AST
 
 The first design decision is the AST shape. We want six

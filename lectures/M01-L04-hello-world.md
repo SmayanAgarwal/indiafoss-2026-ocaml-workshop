@@ -28,6 +28,20 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: hello, world
+
+- Our first program that *runs*: visible output to the world.
+- Two concepts you will use in every program from here on:
+  - the `unit` type (the value `()`);
+  - the sequencing operator `;`.
+- An OCaml program is a *sequence of `let` bindings*.
+- Different shape from C's `int main()` or Python's `if __name__`.
+- Short lecture; the shape matters.
+
+:::
+
 In the [previous lecture](M01-L03-ocaml-tour.html) we toured the
 values and expressions of OCaml: numbers, booleans, strings, `let`
 bindings, type inference. We have not yet written anything that

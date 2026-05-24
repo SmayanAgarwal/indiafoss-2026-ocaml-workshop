@@ -48,6 +48,24 @@ seen in object-oriented languages under names like `private`,
 rather than the value level. The mechanism is structural rather
 than nominal, and it is checked entirely at compile time.
 
+:::slide
+
+## This lecture: module signatures
+
+- Last lecture: a `Stack` module's internal `ref` leaked
+  out, because everything in a module is visible by default.
+- This lecture's fix: *module signatures*.
+- A signature is the type-level description of a module: which
+  names escape, with which types.
+- Constrain a module by a signature; anything not listed
+  becomes invisible to callers.
+- OCaml's encapsulation story: same idea as `private` /
+  `public` / `interface`, at the module level.
+- Structural rather than nominal; checked entirely at compile
+  time.
+
+:::
+
 ## A first signature
 
 A signature is a `sig ... end` block listing values and their

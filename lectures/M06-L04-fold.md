@@ -41,6 +41,19 @@ pattern, name the abstraction, then study the two flavours that
 arise (`fold_left` and `fold_right`). At the end we look at folds
 beyond lists.
 
+:::slide
+
+## This lecture: `fold`
+
+- `map` returns a list. `filter` returns a list. `fold` returns *anything*.
+- A number, a string, a record, another list, a tree.
+- The most general of the three: subsumes both `map` and `filter`.
+- Same shape as before: two concrete functions, abstract the pattern, name it.
+- Two flavours: `fold_left` and `fold_right`.
+- At the end: folds beyond lists.
+
+:::
+
 ## From `sum` and `all_true` to `fold`
 
 Two functions:

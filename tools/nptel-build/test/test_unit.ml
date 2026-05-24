@@ -102,6 +102,68 @@ let divs_nesting () =
     1 (count_sub "<section class=\"slide\"");
   check_int "one fragment div" 1 (count_sub "<div class=\"fragment\">")
 
+let divs_cols_basic () =
+  let src =
+    ":::cols\n:::col 60%\nhi\n:::\n:::col 40%\nhello\n:::\n:::\n"
+  in
+  let out = Divs.preprocess src in
+  check_bool "cols container opens" true
+    (try ignore (Str.search_forward (Str.regexp_string "<div class=\"cols\">") out 0); true
+     with Not_found -> false);
+  check_bool "first col width 60%" true
+    (try ignore
+         (Str.search_forward
+            (Str.regexp_string "<div class=\"col\" style=\"flex: 0 0 60%;\">")
+            out 0);
+       true
+     with Not_found -> false);
+  check_bool "second col width 40%" true
+    (try ignore
+         (Str.search_forward
+            (Str.regexp_string "<div class=\"col\" style=\"flex: 0 0 40%;\">")
+            out 0);
+       true
+     with Not_found -> false)
+
+let divs_col_no_width () =
+  let out = Divs.preprocess ":::cols\n:::col\nhi\n:::\n:::\n" in
+  check_bool "bare col emits no inline style" true
+    (try ignore (Str.search_forward (Str.regexp_string "<div class=\"col\">") out 0); true
+     with Not_found -> false);
+  check_bool "no flex inline style on bare col" true
+    (try
+       ignore (Str.search_forward (Str.regexp_string "flex: 0 0") out 0);
+       false
+     with Not_found -> true)
+
+let divs_col_malformed () =
+  (* "60" without %, "abc", "150%", "0%": each should fall through and
+     leave the [:::col ...] line literal in the output (no <div class=
+     "col"> emitted). *)
+  let cases = [ "60"; "abc"; "150%"; "0%" ] in
+  List.iter
+    (fun spec ->
+      let src = Printf.sprintf ":::col %s\nhi\n:::\n" spec in
+      let out = Divs.preprocess src in
+      let opened =
+        try
+          ignore (Str.search_forward (Str.regexp_string "<div class=\"col\"") out 0);
+          true
+        with Not_found -> false
+      in
+      Alcotest.(check bool)
+        (Printf.sprintf "malformed `%s` does not open a col div" spec) false opened;
+      let literal =
+        try
+          ignore
+            (Str.search_forward (Str.regexp_string (Printf.sprintf ":::col %s" spec)) out 0);
+          true
+        with Not_found -> false
+      in
+      Alcotest.(check bool)
+        (Printf.sprintf "malformed `%s` left as literal" spec) true literal)
+    cases
+
 let divs_no_match () =
   let src = "plain prose, no divs\n" in
   let out = Divs.preprocess src in
@@ -274,6 +336,9 @@ let () =
           Alcotest.test_case "notes" `Quick divs_notes;
           Alcotest.test_case "fragment" `Quick divs_fragment;
           Alcotest.test_case "nesting" `Quick divs_nesting;
+          Alcotest.test_case "cols basic widths" `Quick divs_cols_basic;
+          Alcotest.test_case "col no width" `Quick divs_col_no_width;
+          Alcotest.test_case "col malformed/out-of-range" `Quick divs_col_malformed;
           Alcotest.test_case "no match" `Quick divs_no_match;
         ] );
       ( "parse",

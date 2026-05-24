@@ -28,6 +28,19 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: literals and types
+
+- Almost every piece of an OCaml program is an *expression*.
+- Static semantics (type-check) before dynamic semantics (evaluate).
+- A *literal* is an expression that is already a value: `5`, `3.14`, `true`, `"hi"`.
+- Four primitive kinds dominate everyday code: `int`, `float`, `bool`, `string`.
+- OCaml's choices here differ from C, Python, Java; the differences are deliberate.
+- Why `1 + 2.0` fails, why `^` not `+` on strings, why `=` is not `==`.
+
+:::
+
 ## Expressions
 
 Almost every meaningful piece of an OCaml program is an

@@ -47,6 +47,21 @@ the warnings, the dual check for redundant clauses, and the
 practical advice on turning warnings into errors for serious
 projects.
 
+:::slide
+
+## This lecture: exhaustiveness
+
+- *Exhaustiveness*: do my clauses cover every value of the type?
+- The compiler answers, every time. If not, it names the missing case.
+- The single biggest reason to prefer variants over strings or
+  magic numbers for finite kinds.
+- Add a constructor: the compiler enumerates every place that
+  needs updating.
+- Today: reading the warnings, redundant-clause check, turning
+  warnings into errors for serious projects.
+
+:::
+
 ## A non-exhaustive match
 
 Take the traffic-light example from [Module 4](M04-L03-variants.html#exhaustiveness-checking):

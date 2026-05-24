@@ -27,6 +27,20 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: a whirlwind tour
+
+- A working tour, not a deep dive: see the *shape* of an OCaml program.
+- Building blocks you will meet today:
+  - literals, arithmetic, booleans, strings;
+  - `let` bindings, functions, type inference.
+- The toplevel reports *type + value* for every expression.
+- Mastery comes later; [Module 2](M02-L01-literals.html) onwards goes deep on each.
+- Click Run on every cell. Edit them. Play.
+
+:::
+
 The [previous](M01-L01-course-intro.html) [two](M01-L02-why-fp.html)
 lectures argued for functional programming in general and for OCaml
 in particular. This lecture is different: it is the quick whirlwind

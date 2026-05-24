@@ -51,6 +51,24 @@ result is a full map module specialised for string keys. This
 lecture explains how that works and shows you how to write your
 own.
 
+:::slide
+
+## This lecture: functors
+
+- Functions take values. Modules collect values.
+- Natural next step: *functions from modules to modules*.
+- In OCaml these are called *functors*.
+- Borrowed from category theory; here the practical meaning is
+  narrower: input one or more modules, output a new module.
+- Live at the module level (not values): cannot be stored in
+  lists or returned from `if`.
+- The standard library uses them everywhere: `Map.Make`,
+  `Set.Make`, `Hashtbl.Make`.
+- Plan: why we need them, the `Map.Make` pattern, writing your
+  own.
+
+:::
+
 ## Why we need them
 
 Most of the parameterisation we have done so far has been

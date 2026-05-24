@@ -172,16 +172,18 @@ mapping to ints, write a function:
 ```ocaml
 type direction = North | South | East | West
 
-let int_of_direction = function
-  | North -> 0
-  | South -> 1
-  | East  -> 2
-  | West  -> 3
+let int_of_direction d =
+  if d = North then 0
+  else if d = South then 1
+  else if d = East  then 2
+  else 3
 ```
 
 This is more verbose than C's implicit enumeration, but it is
-explicit: the mapping is in *one place* and the compiler will
-warn you if you forget a case.
+explicit: the mapping is in *one place*. (We will see in
+[Module 5](M05-L01-basic-patterns.html) how `match` makes this
+cascade much tidier, and how the compiler can warn you if a case
+is missing.)
 
 ## Constructors with payload
 

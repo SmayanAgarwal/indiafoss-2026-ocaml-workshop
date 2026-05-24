@@ -43,6 +43,24 @@ the *identity* of the failure is the whole story; use `result`
 ([next lecture](M08-L03-result-monad.html)) when callers want a
 message or an error code.
 
+:::slide
+
+## This lecture: the option monad
+
+- Previous lecture: a `bind` helper for sequencing optional
+  computations, plus a preview of `let*`.
+- This lecture turns that into a working tool.
+- Define `let*` formally as a *let-operator*.
+- Use the standard library's `Option.bind` and `Option.map`.
+- Walk through a realistic example end to end.
+- The option monad is the workhorse for "this step may fail,
+  and we do not need to say why".
+- Use `option` when the *identity* of the failure is the whole
+  story; `result` ([next lecture](M08-L03-result-monad.html))
+  when callers want a message.
+
+:::
+
 ## Definition
 
 A monad is a type plus two operations. Concretely for `option`:

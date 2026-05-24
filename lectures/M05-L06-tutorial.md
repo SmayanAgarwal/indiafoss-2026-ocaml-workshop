@@ -48,6 +48,22 @@ We will build everything from scratch, so by the end of this
 lecture you should have a small working library you could copy
 into a project and extend.
 
+:::slide
+
+## This tutorial: a tiny expression language
+
+- Build an algebraic data type for arithmetic expressions.
+- Four functions, each a pattern match on the same type:
+  - *Evaluator*: produce a number.
+  - *Pretty printer*: produce a string.
+  - *Depth*: how tall is the tree.
+  - *Constant folder*: simplify by collapsing constants.
+- This is the workhorse shape: parsers, interpreters, query
+  compilers, transformers all walk trees this way.
+- From scratch; by the end, a small library you could extend.
+
+:::
+
 ## The type
 
 ```ocaml

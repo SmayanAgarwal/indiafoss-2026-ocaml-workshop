@@ -43,6 +43,22 @@ patterns: how to ignore record fields, how to rename them on the
 way in, how to walk a tree, how to handle pairs of options,
 and a few related idioms that recur in real code.
 
+:::slide
+
+## This lecture: records and variants in patterns
+
+- Pattern-matching on records and variants is the day-to-day work.
+- All the pieces are in hand: records (M04-L02), variants (M04-L03),
+  basic patterns (L1), nesting / or / guards (L2, L3).
+- This lecture pulls them together.
+- Idioms covered:
+  - Naming only the fields you need; renaming on the way in.
+  - Walking a tree.
+  - Handling pairs of `option`.
+  - Combinations that recur in real code.
+
+:::
+
 ## Record patterns: name the fields you need
 
 Suppose we have a user record:
@@ -162,16 +178,16 @@ that payload:
 type shape =
   | Circle of float
   | Rectangle of float * float
-  | Polygon of float list
+  | Triangle of float * float * float
 
 let perimeter = function
   | Circle r -> 2.0 *. 3.14159 *. r
   | Rectangle (w, h) -> 2.0 *. (w +. h)
-  | Polygon sides -> List.fold_left (+.) 0.0 sides
+  | Triangle (a, b, c) -> a +. b +. c
 
 let _ = perimeter (Circle 1.0)
 let _ = perimeter (Rectangle (3.0, 4.0))
-let _ = perimeter (Polygon [1.0; 2.0; 3.0])
+let _ = perimeter (Triangle (3.0, 4.0, 5.0))
 ```
 
 :::slide
@@ -182,16 +198,16 @@ let _ = perimeter (Polygon [1.0; 2.0; 3.0])
 type shape =
   | Circle of float
   | Rectangle of float * float
-  | Polygon of float list
+  | Triangle of float * float * float
 
 let perimeter = function
   | Circle r -> 2.0 *. 3.14159 *. r
   | Rectangle (w, h) -> 2.0 *. (w +. h)
-  | Polygon sides -> List.fold_left (+.) 0.0 sides
+  | Triangle (a, b, c) -> a +. b +. c
 ```
 
 - Each clause matches a constructor.
-- Binds the payload to a name: `r`, `(w, h)`, `sides`.
+- Binds the payload to a name: `r`, `(w, h)`, `(a, b, c)`.
 - Pattern says "this kind; here's how to take its data apart".
 
 :::
@@ -199,12 +215,12 @@ let perimeter = function
 Each clause's pattern is a constructor with a sub-pattern for the
 payload. `Circle r` binds the payload to `r`. `Rectangle (w, h)`
 binds a *tuple* payload by destructuring it directly: `w` is the
-width, `h` the height. `Polygon sides` binds the entire payload
-(a list) to `sides`; the function body then folds over the list.
+width, `h` the height. `Triangle (a, b, c)` does the same for a
+three-tuple payload, binding each side length.
 
 The compiler reads off the type from the constructor names. We
 did not have to write `: shape` anywhere; the use of `Circle`,
-`Rectangle`, and `Polygon` is enough.
+`Rectangle`, and `Triangle` is enough.
 
 Note one place this differs from a function taking two arguments.
 `Rectangle (w, h)` is a *constructor applied to a tuple*, not a

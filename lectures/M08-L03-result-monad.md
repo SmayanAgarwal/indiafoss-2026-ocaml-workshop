@@ -40,6 +40,24 @@ This lecture defines `result`, shows the standard library's
 error messages, and discusses the design trade-offs of using
 `result` at scale.
 
+:::slide
+
+## This lecture: the result monad
+
+- `option`: "maybe a value, maybe not".
+- `result`: "either a value, or an error with information".
+- Both shapes carry a value on success; only `result` carries
+  information on failure.
+- Monadic plumbing is identical: same `bind`, same `let*`, same
+  intuition.
+- Plan:
+  - Recap the `result` type from Module 4.
+  - Use `Result.bind` and `let*`.
+  - Walk through a parser that returns informative messages.
+  - Discuss the design trade-offs at scale.
+
+:::
+
 ## The type
 
 OCaml's standard library defines:

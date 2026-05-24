@@ -26,6 +26,21 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: currying
+
+- A multi-argument function is secretly a *chain* of one-argument functions.
+- The shape is called *currying* (after Haskell Curry).
+- It enables *partial application*: supply some arguments, get back a function wanting the rest.
+- This is the Module 3 idea that most surprises C / Java / Python arrivals.
+- Explains a lot of OCaml's API style:
+  - why `List.map` takes the function first;
+  - why operators have prefix forms like `(+)`.
+- Four parts: unfolding, partial application, argument order, the tuple alternative.
+
+:::
+
 In OCaml, a function with multiple arguments is secretly a *chain*
 of one-argument functions. This shape is called *currying*, after
 the logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry)

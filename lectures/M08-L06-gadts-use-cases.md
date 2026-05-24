@@ -38,6 +38,23 @@ shape is uninteresting but whose *type* carries information the
 program needs at compile time. GADTs are how OCaml encodes
 witnesses naturally.
 
+:::slide
+
+## This lecture: GADTs in real code
+
+- Last lecture's toy expression AST leaves a misleading
+  impression: that GADTs are mostly for interpreters.
+- They are not. Four idioms where GADTs earn their keep:
+  - Typed pretty-printers.
+  - Heterogeneous lists.
+  - Type-safe APIs that prevent illegal states.
+  - `printf`-like format strings (type-safe).
+- Common thread: *type witnesses*. A value whose runtime shape
+  is uninteresting; whose *type* carries information.
+- GADTs are how OCaml encodes witnesses naturally.
+
+:::
+
 ## Use 1: typed pretty-printers
 
 Suppose you want one function `show` that pretty-prints any value

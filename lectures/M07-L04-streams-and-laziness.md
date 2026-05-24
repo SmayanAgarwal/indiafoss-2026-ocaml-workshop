@@ -44,6 +44,23 @@ thunk (a `unit -> 'a` function); then a stream backed by a
 [`Lazy.t`](https://v2.ocaml.org/api/Lazy.html), which adds *memoization*
 so each tail is computed at most once.
 
+:::slide
+
+## This lecture: streams and laziness
+
+- Finite data so far; many problems want *infinite* sequences:
+  primes, Fibonacci, input lines, game-tree moves.
+- OCaml is strict: `1 :: heavy ()` runs `heavy ()` immediately.
+- Need to *delay* the tail until somebody asks.
+- Build the *stream*, the standard functional answer, in two
+  steps:
+  - Stream backed by a thunk (`unit -> 'a`).
+  - Stream backed by `Lazy.t`, which adds memoization.
+- Recursive values, the sieve of Eratosthenes, and lazy
+  Fibonacci along the way.
+
+:::
+
 ## Recursive values
 
 OCaml lets you write `let rec f x = ...` for recursive *functions*.

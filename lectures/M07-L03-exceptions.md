@@ -57,6 +57,24 @@ spend the lecture on what exceptions are, how to raise and catch
 them, and the practical question of when an exception is the
 right shape and when an `option` or `result` is.
 
+:::slide
+
+## This lecture: exceptions
+
+- Some functions have no answer: `List.hd []`, `1 / 0`,
+  `int_of_string "hello"`.
+- *Typed* approach (Module 4): wrap failure in `option` or
+  `result`.
+- *This lecture*: the other approach, *exceptions*.
+- An exception interrupts evaluation and propagates up the call
+  stack until something catches it.
+- Cheap at the call site; the cost is that failure is invisible
+  to the type.
+- Plan: built-ins, `raise` and `try ... with`, defining your own,
+  when to choose exceptions vs `option` / `result`.
+
+:::
+
 ## Built-in exceptions
 
 OCaml's standard library predefines a handful of common

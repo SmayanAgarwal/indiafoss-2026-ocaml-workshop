@@ -52,6 +52,8 @@ type kind =
   | Solution
   | Quiz_mcq of string * int  (* id, 1-based source line of the opening ::: *)
   | Quiz_code of string * int
+  | Cols
+  | Col of int option  (* width as integer percent, e.g. Some 60; None = flex equally *)
 
 (* Sanitise an author-supplied id to a slug shape that survives in
    URL fragments. Lowercase, [a-z0-9-] only, collapse repeats,
@@ -108,6 +110,24 @@ let parse_quiz_kind rest =
     Some (`Code, parse_optional_id tail)
   else None
 
+(* Parse the tail of a [:::col ...] open. Accepts:
+     ""        -> Some None        (no width: flex equally with siblings)
+     "60%"     -> Some (Some 60)   (1..99 inclusive)
+   Anything else (e.g. "60" without %, "abc", "150%", "0%") yields
+   None, so the caller falls through and the line stays as plain
+   text -- same fate as any unrecognised [:::foo] today. *)
+let parse_col_width tail =
+  let t = String.trim tail in
+  if t = "" then Some None
+  else
+    let n = String.length t in
+    if n < 2 || t.[n - 1] <> '%' then None
+    else
+      let digits = String.sub t 0 (n - 1) in
+      match int_of_string_opt digits with
+      | Some w when w >= 1 && w <= 99 -> Some (Some w)
+      | _ -> None
+
 (* Quiz state is threaded through preprocess as a mutable counter
    used only for positional fallback ids. [line_no] is 1-based and
    refers to the input line of the opening [:::] marker; we stamp
@@ -125,6 +145,15 @@ let parse_open ~quiz_counter ~line_no line =
     | "fragment" -> Some Fragment
     | "notes" -> Some Notes
     | "solution" -> Some Solution
+    | "cols" -> Some Cols
+    | _ when rest = "col" -> Some (Col None)
+    | _ when String.length rest >= 4
+             && String.sub rest 0 4 = "col "
+             ->
+      let tail = String.sub rest 4 (String.length rest - 4) in
+      (match parse_col_width tail with
+       | Some w -> Some (Col w)
+       | None -> None)
     | _ ->
       (match parse_quiz_kind rest with
        | Some (kind, explicit_id) ->
@@ -157,6 +186,9 @@ let open_tag = function
       Printf.sprintf
         "<div class=\"quiz quiz-code\" data-quiz-id=\"%s\" data-quiz-line=\"%d\">"
         id line
+  | Cols -> "<div class=\"cols\">"
+  | Col None -> "<div class=\"col\">"
+  | Col (Some w) -> Printf.sprintf "<div class=\"col\" style=\"flex: 0 0 %d%%;\">" w
 
 let close_tag = function
   | Slide | Subslide -> "</section>"
@@ -164,6 +196,7 @@ let close_tag = function
   | Notes -> "</aside>"
   | Solution -> "</details>"
   | Quiz_mcq _ | Quiz_code _ -> "</div>"
+  | Cols | Col _ -> "</div>"
 
 (* Inside [:::quiz code], the FIRST ocaml fence is the student cell
    and any subsequent ones are test cells (hidden assertion code).

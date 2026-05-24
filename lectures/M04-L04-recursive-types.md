@@ -52,6 +52,21 @@ for processing structured data.
 combinators like `map` and [`fold`](M06-L04-fold.html). The
 foundation, the *types themselves*, is what we introduce now.
 
+:::slide
+
+## This lecture: recursive types
+
+- A variant constructor can carry a value of *the same type*.
+- That self-reference describes data of *unbounded size* with a
+  *fixed* type declaration: lists, trees, expressions.
+- Connects recursion at the function level (M03) with recursion
+  at the type level.
+- A recursive type calls for a recursive function with the same
+  shape: the code mirrors the data.
+- Foundation for pattern matching (M05) and `map` / `fold` (M06).
+
+:::
+
 ## A first recursive variant: a list of integers
 
 Start with a list of *integers*. Conceptually, a list is either

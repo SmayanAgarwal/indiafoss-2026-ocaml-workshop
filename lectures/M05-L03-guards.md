@@ -47,6 +47,20 @@ a cost: they suppress exhaustiveness checking for the guarded
 clause. We will see why and what to do about it in this lecture,
 and revisit the trade-off in [Lecture 4](M05-L04-exhaustiveness.html#exhaustiveness-and-guards-one-more-reminder).
 
+:::slide
+
+## This lecture: guards
+
+- A pattern matches on *shape* (this constructor, that literal).
+- A guard matches on a *computation*: positive `int`, long string.
+- Syntax: `| pat when <bool-expr> -> rhs`.
+- The clause fires only if the pattern matches *and* the guard is true.
+- The restriction is deliberate: pure patterns are what the
+  compiler can check for exhaustiveness.
+- Cost: guarded clauses suppress that check; we revisit in L4.
+
+:::
+
 ## A first example
 
 ```ocaml

@@ -48,6 +48,20 @@ lecture where it starts. Most of the data structures you will
 design over the rest of the course are records, variants, or
 combinations of the two.
 
+:::slide
+
+## This lecture: records
+
+- A *record* is a bundle, like a tuple, but with components named.
+- For 2 or 3 self-evident positions: tuple. Otherwise: record.
+- Same role as a C `struct` or a Java data class.
+- Two semantic twists worth internalising:
+  - *Immutable* by default.
+  - *Structurally* compared, like an `int` or a `string`.
+- Where the data-modelling habit starts.
+
+:::
+
 ## Declaring a record type
 
 Unlike tuples, records require a *type declaration* before you can
@@ -333,7 +347,70 @@ the end of this lecture.
 
 ## Records vs tuples: when to use which
 
-We have now seen both compound types. Here is the practical guidance:
+We have now seen both compound types. Before the practical
+guidance, a motivating example. Suppose you want to model a
+*rectangle* by two corner points. The tuple form is
+`(int * int) * (int * int)`. Now: which point is which corner?
+Bottom-left first, top-right second? Or top-left, bottom-right?
+The type does not say; callers have to guess (or read the doc
+comment). With a record:
+
+```ocaml
+type rectangle = {
+  bottom_left : int * int;
+  top_right   : int * int;
+}
+
+let r = { bottom_left = (1, 2); top_right = (5, 6) }
+```
+
+The field names make the convention explicit at the type and at
+every use site. Two components is on the edge of "tuples are
+fine"; the moment a position is not self-evident, the record
+wins even at small arity.
+
+:::slide
+
+## Why named fields: rectangles
+
+:::cols
+:::col 65%
+
+A rectangle from two corner points:
+
+```ocaml
+type point = int * int
+
+type rect_tuple = point * point
+
+type rectangle = {
+  bottom_left : point;
+  top_right   : point;
+}
+```
+
+- Tuple: which corner is *first*?
+- Record: the field name says.
+- Two components, positions not self-evident.
+
+:::
+:::col 35%
+
+<svg viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 320px;">
+  <rect x="40" y="40" width="180" height="120"
+        fill="#dbe9fa" stroke="#1f3b6f" stroke-width="2"/>
+  <circle cx="40" cy="160" r="5" fill="#1f3b6f"/>
+  <circle cx="220" cy="40" r="5" fill="#1f3b6f"/>
+  <text x="40" y="182" font-family="sans-serif" font-size="14"
+        text-anchor="start" fill="#1f3b6f">bottom_left</text>
+  <text x="220" y="30" font-family="sans-serif" font-size="14"
+        text-anchor="end" fill="#1f3b6f">top_right</text>
+</svg>
+
+:::
+:::
+
+:::
 
 :::slide
 
@@ -343,11 +420,12 @@ Use a **record** when:
 
 - More than three fields.
 - Fields have meaningful names (`first_name`, `phone`).
+- Positions are *not* self-evident (rectangle corners).
 - You want functional update of a few fields (`with`).
 
 Use a **tuple** when:
 
-- Two or three components; positions are self-evident.
+- Two or three components; positions *are* self-evident.
 - Short-lived (destructure right after building).
 
 :::

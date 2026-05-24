@@ -26,6 +26,21 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: recursion
+
+- A *recursive* function calls itself.
+- In OCaml, recursion replaces most uses of `for` / `while` loops.
+- Every recursive function has the same three-part shape:
+  - one or more *base cases* (direct answer, no recursion);
+  - a *recursive case* on a smaller input;
+  - termination: the smaller input approaches a base case.
+- Recursion in OCaml is cheap; the compiler is good at it.
+- Tail recursion (next lecture) makes it efficient.
+
+:::
+
 A recursive function is one that calls itself. In a language without
 mutable loop variables, recursion is the main way to "do something N
 times" or "walk through a structure." This lecture is about how to

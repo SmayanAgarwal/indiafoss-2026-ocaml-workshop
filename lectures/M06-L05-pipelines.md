@@ -44,6 +44,20 @@ packages two functions into one without naming an intermediate
 argument. Both are tiny, both are everyday OCaml, and both make
 higher-order code dramatically more readable.
 
+:::slide
+
+## This lecture: pipelines and composition
+
+- We have `map`, `filter`, `fold`, and `fun x -> ...`. How to *chain* them?
+- Real code: split, drop short, lowercase, count distinct. Four steps.
+- Nested calls read inside-out; the logic flows the wrong way.
+- Two pieces of plumbing fix that:
+  - The pipeline operator `|>`.
+  - Function composition.
+- Tiny operators; everyday OCaml; higher-order code becomes readable.
+
+:::
+
 ## The pipeline operator `|>`
 
 The operator `|>` is defined, in its entirety, like this:

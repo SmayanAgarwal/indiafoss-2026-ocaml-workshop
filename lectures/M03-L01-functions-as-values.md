@@ -280,6 +280,27 @@ or `let greeting = "hello"`: a name bound to a value. The only
 difference is that the *value* happens to be a function. The
 language does not distinguish.
 
+A small corner of this idea worth naming: a function whose
+parameter is the unit value `()` is called a *thunk*. Its type is
+`unit -> 'a` for some `'a`. The body runs not when the thunk is
+defined, but each time you call it with `()`:
+
+```ocaml
+let greet () = "hello"
+
+let _ = greet
+let _ = greet ()
+```
+
+`greet` is the thunk: a value of type `unit -> string`. The first
+`let _ = greet` does not invoke the body; it simply names the
+function value. The second, `greet ()`, applies the thunk and
+produces `"hello"`. Each application re-runs the body. The thunk
+is the canonical way to bundle a computation as a value and
+decide *later* when to perform it; you will see thunks again in
+[M07-L04](M07-L04-streams-and-laziness.html), where a stream's
+tail is exactly a `unit -> 'a stream` thunk.
+
 ## Functions can be returned from other functions
 
 The next step: a function whose return value is *another function*.

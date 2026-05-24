@@ -45,6 +45,22 @@ run in polynomial time. We close on the catch that ties this
 lecture and the previous one together: memoization only works for
 *pure* functions.
 
+:::slide
+
+## This lecture: memoization
+
+- The `Lazy.t` trick last lecture: compute on first call, save
+  the answer, return the saved answer next time.
+- That trick has a name: *memoization*.
+- Lift it from streams to a general technique:
+  - A `memo` combinator that wraps any function with a cache.
+  - A `memo_rec` variant that handles *recursive* functions.
+- Worked examples: naive O(2^n) Fibonacci becomes linear;
+  naive edit distance becomes polynomial.
+- The catch: memoization only works for *pure* functions.
+
+:::
+
 ## A small helper for timing
 
 To see speedups we need to *measure* them. A short helper:

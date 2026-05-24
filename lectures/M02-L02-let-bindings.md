@@ -26,6 +26,20 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: `let` bindings
+
+- Literals gave us values; this lecture gives us *names*.
+- Two forms of `let`, same keyword, different scope:
+  - `let x = e1 in e2`: local to an expression.
+  - `let x = e`: top-level definition, visible to the rest of the file.
+- Typing rule (static) and evaluation rule (dynamic) for each.
+- *Shadowing*: reusing a name introduces a new binding, not mutation.
+- Almost every line of OCaml has a `let` in it.
+
+:::
+
 The [previous lecture](M02-L01-literals.html) introduced literals:
 the smallest building blocks of a program. This lecture introduces
 the next layer up: *names*. Naming a value lets you compute it once

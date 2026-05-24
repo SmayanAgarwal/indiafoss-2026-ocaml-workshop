@@ -26,6 +26,20 @@ reading:
 
 :::
 
+:::slide
+
+## This lecture: local helpers and mutual recursion
+
+- Two related topics, both ordinary features of day-to-day OCaml.
+- *Local* function definitions: helpers inside another function with `let ... in`.
+  - Scoped only to the outer function; keeps the top level clean.
+- *Mutual recursion*: two or more functions that call each other.
+  - Glued with the `and` keyword; one `let rec ... and ... and ...`.
+- Neither topic is conceptually deep.
+- The point is the *conventions*: when local vs. top-level, and what `and` is for.
+
+:::
+
 Two related topics in this lecture. The first is *local* function
 definitions: helpers defined inside another function with
 `let ... in`, scoped only to that outer function. The second is

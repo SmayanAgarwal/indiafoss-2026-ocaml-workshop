@@ -49,6 +49,22 @@ elegant data structure that is exactly the sort of thing a module
 system is designed for: a few operations on an abstract type,
 maintaining an invariant we do not want callers to see or break.
 
+:::slide
+
+## What this tutorial does
+
+- Build a *functional queue* (FIFO) using the classic two-stack
+  trick.
+- Wrap it in a module with a signature that hides the
+  representation.
+- Turn the module into a *functor* parameterised by the element
+  type, with a printer attached.
+- Uses every piece of vocabulary from Module 7: module,
+  signature, abstract type, functor.
+- Walk away with one worked example covering the whole module.
+
+:::
+
 ## The implementation, unsealed
 
 We start with the raw implementation, with no signature attached.

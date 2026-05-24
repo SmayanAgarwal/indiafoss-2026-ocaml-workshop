@@ -42,6 +42,18 @@ functions, thinking about [polymorphic types](M02-L03-types-and-inference.html#p
 carry over to [`filter`](M06-L03-filter.html), [`fold`](M06-L04-fold.html),
 and everything else in this module.
 
+:::slide
+
+## This lecture: `map`
+
+- `map f xs`: a new list, each element transformed by `f`.
+- Type: `('a -> 'b) -> 'a list -> 'b list`. Same length, same order.
+- The most-used higher-order function in everyday OCaml.
+- Pattern: take a list, get a list of "the same things, transformed".
+- We write it from scratch; the moves carry over to `filter` and `fold`.
+
+:::
+
 ## Writing `map` from scratch
 
 We saw a hint of `map` at the end of [Lecture 1](M06-L01-functions-revisited.html#why-bother-the-abstraction-principle).

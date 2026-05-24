@@ -153,6 +153,18 @@ int * int` where an `int * int` is expected, and vice versa. Each
 tuple shape is its own type, distinguished by both the arity and
 the types of the components.
 
+You can watch the compiler reject the mismatch in the live cell
+below: the annotation says `int * int`, but the value is a triple.
+
+```ocaml skip
+let _ : int * int = (1, 2, 3)
+```
+
+The error names the mismatch explicitly: the expression has type
+`int * int * int` but an expression of type `int * int` was
+expected. The rejection happens at type-checking time, before any
+code runs.
+
 :::slide
 
 ## Fixed arity is part of the type
@@ -164,9 +176,22 @@ let _ : int * int * int = (1, 2, 3)
 
 - *Arity* = number of components a tuple carries.
 - These are *different types*: arity 2 vs arity 3.
-- Can't pass an `int * int * int` where `int * int` is expected.
 - Contrast Python: 2-tuple and 3-tuple are both `tuple`.
 - OCaml: static checking, but a fresh type for every shape.
+
+:::
+
+:::slide
+
+## Try it: arity is a type error
+
+```ocaml skip
+let _ : int * int = (1, 2, 3)
+```
+
+- Click **Run**: the binding fails to type-check.
+- Error: expression has type `int * int * int`, expected `int * int`.
+- Rejected before any code runs.
 
 :::
 
@@ -296,7 +321,10 @@ let _ = distance (0.0, 0.0) (3.0, 4.0)
 The two parameters are *patterns* `(x1, y1)` and `(x2, y2)`. When
 you call `distance (0.0, 0.0) (3.0, 4.0)`, OCaml matches the first
 argument against `(x1, y1)`, binding `x1 = 0.0` and `y1 = 0.0`,
-and similarly for the second.
+and similarly for the second. We will study pattern matching deeply
+in [Module 5](M05-L01-basic-patterns.html), where you will see that
+function parameters are one of several places where any OCaml
+pattern can appear.
 
 :::slide
 
@@ -314,7 +342,7 @@ let _ = distance (0.0, 0.0) (3.0, 4.0)
 - Result: `float = 5.0`.
 - Each parameter is a *pattern* `(x1, y1)`.
 - Inferred type: `float * float -> float * float -> float`.
-- Two pairs in, one float out.
+- Patterns in depth in [Module 5](M05-L01-basic-patterns.html).
 
 :::
 
@@ -495,19 +523,11 @@ let pairs = [(1, "one"); (2, "two"); (3, "three")]
 ```
 
 The type of `pairs` is `(int * string) list`: a list of `int *
-string` pairs. To find a value by key, you walk the list and check
-each pair:
-
-```ocaml
-let pairs = [(1, "one"); (2, "two"); (3, "three")]
-
-let rec lookup key = function
-  | [] -> None
-  | (k, v) :: rest ->
-      if k = key then Some v else lookup key rest
-
-let _ = lookup 2 pairs
-```
+string` pairs. Building these tables is something we can do now;
+searching them by key needs pattern matching, which is the topic
+of [Module 5](M05-L01-basic-patterns.html). The standard library
+function `List.assoc_opt` is what you reach for once you have
+`option` and patterns in hand.
 
 :::slide
 
@@ -520,70 +540,7 @@ let pairs = [(1, "one"); (2, "two"); (3, "three")]
 ```
 
 - Type: `(int * string) list`.
-
-:::
-
-:::slide
-
-## Tuples in collections: searching
-
-```ocaml
-let pairs = [(1, "one"); (2, "two"); (3, "three")]
-let rec lookup key = function
-  | [] -> None
-  | (k, v) :: rest ->
-      if k = key then Some v else lookup key rest
-
-let _ = lookup 2 pairs
-```
-
-- Result: `string option = Some "two"`.
-- `(k, v) :: rest`: nested pattern destructuring head and tail.
-- `option` in lecture 5; `function` in Module 5.
-
-:::
-
-The pattern `(k, v) :: rest` is a *nested pattern*: it matches a
-non-empty list whose head is a pair, binding the head's two
-components and the tail in one go.
-[Module 5](M05-L02-nested-and-or-patterns.html) is largely about
-how patterns nest like this; for now, just notice that you can
-destructure several layers at once.
-
-The standard library has a function with this exact shape:
-`List.assoc_opt`. We will reach for it in
-[M04-L04](M04-L04-recursive-types.html#chained-option-access),
-when we have introduced `option` properly.
-
-## Tuples and higher-order functions
-
-A small preview of what is coming in
-[Module 6](M06-L02-map.html). Suppose you want to build a table of
-squares for `1` through `5`. You can use `List.map` with an
-anonymous function that returns a pair:
-
-```ocaml
-let nums = [1; 2; 3; 4; 5]
-let _ = List.map (fun x -> (x, x * x)) nums
-```
-
-The result is `[(1,1); (2,4); (3,9); (4,16); (5,25)]`. Each input
-maps to a pair of `(input, square)`. This idiom: *map a list into
-pairs* to build a small lookup table from a computation, is everywhere
-in OCaml code.
-
-:::slide
-
-## Tuples and higher-order functions
-
-```ocaml
-let nums = [1; 2; 3; 4; 5]
-let _ = List.map (fun x -> (x, x * x)) nums
-```
-
-- Result: `[(1,1); (2,4); (3,9); (4,16); (5,25)]`.
-- Each input maps to a pair `(input, square)`.
-- Common pattern: build a table from a computation.
+- Searching by key needs pattern matching (Module 5).
 
 :::
 

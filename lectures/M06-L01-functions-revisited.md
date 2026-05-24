@@ -341,7 +341,7 @@ let on_click handler =
 
 let _ =
   on_click (fun msg ->
-    print_endline ("got event: " ^ msg))
+    "got event: " ^ msg)
 ```
 
 - `on_click` calls its argument `handler` with an event description.
