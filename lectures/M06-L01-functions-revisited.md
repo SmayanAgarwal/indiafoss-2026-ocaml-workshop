@@ -38,6 +38,20 @@ like a perfectly ordinary `let` binding; `make_adder 5` returns a
 brand new function value; `apply_twice f x` takes a function as an
 argument.
 
+:::slide
+
+## From M3, leaned on
+
+- M3: functions are **first-class values** (named, passed, returned, stored).
+- M6: we lean on that idea for the entire module.
+- A **higher-order function** is one that:
+  - takes a function as an argument, *or*
+  - returns a function as its result
+  - (most interesting ones do both).
+- Lets you extract the *pattern* of a computation from the *details*; reuse the same pattern across many concrete computations.
+
+:::
+
 This module is where we take that idea and lean on it. The remaining
 five lectures in Module 6 are, in a sense, a single sustained
 exercise in higher-order programming: writing functions that take
@@ -57,6 +71,19 @@ of mileage opens up: you can extract the *pattern* of a computation
 from the *details* it operates on, parameterise the pattern by the
 details, and reuse the same pattern across dozens of concrete
 computations.
+
+:::slide
+
+## The plan for Module 6
+
+- **L1** (today): higher-order functions; the anatomy.
+- **L2** ([`map`](M06-L02-map.html)): apply a function to each element.
+- **L3** ([`filter`](M06-L03-filter.html)): keep elements that satisfy a predicate.
+- **L4** ([`fold`](M06-L04-fold.html)): collapse a collection to a value.
+- **L5** ([pipelines](M06-L05-pipelines.html)): the `|>` operator.
+- **L6** ([tutorial](M06-L06-tutorial.html)): rebuild a sizeable slice of the standard library out of these few pieces.
+
+:::
 
 The canonical paper on this style is John Hughes's
 [*Why Functional Programming Matters*](https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf)

@@ -36,6 +36,19 @@ it, so reasoning about code reduces to
 [substituting values for names](M01-L02-why-fp.html#equational-reasoning),
 and the compiler can inline and reorder freely.
 
+:::slide
+
+## Six modules without mutation
+
+- M1-M6: every value immutable. Fresh state = fresh value.
+- Functional-style payoff:
+  - `f x` gives the same answer wherever you call it;
+  - reasoning reduces to [substitution](M01-L02-why-fp.html#equational-reasoning);
+  - the compiler can inline and reorder freely.
+- But sometimes mutation is the right tool.
+
+:::
+
 But mutation is, sometimes, the right tool. A statistics routine
 walks a stream of numbers and updates a running sum. A web server
 counts how many requests it has handled. A memoization table caches
@@ -49,6 +62,19 @@ language offers for opting in is the *mutable reference cell*, or
 `ref` for short. This module is about `ref` and the other
 mutable building blocks (mutable record fields, arrays), and about
 when reaching for them is worth what you give up.
+
+:::slide
+
+## When mutation is the right tool
+
+- A statistics routine: running sum across a stream.
+- A web server: request counter.
+- A memoization table: cache results across calls.
+- Threading the state through every call by hand is noisier than it needs to be.
+- OCaml's stance (unlike Haskell): mutation **available**, not the default.
+- Simplest opt-in: the **mutable reference cell**, or `ref`.
+
+:::
 
 ## A ref is a mutable box
 

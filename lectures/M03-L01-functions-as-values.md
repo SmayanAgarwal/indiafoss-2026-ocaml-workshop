@@ -37,6 +37,20 @@ in the language. This lecture is about what that actually means in
 practice, what new things you can express because of it, and the
 syntax for creating functions on the fly.
 
+:::slide
+
+## Functions are values
+
+- `42` is a value. `"hello"` is a value. **A function is a value too.**
+- You can:
+  - name a function with `let`,
+  - pass it as an argument,
+  - return it from another function,
+  - store it in a list, tuple, record.
+- The slogan: functions are **first-class values**.
+
+:::
+
 If you arrived from C or Python, the phrase "functions are values"
 may sound right but the practice takes adjusting to. Functions in C
 are *pointers to code*, not really values: you can pass a function
@@ -58,6 +72,19 @@ that functions are values; the next four lectures
 put the machinery to work. By the end of the module you will be
 writing functions that produce functions, returning functions from
 functions, and reasoning about function types without effort.
+
+:::slide
+
+## The plan for Module 3
+
+- **L1** (today): functions as values; anonymous functions.
+- **L2** ([recursion](M03-L02-recursion.html)): writing self-referential functions.
+- **L3** ([currying](M03-L03-currying.html)): every multi-argument function in OCaml is really a chain of one-argument functions.
+- **L4** ([tail recursion](M03-L04-tail-recursion.html)): recursion that runs in constant stack.
+- **L5** ([local and mutual recursion](M03-L05-local-and-mutual.html)): `let rec ... and ...` and `let rec ... in ...`.
+- **L6** ([tutorial](M03-L06-tutorial.html)): putting it together.
+
+:::
 
 ## Two ways to define a function
 

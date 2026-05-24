@@ -36,6 +36,20 @@ to walk a [tree](M04-L04-recursive-types.html), to handle an
 [option](M04-L04-recursive-types.html), to write the body of
 nearly every interesting function.
 
+:::slide
+
+## Pattern matching moves to the centre
+
+- You have seen `match ... with` and `let (x, y) = ...` since [M2](M02-L02-let-bindings.html), in small doses.
+- From this module on, pattern matching is **everywhere**:
+  - take apart a [tuple](M04-L01-tuples.html),
+  - dispatch on a [constructor](M04-L03-variants.html),
+  - walk a [tree](M04-L04-recursive-types.html),
+  - handle an [option](M04-L04-recursive-types.html).
+- More than any other single feature, **what makes OCaml feel like OCaml**.
+
+:::
+
 The shape we start with is the `match` expression, the way you ask
 "what shape is this value, and what should I do for each shape?"
 In a curly-brace language you would reach for `switch`, or a
@@ -58,6 +72,19 @@ about exhaustiveness, the most load-bearing static check in the
 language. [Lecture 5](M05-L05-records-variants.html) puts it all
 together for records and variants. [Lecture 6](M05-L06-tutorial.html)
 is the tutorial.
+
+:::slide
+
+## The plan for Module 5
+
+- **L1** (today): the three simplest patterns: literal, variable, wildcard.
+- **L2** ([nested and or-patterns](M05-L02-nested-and-or-patterns.html)): patterns inside patterns.
+- **L3** ([guards](M05-L03-guards.html)): `when`-guards on cases.
+- **L4** ([exhaustiveness](M05-L04-exhaustiveness.html)): the most load-bearing static check in the language.
+- **L5** ([records & variants](M05-L05-records-variants.html)): putting it together on real data types.
+- **L6** ([tutorial](M05-L06-tutorial.html)).
+
+:::
 
 ## The shape of a `match`
 
