@@ -1,6 +1,6 @@
 ---
 title: "GADTs: use cases beyond toy interpreters"
-lecture_no: 6
+lecture_no: 8
 week: 8
 duration_target_min: 22
 concepts: [type witnesses, heterogeneous lists, type-safe APIs, printf-like format types]
@@ -20,13 +20,13 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">GADTs: use cases beyond toy interpreters</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 6</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 8</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-The [toy expression-AST from Lecture 5](M08-L05-gadts-basics.html#the-gadt-form)
+The [toy expression-AST from Lecture 7](M08-L07-gadts-basics.html#the-gadt-form)
 is the standard "first example" of GADTs. It is useful for showing
 the mechanics, but it leaves a misleading impression: that GADTs
 are mostly for interpreters. They are not. This lecture shows four
@@ -324,7 +324,7 @@ GADTs the default.
 
 ## A quick check
 
-:::quiz mcq id=M08-L06-q3
+:::quiz mcq id=M08-L08-q3
 In the `show` function with a GADT witness, why does
 `show (T_pair (T_int, T_string)) (3, "hi")` type-check while
 `show T_int (3, "hi")` does not?
@@ -343,7 +343,7 @@ string) ty`, so the second argument must be `int * string`. `T_int
 not match `int`, hence the type error in the second case.
 :::
 
-:::quiz mcq id=M08-L06-q2
+:::quiz mcq id=M08-L08-q2
 Why is a heterogeneous list (`'a hlist`) different from a tuple
 like `int * string * bool`?
 
@@ -403,7 +403,7 @@ let _ = convert String_t "hello"
 
 A code quiz:
 
-:::quiz code id=M08-L06-q1
+:::quiz code id=M08-L08-q1
 Extend the witness GADT with a `Bool_t : bool t` constructor and
 write `convert3 : type a. a t -> a -> string` that handles all
 three.
@@ -456,7 +456,7 @@ output.
 
 ## What is next
 
-Lecture 7: the Module 8 **tutorial**.
+Lecture 10: the Module 8 **tutorial**.
 
 - We combine the option monad, GADTs, and pattern matching.
 - Build a tiny well-typed expression evaluator.
@@ -464,11 +464,11 @@ Lecture 7: the Module 8 **tutorial**.
 
 :::
 
-The [tutorial in lecture 7](M08-L07-tutorial.html) brings together
+The [tutorial in lecture 10](M08-L10-tutorial.html) brings together
 the monad pattern from
-lectures [1](M08-L01-sequencing.html)-[4](M08-L04-state-monad.html)
+lectures [1](M08-L01-sequencing.html)-[4](M08-L05-state-monad.html)
 and the GADT pattern from
-lectures [5](M08-L05-gadts-basics.html)-[6](M08-L06-gadts-use-cases.html).
+lectures [5](M08-L07-gadts-basics.html)-[6](M08-L08-gadts-use-cases.html).
 We build a small
 expression language whose AST is a GADT (so ill-typed programs
 cannot be constructed), and an evaluator that returns `'a option`

@@ -138,7 +138,7 @@ the [White House February 2024
 memorandum](M10-L02-memory-bugs-as-security.html) on memory-safe
 languages), and shows how OCaml rules each one out by construction.
 We also walk a [Heartbleed-style
-example](M10-L05-tutorial.html) end to end. Module 11 picks up
+example](M10-L06-tutorial.html) end to end. Module 11 picks up
 where the vanilla type system stops:
 [OxCaml](https://oxcaml.org), a research branch of OCaml maintained
 by Jane Street, adds a *mode system* on top of the language we will
@@ -607,7 +607,7 @@ We will not survey every feature of OCaml. The language has many
 corners: objects and classes (rarely used in modern code), ppx
 syntax extensions (a tooling topic of its own), polymorphic variants (mostly
 specialised), first-class modules (advanced),
-[GADTs](M08-L05-gadts-basics.html) (we touch them briefly), effect
+[GADTs](M08-L07-gadts-basics.html) (we touch them briefly), effect
 handlers (a Multicore OCaml feature we leave for a follow-on
 course). I have picked the subset that will be most useful to you in
 the largest number of future situations.

@@ -26,6 +26,80 @@ reading:
 
 :::
 
+:::slide
+
+## Where we left off
+
+- In [M05-L06](M05-L06-tutorial.html) we built a tiny expression
+  evaluator with nested `match`es on `option`.
+- Every recursive clause did the same dance:
+  - Evaluate sub-expression.
+  - Pattern-match on `Some _` / `None`.
+  - Propagate `None`.
+- *Three* failing expressions (`bad1`, `bad2`, `bad3`) all
+  returned `None` after threading the option through nested
+  matches.
+- Module 8 fixes the boilerplate (monads, this lecture and the
+  next four) and the source of the failure (GADTs, lectures 7-10).
+
+:::
+
+:::slide
+
+## The M05-L06 `eval` (recap)
+
+```text
+let rec eval (env : env) e =
+  match e with
+  | Int n -> Some (VInt n)
+  | Bool b -> Some (VBool b)
+  | Add (e1, e2) ->
+      (match eval env e1, eval env e2 with
+       | Some (VInt a), Some (VInt b) -> Some (VInt (a + b))
+       | _ -> None)
+  | If (c, t, f) ->
+      (match eval env c with
+       | Some (VBool true) -> eval env t
+       | Some (VBool false) -> eval env f
+       | _ -> None)
+  | Var x -> lookup x env
+  | Let_in (x, _, e1, e2) ->
+      (match eval env e1 with
+       | Some v -> eval ((x, v) :: env) e2
+       | None -> None)
+```
+
+- Five clauses, three nested `match`es on sub-results, repeated
+  `_ -> None` arms.
+- The "interesting" right-hand sides are buried inside the option
+  unwrapping.
+
+:::
+
+:::slide
+
+## Three failing expressions
+
+```text
+let bad1 = Add (Bool true, Int 1)    (* "(true + 1)" *)
+let _ = eval [] bad1                  (* = None *)
+
+let bad2 = Var "y"                    (* "y" *)
+let _ = eval [] bad2                  (* = None *)
+
+let bad3 = If (Int 1, Int 42, Int 0)  (* "(if 1 then 42 else 0)" *)
+let _ = eval [] bad3                  (* = None *)
+```
+
+- `bad1`: type-incorrect at runtime; `Add` wants two `VInt`s.
+- `bad2`: unbound variable; `lookup` returns `None`.
+- `bad3`: condition is not a `VBool`.
+- Two questions left for Module 8:
+  - Can we *flatten* the nested-match plumbing?
+  - Can we *prevent* `bad1` at compile time?
+
+:::
+
 Module 8 is about a pattern that shows up everywhere in OCaml code,
 once you learn to look for it: *sequencing computations that might
 fail*. We already have the shapes for "something may go wrong":
@@ -37,16 +111,19 @@ computations. Without one, code grows into a *pyramid of doom* of
 nested [`match`](M05-L01-basic-patterns.html) statements where the
 actual logic is buried inside six levels of indentation.
 
-This lecture sets up the problem and motivates the solution. The
-next three lectures
-([option monad](M08-L02-option-monad.html),
-[result monad](M08-L03-result-monad.html),
-[state monad](M08-L04-state-monad.html))
-study the solution in detail. After that we turn to a different
-but related advanced feature, generalized algebraic data types, or
-GADTs, in lectures [five](M08-L05-gadts-basics.html) and
-[six](M08-L06-gadts-use-cases.html). The Module 8 tutorial in
-[lecture seven](M08-L07-tutorial.html) combines both.
+This lecture sets up the problem and motivates the solution.
+[Lecture 2](M08-L02-option-monad.html) defines the option monad
+formally with `let*` sugar; [lecture 3](M08-L03-monad-laws-list-monad.html)
+states the monad laws and adds the list monad;
+[lecture 4](M08-L04-result-monad.html) does the result monad;
+[lecture 5](M08-L05-state-monad.html) the state monad;
+[lecture 6](M08-L06-parameterised-state.html) parameterised state
+with a typed stack-machine bridge to GADTs. After that we turn to
+GADTs themselves: [lecture 7](M08-L07-gadts-basics.html) introduces
+them, [lecture 8](M08-L08-gadts-use-cases.html) shows real use
+cases, [lecture 9](M08-L09-hlists-witnesses.html) covers hlists
+and witnesses. The Module 8 tutorial in
+[lecture 10](M08-L10-tutorial.html) combines monads and GADTs.
 
 The word *monad* sounds scarier than it is. The mathematical
 machinery behind it lives in [category theory](https://en.wikipedia.org/wiki/Category_theory),
@@ -316,13 +393,15 @@ different monads:
 
 :::slide
 
-## Three monads we will cover
+## The monads we will cover
 
 - **Option monad** (Lecture 2): `'a option`. "Maybe a value."
-- **Result monad** (Lecture 3): `('a, 'e) result`. "Either a value or an error with information."
-- **State monad** (Lecture 4): `state -> ('a * state)`. "A computation that threads state."
-- Lectures 5-6: GADTs, a separate type-system feature.
-- Lecture 7: tutorial, combining GADTs with the monad pattern.
+- **List monad** (Lecture 3, with monad laws): `'a list`. "Many values."
+- **Result monad** (Lecture 4): `('a, 'e) result`. "A value or an error with information."
+- **State monad** (Lecture 5): `state -> ('a * state)`. "A computation that threads state."
+- **Parameterised state** (Lecture 6): state whose type itself changes.
+- Lectures 7-9: GADTs, a separate type-system feature.
+- Lecture 10: tutorial, combining GADTs with the monad pattern.
 
 :::
 
@@ -340,11 +419,11 @@ same `'a t` + `return` + `bind` shape, with `t` being something
 different in each case:
 
 - `'a option`: maybe a value (this module's lecture 2).
-- `('a, 'e) result`: a value or an error message (lecture 3).
+- `('a, 'e) result`: a value or an error message (lecture 4).
 - `'a list`: zero, one, or many values; `bind` is "flat-map across
   all of them" (the *list monad*; sometimes used for non-determinism).
 - `state -> 'a * state`: a value computed against a piece of
-  ambient state ([lecture 4](M08-L04-state-monad.html)).
+  ambient state ([lecture 5](M08-L05-state-monad.html)).
 - `'a Lwt.t` or `'a Eio.Promise.t`: a value that will become
   available after I/O completes (concurrent programming; covered
   in the secure-systems half of the course, to be added).
@@ -504,7 +583,7 @@ formally as a let-operator, points at the standard library's
 `Option.bind` and `Option.map` (the same functions, just shipped
 in the stdlib), and walks through a realistic example: parsing
 `"(3, 4)"` into the pair `(3, 4)`. After that,
-[lecture three](M08-L03-result-monad.html) swaps `option` for
+[lecture three](M08-L04-result-monad.html) swaps `option` for
 `result`: same shape, richer failure information.
 
 ## Reading

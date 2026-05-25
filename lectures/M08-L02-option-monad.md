@@ -40,7 +40,7 @@ lookup that may or may not find a key. An arithmetic step that may
 or may not produce a sensible answer. Use
 [`option`](M04-L04-recursive-types.html#the-option-type) when
 the *identity* of the failure is the whole story; use `result`
-([next lecture](M08-L03-result-monad.html)) when callers want a
+([next lecture](M08-L04-result-monad.html)) when callers want a
 message or an error code.
 
 :::slide
@@ -56,7 +56,7 @@ message or an error code.
 - The option monad is the workhorse for "this step may fail,
   and we do not need to say why".
 - Use `option` when the *identity* of the failure is the whole
-  story; `result` ([next lecture](M08-L03-result-monad.html))
+  story; `result` ([next lecture](M08-L04-result-monad.html))
   when callers want a message.
 
 :::
@@ -403,7 +403,7 @@ monad gives you the first-`None`-wins behaviour. If you want "try
 all the parses and tell me everything that failed", that is the
 *applicative* (or *validation*) shape, which is a sibling pattern.
 We will not study it in detail in this course; the
-[next lecture](M08-L03-result-monad.html#when-you-want-to-collect-all-errors)
+[next lecture](M08-L04-result-monad.html#when-you-want-to-collect-all-errors)
 will mention it again when we get to `result`.
 
 ## The monad laws (a teaser)
@@ -557,7 +557,7 @@ Two optional lookups, one `let*` each, a pure final wrap with
 
 ## What is next
 
-Lecture 3: the **result monad**.
+Lecture 4: the **result monad**.
 
 - Like `option`, but the failure case carries information.
 - The error type is a parameter: a `string`, a variant, anything you like.
@@ -566,10 +566,10 @@ Lecture 3: the **result monad**.
 :::
 
 `option` is fine when "no value here" is all you need to know.
-The [next lecture](M08-L03-result-monad.html) moves to `result`,
+The [next lecture](M08-L04-result-monad.html) moves to `result`,
 where the failure case carries a payload (an error message, a code,
 a [variant](M04-L03-variants.html)). Same monad shape, richer
-information. After that, [the state monad](M08-L04-state-monad.html)
+information. After that, [the state monad](M08-L05-state-monad.html)
 in lecture four.
 
 ## Reading

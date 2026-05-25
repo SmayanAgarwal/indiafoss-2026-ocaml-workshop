@@ -625,8 +625,8 @@ Int 1)` is a well-typed *OCaml value* of type `expr`, but it
 represents a program that makes no sense. The OCaml type system
 cannot see this, because our `expr` lumps integer expressions
 and boolean expressions together. *GADTs*, in
-[M08-L05](M08-L05-gadts-basics.html) and
-[M08-L06](M08-L06-gadts-use-cases.html), let you index `expr`
+[M08-L07](M08-L07-gadts-basics.html) and
+[M08-L08](M08-L08-gadts-use-cases.html), let you index `expr`
 by what it produces (`int` vs `bool`). With that indexing, the
 type system rules out `Add (Bool true, _)` at compile time, and
 the option return type disappears entirely.
@@ -645,7 +645,7 @@ as a fact of life. Both get repaired by the end of Module 8.
 - **Why can `eval` fail at all?**
   `expr` lumps int and bool expressions together; the OCaml
   type system cannot reject `Add (Bool true, _)`.
-  [GADTs in M08-L05/L06](M08-L05-gadts-basics.html) index
+  [GADTs in M08-L07/L08](M08-L07-gadts-basics.html) index
   `expr` by what it produces, ruling `bad1` out at compile time.
 - The `option` return type then disappears entirely.
 

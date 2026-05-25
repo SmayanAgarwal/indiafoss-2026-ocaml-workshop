@@ -1,6 +1,6 @@
 ---
 title: "GADTs: variants with type-level information"
-lecture_no: 5
+lecture_no: 7
 week: 8
 duration_target_min: 24
 concepts: [GADT, generalized algebraic data types, type-level information, pattern matching on GADTs]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">GADTs: variants with type-level information</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 5</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 7</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -406,14 +406,14 @@ If the answer is "I would have to add an
 [`option`](M04-L04-recursive-types.html#the-option-type) return
 type and pattern-match in two places", they are probably not.
 
-The [next lecture](M08-L06-gadts-use-cases.html) shows three or
+The [next lecture](M08-L08-gadts-use-cases.html) shows three or
 four real use cases that pull this into focus: typed
 pretty-printers, heterogeneous lists, type-safe builders, and the
 GADT machinery behind `Printf`.
 
 ## A quick check
 
-:::quiz mcq id=M08-L05-q3
+:::quiz mcq id=M08-L07-q3
 What is the type of `Add (Int_lit 1, Int_lit 2)`?
 
 - [x] `int expr`
@@ -426,7 +426,7 @@ What is the type of `Add (Int_lit 1, Int_lit 2)`?
 `int expr`. The compiler refuses to apply `Add` to anything else.
 :::
 
-:::quiz mcq id=M08-L05-q2
+:::quiz mcq id=M08-L07-q2
 Why does the `eval` function need the annotation `type a. a expr
 -> a`?
 
@@ -499,7 +499,7 @@ compiler enforces it.
 
 A code quiz:
 
-:::quiz code id=M08-L05-q1
+:::quiz code id=M08-L07-q1
 Define a GADT `type _ value` with two constructors `VInt : int ->
 int value` and `VBool : bool -> bool value`. Write `unwrap : type
 a. a value -> a` that returns the underlying value.
@@ -545,19 +545,19 @@ single concrete `a` to satisfy both branches.
 
 ## What is next
 
-Lecture 6: **GADT use cases**.
+Lecture 8: **GADT use cases**.
 
 - Heterogeneous lists and type witnesses.
 - The format-string trick behind `Printf`.
 - Less-trivial examples.
-- Then Lecture 7: combining GADTs with monads in a typed
+- Then Lecture 10: combining GADTs with monads in a typed
   evaluator.
 
 :::
 
-The [next lecture](M08-L06-gadts-use-cases.html) takes the basic
+The [next lecture](M08-L08-gadts-use-cases.html) takes the basic
 machinery here and shows three or four real applications. The
-[lecture after that](M08-L07-tutorial.html) is the tutorial:
+[lecture after that](M08-L10-tutorial.html) is the tutorial:
 combining a GADT-based typed AST with an
 [option-monad](M08-L02-option-monad.html) evaluator that can fail
 at runtime (division by zero, say) while still guaranteeing type

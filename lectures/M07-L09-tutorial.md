@@ -685,9 +685,9 @@ enough to structure a real OCaml project at scale.
 [Module 8](M08-L01-sequencing.html) turns to two more advanced
 abstractions: *monads*, which sequence computations cleanly across
 effects ([option](M08-L02-option-monad.html),
-[result](M08-L03-result-monad.html),
-[state](M08-L04-state-monad.html), exceptions, IO), and
-[*GADTs*](M08-L05-gadts-basics.html), generalized algebraic data
+[result](M08-L04-result-monad.html),
+[state](M08-L05-state-monad.html), exceptions, IO), and
+[*GADTs*](M08-L07-gadts-basics.html), generalized algebraic data
 types, which let you encode richer constraints in the type
 system. Both are common in serious OCaml code; both reward the
 groundwork we have laid through Modules 1 through 7.

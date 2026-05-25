@@ -1,6 +1,6 @@
 ---
 title: "The result monad: errors with information"
-lecture_no: 3
+lecture_no: 4
 week: 8
 duration_target_min: 22
 concepts: [result type, Result.bind, error propagation, let* for results]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">The result monad: errors with information</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 3</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 4</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -391,7 +391,7 @@ no universal right answer.
 
 ## A quick check
 
-:::quiz mcq id=M08-L03-q3
+:::quiz mcq id=M08-L04-q3
 Given `let pipeline () = let* _ = (Error "first") in let* _ =
 (Error "second") in Ok 42` (with `let*` bound to `Result.bind`),
 what does `pipeline ()` evaluate to?
@@ -407,7 +407,7 @@ first line is returned unchanged. "Collect all errors" requires
 the validation pattern, not the monad pattern.
 :::
 
-:::quiz mcq id=M08-L03-q2
+:::quiz mcq id=M08-L04-q2
 Which is the right tool for "this function might return one of
 five distinct kinds of error and callers should be able to react
 differently to each"?
@@ -492,7 +492,7 @@ let _ = parse_pair_r "frog"
 
 A small code quiz to put it together:
 
-:::quiz code id=M08-L03-q1
+:::quiz code id=M08-L04-q1
 Write `safe_div_chain : int -> int -> int -> (int, string) result`
 that computes `((a / b) / c)` using `Result.bind`, returning
 `Error "div by zero"` if either division would fail.
@@ -538,7 +538,7 @@ divide-by-zero, which is exactly what we want.
 
 ## What is next
 
-Lecture 4: the **state monad**.
+Lecture 5: the **state monad**.
 
 - Thread a hidden state through a chain of computations *without*
   mutation.
@@ -548,7 +548,7 @@ Lecture 4: the **state monad**.
 
 We have seen two monads with the same shape: `option` and
 `result`, both about possible failure. The
-[next lecture](M08-L04-state-monad.html) moves to a different
+[next lecture](M08-L05-state-monad.html) moves to a different
 flavour entirely: the state monad, which threads a piece of
 "ambient" state through a chain of pure computations. Same `let*`
 syntax, very different intuition.

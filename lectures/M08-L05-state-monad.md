@@ -1,6 +1,6 @@
 ---
 title: "The state monad"
-lecture_no: 4
+lecture_no: 5
 week: 8
 duration_target_min: 24
 concepts: [state monad, threading state, gensym, functional state]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">The state monad</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 4</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -28,7 +28,7 @@ reading:
 
 The previous two lectures used monads for *failure*:
 [option](M08-L02-option-monad.html) and
-[result](M08-L03-result-monad.html) both encode "this step may or
+[result](M08-L04-result-monad.html) both encode "this step may or
 may not produce a value". The state monad is a different flavour
 of the same machinery: rather than failure, it encodes *threaded
 state*. Each step of a chain receives the current state from the
@@ -121,7 +121,7 @@ ignores the input state, produces the value `x`, and returns the
 same state unchanged. "I have no effect on the state; here is
 this value." It is the analogue of
 [`Some x` for option](M08-L02-option-monad.html#definition), or
-[`Ok x` for result](M08-L03-result-monad.html#definition).
+[`Ok x` for result](M08-L04-result-monad.html#definition).
 
 `bind m f` is where the state threading happens. We call `m`
 first, passing the input state `s`; we get back `(a, s')`, where
@@ -413,7 +413,7 @@ plumbing does not.
 
 ## A quick check
 
-:::quiz mcq id=M08-L04-q3
+:::quiz mcq id=M08-L05-q3
 After running `run program 1` in the gensym example, the result is
 `(("x_1", "x_2", "y_3"), 4)`. Why does the state end at `4` and
 not at `3`?
@@ -431,7 +431,7 @@ would produce `_4` and set the state to `5`. The final state is
 the "next available", not the "last used".
 :::
 
-:::quiz mcq id=M08-L04-q2
+:::quiz mcq id=M08-L05-q2
 What is the type of `get` in our state monad?
 
 - [ ] `int -> int`
@@ -500,7 +500,7 @@ no `ref` in sight.
 
 A code quiz to consolidate:
 
-:::quiz code id=M08-L04-q1
+:::quiz code id=M08-L05-q1
 Write `incr_state : unit state` that increments the state by 1
 and produces `()`. Use `get` and `put`.
 
@@ -556,7 +556,7 @@ produce.
 
 ## What is next
 
-Lectures 5-6: **GADTs**.
+Lectures 7-8: **GADTs**.
 
 - A more advanced type-system feature.
 - Variant constructors that carry type-level information.
@@ -567,14 +567,14 @@ Lectures 5-6: **GADTs**.
 
 We have seen three monads with the same `let*` shape:
 [`option`](M08-L02-option-monad.html),
-[`result`](M08-L03-result-monad.html), and `state`. The
-[next](M08-L05-gadts-basics.html)
-[two](M08-L06-gadts-use-cases.html) lectures change direction
+[`result`](M08-L04-result-monad.html), and `state`. The
+[next](M08-L07-gadts-basics.html)
+[two](M08-L08-gadts-use-cases.html) lectures change direction
 entirely and study a different advanced feature: generalized
 algebraic data types. They are not part of the monad story
 mechanically, but they often appear in the same kinds of code
 (small embedded languages with typed ASTs), and the
-[tutorial in lecture 7](M08-L07-tutorial.html) brings the two
+[tutorial in lecture 10](M08-L10-tutorial.html) brings the two
 threads together.
 
 ## Reading

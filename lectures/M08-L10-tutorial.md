@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: a tiny well-typed evaluator"
-lecture_no: 7
+lecture_no: 10
 week: 8
 duration_target_min: 28
 concepts: [GADT-driven AST, type-safe evaluator, optional + result monad in evaluation]
@@ -20,9 +20,26 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Tutorial: a tiny well-typed evaluator</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 7</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 10</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
+
+:::
+
+:::slide
+
+## Why this tutorial
+
+- Capstone for the OCaml half (M01-M08).
+- One worked example that ties together:
+  - The [monad pattern](M08-L01-sequencing.html) (option, result, state).
+  - [GADTs](M08-L07-gadts-basics.html) for type-indexed ASTs.
+  - [Pattern matching](M05-L01-basic-patterns.html) with type
+    refinement.
+- Builds the GADT-typed interpreter that
+  [M05-L06](M05-L06-tutorial.html) forward-pointed to.
+- By the end: `Add (Bool_lit true, _)` is a compile error, not a
+  runtime `None`.
 
 :::
 
@@ -30,10 +47,10 @@ This is the capstone for the OCaml half of the course. We are
 going to build a small expression language that combines almost
 everything we have seen in Module 8:
 
-- A [GADT](M08-L05-gadts-basics.html) for the abstract syntax tree,
+- A [GADT](M08-L07-gadts-basics.html) for the abstract syntax tree,
   so that ill-typed programs cannot be constructed.
 - A [pattern-matching](M05-L01-basic-patterns.html) evaluator that
-  uses [GADT type refinement](M08-L05-gadts-basics.html#pattern-matching-with-type-refinement)
+  uses [GADT type refinement](M08-L07-gadts-basics.html#pattern-matching-with-type-refinement)
   to return the right type for each constructor.
 - An optional-failure layer, in the
   [option-monad style](M08-L02-option-monad.html), that
@@ -46,7 +63,7 @@ code on its own: a typed mini-interpreter is the foundation of
 many production OCaml tools (configuration languages, query
 builders, embedded scripting). Second, it is a working example
 that ties together [monads](M08-L01-sequencing.html),
-[GADTs](M08-L05-gadts-basics.html), and
+[GADTs](M08-L07-gadts-basics.html), and
 [pattern matching](M05-L01-basic-patterns.html), the three big
 OCaml ideas from the back half of the functional-programming half
 of the course.
@@ -403,7 +420,7 @@ zero until you evaluate it, so you handle that case with `None`
 short-circuit semantics.
 
 For a real interpreter you would pick
-[`result`](M08-L03-result-monad.html) over `option` so that the
+[`result`](M08-L04-result-monad.html) over `option` so that the
 error case carries a useful message ("divide by zero at expression
 4711"). The shape of the code is identical: `let*` chains, GADT
 pattern matching with `type a. ...`, runtime checks in the
@@ -466,7 +483,7 @@ need ordering witnesses or other extensions.
 
 A code quiz to put it together:
 
-:::quiz code id=M08-L07-q3
+:::quiz code id=M08-L10-q3
 Add a `Neg : int expr * int expr -> int expr` constructor that
 represents subtraction (despite its name; let us call it `Sub`).
 Write the evaluator that handles `Int_lit`, `Add`, and `Sub`.
@@ -514,7 +531,7 @@ arithmetic.
 
 ## A check
 
-:::quiz mcq id=M08-L07-q2
+:::quiz mcq id=M08-L10-q2
 We pattern-match on a GADT inside `eval`. Why is the `type a.
 ...` annotation usually needed?
 
@@ -532,7 +549,7 @@ branch's `a` independently. This is the standard idiom for
 writing functions on GADTs.
 :::
 
-:::quiz mcq id=M08-L07-q1
+:::quiz mcq id=M08-L10-q1
 Why does combining GADTs with the option monad in `eval_safe`
 make sense?
 
@@ -551,6 +568,84 @@ that no static type can detect. They are complementary, not
 redundant.
 :::
 
+## Closing the loop: `bad1` from M05-L06
+
+Cast your mind back to the
+[M05-L06 tutorial interpreter](M05-L06-tutorial.html). It had
+three failing programs, `bad1`, `bad2`, `bad3`. Two of them
+(`bad2`'s unbound variable, `bad3`'s non-bool condition) are
+*runtime* failures: the kind monads handle gracefully. `bad1` is
+different. Its source was:
+
+:::slide
+
+## The M05-L06 `bad1`, revisited
+
+```text
+(* M05-L06: ordinary-variant AST *)
+type expr = Int of int | Bool of bool | Add of expr * expr | ...
+
+let bad1 = Add (Bool true, Int 1)
+let _ = eval [] bad1  (* = None at runtime *)
+```
+
+- In M05-L06 this compiles fine.
+- The `eval` function returns `None` *at runtime* because the
+  nested match falls through.
+- The compiler had no way to notice the mistake.
+
+:::
+
+:::slide
+
+## With a GADT-typed AST, `bad1` is a compile error
+
+```ocaml skip
+type _ expr =
+  | Int_lit  : int  -> int expr
+  | Bool_lit : bool -> bool expr
+  | Add      : int expr * int expr -> int expr
+
+(* Try to construct M05-L06's bad1: *)
+let bad1 = Add (Bool_lit true, Int_lit 1)
+```
+
+```text
+Error: This expression has type bool expr
+       but an expression was expected of type int expr
+       Type bool is not compatible with type int
+```
+
+- `Add` requires *two* `int expr` arguments.
+- `Bool_lit true : bool expr`, not `int expr`.
+- The construction itself is rejected.
+- `bad1` cannot exist in this language.
+
+:::
+
+This is the long-promised payoff. M05-L06 had to live with `eval
+[] bad1 = None` at runtime because ordinary variants lump all
+expression shapes into one type. The GADT-typed version indexes
+`expr` by what it produces (`int` vs `bool`). With that indexing,
+the construction `Add (Bool_lit true, _)` is ill-typed: the
+compiler sees that the first argument's type does not match what
+`Add` wants, and refuses.
+
+The class of bug that motivated *the entire option monad
+treatment* of `eval` in M05-L06 is gone. We do not need to
+short-circuit on a type mismatch because the type mismatch cannot
+arise. We still want the option monad (or the result monad) for
+*runtime* failures like division by zero, missing variables, or
+parse errors. But "tried to add a bool to an int" is no longer one
+of those runtime failures, because it is impossible to build a
+program that would even try.
+
+This is the lesson of Module 8 distilled: monads handle what the
+type system cannot see; GADTs let the type system see more. The
+two are complementary, and together they shrink the runtime
+failure surface of a typed interpreter to the genuine impossibles
+(divisor zero, missing key) that no static check can prevent.
+
 ## You finished Module 8
 
 :::slide
@@ -560,10 +655,14 @@ redundant.
 After Module 8 you can:
 
 - Recognise the "monad" shape: `return` + `bind` for sequencing.
-- Use the option and result monads with `let*` sugar.
-- Use the state monad for threaded computations without mutation.
-- Define and use simple GADTs to encode type-level information.
+- State the monad laws and check them on a concrete monad.
+- Use the option, list, result, and state monads with `let*` sugar.
+- Reach for parameterised state when the state's *type* changes.
+- Define and use GADTs to encode type-level information,
+  including hlists and witnesses.
 - Combine GADTs with monads in a small typed interpreter.
+- See how a GADT-typed AST rejects M05-L06's `bad1` at compile
+  time.
 
 End of the **functional programming** half (Modules 1-8); the
 secure-systems half builds on this foundation.
@@ -588,7 +687,7 @@ up through [`let` bindings](M02-L02-let-bindings.html),
 [higher-order functions](M06-L01-functions-revisited.html),
 [modules](M07-L06-module-basics.html),
 [monads](M08-L01-sequencing.html), and
-[GADTs](M08-L05-gadts-basics.html). Each module fed the next: refs
+[GADTs](M08-L07-gadts-basics.html). Each module fed the next: refs
 in M07 gave the imperative ground for the state monad in M08;
 variants in M04 set up GADTs in M08; modules in M07 are the
 packaging you reach for whenever you grow a real codebase.
