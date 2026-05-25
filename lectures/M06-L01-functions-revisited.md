@@ -228,9 +228,9 @@ let rec map f = function
   | [] -> []
   | x :: rest -> f x :: map f rest
 
-let _ = map (fun x -> x * 2) [1; 2; 3]
-let _ = map (fun x -> x * x) [1; 2; 3]
-let _ = map (fun x -> x + 1) [1; 2; 3]
+let _ = map (fun x -> x * 2) [1; 2; 3]  (* = [2; 4; 6] *)
+let _ = map (fun x -> x * x) [1; 2; 3]  (* = [1; 4; 9] *)
+let _ = map (fun x -> x + 1) [1; 2; 3]  (* = [2; 3; 4] *)
 ```
 
 :::slide
@@ -443,16 +443,42 @@ let compose f g = fun x -> f (g x)
 let square = fun x -> x * x
 let inc    = fun x -> x + 1
 let square_then_inc = compose inc square
-let _ = square_then_inc 4
+let _ = square_then_inc 4  (* = 17 *)
 ```
 
 The result of `square_then_inc 4` is `17`: first square (`16`), then
-increment (`17`). We will revisit composition in Lecture 5 alongside
-the pipeline operator `|>`. For now, notice the signature:
+increment (`17`). We will revisit composition in
+[Lecture 5](M06-L05-pipelines.html) alongside the pipeline operator
+`|>`.
+
+:::slide
+
+## Function composition
+
+```ocaml
+let compose f g = fun x -> f (g x)
+
+let square = fun x -> x * x
+let inc    = fun x -> x + 1
+let square_then_inc = compose inc square
+let _ = square_then_inc 4  (* = 17 *)
+```
+
+Signature, one arrow per line:
 
 ```
-val compose : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
+val compose :
+       ('b -> 'c)        (* f *)
+    -> ('a -> 'b)        (* g *)
+    -> 'a -> 'c          (* result *)
 ```
+
+- Takes two functions, returns a third.
+- Higher-order on both ends: in *and* out.
+- Not in the stdlib by default; one line to write yourself.
+- Revisited with `|>` in [Lecture 5](M06-L05-pipelines.html).
+
+:::
 
 Read as: "given a function from `'b` to `'c`, and a function from
 `'a` to `'b`, produce a function from `'a` to `'c`." Composition is
@@ -486,7 +512,7 @@ Functions returned from `make_adder` work the same way: the captured
 Each `make_adder` call creates an independent closure with its own
 captured `n`.
 
-## Functions can return functions can return functions
+## Functions can return functions, which can return functions, which can...
 
 Once we accept that functions are values, there is no reason a
 function cannot return *another* function, which itself returns
