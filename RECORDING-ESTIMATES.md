@@ -225,111 +225,158 @@ M07-L03 and M07-L05 (12 slides / 18 min) sit below the NPTEL
 20-min floor. M07-L04 and M07-L08 (13 slides / 20 min) sit right
 at the floor.
 
-### M08: Monads and GADTs (7 lectures)
+### M08: Monads and GADTs (10 lectures)
 
 Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M08 drafts. M08 is not yet polished; the slide counts reflect the
-current draft state. Estimate uses slide_count x 1.5 min.
+M08 drafts. M08 grew from 7 to 10 lectures (added L03 monad laws +
+list monad, L06 parameterised state, L09 hlists + witnesses; the
+renumbered existing files are L04, L05, L07, L08, L10). Estimate
+uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M08-L01 | Sequencing computations: motivation for monads | 10 | 15 | 21 |
+| M08-L01 | Sequencing computations: motivation for monads | 13 | 20 | 28 |
 | M08-L02 | The option monad and `let*` sugar | 13 | 20 | 28 |
-| M08-L03 | The result monad: errors with information | 16 | 24 | 34 |
-| M08-L04 | The state monad | 16 | 24 | 34 |
-| M08-L05 | GADTs: variants with type-level information | 14 | 21 | 29 |
-| M08-L06 | GADTs: use cases beyond toy interpreters | 11 | 17 | 24 |
-| M08-L07 | Tutorial: a tiny well-typed evaluator | 13 | 20 | 28 |
-| **M08 total** | | **93** | **141** | **198** |
-| | | | **(2.4 h)** | **(3.3 h)** |
+| M08-L03 | Monad laws and the list monad | 19 | 29 | 40 |
+| M08-L04 | The result monad: errors with information | 16 | 24 | 34 |
+| M08-L05 | The state monad | 16 | 24 | 34 |
+| M08-L06 | Parameterised state and a typed stack machine | 14 | 21 | 29 |
+| M08-L07 | GADTs: variants with type-level information | 14 | 21 | 29 |
+| M08-L08 | GADTs: use cases beyond toy interpreters | 11 | 17 | 24 |
+| M08-L09 | GADTs: hlists and witnesses | 15 | 23 | 32 |
+| M08-L10 | Tutorial: a tiny well-typed evaluator | 16 | 24 | 34 |
+| **M08 total** | | **147** | **221** | **309** |
+| | | | **(3.7 h)** | **(5.2 h)** |
 
-M08-L01 (10 slides / 15 min) and M08-L06 (11 slides / 17 min)
-sit below the NPTEL 20-min floor. M08-L02 and M08-L07 (13 slides
-/ 20 min) sit right at the floor.
+M08-L08 (11 slides / 17 min) sits below the NPTEL 20-min floor;
+M08-L03 (19 slides / 29 min) is the heaviest lecture and rides
+the 30-min ceiling. Other lectures land comfortably between the
+floor and ceiling.
 
-### M09: Testing (5 lectures)
+### M09: Concurrency and Testing (8 lectures)
 
-Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M09 drafts. M09 is not yet polished; the slide counts reflect the
-current draft state (and now include M09-L04 model-based testing
-as a distinct lecture, with the tutorial at L05). Estimate uses
+Re-estimated 2026-05-25 after the M09 restructure: the module
+was renamed from "Testing" to "Concurrency and Testing"; the
+existing L03 was split into L03 (QCheck basics + shrinking)
+and a new L04 (custom generators + stateful PBT); model-based
+testing moved from L04 to L05; two new concurrency lectures
+(L06 effect handlers, L07 fibers and lightweight concurrency)
+were inserted; the tutorial moved from L05 to L08 and was
+extended with effect-handler stubs. Estimate uses
 slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M09-L01 | Why test a type-safe program? | 11 | 17 | 24 |
+| M09-L01 | Why test a type-safe (and concurrent) program? | 13 | 20 | 28 |
 | M09-L02 | Unit testing in OCaml with OUnit2 | 15 | 23 | 32 |
-| M09-L03 | Property-based testing with QCheck | 21 | 32 | 45 |
-| M09-L04 | Model-based testing | 16 | 24 | 34 |
-| M09-L05 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 11 | 17 | 24 |
-| **M09 total** | | **74** | **113** | **159** |
-| | | | **(1.9 h)** | **(2.7 h)** |
+| M09-L03 | Property-based testing with QCheck: basics and shrinking | 17 | 26 | 36 |
+| M09-L04 | Custom generators and stateful property tests | 13 | 20 | 28 |
+| M09-L05 | Model-based testing | 16 | 24 | 34 |
+| M09-L06 | Effect handlers for concurrency | 15 | 23 | 32 |
+| M09-L07 | Fibers and lightweight concurrency | 13 | 20 | 28 |
+| M09-L08 | Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs | 14 | 21 | 30 |
+| **M09 total** | | **116** | **174** | **244** |
+| | | | **(2.9 h)** | **(4.1 h)** |
 
-M09-L03 (21 slides / 32 min) overruns the NPTEL 30-min ceiling.
-M09-L01 and M09-L05 (11 slides / 17 min each) sit below the
-20-min floor.
+All M09 lectures now land in the 20-36 min band. L03 still
+overruns the NPTEL 30-min ceiling slightly (26 min was 32 min
+pre-split, so the split helped but L03 is still on the heavy
+side). L04 and L07 sit at the 20-min floor; both are
+introductions that hand off to the following lecture so the
+weight is appropriate.
 
-### M10: Memory safety and security (5 lectures)
+### M10: Memory safety and security (6 lectures)
 
-Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M10 drafts. M10 is not yet polished; the slide counts reflect the
-current draft state. Estimate uses slide_count x 1.5 min.
+Re-estimated 2026-05-25 after the M10 expansion: L01 grew from 8
+to 13 slides (Rust comparison, expanded zoo, worked UAF
+example); L03 grew from 13 to 15 slides (GC vs borrow checker,
+moving-GC tagging); a new L05 "Resource safety: file
+descriptors, sockets, and buffers" was inserted; the old L05
+tutorial was renumbered L06 and grew from 11 to 14 slides
+(leaks-vs-corruption, FFI + Ctypes, modes forward pointer).
+Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M10-L01 | Undefined behaviour and the C memory-safety zoo | 8 | 12 | 17 |
+| M10-L01 | Undefined behaviour and the C memory-safety zoo | 13 | 20 | 28 |
 | M10-L02 | Memory bugs as security incidents | 17 | 26 | 36 |
-| M10-L03 | How OCaml rules them out by construction | 13 | 20 | 28 |
+| M10-L03 | How OCaml rules them out by construction | 15 | 23 | 32 |
 | M10-L04 | Where OCaml itself has UB | 15 | 23 | 32 |
-| M10-L05 | Tutorial: walking Heartbleed end to end | 11 | 17 | 24 |
-| **M10 total** | | **64** | **98** | **137** |
-| | | | **(1.6 h)** | **(2.3 h)** |
+| M10-L05 | Resource safety: file descriptors, sockets, and buffers | 15 | 23 | 32 |
+| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 21 | 30 |
+| **M10 total** | | **89** | **134** | **187** |
+| | | | **(2.2 h)** | **(3.1 h)** |
 
-M10-L01 (8 slides / 12 min) is the thinnest lecture in the
-course and well below the NPTEL 20-min floor. M10-L05 (11
-slides / 17 min) also sits below the floor. M10-L03 (13 slides
-/ 20 min) sits right at the floor.
+All M10 lectures now land in the 20-30 min NPTEL band; the
+expansion added 36 video min and 1 lecture (no thin
+sub-20-min outliers remain).
 
-### M11: OxCaml: type-level extensions of safety (5 lectures)
+### M11: OxCaml: type-level extensions of safety (7 lectures)
 
-Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M11 drafts. M11 is not yet polished; the slide counts reflect the
-current draft state. Estimate uses slide_count x 1.5 min.
+Re-estimated 2026-05-25 after the M11 expansion: L01 grew from
+10 to 14 slides (all five mode axes introduced upfront with
+forward pointers); a new L03 *Portability: data-race freedom
+across domains* was inserted (15 slides); L03 uniqueness was
+renumbered L04 and grew from 14 to 16 slides (file-descriptor
+protocol slide and unique `File_descr` worked example); L04
+linearity was renumbered L05 and grew from 11 to 13 slides
+(send-once channel, no-aliasing-vs-no-dropping contrast); a new
+L06 *Contention: synchronisation at compile time* was inserted
+(17 slides); the old L05 tutorial was renumbered L07 and grew
+from 13 to 15 slides (portability+contention integration into
+the API; closing-thoughts slide forward-pointing to M12).
+Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M11-L01 | Modes as the type-level continuation of safety | 10 | 15 | 21 |
+| M11-L01 | Modes as the type-level continuation of safety | 14 | 21 | 29 |
 | M11-L02 | Locality: safe stack allocation | 13 | 20 | 28 |
-| M11-L03 | Uniqueness: use-after-free at the type level | 14 | 21 | 29 |
-| M11-L04 | Linearity: use exactly once | 11 | 17 | 24 |
-| M11-L05 | Tutorial: a resource-management API | 13 | 20 | 28 |
-| **M11 total** | | **61** | **93** | **130** |
-| | | | **(1.6 h)** | **(2.2 h)** |
+| M11-L03 | Portability: data-race freedom across domains | 15 | 23 | 32 |
+| M11-L04 | Uniqueness: use-after-free at the type level | 16 | 24 | 34 |
+| M11-L05 | Linearity: use exactly once | 13 | 20 | 28 |
+| M11-L06 | Contention: synchronisation at compile time | 17 | 26 | 36 |
+| M11-L07 | Tutorial: a resource-management API | 15 | 23 | 32 |
+| **M11 total** | | **103** | **157** | **219** |
+| | | | **(2.6 h)** | **(3.7 h)** |
 
-M11-L01 (10 slides / 15 min) and M11-L04 (11 slides / 17 min)
-sit below the NPTEL 20-min floor. M11-L02 and M11-L05 (13
-slides / 20 min) sit right at the floor.
+All M11 lectures now land in the 20-30 min NPTEL band; the
+expansion added 64 video min and 2 lectures (no thin
+sub-20-min outliers remain). The two new lectures bring the
+concurrency-safety story (portability + contention) into the
+module proper, where it previously had to be hand-waved away
+in M11-L01.
 
-### M12: Unikernels (MirageOS) (5 lectures)
+### M12: Unikernels (MirageOS) (6 lectures)
 
-Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M12 drafts. M12 is not yet polished; the slide counts reflect the
-current draft state. Estimate uses slide_count x 1.5 min.
+Re-estimated 2026-05-25 after the M12 expansion: L01 grew from
+10 to 13 slides (TCB-growth timeline, attack-surface argument,
+worked HTTP-request trace); L02 grew from 10 to 14 slides
+(library modules a libOS picks from, ClickOS, other library-OS
+research efforts, leaner-but-more-responsibility trade-off); L03
+grew from 10 to 14 slides (Solo5 hypercall ABI, Solo5 backends
+table, KVM as the canonical backend, VM-vs-container spectrum);
+L04 grew from 10 to 15 slides (GC inside a unikernel, memory
+safety as first line of defence, M10/M11 forward pointers,
+predictability for servers, OCaml-vs-C trade-off); L05 holds at
+12 slides (KC is rewriting it separately); a new L06 *Bob the
+Bin Man: a worked unikernel example* (13 slides) walks one tiny
+HTTP unikernel end to end. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M12-L01 | Why do we need an OS? | 10 | 15 | 21 |
-| M12-L02 | Ingredient 1: Library OS | 10 | 15 | 21 |
-| M12-L03 | Ingredient 2: Virtualisation | 10 | 15 | 21 |
-| M12-L04 | Ingredient 3: OCaml for systems | 10 | 15 | 21 |
+| M12-L01 | Why do we need an OS? | 13 | 20 | 28 |
+| M12-L02 | Ingredient 1: Library OS | 14 | 21 | 29 |
+| M12-L03 | Ingredient 2: Virtualisation | 14 | 21 | 29 |
+| M12-L04 | Ingredient 3: OCaml for systems | 15 | 23 | 32 |
 | M12-L05 | MirageOS = Library OS + Virtualisation + OCaml | 12 | 18 | 25 |
-| **M12 total** | | **52** | **78** | **109** |
-| | | | **(1.3 h)** | **(1.8 h)** |
+| M12-L06 | Bob the Bin Man: a worked unikernel example | 13 | 20 | 28 |
+| **M12 total** | | **81** | **122** | **171** |
+| | | | **(2.0 h)** | **(2.8 h)** |
 
-All four ingredient lectures (M12-L01..L04, 10 slides / 15 min
-each) sit well below the NPTEL 20-min floor; M12-L05 (12 slides
-/ 18 min) is also below. M12 is the shortest module currently
-and will need to grow during the polish pass.
+M12-L01..L04 and L06 all land in the 20-30 min NPTEL band.
+M12-L05 (12 slides / 18 min) is still under the 20-min floor;
+KC is rewriting it separately and will revise this row when the
+L05 work is committed.
 
 ## Sweep: lectures with low slide counts (2026-05-25)
 
@@ -353,19 +400,17 @@ state; expect movement during each module's polish pass):**
 
 | Lecture | Slides |
 |---|---:|
-| M10-L01 Undefined behaviour and the C memory-safety zoo | 8 |
-| M08-L01 Sequencing computations | 10 |
-| M11-L01 Modes as the type-level continuation of safety | 10 |
-| M12-L01..L04 (Why OS, Library OS, Virtualisation, OCaml for systems) | 10 each |
-| M08-L06 GADTs use cases | 11 |
-| M09-L01 Why test a type-safe program? | 11 |
-| M09-L05 Tutorial | 11 |
-| M10-L05 Tutorial: Heartbleed | 11 |
-| M11-L04 Linearity | 11 |
+| M08-L08 GADTs use cases | 11 |
 | M06-L03 Filter | 12 |
 | M07-L03 Exceptions | 12 |
 | M07-L05 Memoization | 12 |
 | M12-L05 MirageOS = Library OS + Virtualisation + OCaml | 12 |
+
+(M10's previously-thin entries L01 and L05, and M11's
+previously-thin entries L01 and L04 (now L05), were lifted out
+of this list by the 2026-05-25 M10 and M11 expansions. M12-L01
+through L04 were lifted out by the 2026-05-25 M12 expansion;
+only M12-L05 remains thin, pending KC's separate rewrite.)
 
 After the 2026-05-25 sweep, all per-module tables above use
 slide_count x 1.5 from the current drafts; these unpolished rows
@@ -374,17 +419,28 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1505 min (25.1 hours) across
-  71 lectures and 12 modules.
-- **Estimated recording time**: 2106 min (35.1 hours)
-  at the 1.4× multiplier.
+- **Final video**: 1790 min (29.8 hours) across
+  81 lectures and 12 modules.
+- **Estimated recording time**: 2505 min (41.7 hours)
+  at the 1.4x multiplier.
 
-The 25.0 hours of final video falls under NPTEL's ~30 hr target;
-that is expected, since the original sketch reserved a margin,
-the M03 list-removal pass plus the secure-systems half landed on
-the lower end of the 25-min-per-lecture window, and several
-unpolished modules (notably M10, M11, M12) currently run thin
-and will grow during their polish passes. Numbers reflect the
+The 29.8 hours of final video covers NPTEL's ~30 hr target
+after the 2026-05-25 M09 restructure (+3 lectures, +61 video
+min for effect-handler concurrency), the M10 expansion (+1
+lecture, +36 video min for resource safety; M10 grew from 5 to
+6 lectures with L01/L03/L06 also growing), the 2026-05-25 M11
+expansion (+2 lectures, +64 video min for portability and
+contention; M11 grew from 5 to 7 lectures with all four
+existing lectures also growing), and the 2026-05-25 M12
+expansion (+1 lecture, +44 video min for TCB-growth /
+ClickOS / Solo5 ABI / GC-in-a-unikernel / Bob-the-Bin-Man;
+M12 grew from 5 to 6 lectures with M12-L01..L04 also growing,
+and L05 held for KC's separate rewrite). The M08
+monads-and-GADTs polish on 2026-05-25 took the module from
+7 to 10 lectures and added 1.3 h of video (new M08-L03 monad
+laws and list monad, M08-L06 parameterised state and a typed
+stack machine, M08-L09 hlists and witnesses). Numbers reflect
+the
 2026-05-22 re-estimate for M02, M03, and M04 (slide_count x
 1.5), the 2026-05-23 addition of M07-L04 and M07-L05, the
 2026-05-24 M04 tutorial swap (JSON tutorial retired; M04-L05 AST
@@ -408,7 +464,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **35.1 hours of recording / 4.3 hours per day = ~8.2 studio days.**
+- **41.7 hours of recording / 4.3 hours per day = ~9.7 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -422,12 +478,12 @@ sessions:
 | M05 Pattern matching | 3.6 | 0.8 |
 | M06 Higher-order programming | 2.8 | 0.7 |
 | M07 Side effects and modular programming | 4.4 | 1.0 |
-| M08 Monads and GADTs | 3.3 | 0.8 |
-| M09 Testing | 2.7 | 0.6 |
-| M10 Memory safety and security | 2.3 | 0.5 |
-| M11 OxCaml: type-level extensions of safety | 2.2 | 0.5 |
-| M12 Unikernels (MirageOS) | 1.8 | 0.4 |
-| **Total** | **35.2** | **8.2** |
+| M08 Monads and GADTs | 5.2 | 1.2 |
+| M09 Concurrency and Testing | 4.1 | 1.0 |
+| M10 Memory safety and security | 3.1 | 0.7 |
+| M11 OxCaml: type-level extensions of safety | 3.7 | 0.9 |
+| M12 Unikernels (MirageOS) | 2.8 | 0.7 |
+| **Total** | **41.7** | **9.7** |
 
 ## Caveats
 
