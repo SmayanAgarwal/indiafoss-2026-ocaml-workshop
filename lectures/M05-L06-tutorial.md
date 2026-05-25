@@ -280,7 +280,7 @@ bottom.
 
 ## `depth`: or-pattern across the leaves
 
-```ocaml
+```ocaml skip
 let rec depth e =
   match e with
   | Int _ | Bool _ | Var _ -> 1
@@ -294,7 +294,21 @@ let rec depth e =
   the or-pattern `Int _ | Bool _ | Var _`.
 - Each recursive case adds `1` and takes the `max` over its
   sub-expressions.
-- `depth example` = `4`.
+
+:::
+
+:::slide
+
+## `depth example`
+
+```ocaml
+let _ = depth example  (* = 4 *)
+```
+
+- `Let_in` at the root: contributes `1`.
+- `If` underneath: `1` more.
+- `Add` underneath that: `1` more.
+- Leaf (`Int` or `Var`) at the bottom: `1`. Total = `4`.
 
 :::
 
@@ -451,6 +465,189 @@ let rec eval (env : env) e =
 - `Let_in`: eval the binding, extend env at the head, eval the
   body. The `ty option` is ignored at runtime (`_`).
 - `eval [] example` = `Some (VInt 15)`.
+
+:::
+
+## More examples
+
+Now that `eval` is defined, let us run it on a few small
+expressions. For each one we show the `pretty` output (so you
+can read the program as surface syntax) and the `eval` result.
+
+```ocaml
+let ex1 = Add (Int 2, Int 3)
+let _ = pretty ex1
+let _ = eval [] ex1  (* = Some (VInt 5) *)
+```
+
+```text
+(2 + 3)
+```
+
+```ocaml
+let ex2 = Let_in ("x", None, Int 10, Add (Var "x", Int 1))
+let _ = pretty ex2
+let _ = eval [] ex2  (* = Some (VInt 11) *)
+```
+
+```text
+(let x = 10 in (x + 1))
+```
+
+`Let_in` extends the environment with `("x", VInt 10) :: []`,
+then evaluates the body under that env. `Var "x"` finds it via
+`lookup`.
+
+```ocaml
+let ex3 = If (Bool true, Int 42, Add (Int 1, Int 1))
+let _ = pretty ex3
+let _ = eval [] ex3  (* = Some (VInt 42) *)
+```
+
+```text
+(if true then 42 else (1 + 1))
+```
+
+The condition `Bool true` evaluates to `VBool true`, so the
+`then`-branch wins; the `else`-branch is never touched.
+
+:::slide
+
+## `eval` on a few small programs
+
+```ocaml skip
+let ex1 = Add (Int 2, Int 3)
+let _ = eval [] ex1  (* = Some (VInt 5) *)
+(* pretty: (2 + 3) *)
+
+let ex2 = Let_in ("x", None, Int 10, Add (Var "x", Int 1))
+let _ = eval [] ex2  (* = Some (VInt 11) *)
+(* pretty: (let x = 10 in (x + 1)) *)
+
+let ex3 = If (Bool true, Int 42, Add (Int 1, Int 1))
+let _ = eval [] ex3  (* = Some (VInt 42) *)
+(* pretty: (if true then 42 else (1 + 1)) *)
+```
+
+- Arithmetic, let-binding, conditional: same skeleton.
+- `Let_in` extends `env`; `Var` looks up; `If` branches.
+- Every clause threads `option` by hand.
+
+:::
+
+## When `eval` returns `None`
+
+The interpreter is total in the sense that it never raises an
+exception, but it does report failure with `None`. There are
+two ways for an `expr` to fail at runtime: a value of the wrong
+*kind* in an operator position, and a `Var` whose name is
+unbound in the current environment.
+
+```ocaml
+let bad1 = Add (Bool true, Int 1)
+let _ = pretty bad1
+let _ = eval [] bad1  (* = None *)
+```
+
+```text
+(true + 1)
+```
+
+`Add` expects two `VInt` payloads, and the first sub-expression
+evaluates to a `VBool`. The nested `match` inside the `Add`
+clause falls through to `_ -> None`.
+
+```ocaml
+let bad2 = Var "y"
+let _ = pretty bad2
+let _ = eval [] bad2  (* = None *)
+```
+
+```text
+y
+```
+
+`lookup "y" []` walks the empty environment and returns `None`,
+which propagates to the top.
+
+```ocaml
+let bad3 = If (Int 1, Int 42, Int 0)
+let _ = pretty bad3
+let _ = eval [] bad3  (* = None *)
+```
+
+```text
+(if 1 then 42 else 0)
+```
+
+The condition is an integer, not a boolean. The nested `match`
+inside the `If` clause falls through to `_ -> None`.
+
+:::slide
+
+## When `eval` returns `None`
+
+```ocaml skip
+let bad1 = Add (Bool true, Int 1)    (* "(true + 1)" *)
+let _ = eval [] bad1                  (* = None *)
+
+let bad2 = Var "y"                    (* "y" *)
+let _ = eval [] bad2                  (* = None *)
+
+let bad3 = If (Int 1, Int 42, Int 0)  (* "(if 1 then 42 else 0)" *)
+let _ = eval [] bad3                  (* = None *)
+```
+
+- `bad1`: type-incorrect at runtime; `Add` wants two `VInt`s.
+- `bad2`: unbound variable; `lookup` returns `None`.
+- `bad3`: condition is not a `VBool`.
+
+:::
+
+## Two looming questions
+
+There are two things to be uncomfortable about with this
+interpreter, and both have proper answers in Module 8.
+
+**Why so much `None`-bookkeeping?** Look at every recursive
+clause: `Add`, `If`, `Let_in`. Each one does the same dance:
+evaluate a sub-expression, pattern-match on the `Some _` / `None`
+result, propagate `None` if it appears. The clauses are
+near-copies of each other with different right-hand sides. This
+boilerplate is exactly what the *option monad* captures, with a
+`let*` operator that compresses each nested `match` to one line.
+We take this same interpreter and rewrite it with `let*` in
+[M08-L02](M08-L02-option-monad.html). The shape stays the same;
+the noise disappears.
+
+**Why can `eval` fail at all?** Look at `bad1`: `Add (Bool true,
+Int 1)` is a well-typed *OCaml value* of type `expr`, but it
+represents a program that makes no sense. The OCaml type system
+cannot see this, because our `expr` lumps integer expressions
+and boolean expressions together. *GADTs*, in
+[M08-L05](M08-L05-gadts-basics.html) and
+[M08-L06](M08-L06-gadts-use-cases.html), let you index `expr`
+by what it produces (`int` vs `bool`). With that indexing, the
+type system rules out `Add (Bool true, _)` at compile time, and
+the option return type disappears entirely.
+
+For Module 5, we accept the boilerplate and the runtime failure
+as a fact of life. Both get repaired by the end of Module 8.
+
+:::slide
+
+## Two looming questions
+
+- **Why so much `None`-bookkeeping?**
+  Every recursive clause threads `option` by hand.
+  [M08-L02](M08-L02-option-monad.html) compresses each nested
+  `match` to a one-line `let*`.
+- **Why can `eval` fail at all?**
+  `expr` lumps int and bool expressions together; the OCaml
+  type system cannot reject `Add (Bool true, _)`.
+  [GADTs in M08-L05/L06](M08-L05-gadts-basics.html) index
+  `expr` by what it produces, ruling `bad1` out at compile time.
+- The `option` return type then disappears entirely.
 
 :::
 
@@ -670,14 +867,14 @@ recursive ADT.
 
 :::
 
-## Common pitfalls
+## Common pitfalls of interpreters
 
 A handful of mistakes catch almost everyone the first time they
 write an interpreter.
 
 :::slide
 
-## Common pitfalls
+## Common pitfalls of interpreters
 
 - **Forgetting to parenthesise an inner `match`.** When the
   RHS of a clause is itself a `match`, parenthesise it (or use
