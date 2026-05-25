@@ -543,6 +543,18 @@ The type tells later code to handle both cases. There is no
 sentinel value that means anything other than what its
 constructor says.
 
+This is the slogan you will hear in functional-programming
+circles: *make illegal states unrepresentable*. With `marks :
+int`, every `int` is a legal field value, so "took the exam"
+versus "not yet taken" has to live in a sentinel that the type
+system cannot see. With `marks : int option`, there are exactly
+two ways to construct the field (`Some n` and `None`), and they
+correspond to exactly the two states the domain has. The illegal
+configurations (a sentinel `-1`, a magic `0`) are no longer
+expressible. We will lean on this principle again in
+[Module 7](M07-L07-signatures.html#why-hide-internals) when we
+discuss API design.
+
 :::slide
 
 ## When to use `option`: the problem
@@ -580,6 +592,8 @@ let bob   = { name = "Bob";   roll_no = "CS25"; marks = None }
 - `Some 87`: took the exam, scored 87.
 - `None`: not taken yet.
 - The type forces every reader to handle both cases.
+- The slogan: *make illegal states unrepresentable*. No
+  sentinel `-1`, no magic `0`.
 
 :::
 
@@ -990,8 +1004,11 @@ let e = Sub (Sub (Num 7, Num 3), Num 2)
 
 ## What's next
 
-Lecture 5: **tutorial** that ties tuples, records, variants,
-recursive types, `option`, and `result` together.
+Two **tutorials** that tie tuples, records, variants, recursive
+types, `option`, and `result` together on worked examples:
+
+- Lecture 5: a tiny **AST** for OCaml itself.
+- Lecture 6: a tiny **file system**.
 
 :::
 

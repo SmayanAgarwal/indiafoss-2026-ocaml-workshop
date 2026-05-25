@@ -261,14 +261,6 @@ e2` shape from M02-L02, now expressed as data.
 The AST for `let x = 5 in x + 3`:
 
 ```ocaml
-type expr =
-  | Int of int
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Var of string
-  | Let_in of string * expr * expr
-
 let e_let =
   Let_in ("x",
           Int 5,
@@ -285,14 +277,6 @@ Nested let bindings become nested `Let_in` constructors. The AST
 for `let x = 5 in let y = 10 in x + y`:
 
 ```ocaml
-type expr =
-  | Int of int
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Var of string
-  | Let_in of string * expr * expr
-
 let e_let_nested =
   Let_in ("x", Int 5,
     Let_in ("y", Int 10,
@@ -569,17 +553,6 @@ type expr =
 Two example trees, one with and one without an annotation:
 
 ```ocaml
-type ty =
-  | T_int
-  | T_bool
-
-type expr =
-  | Int of int
-  | Bool of bool
-  | Add of expr * expr
-  | Var of string
-  | Let_in of string * ty option * expr * expr
-
 (* let x = 5 in x + 3 *)
 let e_unannotated =
   Let_in ("x", None, Int 5, Add (Var "x", Int 3))
@@ -749,30 +722,28 @@ let prog =
 
 :::
 
-## What you should be able to do now
+## What's next
 
 :::slide
 
-## What you should be able to do now
+## What's next
 
-After Module 4 you can:
+You have now seen the full Module 4 toolkit applied to an AST.
 
-- Bundle values with tuples and records.
-- Express "this or that" with variants.
-- Model recursive shapes (lists, trees, ASTs).
-- Reach for `option` and `result` instead of nulls.
-- Design a domain type by combining the pieces.
-
-Module 5: **pattern matching** (the way to take any of these
-values apart) in depth.
+- One more tutorial ([M04-L06](M04-L06-tutorial-fs.html)):
+  the **same toolkit** on a tiny **file system**.
+- Then [Module 5](M05-L01-basic-patterns.html): **pattern
+  matching** to take these values apart.
 
 :::
 
-You now have the full vocabulary for modelling data in OCaml. The
-combination of records, variants, tuples, recursion, and
-polymorphism is enough to express essentially any data shape you
-will encounter; [Module 5](M05-L01-basic-patterns.html) gives you
-the everyday machinery for taking these values apart.
+You have now seen the full Module 4 toolkit (records, variants,
+tuples, recursion, `option`, `result`) applied to an AST. The next
+tutorial ([M04-L06](M04-L06-tutorial-fs.html)) reapplies the same
+toolkit to a tiny file system, so you see how the same ingredients
+fit a very different domain. Walking either tree (an AST evaluator,
+a file-system `du`) is the job of pattern matching, which arrives
+in [Module 5](M05-L01-basic-patterns.html).
 
 ## Reading
 

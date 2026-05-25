@@ -89,7 +89,7 @@ min / 209 recording min, so the polish net-shrunk M03 by about
 
 ### M04: Data types (6 lectures)
 
-Re-estimated 2026-05-22 / 23 / 24 after the M04 polish passes
+Re-estimated 2026-05-22 / 23 / 24 / 25 after the M04 polish passes
 (M04-L01 constructing-and-extracting split; M04-L02 access-field
 and function-parameter slides each split, mutable-record-fields
 deferred to M07-L01; M04-L03 stripped of pattern-matching content
@@ -102,28 +102,35 @@ walks / evaluator deferred to M05). The old M04-L05
 so its option / result content was folded into M04-L04. The single
 JSON tutorial was retired on 2026-05-24 in favour of two more
 domain-relevant tutorials: M04-L05 (a tiny AST for OCaml) and
-M04-L06 (a tiny file system). M04 now has six lectures.
-Estimate uses slide_count x 1.5 min.
+M04-L06 (a tiny file system). The 2026-05-25 pass introduced the
+"make illegal states unrepresentable" slogan in M04-L04 (after
+option is introduced) and tightened the M04-L05 closing. M04 now
+has six lectures. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M04-L01 | Tuples | 16 | 24 | 34 |
-| M04-L02 | Records | 15 | 23 | 32 |
+| M04-L01 | Tuples | 17 | 26 | 36 |
+| M04-L02 | Records | 17 | 26 | 36 |
 | M04-L03 | Variants (sum types) | 9 | 14 | 20 |
-| M04-L04 | Recursive types, polymorphism, option / result | 22 | 33 | 46 |
+| M04-L04 | Recursive types, polymorphism, option / result | 24 | 36 | 50 |
 | M04-L05 | Tutorial: a tiny AST for OCaml | 16 | 24 | 34 |
 | M04-L06 | Tutorial: a tiny file system | 14 | 21 | 30 |
-| **M04 total** | | **92** | **139** | **196** |
-| | | | **(2.3 h)** | **(3.3 h)** |
+| **M04 total** | | **97** | **147** | **206** |
+| | | | **(2.5 h)** | **(3.4 h)** |
 
-M04-L04 is the longest lecture in the course at 33 video min;
-it brushes past the NPTEL 30-min upper bound. KC has chosen to
-keep it as one lecture rather than split (the content arc from
-intlist all the way to result is best taken in one sitting).
+M04-L04 is the longest lecture in the course at 36 video min; it
+overruns the NPTEL 30-min upper bound. KC has chosen to keep it
+as one lecture rather than split (the content arc from intlist
+all the way to result is best taken in one sitting), but if the
+recorded delivery overshoots, a natural cut point is "Null: the
+billion-dollar mistake" - everything before is recursive /
+parameterised variants, everything after is `option` / `result`
+design.
 
-M04-L03 sits at the NPTEL 20-min lower bound. M04-L04 absorbed
-the polymorphism material and the option / result content; walks
-were deferred to M05 to mirror CS3100_m25's lec05 / lec06 split.
+M04-L03 is below the NPTEL 20-min lower bound at 9 slides / 14
+min and is the thinnest standalone lecture in the polished
+modules. See the sweep notes below.
+
 M04-L05 and M04-L06 are construction-only tutorials on two
 different domains so the audience sees the same toolkit twice;
 walks / evaluators for both ASTs and file systems land in M05.
@@ -238,21 +245,65 @@ authoring-time `duration_target_min`.
 | **M12 total** | | **125** | **175** |
 | | | **(2.1 h)** | **(2.9 h)** |
 
+## Sweep: lectures with low slide counts (2026-05-25)
+
+At the calibrated slide_count x 1.5 cadence, anything under ~14
+slides runs short of the NPTEL 20-min floor, and anything under
+~10 slides is awkwardly thin for a standalone lecture. Counts
+below are from a `grep -c '^:::slide'` sweep of all 70 lectures.
+
+**Polished modules (numbers reflect today's lecture state):**
+
+| Lecture | Slides | Video (min) | Status |
+|---|---:|---:|---|
+| M04-L03 Variants | 9 | 14 | **Too thin.** KC's call. Options: expand with a worked `tcp_state` / `shape` design example; absorb into M04-L04 (pushes L04 to ~46 min, too long); or rebalance L03/L04 by splitting L04 and shuffling. Pending KC decision. |
+| M02-L06 Tutorial | 11 | 17 | Borderline; tutorials run light by design. Acceptable. |
+| M03-L05 Local and mutual | 11 | 17 | Borderline. Post-list-removal shrinkage; OK to leave per current note. |
+| M03-L06 Tutorial | 11 | 17 | Borderline; same reason. |
+| M07-L05 Memoization | 12 | 18 | OK; new lecture, intentionally compact. |
+
+**Unpolished modules (slide counts are authoring-time sketches;
+expect movement during each module's polish pass):**
+
+| Lecture | Slides |
+|---|---:|
+| M10-L01 Undefined behaviour and the C memory-safety zoo | 8 |
+| M05-L03 Guards | 10 |
+| M08-L01 Sequencing computations | 10 |
+| M11-L01 Modes as the type-level continuation of safety | 10 |
+| M12-L01..L04 (Why OS, Library OS, Virtualisation, OCaml for systems) | 10 each |
+| M05-L04 Exhaustiveness checking | 11 |
+| M08-L06 GADTs use cases | 11 |
+| M09-L01 Why test a type-safe program? | 11 |
+| M09-L05 Tutorial | 11 |
+| M10-L05 Tutorial: Heartbleed | 11 |
+| M11-L04 Linearity | 11 |
+| M03-L04 Tail recursion | 12 |
+| M06-L03 Filter | 12 |
+| M07-L03 Exceptions | 12 |
+
+These rows in the per-module tables above still use authoring-time
+`duration_target_min` rather than slide_count x 1.5, so the listed
+durations may not match reality once polished. Re-check at polish
+time per module.
+
 ## Course totals
 
-- **Final video**: 1614 min (26.9 hours) across
+- **Final video**: 1622 min (27.0 hours) across
   70 lectures and 12 modules.
-- **Estimated recording time**: 2268 min (37.8 hours)
+- **Estimated recording time**: 2278 min (38.0 hours)
   at the 1.4× multiplier.
 
-The 26.8 hours of final video falls slightly under NPTEL's ~30
+The 27.0 hours of final video falls slightly under NPTEL's ~30
 hr target; that is expected, since the original sketch reserved
 a margin, and the M03 list-removal pass plus the secure-systems
 half landed on the lower end of the 25-min-per-lecture window.
 Numbers reflect the 2026-05-22 re-estimate for M02, M03, and M04
 (slide_count x 1.5), the 2026-05-23 addition of M07-L04 and
-M07-L05, and the 2026-05-24 M04 tutorial swap (JSON tutorial
-retired; M04-L05 AST + M04-L06 file-system tutorials added).
+M07-L05, the 2026-05-24 M04 tutorial swap (JSON tutorial retired;
+M04-L05 AST + M04-L06 file-system tutorials added), and the
+2026-05-25 M04 polish (slogan introduction in L04; L01 and L02
+slide-count drift up by one each; L04 grew by two slides).
 M01, M05, M06, and the remaining M07+ rows still use the
 authoring-time `duration_target_min`.
 
@@ -272,7 +323,7 @@ sessions:
 | M01 Intro to functional programming | 2.6 | 0.6 |
 | M02 Expressions | 3.1 | 0.7 |
 | M03 Functions | 2.8 | 0.7 |
-| M04 Data types | 3.2 | 0.7 |
+| M04 Data types | 3.4 | 0.8 |
 | M05 Pattern matching | 3.2 | 0.7 |
 | M06 Higher-order programming | 3.2 | 0.7 |
 | M07 Side effects and modular programming | 4.6 | 1.1 |
@@ -281,7 +332,7 @@ sessions:
 | M10 Memory safety and security | 2.9 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 2.9 | 0.7 |
 | M12 Unikernels (MirageOS) | 2.9 | 0.7 |
-| **Total** | **38.7** | **9.0** |
+| **Total** | **38.9** | **9.1** |
 
 ## Caveats
 

@@ -242,6 +242,7 @@ type perms = { read : bool; write : bool; exec : bool }
 type entry =
   | File of { name : string; size  : int;   perms : perms }
   | Dir  of { name : string; perms : perms; contents : entry list }
+let rw = { read = true; write = true;  exec = false }
 let rx = { read = true; write = false; exec = true  }
 let alice =
   Dir { name = "alice"; perms = rx; contents = [] }
@@ -259,16 +260,33 @@ parsing: just constructors and records.
 
 ## A small directory
 
-```text
-let cat = File { name = "cat.jpg"; size = 184_000; perms = rw }
-let dog = File { name = "dog.jpg"; size = 220_000; perms = rw }
+:::cols
+:::col 62%
+
+```ocaml
+let cat =
+  File { name = "cat.jpg"; size = 184_000; perms = rw }
+let dog =
+  File { name = "dog.jpg"; size = 220_000; perms = rw }
 
 let photos =
   Dir { name = "photos"; perms = rx; contents = [cat; dog] }
 ```
 
-- `contents` is a list of `entry` values; files and directories
-  share that type, so they share the list.
+- `contents` is a list of `entry` values; files and
+  directories share that type, so they share the list.
+
+:::
+:::col 38%
+
+```text
+photos/
++- cat.jpg
++- dog.jpg
+```
+
+:::
+:::
 
 :::
 
@@ -433,7 +451,7 @@ val lookup : entry -> string list -> (entry, lookup_error) result
 
 ## Lookup outcome: example values
 
-```text
+```ocaml
 let ok : (entry, lookup_error) result =
   Ok (File { name = "notes.txt"; size = 1284; perms = rw })
 

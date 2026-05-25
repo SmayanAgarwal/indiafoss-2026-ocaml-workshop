@@ -185,6 +185,75 @@ explicit: the mapping is in *one place*. (We will see in
 cascade much tidier, and how the compiler can warn you if a case
 is missing.)
 
+## Combining variants and records: a card
+
+The domain often has more than one axis of choice. A playing card
+has a *suit* and a *rank*, each independent of the other. Each
+axis is a small enum variant; the card itself is a
+[record](M04-L02-records.html) that bundles both:
+
+```ocaml
+type suit = Spades | Hearts | Diamonds | Clubs
+
+type rank =
+  | Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten
+  | Jack | Queen | King | Ace
+
+type card = { suit : suit; rank : rank }
+
+let ace_of_spades = { suit = Spades; rank = Ace }
+let two_of_hearts = { suit = Hearts; rank = Two }
+```
+
+Two enum-case variants and one record that combines them. The
+variants capture "exactly one of these alternatives"; the record
+captures "all of these together". A `card` is therefore "this
+suit *and* this rank", drawn from the 4 x 13 = 52 combinations.
+
+This is the everyday shape of Module 4 data: variants for the
+axes of choice, records for the bundling. Recursion in the
+variants (lists, trees, expressions) is the topic of the next
+lecture.
+
+:::slide
+
+## Combining variants and records: a card
+
+```ocaml
+type suit = Spades | Hearts | Diamonds | Clubs
+
+type rank =
+  | Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten
+  | Jack | Queen | King | Ace
+
+type card = { suit : suit; rank : rank }
+
+let ace_of_spades = { suit = Spades; rank = Ace }
+```
+
+- Two enum variants (the *axes* of choice).
+- One record (the *bundling*).
+- A card is "this suit AND this rank" - 4 x 13 = 52 in total.
+
+:::
+
+:::slide
+
+## Variants AND records, side by side
+
+The two Module 4 building blocks answer two different questions:
+
+- **Variant** = "which *one* of these?" (a sum).
+- **Record** = "all of these *together*?" (a product).
+
+Most domain types reach for both. Variants for the axes of
+choice; records for the bundling.
+
+Next lecture: recursion in the variants - lists, trees,
+arithmetic expressions.
+
+:::
+
 ## Constructors with payload
 
 A variant becomes much more interesting when its constructors carry
@@ -330,24 +399,6 @@ recursive ones (`list`, trees, expressions) in the
 [next lecture](M04-L04-recursive-types.html), where they are also
 the natural setting to introduce *parameterised variants* (lists
 of *anything*, trees of *anything*) and *polymorphism*.
-
-The slogan you will hear in functional programming circles is
-*make illegal states unrepresentable*. A well-designed variant
-type allows only the configurations the domain actually permits,
-and rules out the rest by construction. Compare:
-
-- *Bad:* `type connection = { state : string; peer : string option;
-  bytes_sent : int option; close_reason : string option }`.
-  Nothing prevents `{ state = "listening"; bytes_sent = Some 42; ... }`,
-  which is nonsense.
-- *Good:* the `tcp_state` variant above. Each state carries
-  precisely the data it needs and no more. There is no way to
-  build a "Listening with bytes_sent" value.
-
-This is the design principle Module 4 was put together to teach.
-You will see it again in
-[Module 7](M07-L07-signatures.html#why-hide-internals) when we
-discuss API design.
 
 ## A small check
 
