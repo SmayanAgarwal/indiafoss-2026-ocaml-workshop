@@ -107,9 +107,9 @@ let cell_controls () =
 let asset_paths_root_relative () =
   let s = Lazy.force html in
   check_bool "x-ocaml asset path is /assets/..." true
-    (contains s "src=\"/assets/x-ocaml/x-ocaml.js\"");
+    (contains s "src=\"/assets/x-ocaml/x-ocaml.js?v=");
   check_bool "worker asset path is /assets/..." true
-    (contains s "src-worker=\"/assets/x-ocaml/x-ocaml.worker.js\"")
+    (contains s "src-worker=\"/assets/x-ocaml/x-ocaml.worker.js?v=")
 
 let reveal_wrapper () =
   check_bool "empty .reveal .slides wrapper present" true

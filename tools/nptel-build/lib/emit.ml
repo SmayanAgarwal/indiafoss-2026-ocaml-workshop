@@ -11,6 +11,28 @@
 
 let quiz_api_url = "https://nptel-quiz.kc-7c7.workers.dev"
 
+(* Short content hash of a file relative to the build cwd. Used as a
+   [?v=...] cache-buster on the x-ocaml worker URL so a rebuilt bundle
+   invalidates the worker the browser previously fetched. Memoized so we
+   only digest each bundle once per build. *)
+let bundle_hash_cache : (string, string) Hashtbl.t = Hashtbl.create 8
+
+let bundle_hash rel_path =
+  match Hashtbl.find_opt bundle_hash_cache rel_path with
+  | Some h -> h
+  | None ->
+      let h =
+        try
+          let ic = open_in_bin rel_path in
+          let len = in_channel_length ic in
+          let s = really_input_string ic len in
+          close_in ic;
+          String.sub (Digest.to_hex (Digest.string s)) 0 8
+        with Sys_error _ -> "missing"
+      in
+      Hashtbl.add bundle_hash_cache rel_path h;
+      h
+
 let head ~asset_root ~(fm : Frontmatter.t) =
   (* [asset_root] is the prefix used in front of each asset path. For
      production we use root-relative paths like ["/assets/..."], so
@@ -39,11 +61,17 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   let bundle_dir, src_load_attr =
     match fm.week with
     | Some 9 ->
+        let v = bundle_hash "assets/x-ocaml/m09-extras.js" in
         ( "x-ocaml",
           Printf.sprintf
-            "\n    src-load=\"%s/assets/x-ocaml/m09-extras.js\"" asset_root )
+            "\n    src-load=\"%s/assets/x-ocaml/m09-extras.js?v=%s\""
+            asset_root v )
     | Some 11 -> ("x-oxcaml", "")
     | _ -> ("x-ocaml", "")
+  in
+  let main_v = bundle_hash (Printf.sprintf "assets/%s/x-ocaml.js" bundle_dir) in
+  let worker_v =
+    bundle_hash (Printf.sprintf "assets/%s/x-ocaml.worker.js" bundle_dir)
   in
   Printf.sprintf
     {|<!doctype html>
@@ -87,15 +115,15 @@ let head ~asset_root ~(fm : Frontmatter.t) =
     }
   </script>
   <script async
-    src="%s/assets/%s/x-ocaml.js"
-    src-worker="%s/assets/%s/x-ocaml.worker.js"
+    src="%s/assets/%s/x-ocaml.js?v=%s"
+    src-worker="%s/assets/%s/x-ocaml.worker.js?v=%s"
     x-ocamlformat="margin=60"%s></script>
 </head>|}
     (Parse.html_escape commit_sha)
     (Parse.html_escape quiz_api_url)
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
     asset_root asset_root asset_root asset_root
-    asset_root bundle_dir asset_root bundle_dir
+    asset_root bundle_dir main_v asset_root bundle_dir worker_v
     src_load_attr
 
 let header_bar ~(fm : Frontmatter.t) =
