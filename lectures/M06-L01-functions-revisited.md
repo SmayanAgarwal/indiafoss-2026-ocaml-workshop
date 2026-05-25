@@ -266,12 +266,10 @@ let rec map f = function
   | [] -> []
   | x :: rest -> f x :: map f rest
 
-let _ = map (fun x -> x * 2) [1; 2; 3]
-let _ = map (fun x -> x * x) [1; 2; 3]
-let _ = map (fun x -> x + 1) [1; 2; 3]
+let _ = map (fun x -> x * 2) [1; 2; 3]  (* = [2; 4; 6] *)
+let _ = map (fun x -> x * x) [1; 2; 3]  (* = [1; 4; 9] *)
+let _ = map (fun x -> x + 1) [1; 2; 3]  (* = [2; 3; 4] *)
 ```
-
-`[2; 4; 6]`, `[1; 4; 9]`, `[2; 3; 4]`.
 
 - One function captures *the walk*.
 - Three per-element computations are passed in.
