@@ -1,6 +1,6 @@
 ---
 title: "Linearity: use exactly once"
-lecture_no: 4
+lecture_no: 5
 week: 11
 duration_target_min: 25
 concepts: [linearity, once, many, linear types, file handle, resource discipline, linear logic]
@@ -24,7 +24,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Linearity: use exactly once</h2>
-<p class="title-slide-label">Module 11 &middot; Lecture 4</p>
+<p class="title-slide-label">Module 11 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -63,10 +63,12 @@ ownership, and traces the idea back to Girard's Linear Logic.
 ## Where we are
 
 - M11-L02: locality. Tracks scope.
-- M11-L03: uniqueness. Tracks past aliasing.
-- M11-L04 (this lecture): **linearity**. Tracks future use.
+- M11-L03: portability. Tracks cross-domain crossing.
+- M11-L04: uniqueness. Tracks past aliasing.
+- M11-L05 (this lecture): **linearity**. Tracks future use.
+- M11-L06: contention. Tracks cross-domain access.
 
-Three independent axes. M11-L05 puts them together.
+Five independent axes. M11-L07 puts them together.
 
 :::
 
@@ -173,7 +175,7 @@ Read each line of the signature:
 - `open_` produces a `once` handle. The caller will use it at
   most once, then.
 - `read` consumes a `once` handle and returns a *fresh* `once`
-  handle. This is the ownership-chain shape from M11-L03:
+  handle. This is the ownership-chain shape from M11-L04:
   threading the handle through each operation lets us call `read`
   many times in sequence, each call consuming its handle and
   producing the next.
@@ -227,6 +229,68 @@ end
 
 Client uses the **ownership-chain** shape: shadow `t` through
 each operation.
+
+:::
+
+## Another protocol: a send-once channel
+
+The file-handle module is one shape of "use exactly once" API.
+The same machinery works for any protocol with a known final
+step. A representative variation: a *send-once* channel, the kind
+that some message-passing systems hand to one party for a single
+send and then expire.
+
+```ocaml skip
+module type Send_once_channel = sig
+  type 'a t
+  val make  : unit -> 'a t @ once
+  val send  : 'a t @ once -> 'a -> unit
+end
+```
+
+Read the signature. `make` produces a once-usable channel.
+`send` consumes the channel and delivers the message. After
+`send`, the channel does not exist as a once-usable binding;
+sending twice is a type error, exactly as double-close was for
+the file handle.
+
+A correct client looks like:
+
+```ocaml skip
+let example () =
+  let ch = Send_once_channel.make () in
+  Send_once_channel.send ch "hello"
+```
+
+A bad client (sending twice) fails to type-check:
+
+```ocaml skip
+let bad () =
+  let ch = Send_once_channel.make () in
+  Send_once_channel.send ch "hello";
+  Send_once_channel.send ch "again"   (* type error: ch is once,
+                                         already used *)
+```
+
+The shape recurs: `commit` on a transaction, `consume` on a
+generator, `finalise` on a builder, `release` on a lock. Each is
+a "once" protocol, and each fits the same mode signature.
+
+:::slide
+
+## A send-once channel
+
+```text
+val make  : unit -> 'a t @ once
+val send  : 'a t @ once -> 'a -> unit
+```
+
+- `make` produces a once-usable channel.
+- `send` consumes it and delivers the message.
+- A second `send` is a type error.
+
+Same shape as `close`: a `once` protocol where the final step
+consumes the handle.
 
 :::
 
@@ -341,7 +405,7 @@ And for some APIs, you want both. The file-handle module above is
 actually a candidate for *both* uniqueness and linearity: the
 handle should have no aliases (uniqueness) *and* be used at most
 once on each thread of execution (linearity). The minimal version
-in this lecture is the linearity-only one; M11-L05's tutorial
+in this lecture is the linearity-only one; M11-L07's tutorial
 combines them.
 
 :::slide
@@ -357,9 +421,53 @@ Often combined. The next lecture builds an API that uses both.
 
 :::
 
+## No aliasing vs no dropping
+
+A complementary way to see the two axes. The classical
+substructural-types literature distinguishes "no aliasing"
+(uniqueness) from "no dropping" (linearity) cleanly:
+
+- A **unique** value has *no other live references*: copying or
+  aliasing it is forbidden. Discarding it is allowed (a unique
+  handle that goes out of scope just disappears, like any other
+  value).
+- A **once** value has *exactly one further use*: discarding it
+  is forbidden (in strict configurations it is an error, in
+  default configurations a warning). Aliasing it is *not*
+  prevented by linearity (a `once` value can have past aliases;
+  what is restricted is *future* use).
+
+Pick the axis by the invariant you need:
+
+- Need "no other references right now" (so `free` is safe):
+  reach for **uniqueness**.
+- Need "this protocol step must happen, and only once" (so
+  `commit`, `close`, `consume` are enforced): reach for
+  **linearity**.
+
+The file-handle module uses both because both invariants matter:
+no other references (so the close is correct) *and* close must
+fire exactly once.
+
+:::slide
+
+## No aliasing vs no dropping
+
+| | Uniqueness | Linearity |
+|---|---|---|
+| Forbids aliasing? | Yes | No |
+| Forbids dropping? | No | Yes (in strict mode) |
+| Tracks | Past | Future |
+| Best for | `free` | `close` |
+
+Pick uniqueness when "no other references" is what matters.
+Pick linearity when "use exactly once" is what matters.
+
+:::
+
 ## The closure-capture rule revisited
 
-In M11-L03 we saw that a closure capturing a unique value becomes
+In M11-L04 we saw that a closure capturing a unique value becomes
 `once`. That rule sits squarely on the linearity axis. Here is the
 phenomenon stated in linearity terms.
 
@@ -384,7 +492,7 @@ let use_it () =
 
 The function `f` has been given mode `once` because it captures a
 `once` handle. The second call is rejected. This is the same shape
-as the `wat` example from M11-L03, but stated on the linearity
+as the `wat` example from M11-L04, but stated on the linearity
 axis instead of the uniqueness axis.
 
 :::slide
@@ -478,7 +586,7 @@ the other when needed.
 OxCaml's linearity is this practical packaging of the 1987 idea.
 The 2022 ESOP paper *Linearity and Uniqueness: An Entente
 Cordiale* by Marshall, Vollmer, and Orchard, which we cited in
-M11-L03, brings the linearity and uniqueness threads together in
+M11-L04, brings the linearity and uniqueness threads together in
 one formal system: that paper is the academic mirror of what
 OxCaml ships.
 
@@ -499,7 +607,7 @@ production deployment is recent.
 
 ## Activity
 
-:::quiz mcq id=M11-L04-q1
+:::quiz mcq id=M11-L05-q1
 Given the `Handle` signature in this lecture, which client
 compiles?
 
@@ -540,7 +648,7 @@ threads the fresh handle into the shadowed `t`, then `close`
 consumes it.
 :::
 
-:::quiz mcq id=M11-L04-q2
+:::quiz mcq id=M11-L05-q2
 Inside a function `f`, the type checker reports that `f` itself
 has mode `once`, even though you did not annotate it. Which of
 these is the most likely cause?
@@ -574,7 +682,7 @@ Q2: why `f` ends up `once` without an annotation.
 - Threading the handle correctly through `read` is the same shape
   as the `Unique_ref` ownership chain.
 - A closure capturing a `once` value becomes `once`. This is the
-  rule that bridges into the closure-capture pitfall from M11-L03.
+  rule that bridges into the closure-capture pitfall from M11-L04.
 
 :::
 
@@ -605,7 +713,7 @@ otherwise be unsafe.
 
 ## What's next
 
-The final lecture of M11 (M11-L05) is the tutorial. We will build
+The final lecture of M11 (M11-L07) is the tutorial. We will build
 a complete file-handle module using both linearity *and* locality:
 the handle is `once` (cannot be used twice) *and* `local` (cannot
 escape the scope it was opened in). We will walk through three

@@ -1,6 +1,6 @@
 ---
 title: "Uniqueness: use-after-free at the type level"
-lecture_no: 3
+lecture_no: 4
 week: 11
 duration_target_min: 25
 concepts: [uniqueness, unique, aliased, manual resource management, use-after-free, double-free, closure capture]
@@ -24,7 +24,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Uniqueness: use-after-free at the type level</h2>
-<p class="title-slide-label">Module 11 &middot; Lecture 3</p>
+<p class="title-slide-label">Module 11 &middot; Lecture 4</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -469,7 +469,7 @@ not consumed.
 
 The compiler's answer: a closure that captures a unique value is
 itself given the mode **`once`** (which is on the *linearity* axis,
-the topic of M11-L04). Once-mode means "use at most once." The
+the topic of M11-L05). Once-mode means "use at most once." The
 second call to `f` is then rejected, not because `t` was already
 freed (the linearity check fires before any value-level reasoning
 about `t`), but because `f` itself has already been used.
@@ -656,8 +656,8 @@ to `dup`, as above; you can coerce it explicitly). A linear value
 may have been aliased in the *past*. These are different
 properties.
 
-For most resource-management APIs, you want both. M11-L04 is the
-linearity lecture; M11-L05 is the tutorial that puts the two
+For most resource-management APIs, you want both. M11-L05 is the
+linearity lecture; M11-L07 is the tutorial that puts the two
 together.
 
 :::slide
@@ -671,9 +671,89 @@ Different axes; different rules; both useful.
 
 :::
 
+## A killer application: file descriptors
+
+M10-L05 was the lecture where we walked through resource safety
+in vanilla OCaml. The story was: `In_channel.with_open_text` and
+`Fun.protect` close the easy cases (open-use-close in one scope);
+the awkward cases (handle escapes the function, custom lifetime,
+socket pools) need either programmer discipline or a runtime flag.
+The closing pointer there was to OxCaml's modes, and this lecture
+is where the pointer cashes.
+
+A unique `File_descr` is the OxCaml answer: a file descriptor
+whose handle the compiler has proven has no other live references.
+With that proof, `close` can take the handle at mode `unique`
+*and consume it*. After the call, no live unique reference exists;
+the bug class "use after close" cannot be expressed because the
+binding the compiler is tracking is gone.
+
+```ocaml skip
+(* Sketch: a unique file-descriptor module. *)
+module File_descr : sig
+  type t
+  val open_  : string -> t @ unique
+  val read   : t @ unique -> bytes -> int -> int -> int * t @ unique
+  val close  : t @ unique -> unit
+end = struct
+  type t = { fd : Unix.file_descr }
+  let open_ path =
+    { fd = Unix.openfile path [Unix.O_RDONLY] 0o600 }
+  let read t buf off len =
+    let n = Unix.read t.fd buf off len in
+    n, t
+  let close t = Unix.close t.fd
+end
+```
+
+Read each line. `open_` returns a `t @ unique`: a fresh handle
+with no other references (it was just created). `read` consumes
+the unique handle, performs the read, and returns a fresh unique
+handle for the caller to chain. `close` consumes the handle and
+returns `unit`: no fresh handle, no way to use the file again.
+
+Double-close, use-after-close, leaked open handles: each is a
+type error against this signature. The compiler does what
+`with_open_text` did at runtime, only now it does it at compile
+time.
+
+:::slide
+
+## A unique `File_descr` module
+
+```text
+val open_  : string -> t @ unique
+val read   : t @ unique -> bytes -> int -> int -> int * t @ unique
+val close  : t @ unique -> unit
+```
+
+- `open_` mints a fresh unique handle.
+- `read` consumes and re-mints, like `Unique_ref.get` / `set`.
+- `close` consumes without re-minting: no live handle remains.
+
+The bugs from M10-L05 (double-close, use-after-close, leak) all
+fail to type-check against this signature.
+
+:::
+
+:::slide
+
+## From M10-L05 combinator to M11-L04 type
+
+| M10-L05 (runtime) | M11-L04 (compile time) |
+|---|---|
+| `In_channel.with_open_text` | `t @ unique` in `close`'s signature |
+| `Fun.protect ~finally:close` | Unique-tracking by the type checker |
+| Catches double-close at runtime, sometimes | Catches double-close at compile time, always |
+| Restricted to one-scope lifetimes | Works for any explicit ownership chain |
+
+The runtime combinator becomes the type.
+
+:::
+
 ## Activity
 
-:::quiz mcq id=M11-L03-q1
+:::quiz mcq id=M11-L04-q1
 Given the `Unique_ref` signature from this lecture, which of these
 clients fails to type-check?
 
@@ -709,7 +789,7 @@ be discarded. The subsequent `free r` is the **original** `r`,
 which has already been used as unique. The compiler rejects it.
 :::
 
-:::quiz mcq id=M11-L03-q2
+:::quiz mcq id=M11-L04-q2
 Suppose we wrote a closure that *aliases* (not consumes) a unique
 reference:
 
@@ -787,7 +867,7 @@ the unsafe version; the type checker has just proven it safe.
 
 ## What's next
 
-The next lecture (M11-L04) is **linearity**. We will treat it on
+The next lecture (M11-L05) is **linearity**. We will treat it on
 its own terms: a separate axis that tracks *future* use rather
 than past aliasing, a separate set of modes (`many` and `once`),
 a separate set of compile errors. We will see why some APIs are
@@ -795,7 +875,7 @@ more naturally written with linearity than uniqueness (the
 "linear handle" example), and we will look at the file-handle
 shape that puts the two together.
 
-Then M11-L05 is the tutorial, where we design a file-handle module
+Then M11-L07 is the tutorial, where we design a file-handle module
 end to end, combining locality and linearity, and walk through
 three attempts to misuse the API. Each attempt is a type error.
 

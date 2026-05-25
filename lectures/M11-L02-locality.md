@@ -735,30 +735,29 @@ boxed-float computation deep in the call graph will still allocate.
 
 **Pitfall 4: "Locality and reference-counting / linear types are
 the same thing."** They are not. Locality is about *scope*: where
-does this value live? Linearity (M11-L04) is about *number of
+does this value live? Linearity (M11-L05) is about *number of
 uses*: how many times can this be invoked? Some C++ / Rust idioms
 blur the two; OxCaml keeps them separate, on separate axes.
 
 ## What's next
 
-The next lecture (M11-L03) moves to the **uniqueness** axis, which
-tracks whether a value has been aliased in the past. With
-uniqueness in hand, we can give a *safe* type to a `free` function
-for a manually managed resource: `'a t @ unique -> unit`. We will
-see the compiler reject use-after-free and double-free for free.
-
-Uniqueness alone has a subtle problem when unique values get
-captured in closures; that problem motivates the linearity axis,
-which is M11-L04. Then M11-L05 is the tutorial, where we build a
-file-handle module that puts locality and linearity together.
+The next lecture (M11-L03) moves to the **portability** axis,
+which tracks whether a value can cross a domain boundary. The
+gensym race from CS3100 (a `ref` shared across two domains) is the
+motivating example: OxCaml rejects the parallel spawn at compile
+time. Then M11-L04 covers **uniqueness**, M11-L05 covers
+**linearity**, M11-L06 covers **contention**, and M11-L07 is the
+tutorial that combines everything.
 
 :::slide
 
 ## What's next
 
-- Lecture 3: **uniqueness**. Past-aliasing tracking. Safe `free`.
-- Lecture 4: **linearity**. Future-use tracking. Safe `close`.
-- Lecture 5: tutorial. A resource-management API combining both.
+- Lecture 3: **portability**. Cross-domain crossing.
+- Lecture 4: **uniqueness**. Past-aliasing tracking. Safe `free`.
+- Lecture 5: **linearity**. Future-use tracking. Safe `close`.
+- Lecture 6: **contention**. Cross-domain access.
+- Lecture 7: tutorial. A resource-management API combining the axes.
 
 :::
 

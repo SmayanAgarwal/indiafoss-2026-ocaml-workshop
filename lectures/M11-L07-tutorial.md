@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: a resource-management API"
-lecture_no: 5
+lecture_no: 7
 week: 11
 duration_target_min: 25
 concepts: [tutorial, file handle, linearity, locality, manual resource management, API design]
@@ -22,7 +22,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Tutorial: a resource-management API</h2>
-<p class="title-slide-label">Module 11 &middot; Lecture 5</p>
+<p class="title-slide-label">Module 11 &middot; Lecture 7</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -48,7 +48,8 @@ checks.
 2. Sketch the implementation.
 3. Break the API three ways; watch the compiler reject each.
 4. Compare to the C version.
-5. Design exercise: a `malloc`-style buffer API.
+5. Extend the design for portability + contention.
+6. Design exercise: a `malloc`-style buffer API.
 
 :::
 
@@ -508,6 +509,63 @@ Same protocol; same `once @ local` signature.
 
 :::
 
+## Adding portability and contention
+
+The `Handle` API above is `once @ local`: linearity + locality.
+A real system that is *also* shared across domains needs the
+other two axes too. Suppose we want to expose a connection pool
+that any domain may borrow from. The API now has to:
+
+- ship handles to other domains (**portability**),
+- allow safe concurrent reads of the pool's bookkeeping
+  (**contention**),
+- still enforce close-exactly-once (**linearity**),
+- still keep the handle in its caller's region for the duration
+  of the borrow (**locality**).
+
+A sketch of the cross-domain-aware signature:
+
+```ocaml skip
+module type Conn = sig
+  type t
+  type pool
+  val pool         : pool @ portable
+  val borrow       : pool @ portable -> t @ once @ local
+  val read         : t @ once @ local -> string * t @ once @ local
+  val close        : t @ once @ local -> unit
+end
+```
+
+The `pool` value is `portable`: any domain can hold it. The
+`borrow` operation returns a fresh `t @ once @ local`: a handle
+that is local to the borrowing scope and must be closed exactly
+once. The pool's internal counter is an `Atomic.t` (mode-crossing
+contention, so the borrow is race-free).
+
+The five-axis API expresses the *whole* protocol: who can hold
+the pool, who can hold a handle, when the handle must be closed,
+whether the handle may leak. The compiler enforces each piece.
+
+:::slide
+
+## A cross-domain-aware connection pool
+
+```text
+val pool   : pool @ portable
+val borrow : pool @ portable -> t @ once @ local
+val read   : t @ once @ local -> string * t @ once @ local
+val close  : t @ once @ local -> unit
+```
+
+- `portable` on the pool: any domain may hold it.
+- Internal counter as `Atomic.t`: mode-crosses contention.
+- Handles are `once @ local`: linearity + locality from M11-L05
+  and M11-L02.
+
+Five-axis API; the compiler enforces every piece.
+
+:::
+
 ## Design exercise: a `malloc`-style buffer
 
 Now your turn. Design the OxCaml signature for a buffer API with
@@ -548,7 +606,7 @@ What mode annotations do you put where?
 
 :::
 
-:::quiz code id=M11-L05-q1
+:::quiz code id=M11-L07-q1
 Fill in the `Buffer` signature with the right OxCaml mode
 annotations so that the API enforces "no double-free, no
 use-after-free, no escape." The signature shape (one operation per
@@ -650,14 +708,20 @@ We have spent the module on three OxCaml mode axes:
 - **Locality** (M11-L02): tracks whether a value escapes its
   scope. Replaces the C `return &x` bug. Lets you stack-allocate
   short-lived values safely.
-- **Uniqueness** (M11-L03): tracks whether a value has been
+- **Portability** (M11-L03): tracks whether a value can cross
+  a domain boundary. Closures capturing thread-local mutable state
+  are `nonportable`; `Domain.Safe.spawn` requires `portable`.
+- **Uniqueness** (M11-L04): tracks whether a value has been
   aliased in the past. Replaces use-after-free and double-free for
   manually managed resources. Gives modular reasoning from
   signatures alone.
-- **Linearity** (M11-L04): tracks whether a value will be used
+- **Linearity** (M11-L05): tracks whether a value will be used
   again in the future. Replaces use-after-close, double-close,
   and forgotten-close. Provides the protocol vocabulary for
   resource APIs.
+- **Contention** (M11-L06): tracks whether a value is being
+  shared across domains. `Atomic.t` mode-crosses contention so it
+  can be hammered on by many domains safely.
 
 Three axes, five modes total (`global` / `local`,
 `aliased` / `unique`, `many` / `once`), each independent. The
@@ -665,24 +729,27 @@ compiler checks all of them simultaneously. The cost is zero at
 runtime; the benefit is whole categories of bugs becoming
 impossible.
 
-There are two more axes we did not cover in this course:
-**contention** and **portability**, which deliver compile-time
-data-race freedom. The same shape of argument applies: a runtime
-discipline (locking) becomes a compile-time invariant. If you
-want to follow up, the CS6868 OxCaml handout linked at the top of
-this lecture is the most comprehensive treatment.
+Two more axes (portability and contention) delivered compile-time
+data-race freedom in M11-L03 and M11-L06. The same shape of
+argument applied: a runtime discipline (locking, careful sharing)
+became a compile-time invariant. The CS6868 OxCaml handout linked
+at the top of this lecture is the most comprehensive treatment of
+the deeper end of the design (capsules, fork-join, parallel
+arrays).
 
 :::slide
 
 ## Module 11 summary
 
-| Axis | Default | Strict | Tracks | Replaces C bug |
+| Axis | Default | Strict | Tracks | Replaces |
 |---|---|---|---|---|
 | Locality | `global` | `local` | Escape | `return &x` |
+| Portability | `nonportable` | `portable` | Cross-domain crossing | shared `ref` racing |
 | Uniqueness | `aliased` | `unique` | Past aliasing | use-after-free, double-free |
 | Linearity | `many` | `once` | Future use | use-after-close, double-close |
+| Contention | `uncontended` | `contended` | Cross-domain access | racy reads on shared mutable state |
 
-Three axes, zero runtime cost, whole categories of bugs become
+Five axes, zero runtime cost, whole categories of bugs become
 type errors.
 
 :::
@@ -703,6 +770,24 @@ OCaml? The answer is **unikernels**, and that is where we go next.
 
 :::
 
+:::slide
+
+## Closing thoughts: from modes to systems
+
+- M11 built a typed mental model: protocol of use becomes type.
+- Same discipline scales to systems-level safety: when the
+  whole stack is OCaml, the modes you learned here apply
+  everywhere (network buffers, device handles, scheduler
+  tokens).
+- Module 12: MirageOS uses these same disciplines to build
+  unikernels: small, single-purpose, library-OS appliances
+  written in safe OCaml end to end.
+
+The mode system is the link between this module's API safety and
+the next module's systems safety.
+
+:::
+
 ## Reading
 
 - **OxCaml documentation**, the modes overview:
@@ -713,7 +798,7 @@ OCaml? The answer is **unikernels**, and that is where we go next.
   <https://github.com/kayceesrk/cs6868_s26>
 - **OxCaml ICFP 2025 tutorial**, the hands-on exercises:
   <https://github.com/oxcaml/tutorial-icfp25>
-- The two blog posts that anchored M11-L01 and M11-L03 / L04
+- The two blog posts that anchored M11-L01 and M11-L04 / L05
   (linked in those lectures).
 
 ## Sources

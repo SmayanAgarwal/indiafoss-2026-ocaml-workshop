@@ -41,9 +41,9 @@ the safe fragment, though, the language genuinely does what it
 claims.
 
 Module 11 picks the argument back up at a different boundary. There
-are two C bug classes that the OCaml story so far does *not*
-address, and they are not curiosities. They are bugs that real
-systems programmers hit every week.
+are bug classes that the OCaml story so far does *not* address,
+and they are not curiosities. They are bugs that real systems
+programmers hit every week.
 
 The first is **stack-pointer escape**. In C you can write
 `return &x` where `x` is a function-local variable. The compiler
@@ -69,20 +69,43 @@ calls `close` twice on the same descriptor, or forgets to close it,
 or closes it and then keeps using it, the type system has nothing
 to say.
 
-OxCaml's mode system fixes both. The fix is type-level, which means
-no extra runtime, no extra branches, no extra allocation. The
-compiler reads the program more carefully, and rejects more bad
-programs.
+The third is **data races across domains**. OCaml 5 ships domains;
+two of them sharing a `ref` and both writing is a textbook race.
+Vanilla OCaml compiles the program and lets the race fire at
+runtime. Standard race-detector tools like TSan find some of
+them, after the program has run on enough inputs. The type
+system, until OxCaml, had no compile-time check.
+
+OxCaml's mode system fixes all three. The fix is type-level,
+which means no extra runtime, no extra branches, no extra
+allocation. The compiler reads the program more carefully, and
+rejects more bad programs.
 
 :::slide
 
 ## Where M10 left us
 
 - GC + types rule out memory bugs **inside safe OCaml**, by construction.
-- But two C bug classes survive even with a GC:
+- But three bug classes survive even with a GC:
   - **stack-pointer escape** (`return &x`),
-  - **use-after-free of manually managed resources** (close twice).
+  - **use-after-free of manually managed resources** (close twice),
+  - **data races** across domains (shared `ref`, two writers).
 - The fix is to extend the *type* system. That is the OxCaml story.
+
+:::
+
+:::slide
+
+## What modes add to OCaml
+
+- A **mode** is a type-level annotation on a *use site*, not on
+  a type definition.
+- The same `int ref` can appear at different modes in different
+  places; the type stays the same, the rules differ.
+- A **behavioural type** tracks the *protocol of use*, not just
+  the shape of values.
+- Modes turn programmer conventions ("close once", "do not race
+  the counter") into compile-time checks.
 
 :::
 
@@ -99,17 +122,19 @@ The mode is on the *use site*, not on the type definition. This is
 unlike, say, Rust, where ownership is woven into the type itself.
 
 An **axis** is one independent dimension of mode. OxCaml has five
-axes. We will look at three in this module:
+axes. We will cover all five in this module:
 
 - **Locality**: can this value escape the scope it was created in?
+- **Portability**: can this value cross a domain boundary?
 - **Uniqueness**: has this value been aliased in the past?
 - **Linearity**: how many times can this value still be used?
+- **Contention**: is this value being accessed by multiple domains?
 
-The other two are **contention** and **portability**, which together
-form OxCaml's story for compile-time data-race freedom. They matter
-to the same people who care about Module 11, but the course does
-not include a concurrency module, so we will mention them in
-passing and then move on.
+The first and the middle two (locality, uniqueness, linearity) form
+OxCaml's story for safe stack allocation and safe manual resource
+management. The other two (portability, contention) form OxCaml's
+story for compile-time data-race freedom. Each axis is independent
+and gets its own lecture.
 
 A **behavioural type** is a type that tracks *use patterns*, not
 just shape. The classical example: a file-handle type that knows it
@@ -126,8 +151,24 @@ types built into the compiler.
 - **Behavioural type**: a type that tracks the protocol of use,
   not just the shape of values.
 
-OxCaml has five axes. M11 covers **locality**, **uniqueness**,
-**linearity**.
+OxCaml has five axes: **locality**, **portability**, **uniqueness**,
+**linearity**, **contention**. M11 covers all five.
+
+:::
+
+:::slide
+
+## Five axes at a glance
+
+- **Locality**: scope escape.
+- **Portability**: cross-domain crossing.
+- **Uniqueness**: past aliasing.
+- **Linearity**: future use.
+- **Contention**: cross-domain access.
+
+Each axis is independent; the compiler tracks all five
+simultaneously. One per lecture, M11-L02 through M11-L06; M11-L07
+combines them.
 
 :::
 
@@ -184,22 +225,22 @@ dynamic check is gone.
 
 ## A tour of the axes
 
-The next three lectures (M11-L02 through M11-L04) each take one
+The next five lectures (M11-L02 through M11-L06) each take one
 axis, give a working example, and walk through what the compiler
 says when you try to break the rule. This section is the road map.
 
 A note on the code snippets below and in the following lectures:
-the OxCaml mode-syntax (the `@ local`, `@ unique`, `@ once`
-annotations, `stack_`, `exclave_`, `Modes.Aliased.t`) is still
-evolving across OxCaml releases. The snippets reflect the syntax
-of the snapshot this course is pinned to; if you try a slightly
-different OxCaml version, some surface details may differ. The
-*ideas* are stable; the spelling is not.
+the OxCaml mode-syntax (the `@ local`, `@ unique`, `@ once`,
+`@ portable`, `@ contended` annotations, `stack_`, `exclave_`,
+`Modes.Aliased.t`) is still evolving across OxCaml releases. The
+snippets reflect the syntax of the snapshot this course is pinned
+to; if you try a slightly different OxCaml version, some surface
+details may differ. The *ideas* are stable; the spelling is not.
 
 `Modes.Aliased.t` in particular is a small wrapper type used to
 expose a unique value through an interface without compromising
 its uniqueness. We will introduce it where it earns its keep, in
-[M11-L03](M11-L03-uniqueness.html); for now treat it as one more
+[M11-L04](M11-L04-uniqueness.html); for now treat it as one more
 piece of syntax that exists for a reason you do not yet need.
 
 ### Locality: scope-tracking
@@ -336,7 +377,7 @@ warning, or in some configurations a hard error.
 Linearity is the mirror of uniqueness. Uniqueness asks *has this
 been aliased in the past?* Linearity asks *will this be used again
 in the future?* They cooperate in subtle ways, especially around
-closures, which we will see in M11-L03 and M11-L04.
+closures, which we will see in M11-L04 and M11-L05.
 
 :::slide
 
@@ -352,23 +393,80 @@ Captures the *future*; uniqueness captures the *past*.
 
 :::
 
-### Contention and portability, briefly
+### Portability: tracking cross-domain crossing
 
-The last two axes are **contention**
-(`uncontended` / `shared` / `contended`) and **portability**
-(`portable` / `nonportable`). Together they let the OxCaml compiler
-reject data races at compile time. A closure that captures a
-mutable `ref` is `nonportable`; the spawn primitives require
-`portable` closures; the type checker glues those rules together to
-make racy programs untypable.
+OxCaml introduces a **portability** axis with two modes,
+`nonportable` (the default) and `portable`. A `portable` value is
+safe to send to another domain: pure functions are portable;
+closures capturing only immutable data are portable; closures
+capturing a `ref` or any other thread-local mutable state are
+*not*. `Domain.Safe.spawn` requires its argument closure to be
+`portable`, which is how OxCaml refuses the classic shared-`ref`
+race at compile time.
 
-This course does not include a concurrency module, so we are not
-covering contention and portability in any depth. The point of
-mentioning them now: the mode-system framing scales. The same shape
-of argument we will use for locality, uniqueness, and linearity is
-the shape Jane Street uses to deliver compile-time race freedom.
-The CS6868 handout in your reading list covers contention and
-portability if you want to follow up.
+```ocaml skip
+let gensym =
+  let count = ref 0 in
+  fun prefix ->
+    count := !count + 1;
+    prefix ^ "_" ^ string_of_int !count
+
+(* Rejected: gensym is nonportable. *)
+let _ = Domain.Safe.spawn (fun () -> gensym "x")
+```
+
+We will read the error carefully in M11-L03.
+
+:::slide
+
+## Portability, in one slide
+
+- Two modes: `nonportable` (default) and `portable`.
+- `@ portable`: safe to send to another domain.
+- A closure that captures a `ref` (or any thread-local mutable
+  state) is **nonportable**.
+- `Domain.Safe.spawn` requires `portable`.
+
+Replaces the race: shared `ref` across domains. Caught at compile
+time.
+
+:::
+
+### Contention: tracking cross-domain access
+
+OxCaml introduces a **contention** axis with three modes,
+`uncontended` (the default), `shared`, and `contended`. An
+`uncontended` value is exclusively yours; a `shared` value is
+read-only-shared with other domains; a `contended` value is
+read-and-write-shared. The rule is: a `contended` value's mutable
+fields cannot be read or written (yes, even read; the compiler
+cannot tell at the read site whether some other domain is mid-
+write). `Atomic.t` is the typed escape hatch: it mode-crosses
+contention, so atomic operations are accepted at any mode.
+
+```ocaml skip
+type counter = { mutable n : int }
+
+let bump_contended (c @ contended) =
+  c.n <- c.n + 1
+(* Rejected: c is contended, mutable field n is being written. *)
+```
+
+We will work this through in M11-L06.
+
+:::slide
+
+## Contention, in one slide
+
+- Three modes: `uncontended` (default), `shared`, `contended`.
+- Read or write a mutable field on `contended`: rejected.
+- Read a mutable field on `shared`: allowed.
+- `Atomic.t` mode-crosses contention: always safe.
+
+Replaces the bug: lost updates from racy mutable-field writes.
+Caught at compile time.
+
+:::
 
 :::slide
 
@@ -377,12 +475,12 @@ portability if you want to follow up.
 | Axis | Modes (looser ⇐ ⇒ stricter) | Default | Tracks |
 |---|---|---|---|
 | **Locality** | `global` ⇐ `local` | `global` | Can it escape its scope? |
+| **Portability** | `nonportable` ⇐ `portable` | nonportable | Cross-domain crossing? |
 | **Uniqueness** | `aliased` ⇐ `unique` | `aliased` | Has it been aliased? |
 | **Linearity** | `many` ⇐ `once` | `many` | Will it be used again? |
-| Contention | `uncontended` ⇐ `shared` ⇐ `contended` | uncontended | Cross-domain access? |
-| Portability | `nonportable` ⇐ `portable` | nonportable | Cross-domain crossing? |
+| **Contention** | `uncontended` ⇐ `shared` ⇐ `contended` | uncontended | Cross-domain access? |
 
-The first three are M11's subject.
+All five are M11's subject.
 
 :::
 
@@ -433,25 +531,33 @@ in M01. Modes extend the argument to the protocol of use.
 
 ## What this module covers
 
-The remaining four lectures of M11 take each axis in turn and walk
-it carefully. The plan:
+The remaining six lectures of M11 take each axis in turn and walk
+it carefully, then combine them in a tutorial. The plan:
 
 - **M11-L02** introduces locality. Polyline running example.
   `stack_` blocks. `exclave_` for returning local values. Mode
   crossing for primitive types. The compiler-error walk-through
   when an escape is attempted.
-- **M11-L03** introduces uniqueness. The `Unique_ref` API from the
+- **M11-L03** introduces portability. The gensym-race example.
+  `Domain.Safe.spawn`'s portable constraint. The capture-versus-
+  parameter distinction. `Portable.Atomic.t` for race-free
+  parallel state.
+- **M11-L04** introduces uniqueness. The `Unique_ref` API from the
   2025-05-29 post. The subtle pitfall around closure capture and
   why uniqueness alone is insufficient. (Spoiler: it leads
   naturally to linearity.)
-- **M11-L04** introduces linearity. The `once` mode. A file-handle
+- **M11-L05** introduces linearity. The `once` mode. A file-handle
   module where the compiler rejects double-close, missing close,
   and use-after-close. Past-versus-future framing from the second
   blog post.
-- **M11-L05** is the tutorial. We design a small resource-management
-  API end to end, combining locality and linearity, watch the
-  compiler reject three different ways to misuse the API, and
-  compare to the C equivalent.
+- **M11-L06** introduces contention. The contended / shared /
+  uncontended trio. Why even reads of mutable fields on contended
+  values are rejected. `Atomic.t` mode-crossing. A typed spinlock
+  pattern.
+- **M11-L07** is the tutorial. We design a small resource-management
+  API end to end, combine all five axes, watch the compiler reject
+  three different ways to misuse the API, and compare to the C
+  equivalent.
 
 The OxCaml compiler is still a moving target; the locality and
 uniqueness syntax in particular has shifted across releases. We
