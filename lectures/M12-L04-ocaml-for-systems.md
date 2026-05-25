@@ -460,6 +460,213 @@ Total **TCB-C ~ 40,000 lines**, vs Linux's **~30,000,000**.
 
 :::
 
+## OCaml's GC inside a unikernel
+
+The OCaml garbage collector is a specific design point that
+matters when you push the language down into the OS layer. Three
+properties travel well across the boundary:
+
+- **Compacting, incremental, generational.** The minor heap is
+  bumped in a small contiguous region; the major heap is swept
+  incrementally, in slices, so a single GC pause is bounded. No
+  full stop-the-world for the major heap in the common case.
+- **No kernel allocator needed.** A library OS without an
+  ambient kernel has nowhere to `malloc` from. OCaml's GC manages
+  its own heap on top of a small static memory pool that Solo5
+  hands the unikernel at boot. There is no equivalent of Linux's
+  `kmalloc` to depend on, and none is needed.
+- **Statically linked into the binary.** The GC code lives in
+  the unikernel ELF alongside the application code. Dead-code
+  elimination at link time strips out the GC modes the
+  application does not use.
+
+The shape of the GC is what makes "OCaml-as-OS" practical in
+the first place. A language with a heavier or less predictable
+GC (early Java) would struggle in this regime; a language with
+no GC (C, Rust) would push manual memory management back into
+the application. OCaml's GC is the middle path that fits the
+unikernel constraints.
+
+:::slide
+
+## OCaml's GC fits a unikernel
+
+- **Compacting, incremental, generational.** Bounded pauses.
+- **No `kmalloc` needed.** GC owns a static pool from Solo5.
+- **Static-linked, dead-code-eliminated.** Only the modes the
+  app uses ship in the binary.
+- This is the GC design point that makes "OCaml-as-OS"
+  practical.
+- Heavier GC: pause too long. No GC: manual memory back in the
+  app.
+
+:::
+
+## Memory safety as first line of defence
+
+Recall from [M12-L03](M12-L03-virtualisation.html) that a
+MirageOS unikernel runs inside a VM, and inside that VM there is
+no MMU boundary between the application and what used to be
+"kernel" code. The unikernel's code runs at the guest's highest
+privilege level (you can think of it as the guest's "ring 0"
+inside its own VM). A wild pointer in OCaml-TLS could, in
+principle, scribble over the network stack's buffer pool, the
+scheduler's run queue, or the application's own data.
+
+OCaml's memory safety is what closes this internal gap. Inside
+a single unikernel:
+
+- The hypervisor sees only the outside of the guest. A memory
+  bug inside the guest cannot escape to other guests; the EPT
+  / RVI page tables forbid it.
+- But the hypervisor cannot help with *which* part of the guest
+  got corrupted. That is the language's job.
+- An OCaml type error caught at compile time is much less
+  catastrophic than a C use-after-free caught at runtime: the
+  unikernel either fails to build, or it traps on a typed
+  exception, neither of which hands the attacker arbitrary
+  control.
+
+The slogan is: virtualisation isolates the unikernel from the
+world; the language isolates the inside of the unikernel from
+itself. Both are necessary; neither is sufficient.
+
+:::slide
+
+## Memory safety as first line of defence
+
+- Unikernel runs at the guest's highest privilege level (no
+  ring 3 / ring 0 split inside the VM).
+- Hypervisor protects guests *from each other*.
+- The language protects the *inside of one guest* from itself.
+- A type error at compile time: build fails.
+- A typed exception at runtime: clean trap, no arbitrary control.
+- An OCaml type error here is much less catastrophic than a C
+  use-after-free.
+
+:::
+
+## Forward pointers: M10 and M11
+
+The story of this lecture sits between two other modules that
+make the safety argument concrete. It is worth pointing forward
+to them explicitly, because their machinery is what gives
+MirageOS its safety budget:
+
+- [Module 10 (Memory safety and security)](M10-L01-ub-and-the-zoo.html)
+  takes the four categories of memory-safety bug (UAF, buffer
+  overflow, uninit read, double free) and argues each is ruled
+  out *by construction* in OCaml. That is the empirical floor we
+  cited above (70 percent of CVEs are these four bugs); MirageOS
+  is what you build once that floor is gone.
+- [Module 11 (OxCaml modes)](M11-L01-modes-as-safety.html) goes
+  further: uniqueness modes prevent use-after-free at the type
+  level (no GC reachability needed); linearity forces resources
+  to be used exactly once; portability is a compile-time
+  guarantee that a value can move safely between domains. Each
+  of these gives MirageOS a way to express invariants that
+  ordinary OCaml has to enforce dynamically.
+
+The intuition to carry from M10 and M11 is that the safety story
+keeps tightening: OCaml rules out most of the C CVE zoo; OxCaml
+rules out more at the type level. MirageOS is what you do with
+that safety budget when you spend it on the OS itself.
+
+:::slide
+
+## Forward pointers to M10 and M11
+
+- [**M10**](M10-L01-ub-and-the-zoo.html): the four C memory
+  bugs (UAF, BOF, uninit, double-free) ruled out by
+  construction. MirageOS is what you build once the floor is
+  gone.
+- [**M11**](M11-L01-modes-as-safety.html): uniqueness modes
+  prevent UAF at the *type* level; linearity forces exactly-once
+  use; portability is compile-time data-race freedom.
+- MirageOS spends the M10 + M11 safety budget at the OS layer.
+
+:::
+
+## OCaml's predictability
+
+Performance is what `httpaf_eio` shows on the chart; *predictable*
+performance is the property that matters for a server. Two facts
+make OCaml a good fit for low-latency server workloads, and they
+are worth naming separately:
+
+- **No JIT warm-up.** OCaml's native compiler produces machine
+  code at build time. There is no "first hundred requests are
+  slow while the JIT compiles" phase that you would get with a
+  JVM-based server. The unikernel hits its steady-state latency
+  on request one.
+- **GC tail latency is well-bounded in the median.** With normal
+  allocation patterns, GC pauses sit in the sub-millisecond
+  range. They are not zero, but they are small enough not to
+  surprise the 99th-percentile latency that a server cares about.
+  The famous quote we reuse from M12-L04's GC discussion: *"if
+  your application can tolerate 1 ms of latency, OCaml is a good
+  fit."*
+
+A MirageOS unikernel boots in tens of milliseconds, serves
+requests at predictable latency from the moment it is up, and
+exits cleanly when shot. That predictability is what makes the
+"shoot and restart" deployment model work.
+
+:::slide
+
+## Predictability is a server property
+
+- **No JIT warm-up**: native-compiled at build time. First
+  request is steady-state.
+- **GC pauses sub-millisecond** in the common case.
+- *"If your application can tolerate 1 ms of latency, OCaml is
+  a good fit."*
+- A MirageOS unikernel boots in **tens of ms**; serves at
+  predictable latency on request 1.
+- This is what makes the **shoot-and-restart** deployment
+  model work.
+
+:::
+
+## The trade-off: OCaml vs C
+
+The honest other half of the OCaml-for-systems argument is that
+OCaml *is* slower than C in raw single-threaded compute. The
+benchmark numbers (1.5x to 2x slower for algorithmic workloads)
+are real. For workloads dominated by tight numerical kernels,
+that gap matters; for workloads dominated by I/O and protocol
+parsing (the typical systems applications), it does not.
+
+The reasoning is the same one any server engineer applies to
+language choice: the bottleneck in a network service is almost
+never single-threaded compute. It is system calls, network
+latency, disk seek, GC tail latency, and protocol parsing. Of
+those, only the last is "compute" in the sense the benchmarks
+measure, and OCaml's compiled parsers are very fast (recall the
+httpaf_eio number from the previous slide: 200k req/s, ahead of
+Rust Hyper).
+
+For an OS layer that is fundamentally I/O-bound, the C-vs-OCaml
+gap is in the noise. The safety gain (no UAF, no buffer
+overflow, no double-free) is enormous. The trade is one-sided
+in this domain.
+
+:::slide
+
+## OCaml vs C: the trade-off
+
+- OCaml is **1.5x to 2x slower than C** in raw single-threaded
+  compute.
+- For I/O-bound systems applications, this gap is in the
+  noise.
+- The bottleneck is **syscalls, network, disk, GC tail, protocol
+  parsing**, not single-threaded compute.
+- Safety gain: **no UAF, no BOF, no double-free, no
+  uninit-read.**
+- In this domain, the trade is one-sided.
+
+:::
+
 ## Activity
 
 :::quiz mcq id=M12-L04-q1
@@ -566,6 +773,8 @@ Unikernel code excerpt.
   - The library catalogue (network, storage, security, crypto).
   - TLS as rigorous engineering.
   - A Hello Unikernel example.
+- Lecture 6: **One unikernel end to end.** A tiny HTTP service
+  walked from `unikernel.ml` to a running VM.
 - This module **closes the course**: from M01's type system to
   M12's whole-OS application. Safety, all the way down.
 

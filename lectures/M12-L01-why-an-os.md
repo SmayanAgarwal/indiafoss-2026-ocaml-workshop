@@ -233,6 +233,108 @@ and have everything Just Work.
 
 :::
 
+## TCB growth over time
+
+The size of the kernel is not stable; it grows. The `kernelstats`
+project plots lines-of-code across Linux versions back to 2.4
+(early 2000s) and the curve is monotonically up. The 2.4 series
+sat around 3 to 4 million lines. 2.6 doubled it. 3.x doubled it
+again. By the 4.x series the kernel was around 20 million; by
+5.x it crossed 30. The `drivers/` band grew the fastest of all.
+
+Two readings of this curve are worth keeping in mind. The first
+is the optimistic one: more drivers means Linux supports more
+hardware, which is genuinely useful. The second is the security
+one: the *Trusted Computing Base* you run every day is also
+growing monotonically, with no upper bound in sight, and every
+new line is a candidate location for a CVE.
+
+:::slide
+
+## The TCB keeps growing
+
+- Linux 2.4 (early 2000s): ~3 to 4 million LoC.
+- Linux 2.6: ~8 million.
+- Linux 3.x: ~15 million.
+- Linux 4.x: ~20 million.
+- Linux 5.11: **30 million**.
+- `drivers/` is the fastest-growing band; the curve is monotonic.
+- **More hardware support** comes with **more TCB**.
+
+:::
+
+## TCB attack surface
+
+The slogan is short: more code in the TCB means more bugs in the
+TCB means more CVEs. The conversion factor between "lines of C"
+and "CVEs per year" is not precise, but it is positive. Every
+new driver brings new pointer arithmetic, new lifetimes to track,
+new buffer boundaries to honour. Even when each individual line
+is well-reviewed, the *total* attack surface grows mechanically
+with the codebase.
+
+The empirical evidence we will revisit in
+[M12-L04](M12-L04-ocaml-for-systems.html) is that for over a
+decade roughly 70 percent of high-severity CVEs in major C/C++
+codebases (Microsoft, Chromium, Android) have been memory-safety
+bugs. That ratio has not budged despite enormous investment in
+static analysis, fuzzing, and sandboxing. The mechanism is
+simple: more memory-unsafe C in the TCB, more memory-safety
+CVEs out the other end.
+
+:::slide
+
+## More code in the TCB means more CVEs
+
+- **~70%** of high-severity CVEs in major C/C++ codebases are
+  memory-safety bugs (Microsoft 2019, Chromium 2020).
+- **~90%** for Android.
+- **~80%** of exploited 0-days, 2014 to 2019 (Fish in a Barrel).
+- The percentage has been flat for a decade.
+- More C in the TCB = more memory-safety CVEs.
+- The TCB grows monotonically; the CVE rate keeps pace.
+
+:::
+
+## A worked trace: serving one HTTP request
+
+The "what does the OS do?" question is easiest to feel as a
+trace. A static-file web server gets one HTTP request. What
+kernel services does the request touch before the response goes
+back out on the wire? At minimum:
+
+- The TCP/IP stack accepts the connection (one `accept`).
+- The scheduler picks the server process from the run queue.
+- The page-table layer maps the request buffer into the
+  process's address space.
+- The VFS layer routes a `read` to the page cache, which (on a
+  cache hit) hands back the file contents without a disk touch.
+- The TCP/IP stack frames the response, the network driver
+  pushes packets onto the wire.
+- The scheduler suspends the process while it waits for the
+  next request.
+
+Every one of those bullets is thousands or tens of thousands of
+lines of kernel C. Your server's own code is a few hundred lines
+of bookkeeping. The ratio of "your code" to "OS code touched per
+request" is on the order of 1 to 10,000.
+
+:::slide
+
+## One HTTP request, what gets touched
+
+- TCP/IP `accept` (network stack).
+- Scheduler picks the process off the run queue.
+- Page-table layer maps the request buffer.
+- VFS plus page cache reads the file (no disk on a cache hit).
+- TCP/IP frames the response; driver pushes packets out.
+- Scheduler suspends the process between requests.
+- **Your code**: a few hundred lines of bookkeeping.
+- **Kernel code per request**: thousands to tens of thousands of
+  lines, almost all in C.
+
+:::
+
 It is also instructive to listen to what Linus Torvalds said about
 this back in 1992, when Linux was new and people were arguing about
 microkernels versus monolithic kernels on the comp.os.minix
@@ -363,6 +465,8 @@ the recipe:
   the world's biggest pile of C.
 
 The synthesis, in [Lecture 5](M12-L05-mirageos.html), is MirageOS.
+[Lecture 6](M12-L06-bob-the-bin-man.html) closes with one small
+unikernel walked end to end, from source to running VM.
 
 :::slide
 
@@ -488,6 +592,8 @@ not escape academia at the time, and what changed.
 - Lecture 4: **Ingredient 3, OCaml.** Why memory safety at
   the OS layer matters.
 - Lecture 5: **MirageOS.** The synthesis.
+- Lecture 6: **One unikernel end to end.** From `unikernel.ml`
+  to a running VM.
 
 :::
 

@@ -378,6 +378,161 @@ unikernel's entry point. We will look at exactly this in
 
 :::
 
+## Solo5 architecture: a tiny hypercall ABI
+
+The interesting thing about Solo5, from a design standpoint, is
+how small its interface to the unikernel actually is. Where a
+conventional guest kernel sees an emulated PC (a BIOS, a PCI bus,
+emulated chipset, emulated NIC, emulated disk controller), a
+Solo5 unikernel sees a much smaller surface: a handful of
+*hypercalls* for the operations it actually needs.
+
+The Solo5 ABI, roughly, exposes:
+
+- A **console** for log output.
+- A **clock** to read wall-clock and monotonic time.
+- A **network interface** (one or more), with `solo5_net_read`
+  and `solo5_net_write` for packet I/O.
+- A **block device** (one or more), with `solo5_block_read` and
+  `solo5_block_write` for sector-aligned I/O.
+- A **yield** call that the unikernel uses to wait for events.
+- A **shutdown** call (`solo5_exit`) that ends the VM cleanly.
+
+That is essentially the whole ABI. Compared to the Linux syscall
+surface (hundreds of calls, each with its own semantics and
+edge cases), this is small enough to audit fully. The unikernel
+only has to know how to call these few functions; the tender on
+the other side translates them into whatever the underlying
+backend (KVM, Xen, seccomp) expects.
+
+:::slide
+
+## Solo5's tiny hypercall ABI
+
+- **Console**: log output.
+- **Clock**: wall-clock and monotonic time.
+- **Network**: `solo5_net_read`, `solo5_net_write`.
+- **Block**: `solo5_block_read`, `solo5_block_write`.
+- **Yield**: wait for an event.
+- **Shutdown**: `solo5_exit`.
+
+That is the whole ABI. Small enough to audit fully; compare
+the Linux syscall surface of hundreds of calls.
+
+:::
+
+## Solo5 backends in one table
+
+The same unikernel ELF can be configured against several
+different Solo5 backends. They differ in *what enforces the
+isolation* between the unikernel and the host:
+
+| Backend | Isolation mechanism | Typical use |
+| --- | --- | --- |
+| `solo5-hvt` | KVM virtual machine | The canonical production target on Linux. |
+| `solo5-spt` | Linux seccomp filter | Development; containerised environments where KVM is unavailable. |
+| `solo5-muen` | Muen separation kernel | High-assurance / formally verified hosts. |
+| `solo5-xen` | Xen hypervisor | Xen-based clouds and historic Xen deployments. |
+
+Picking the backend at build time is the M12-L05 specialisation
+story: `mirage configure -t hvt` produces the KVM image,
+`mirage configure -t spt` produces the seccomp-sandboxed image,
+and so on. The application code does not change.
+
+:::slide
+
+## Solo5 backends
+
+| Backend | Isolation | Use |
+| --- | --- | --- |
+| `solo5-hvt` | KVM | Canonical Linux production target |
+| `solo5-spt` | seccomp | Dev, containerised hosts |
+| `solo5-muen` | Muen separation kernel | High-assurance |
+| `solo5-xen` | Xen | Xen-based clouds |
+
+Same unikernel ELF; backend chosen at build time.
+
+:::
+
+## KVM as the canonical backend
+
+Among the four Solo5 backends, **KVM-based `solo5-hvt`** is the
+one you should picture by default. The reasons are practical:
+
+- KVM ships with mainline Linux. Any modern Linux host (kernel
+  4.x and later) can act as a KVM hypervisor with no extra
+  software.
+- KVM uses the hardware virtualisation extensions (Intel VT-x,
+  AMD-V) directly, so the per-guest overhead is small (typically
+  low single-digit percent on most workloads).
+- KVM is what every major cloud provider runs underneath their
+  Linux-based VM offerings. A unikernel that boots cleanly on
+  KVM boots cleanly on AWS, GCP, Azure, DigitalOcean, and so on.
+- The tooling around KVM (`libvirt`, `virt-manager`, the
+  `solo5-hvt` binary itself) is mature and well-documented.
+
+In short, "MirageOS unikernel in production" almost always means
+"`solo5-hvt` on KVM on some Linux host." We will assume this
+combination by default in [M12-L05](M12-L05-mirageos.html) and
+[M12-L06](M12-L06-bob-the-bin-man.html).
+
+:::slide
+
+## KVM is the canonical Solo5 backend
+
+- **KVM** ships with mainline Linux; no extra software needed.
+- Uses **Intel VT-x / AMD-V** hardware extensions directly;
+  overhead is low.
+- Underlies **every major cloud's** Linux VM offerings (AWS, GCP,
+  Azure, DigitalOcean).
+- Mature tooling: `libvirt`, `virt-manager`, `solo5-hvt`.
+- Production MirageOS deployments almost always use this combo.
+
+:::
+
+## VM vs container: an isolation spectrum
+
+It is worth placing virtualisation on a spectrum with its
+neighbours. The three points worth naming are:
+
+- **Separate machine**: maximum isolation. Two machines on
+  different power supplies cannot share a memory bug. Cost:
+  hardware capital, network latency, operational overhead.
+- **Virtual machine** (this lecture): the hypervisor enforces
+  isolation between guests using hardware page tables. Two
+  guests on the same host cannot read each other's memory.
+  Cost: hypervisor in the TCB, a small per-VM resource overhead.
+- **Container**: shares the host kernel; isolation is enforced
+  by kernel namespaces and cgroups. Two containers on the same
+  host *do* share the kernel, and a kernel CVE compromises both.
+  Cost: weaker isolation, but much lower resource overhead.
+
+A VM is more isolation than a container but less than a separate
+machine. For unikernels, the VM boundary is the design payoff:
+strong enough that one unikernel's memory bug cannot reach the
+others, cheap enough that you can deploy dozens of single-purpose
+unikernels on one host. Containers do not deliver this property
+because they share the kernel; "containerised" is not the same
+as "isolated."
+
+:::slide
+
+## VM vs container
+
+| Isolation level | Mechanism | Sharing |
+| --- | --- | --- |
+| Separate machine | Physical | Nothing |
+| **Virtual machine** | **Hypervisor + HW page tables** | **Hypervisor** |
+| Container | Kernel namespaces / cgroups | Host kernel |
+
+- VM is **more isolation than container**, **less than separate
+  machine**.
+- For unikernels, the VM boundary is the **design payoff**.
+- A kernel CVE compromises every container on the host; a guest
+  bug stays inside its guest.
+
+:::
+
 ## Worth picturing
 
 A useful mental model: a host machine running Linux + KVM has, in
@@ -505,6 +660,7 @@ material on memory safety and applies it at the OS level.
 - Lecture 4: **Ingredient 3, OCaml for systems.** Why a memory-
   safe language matters when the MMU isn't there to save you.
 - Lecture 5: **MirageOS = Library OS + Virtualisation + OCaml.**
+- Lecture 6: **One unikernel end to end.**
 
 :::
 

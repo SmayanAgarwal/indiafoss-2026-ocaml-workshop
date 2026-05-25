@@ -231,6 +231,120 @@ shrinks to what the application actually exercises.
 
 :::
 
+## What library modules ship with a library OS
+
+It is helpful to name the *kinds* of library a library-OS image
+typically links. None of these is conceptually new (every monolithic
+kernel has one of each); what changes is that they are exposed as
+ordinary OCaml or C libraries, picked individually, and statically
+linked into the image.
+
+- **Memory allocator.** What `malloc` / `free` do in a C
+  program, or what the GC does for OCaml. The library OS image
+  includes its own.
+- **Scheduler.** The thing that picks which fiber / thread /
+  effect handler to run next. The library OS image owns this
+  decision; no cross-process arbitration is needed because there
+  is only one process.
+- **Network stack.** Ethernet framing, ARP, IP, TCP, UDP, plus
+  whatever application protocols (HTTP, DNS, TLS) you choose to
+  link. We will see in [M12-L05](M12-L05-mirageos.html) that
+  MirageOS implements all of these in OCaml.
+- **File system.** If the workload needs persistent storage; if
+  it does not, the file system is simply not in the image.
+- **Device drivers.** The bottom of the stack: how the library
+  OS talks to network cards, block devices, consoles. M12-L03
+  will simplify this enormously by routing all driver work through
+  a hypervisor's virtual-device interface.
+
+:::slide
+
+## Library modules a library OS picks from
+
+- **Memory allocator** (the GC, for OCaml).
+- **Scheduler** (fibers / threads / effect handlers).
+- **Network stack** (Ethernet, ARP, IP, TCP, UDP, HTTP, TLS).
+- **File system** (only if the app uses persistent storage).
+- **Device drivers** (radically simplified by M12-L03).
+
+The application picks the set it actually uses. Nothing else
+ships.
+
+:::
+
+## Concrete library-OS example: ClickOS
+
+If you want a real-world point on the library-OS map, look at
+**ClickOS**, a project from NEC Labs Europe and the University
+of Cambridge. ClickOS is a minimalistic unikernel-style guest
+based on the *Click modular router* configuration language, designed
+to run network middleboxes (routers, load balancers, NATs,
+firewalls) as tiny VMs. A typical ClickOS instance is a few
+megabytes on disk, boots in tens of milliseconds, processes
+packets at near-line-rate on a 10 Gbps link, and runs the entire
+network function as a single-purpose unikernel.
+
+The interesting result from ClickOS is operational: a single
+commodity x86 server, with KVM and ClickOS guests, can replace
+a rack of dedicated middlebox appliances. The library-OS
+approach pays off precisely when the workload is one specialised
+network function repeated many times: each instance ships only
+the libraries it uses, the per-instance attack surface is small,
+and the boot time is short enough that scaling out is cheap.
+
+:::slide
+
+## ClickOS: a library OS in production
+
+- A minimal unikernel guest from NEC Labs / Cambridge.
+- Runs the **Click modular router** language: middleboxes
+  (routers, NAT, firewall, load balancer) as tiny VMs.
+- A few megabytes on disk; tens of milliseconds boot.
+- Near-line-rate packet processing on 10 Gbps.
+- One commodity x86 box replaces a rack of dedicated
+  middleboxes.
+
+:::
+
+## Other library-OS efforts in research
+
+Beyond Nemesis and Exokernel, several other projects have
+explored the library-OS idea in different forms. Three are
+worth naming briefly:
+
+- **Drawbridge** (Microsoft Research, early 2010s) packaged a
+  large slice of the Windows kernel into a per-application
+  library OS that ran on top of a small "picoprocess" host.
+  The motivation was security isolation for legacy Windows
+  applications.
+- **Graphene / Gramine** continued the same idea on Linux,
+  letting unmodified Linux binaries run inside a small library
+  OS layer suitable for trusted execution environments.
+- The **Rump kernel** project re-packaged large parts of NetBSD
+  as a set of "anykernel" libraries that can be linked into
+  other systems (including Xen guests and userspace processes).
+
+The recurring lesson across all of these is that the library-OS
+idea works technically and finds homes in security-sensitive
+niches; what changes between projects is the host substrate
+they target. None of them displaced Linux outright. All of them
+informed what MirageOS chose to do (and not do).
+
+:::slide
+
+## Other library-OS efforts
+
+- **Drawbridge** (Microsoft Research): Windows kernel packaged
+  as a per-application library OS; picoprocess host.
+- **Graphene / Gramine**: same idea on Linux; popular for trusted
+  execution environments.
+- **Rump kernel**: NetBSD as a set of "anykernel" libraries,
+  linkable into other systems.
+- **Common shape**: library OS + small host substrate.
+- **Common limit**: no one displaced Linux.
+
+:::
+
 ## A short history: Nemesis and Exokernel
 
 This is not a new idea. In the early 1990s two academic projects
@@ -397,6 +511,43 @@ hypervisor's small, stable virtual-device interface.
 
 :::
 
+## The trade-off: less code, more responsibility
+
+There is a third, subtler cost to library OSes that is not a "bug"
+in the same sense as the previous two. The monolithic kernel
+makes a lot of *policy* decisions for you. Which scheduler? CFS.
+Which network buffer size? 64 KiB. Which TCP congestion-control
+algorithm? Cubic. Which memory allocator? `kmalloc`. You inherit
+those choices whether you want them or not.
+
+A library OS removes the ambient kernel and so removes the
+ambient policies. The application becomes responsible for
+choosing and configuring each component. The scheduler is now
+your problem: you pick the fibre runtime, you set the tick
+interval. The TCP congestion control is your problem: you pick
+the algorithm, you size the buffers. For a single-purpose
+appliance (a router, a TLS terminator, a small HTTP service),
+this control is a feature: you tune the system for that one job.
+For a general-purpose workstation, it would be a nightmare: you
+would have to make hundreds of decisions that the kernel quietly
+made for you. That is one reason library OSes succeed in the
+appliance niche and fail in the desktop niche.
+
+:::slide
+
+## Library OS trade-off
+
+- Library OS is **leaner**: only the libraries the app uses
+  ship.
+- The app is **responsible for choosing and configuring**
+  each component: scheduler tick, TCP buffer size, congestion
+  control, memory allocator.
+- **Single-purpose appliance**: control is a feature.
+- **General-purpose workstation**: control is a nightmare.
+- Library OSes shine where the workload is narrow.
+
+:::
+
 ## Worth seeing on a real system
 
 It is worth picturing, concretely, what a library-OS runtime image
@@ -535,6 +686,7 @@ interface that the library OS can speak natively.
 - Lecture 4: **Ingredient 3, OCaml.** Safety inside the
   unikernel; matters because the MMU is no longer there.
 - Lecture 5: **MirageOS.** All three put together.
+- Lecture 6: **One unikernel end to end.**
 
 :::
 
