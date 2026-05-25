@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: walking Heartbleed end to end"
-lecture_no: 5
+lecture_no: 6
 week: 10
 duration_target_min: 25
 concepts: [Heartbleed, CVE-2014-0160, TLS heartbeat, buffer over-read, bounds checking, Bytes.sub, Cstruct, structural impossibility]
@@ -26,20 +26,21 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Tutorial: walking Heartbleed end to end</h2>
-<p class="title-slide-label">Module 10 &middot; Lecture 5</p>
+<p class="title-slide-label">Module 10 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-The previous four lectures built the safety picture in
+The previous five lectures built the safety picture in
 generality: the categories of memory-safety bugs (M10-L01); the
 security cost when one of them ships (M10-L02); how OCaml rules
-them out by construction (M10-L03); and the honest boundary where
-OCaml itself admits UB (M10-L04). This tutorial lands all of that
-on one concrete, exhaustively-documented case study:
-**Heartbleed**, CVE-2014-0160, the OpenSSL bug that affected an
-estimated two-thirds of the public internet in 2014.
+them out by construction (M10-L03); the honest boundary where
+OCaml itself admits UB (M10-L04); and resource safety past memory
+(M10-L05). This tutorial lands all of that on one concrete,
+exhaustively-documented case study: **Heartbleed**,
+CVE-2014-0160, the OpenSSL bug that affected an estimated
+two-thirds of the public internet in 2014.
 
 The choice of Heartbleed is deliberate. It is the single best-
 documented memory-safety incident in computing history. The bug is
@@ -417,6 +418,127 @@ underlying APIs do not permit them.
 
 :::
 
+## A neighbouring bug: resource leaks vs corruption
+
+Heartbleed is a *memory-corruption* class of bug: the
+out-of-bounds read happens in one request, the attacker gets
+64 KB of memory back, and the exploit is immediate. The bug is
+loud per request and detectable per request, once you know what
+to look for.
+
+Compare with the *resource-leak* class of bugs we met in
+[L05](M10-L05-resource-safety.html). A leaked file descriptor
+does not exfiltrate anything; it just persists in the kernel's
+table. One leak is invisible. Ten thousand leaks, over a week
+of uptime, exhaust the per-process file-descriptor limit and
+cause the server to refuse every new connection with EMFILE.
+The failure looks like "the server stopped accepting
+connections," not like "the server is leaking secrets." The
+fault arrived through a slow accumulation, not a single
+malformed request.
+
+Both classes are safety-relevant. The Heartbleed class is what
+the bounds-check discipline closes. The resource-leak class is
+what the combinator discipline (and, in M11, modes) closes.
+
+:::slide
+
+## Leak bugs vs corruption bugs
+
+| Property | Heartbleed (corruption) | fd leak (resource) |
+| --- | --- | --- |
+| Per-request effect | 64 KB memory exfiltrated | one fd retained |
+| Latency to harm | immediate | days of uptime |
+| Detection | per-request | only at exhaustion |
+| Closed by | bounds checks (M10-L03) | combinators (M10-L05) / modes (M11) |
+
+Both are safety bugs. Different shapes; different defences.
+
+:::
+
+## What OCaml + Ctypes does at the FFI boundary
+
+Heartbleed lived in OpenSSL, a C library. Most OCaml programs
+that talk TLS today either use a pure-OCaml stack (`ocaml-tls`)
+or call out to OpenSSL through *Ctypes*, OCaml's standard FFI
+binding library. Ctypes is worth understanding because it is
+where the safety story has the most to gain *and* the most to
+lose at the boundary.
+
+Ctypes asks the binding author to declare, in OCaml, the *type*
+of each C function being called. A `size_t` becomes an OCaml
+`int`; a `unsigned char *` becomes an OCaml `Bytes.t` or a
+`Cstruct.t`; a struct becomes an OCaml record with explicit
+field offsets. The runtime then marshals OCaml values into C
+representations at call time, and back at return time. Done
+correctly, the OCaml side preserves bounds and types; the C
+side is the side where the original Heartbleed-shaped check
+would still have to be added.
+
+What Ctypes does *not* do at the boundary is bounds-check the C
+side for you. If a Ctypes wrapper calls `memcpy(dst, src, n)`
+with `n` larger than the source allocation, the C-side
+`memcpy` will still run an out-of-bounds read. Ctypes lets you
+*express* a safer wrapper (slice the source as `Bytes.sub`
+first, then hand the slice to C), but expressing it is the
+author's job.
+
+:::slide
+
+## OCaml + Ctypes at the FFI boundary
+
+- Ctypes declares C-function types in OCaml.
+- OCaml-side bounds and types preserved at the call.
+- *C-side bounds checks are still the C side's responsibility.*
+- A Ctypes wrapper that hands an unchecked length to `memcpy`
+  has the original Heartbleed bug.
+- Defence: slice on the OCaml side (`Bytes.sub`) *before* the
+  call.
+
+(L04's honest boundary lives here.)
+
+:::
+
+## A forward pointer: modes (Module 11)
+
+The remaining safety gap, the one Ctypes cannot close without
+help, is *who owns the lifetime of a buffer that crosses the
+FFI boundary*. The C side may retain a pointer past the OCaml
+side's last use; the GC has no way to know. M10-L04 mentioned
+this. M10-L05 generalised it to all resources. *Module 11* is
+where the type system catches up.
+
+In M11 we will meet *modes*: locality, uniqueness, linearity.
+The relevant pair for resource ownership is **uniqueness +
+linearity**. A unique value has no other references; a linear
+value is used at most once. The compiler tracks both. A
+buffer handed to a C function with the unique-and-linear
+discipline cannot also be retained by the OCaml side; cannot
+be used twice on the C side; cannot be leaked. The type
+checker enforces it, with no runtime cost.
+
+The point is that Heartbleed's bounds-check shape, the FFI
+buffer-ownership shape, and the resource-management shape are
+all instances of the same problem: keeping a piece of state
+safely usable across a boundary. M10's tools (GC + bounds
+checks + combinators) close most of it. M11's modes close the
+remainder.
+
+:::slide
+
+## Forward pointer: modes (M11)
+
+- Bounds + GC close the in-language memory-safety story.
+- Combinators (`with_open_*`, `Fun.protect`) close the
+  scope-bound resource story.
+- *Modes (uniqueness + linearity) close the rest*: cross-FFI
+  buffer ownership, escaping resources, sharing across threads.
+- Compile-time checks, no runtime cost.
+
+(M11 picks up here.)
+
+:::
+
 ## The big picture
 
 What just happened in this tutorial is the entire module compressed
@@ -434,6 +556,9 @@ into one example. We saw:
   fragment; it would not hold if the handler called into C via
   FFI without preserving the bounds-check discipline on the
   C side.
+- **M10-L05's resource-safety lecture**: the same bug class has
+  a non-memory cousin (leak / double-close / use-after-close)
+  whose defence is the combinator pattern, not the GC.
 
 The single most important sentence in the module is:
 
@@ -470,7 +595,7 @@ its result as an `option` rather than raising. The shape is the
 one you would use if you wanted to handle bounds explicitly,
 without an exception breaking the control flow.
 
-:::quiz code id=M10-L05-q1
+:::quiz code id=M10-L06-q1
 Write `safe_sub : bytes -> int -> int -> bytes option` that
 returns `Some (Bytes.sub b pos len)` when the range `[pos,
 pos + len)` lies entirely inside `b`, and `None` otherwise. The

@@ -67,6 +67,24 @@ contrasting against.
 
 :::
 
+:::slide
+
+## What Module 10 covers (6 lectures)
+
+- **L01** *(this one)*: undefined behaviour, the memory-safety
+  zoo, and a worked use-after-free.
+- **L02**: memory bugs as security incidents. The 70 / 80 / 90
+  industry numbers.
+- **L03**: how OCaml rules them out by construction. GC, bounds
+  checks, value representation.
+- **L04**: where OCaml itself has UB. `Obj.magic`, `Marshal`,
+  FFI.
+- **L05**: resource safety. Beyond memory: file descriptors,
+  sockets, buffers.
+- **L06**: tutorial. Heartbleed, end to end.
+
+:::
+
 ## What "undefined" means
 
 The C standard distinguishes three related but importantly different
@@ -411,6 +429,63 @@ Each has produced thousands of CVEs.
 
 :::
 
+:::slide
+
+## The zoo is wider than four bugs
+
+Other UB categories that bite real C code:
+
+- **Signed-integer overflow** (UB; the compiler may delete
+  overflow checks, as in the activity quiz).
+- **Strict-aliasing violation**: read a value through a pointer
+  of the wrong type; the optimiser assumes the read does not
+  alias.
+- **Uninitialised read** (already in the four).
+- **Double-free** (already in the four).
+- **Data race**: two threads touch the same memory without
+  synchronisation.
+- **Pointer-to-stack escape**: return the address of a local
+  variable.
+
+*The four named bugs are the headliners; the family is larger.*
+
+:::
+
+:::slide
+
+## Worked use-after-free, in C
+
+```c
+struct connection *conn = malloc(sizeof *conn);
+conn->session_id = 42;
+free(conn);
+
+/* later, on another code path: */
+log_event("closing %d", conn->session_id);
+```
+
+- After `free(conn)`, the block is returned to the allocator.
+- `conn` still holds the *old* address: a dangling pointer.
+- `conn->session_id` reads bytes the program no longer owns.
+
+:::
+
+:::slide
+
+## Worked use-after-free: what happens
+
+- Best case: the bytes are still there; the `%d` prints `42`;
+  no visible bug *today*.
+- Real case: a later `malloc` reused the block. The `%d` now
+  prints whatever that other allocation stored at offset 0.
+- Worst case: the attacker controls the reuse (heap spraying);
+  the program reads attacker-supplied data and treats it as
+  trusted state.
+- **The bug is silent until the allocator's reuse pattern
+  changes.** Different libc, different load, different bug.
+
+:::
+
 These four categories are not exhaustive, but they cover the
 majority of memory-safety CVEs in the wild. Microsoft's Security
 Response Center reported in 2019 that *roughly 70 percent of all
@@ -446,6 +521,53 @@ production by walking through how each bug becomes a security
 incident. M10-L03 then makes the OCaml side of the story precise:
 *which* parts of the language rule each bug out, *where* in the
 runtime the rule is enforced, and where the boundary is.
+
+## Rust as a different answer
+
+OCaml is not the only language that rules out the four memory
+bugs by construction. *Rust* is the modern poster-child for
+memory safety without garbage collection, and the contrast with
+OCaml is instructive. Rust uses a *borrow checker*: a static
+analysis built into the type system that tracks ownership and
+borrowing of every value. The rules: each value has exactly one
+owner; you may borrow a value immutably any number of times, or
+mutably exactly once at a time, but not both; when the owner
+goes out of scope, the value is freed.
+
+This is a *compile-time discipline*. There is no runtime
+machinery: no GC, no reference counting, no tag bits. The
+guarantees match OCaml's for the four-bug zoo (use-after-free,
+double-free, data races on owned data), but the cost moves: the
+*programmer* must structure the program so that ownership and
+borrows are statically expressible. Common patterns like a
+doubly-linked list, a graph with cycles, or two threads sharing
+a buffer require extra machinery (`Rc`, `RefCell`, `Arc`,
+`Mutex`) that re-introduces a small runtime cost or pushes the
+check to runtime.
+
+The trade-off in one line: OCaml has a small constant runtime
+overhead and no proof obligation on the programmer; Rust has no
+runtime overhead and a proof obligation that the borrow checker
+must accept.
+
+:::slide
+
+## Rust: another answer
+
+| Property | OCaml | Rust |
+| --- | --- | --- |
+| Discipline | GC + runtime checks | borrow checker (compile-time) |
+| Runtime cost | small constant | none for the safety story |
+| Proof obligation on the programmer | none | "borrow checker accepts your code" |
+| Cyclic / shared structures | natural | extra machinery (`Rc`, `Arc`) |
+
+Both rule out the four-bug zoo. Different *placement* of the
+discipline: OCaml at runtime, Rust at type-check time.
+
+(Module 11 introduces OxCaml *modes*, which add a Rust-style
+type-level discipline *on top of* OCaml's GC.)
+
+:::
 
 ## Activity
 
@@ -558,8 +680,10 @@ bug, with code examples and a tour of the OCaml runtime where the
 rules are enforced. [M10-L04](M10-L04-where-ocaml-has-ub.html) is
 the honest boundary: the small set of places OCaml itself has UB
 (`Obj.magic`, races on `ref`, certain `Marshal` flows).
-[M10-L05](M10-L05-tutorial.html) is the tutorial, where we walk a
-real CVE.
+[M10-L05](M10-L05-resource-safety.html) extends the safety story
+past memory to file descriptors, sockets, and other resources the
+GC alone cannot manage. [M10-L06](M10-L06-tutorial.html) is the
+tutorial, where we walk a real CVE.
 
 :::slide
 
@@ -570,6 +694,10 @@ real CVE.
   numbers, with the original charts.
 - Lecture 3: **how OCaml rules them out by construction.** The
   type-system and GC-level mechanisms, precisely.
+- Lecture 4: where OCaml itself has UB.
+- Lecture 5: **resource safety** past memory: fds, sockets,
+  buffers.
+- Lecture 6: walk Heartbleed end to end.
 
 :::
 

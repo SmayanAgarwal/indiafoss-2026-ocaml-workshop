@@ -777,7 +777,7 @@ aside from [M02-L01](M02-L01-literals.html) finally pays off:
 tagged pointers, block headers, the GC's job. After that,
 [L04](M10-L04-where-ocaml-has-ub.html) is the honest boundary
 (the places in OCaml that *do* admit UB), and
-[L05](M10-L05-tutorial.html) is the tutorial that walks one
+[L06](M10-L06-tutorial.html) is the tutorial that walks one
 real CVE end to end.
 
 :::slide
@@ -788,7 +788,9 @@ real CVE end to end.
   GC for lifetimes, bounds checks for overflow, binding-time
   initialisation, no `free` for double-free. The runtime sketch.
 - Lecture 4: where OCaml itself has UB. The honest boundary.
-- Lecture 5: walk one real CVE end-to-end.
+- Lecture 5: resource safety beyond memory (file descriptors,
+  sockets, buffers).
+- Lecture 6: walk one real CVE end-to-end.
 
 :::
 

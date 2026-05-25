@@ -374,6 +374,26 @@ analysis so painful.
 
 :::
 
+:::slide
+
+## Why tagging enables a *moving* GC
+
+- The GC reclaims memory by *moving* live blocks to a fresh
+  region (minor -> major; compaction in the major heap).
+- Moving means *rewriting every pointer* that points at the
+  block.
+- The runtime must walk the heap and, at each word, decide:
+  "is this a pointer I need to update, or is it just an
+  integer that happens to look like one?"
+- **Tag bit makes the answer unambiguous.** Pointer (low bit
+  `0`): update. Immediate (low bit `1`): leave alone.
+- In C, this same walk is *impossible*: a `long` and a `void *`
+  are indistinguishable in the bit pattern.
+
+*This is why C cannot have a moving GC, and OCaml can.*
+
+:::
+
 ### Block headers
 
 Every heap-allocated block has a small *header* word in front of
@@ -624,6 +644,29 @@ the safety guarantee evaporates locally.
 
 :::
 
+:::slide
+
+## GC vs Rust's borrow checker
+
+Two languages, two different *placements* of the same discipline.
+
+| Property | OCaml (GC) | Rust (borrow checker) |
+| --- | --- | --- |
+| When the check happens | runtime | compile time |
+| Runtime cost | small constant (% GC, % bounds check) | zero for the safety story |
+| Proof obligation on the programmer | none | "the borrow checker accepts it" |
+| Cyclic / shared graphs | natural | extra machinery (`Rc`, `Arc`) |
+
+- Both rule out the four-bug zoo.
+- OCaml: pay a small runtime cost, no proof obligation.
+- Rust: pay no runtime cost, programmer carries the obligation.
+
+(Module 11 introduces OxCaml *modes*: a Rust-style type-level
+discipline *on top of* OCaml's GC, so the programmer pays the
+proof obligation only where it matters.)
+
+:::
+
 ## What's next
 
 [Lecture 4](M10-L04-where-ocaml-has-ub.html) makes the unsafe
@@ -635,7 +678,13 @@ acknowledgement that the race exists). The principle that
 emerges: keep the unsafe core small and well-audited; trust the
 safe fragment for everything else.
 
-[Lecture 5](M10-L05-tutorial.html) walks a real CVE end to end,
+[Lecture 5](M10-L05-resource-safety.html) extends the safety
+story past memory. The GC handles memory; what about file
+descriptors, sockets, database connections, mutex locks?
+L05 walks the higher-order-scoping idiom (`with_open_text`,
+`Fun.protect`) and where it breaks down.
+
+[Lecture 6](M10-L06-tutorial.html) walks a real CVE end to end,
 showing how the same bug pattern is *structurally impossible* in
 the OCaml equivalent. We have built the conceptual picture; the
 tutorial is where it lands on a concrete case.
@@ -646,7 +695,8 @@ tutorial is where it lands on a concrete case.
 
 - Lecture 4: where OCaml itself has UB. `Obj.magic`, `Marshal`,
   FFI, races on `ref`.
-- Lecture 5: walk a real CVE, then show its OCaml equivalent
+- Lecture 5: resource safety past memory: fds, sockets, buffers.
+- Lecture 6: walk a real CVE, then show its OCaml equivalent
   cannot have the same bug.
 
 :::

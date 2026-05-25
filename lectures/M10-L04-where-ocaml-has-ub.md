@@ -694,23 +694,31 @@ mismatch, or use a format that detects the mismatch.
 
 ## What's next
 
-[Lecture 5](M10-L05-tutorial.html) is the tutorial. We have built
-the safety picture (M10-L01 to M10-L03) and the honest boundary
-(this lecture). The tutorial walks one famous CVE,
-**Heartbleed**, end to end: the bug in OpenSSL, the exploit, the
-fix, and the OCaml equivalent where the same bug class is
-structurally impossible. It is the lecture where the abstract
-argument lands on a concrete, well-documented case study.
+[Lecture 5](M10-L05-resource-safety.html) extends the safety
+story past memory: file descriptors, sockets, and other resources
+that the GC alone cannot manage, and the higher-order patterns
+OCaml uses to scope them today.
+
+[Lecture 6](M10-L06-tutorial.html) is the tutorial. We have built
+the safety picture (M10-L01 to M10-L03), the honest boundary
+(this lecture), and the resource-safety gap (M10-L05). The
+tutorial walks one famous CVE, **Heartbleed**, end to end: the
+bug in OpenSSL, the exploit, the fix, and the OCaml equivalent
+where the same bug class is structurally impossible. It is the
+lecture where the abstract argument lands on a concrete,
+well-documented case study.
 
 :::slide
 
 ## What's next
 
-- Lecture 5: walk **Heartbleed** end to end.
-- The OpenSSL bug, the exploit, the fix.
-- The OCaml equivalent: same shape, structurally impossible bug.
-- One code quiz: write a bounds-checked function that returns an
-  option instead of raising.
+- Lecture 5: **resource safety** beyond memory: file
+  descriptors, sockets, buffers. Higher-order scoping with
+  `with_open_text` / `Fun.protect`. Where HOF scoping breaks
+  down. Forward pointer to M11 modes.
+- Lecture 6: walk **Heartbleed** end to end. The OpenSSL bug,
+  the exploit, the fix. The OCaml equivalent: same shape,
+  structurally impossible bug.
 
 :::
 
