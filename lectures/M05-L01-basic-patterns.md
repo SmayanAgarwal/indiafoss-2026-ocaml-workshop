@@ -5,7 +5,7 @@ week: 5
 duration_target_min: 22
 concepts: [pattern matching, match expression, literal patterns, variable patterns, wildcard]
 keywords: [OCaml, pattern matching, match, wildcard, _, literal pattern]
-activity_question: "Why does [match 0 with | x -> x | 0 -> 99] always return 0, no matter what? Which clause runs?"
+activity_question: "What does [match 0 with | x -> x | 0 -> 99] return? Which clause runs, and what happens when you swap the two clauses?"
 think_about_this: "A variable pattern always matches anything and binds the matched value to that name. What happens when a variable pattern is *followed by* a more specific pattern? Which wins?"
 reading:
   - title: "Cornell CS3110, Pattern matching"
@@ -26,8 +26,10 @@ reading:
 
 :::
 
-You have been writing `match ... with` and `let (x, y) = ...` since
-[Module 2](M02-L02-let-bindings.html), in small doses. From this
+You have already met pattern matching in small doses: `match ... with`
+appeared in [Module 3](M03-L02-recursion.html) when we wrote recursive
+list functions, and `let (x, y) = ...` appeared in
+[Module 4](M04-L01-tuples.html) when we took tuples apart. From this
 lecture on, pattern matching moves to the centre of the language. It
 is, more than any single other feature, what makes OCaml *feel* like
 OCaml. You will reach for it dozens of times a day: to take apart a
@@ -40,7 +42,9 @@ nearly every interesting function.
 
 ## Pattern matching moves to the centre
 
-- You have seen `match ... with` and `let (x, y) = ...` since [M2](M02-L02-let-bindings.html), in small doses.
+- You have seen, in small doses,
+  - `match ... with` since [M3](M03-L02-recursion.html)
+  - `let (x, y) = ...` since [M4](M04-L01-tuples.html)
 - From this module on, pattern matching is **everywhere**:
   - take apart a [tuple](M04-L01-tuples.html),
   - dispatch on a [constructor](M04-L03-variants.html),
@@ -77,7 +81,7 @@ is the tutorial.
 
 ## The plan for Module 5
 
-- **L1** (today): the three simplest patterns: literal, variable, wildcard.
+- **L1** (this lecture): the three simplest patterns: literal, variable, wildcard.
 - **L2** ([nested and or-patterns](M05-L02-nested-and-or-patterns.html)): patterns inside patterns.
 - **L3** ([guards](M05-L03-guards.html)): `when`-guards on cases.
 - **L4** ([exhaustiveness](M05-L04-exhaustiveness.html)): the most load-bearing static check in the language.
@@ -119,8 +123,6 @@ let classify n =
 let _ = classify 1
 let _ = classify 5
 ```
-
-`"one"` and `"many"`.
 
 - `match` takes a value (here `n`) and a list of clauses.
 - Each clause: a **pattern** on the left, an **expression** on the right.
@@ -165,10 +167,17 @@ forms:
 1. **Literal patterns**: `0`, `'a'`, `"hello"`, `true`. Match exactly
    that value.
 2. **Variable patterns**: any name starting with a lowercase letter
-   (`x`, `result`, `_data`). Matches *anything*; binds the matched
-   value to that name on the right-hand side.
+   (`x`, `result`, `_data`).
+     - Matches *anything*
+     - Binds the matched value to that name on the right-hand side.
 3. **Wildcard `_`**: matches anything; binds nothing. Use when you
    don't care about the value.
+
+:::
+
+:::slide
+
+## A variable pattern in action
 
 ```ocaml
 let _ =
@@ -221,7 +230,7 @@ do not warn me."
 Now for the trap that catches almost every student at least once.
 Consider this version of `classify`:
 
-```text
+```ocaml skip
 let classify n =
   match n with
   | x -> "variable: " ^ string_of_int x
@@ -231,13 +240,15 @@ let _ = classify 0
 ```
 
 What does `classify 0` return? Not `"this never fires"`. The
-answer is `"variable: 0"`.
+answer is `"variable: 0"`. The code compiles (the compiler warns
+about the second clause), runs, and returns the wrong-looking
+answer, exactly as advertised.
 
 :::slide
 
 ## Order matters
 
-```text
+```ocaml skip
 let classify n =
   match n with
   | x -> "variable: " ^ string_of_int x
@@ -246,14 +257,12 @@ let classify n =
 let _ = classify 0
 ```
 
-`"variable: 0"`.
-
 - Variable pattern `x` matches *anything*, including `0`.
 - The second clause is **unreachable**.
 - OCaml warns:
 
 ```
-Warning 11: this match case is unused.
+Warning 11 [redundant-case]: this match case is unused.
 ```
 
 - Rule: **specific patterns first, general patterns last.**
@@ -317,40 +326,58 @@ let first_only = function
 let _ = first_only (10, 20)
 ```
 
-:::slide
-
-## When to use `_` vs a variable
+`first_only (10, 20)` returns `10`. The wildcard in the second
+position says "there is something here, I do not care what."
+Writing `(x, y) -> x` would also compile, but the compiler would
+warn about the unused `y`. Try it:
 
 ```ocaml
-let first_only = function
-  | (x, _) -> x
+let first_only (x, y) = x
 
 let _ = first_only (10, 20)
 ```
 
-`int = 10`.
-
-- Second component discarded; `_` makes that explicit.
-- Writing `(x, y)` would trigger:
+OCaml emits:
 
 ```
-Warning 26: unused variable y.
+Warning 27 [unused-var-strict]: unused variable y.
 ```
 
-- `_` says "I'm ignoring this on purpose"; the compiler respects it.
+The wildcard is the way to say "I am ignoring this on purpose;
+please do not warn me."
+
+:::slide
+
+## When to use `_` vs a variable
+
+- Use `_` to **discard** a component you don't need.
+- Use a name like `_x` to **document** an ignored piece without
+  using it; `_` itself cannot be referenced.
+- Writing `(x, y)` with `y` unused triggers a warning.
 
 :::
 
-`first_only (10, 20)` returns `10`. The wildcard in the second
-position says "there is something here, I do not care what."
-Writing `(x, y) -> x` would compile, but the compiler would warn
-about the unused `y`:
+:::slide
+
+## Forgetting `_` triggers a warning
+
+```ocaml
+let first_only (x, y) = x
+
+let _ = first_only (10, 20)
+```
+
+Click **Run**: OCaml prints
 
 ```
-Warning 26 [unused-var]: unused variable y.
+Warning 27 [unused-var-strict]: unused variable y.
 ```
 
-Both warnings (11 and 26) are part of the same general philosophy:
+Replace `y` with `_` and the warning disappears.
+
+:::
+
+Both warnings (11 and 27) are part of the same general philosophy:
 the compiler does its best to flag patterns that look like they
 were written by mistake. Most of the time the warning is right.
 
@@ -520,8 +547,7 @@ let g (a, b) = a + b          (* tuple pattern *)
 let h {x; y} = x + y          (* record pattern *)
 ```
 
-The variant case is similar but comes with a caveat. Try it in
-the live cell below:
+The variant case is similar but comes with a caveat:
 
 ```ocaml skip
 let k (Some n) = n
@@ -569,7 +595,8 @@ let k (Some n) = n
 - Any pattern fits in a parameter position.
 - `()`, `(a, b)`, `{x; y}`: total for their type, always safe.
 - `Some n`: variant with > 1 constructor: *non-exhaustive*.
-- Click **Run**: compile-time warning; `k None` raises at runtime.
+- Compiler warns at compile time; `k None` would raise
+  `Match_failure` at runtime.
 - Total patterns in [Lecture 4](M05-L04-exhaustiveness.html).
 
 :::
@@ -579,7 +606,7 @@ let k (Some n) = n
 Even at this early stage, the compiler is watching for missing
 cases. Here is a non-exhaustive match:
 
-```text
+```ocaml skip
 let label = function
   | 0 -> "zero"
   | 1 -> "one"
@@ -589,7 +616,7 @@ let label = function
 
 ## Exhaustiveness, lightly
 
-```text
+```ocaml skip
 let label = function
   | 0 -> "zero"
   | 1 -> "one"
@@ -777,14 +804,38 @@ will let you write a `match` on `int` with only specific cases
 `2`, `3`, and so on. Add a wildcard. The compiler is right; the
 match is incomplete.
 
+:::slide
+
+## Common pitfalls
+
+1. **Variable-first, specific-second.** `| x -> ... | 0 -> ...`
+   makes the `0` clause dead. Read warning 11.
+2. **Leading `|` is optional on the first clause.** Pick one
+   style and stay consistent; the ecosystem leans on a leading
+   bar everywhere.
+
+:::
+
+:::slide
+
+## Common pitfalls (cont.)
+
+3. **`match` is an expression.** All clauses must have the
+   *same* type, just like the branches of `if` / `else`
+   ([M02-L05](M02-L05-if-expressions.html#why-the-branches-must-agree)).
+4. **Forgetting the wildcard on `int` / `string`.** Listing only
+   `0`, `1`, ... triggers warning 8; add `| _ -> ...`.
+
+:::
+
 ## Activity
 
 :::slide
 
 ## Activity
 
-Why does the following always return `0`, regardless of clause
-order?
+What does the following return? Then swap the two clauses: does
+the answer change?
 
 ```text
 let f = function
