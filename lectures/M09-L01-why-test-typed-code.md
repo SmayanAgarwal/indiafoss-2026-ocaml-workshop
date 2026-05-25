@@ -1,10 +1,10 @@
 ---
-title: "Why test a type-safe program?"
+title: "Why test a type-safe (and concurrent) program?"
 lecture_no: 1
 week: 9
 duration_target_min: 25
-concepts: [testing, type safety, behaviour, validation, complementary roles of types and tests]
-keywords: [OCaml, testing, type safety, behaviour, unit testing, property-based testing, validation]
+concepts: [testing, type safety, behaviour, validation, complementary roles of types and tests, concurrency-test challenges]
+keywords: [OCaml, testing, type safety, behaviour, unit testing, property-based testing, validation, concurrency, scheduling, race conditions]
 activity_question: "Here is a well-typed OCaml function: [let sort xs = xs]. Its declared type is ['a list -> 'a list]. The compiler is happy. Is the program correct?"
 think_about_this: "If types eliminate whole classes of bugs by construction, why are there still bugs in well-typed programs? What kind of bug is the type checker structurally unable to see?"
 reading:
@@ -14,14 +14,14 @@ reading:
     url: https://dev.realworldocaml.org/testing.html
 ---
 
-# Why test a type-safe program?
+# Why test a type-safe (and concurrent) program?
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Why test a type-safe program?</h2>
+<h2 class="title-slide-lecture">Why test a type-safe (and concurrent) program?</h2>
 <p class="title-slide-label">Module 9 &middot; Lecture 1</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
@@ -269,13 +269,17 @@ narrower style filling a gap.
 
 1. **Unit tests** (L02): "for this specific input, the output is
    this specific value." Hand-written examples.
-2. **Property-based tests** (L03): "for *any* input drawn from
-   this generator, this property holds." Random exploration.
-3. **Expect tests** (mentioned in L02): "the output, captured
+2. **Property-based tests** (L03, L04): "for *any* input drawn
+   from this generator, this property holds." Random exploration,
+   plus custom generators and stateful command sequences.
+3. **Model-based tests** (L05): stateful PBT against a simple
+   reference implementation.
+4. **Expect tests** (mentioned in L02): "the output, captured
    verbatim, is this string." Useful for exploratory and
    end-to-end cases.
 
-This module: a hands-on lecture on each of the first two.
+Then in L06-L07 we add the concurrency vocabulary, and L08
+brings everything together.
 
 :::
 
@@ -612,7 +616,77 @@ and code coverage tools (`bisect_ppx`, mentioned briefly in
 [Lecture 2](M09-L02-unit-testing.html#what-ounit2-does-not-do))
 help close that gap, but never fully.
 
+## Concurrency adds a new failure mode
+
+So far the bugs we have discussed (the `sort` that does not
+sort, the swapped arguments) all show up *deterministically*:
+the input fixes the output, and the test runs the same way every
+time. As soon as a program has more than one thread of control
+(an async I/O loop, a UI event handler, a server taking
+concurrent requests), a new family of bugs appears: bugs whose
+manifestation depends on the *interleaving* of the threads, not
+just on the input.
+
+A *race condition* is the canonical example. Two threads read
+and write a shared counter. The hardware may interleave their
+operations in dozens of different orders. Some interleavings
+produce the right count; some lose an increment. The function
+"is correct" most of the time and "is wrong" on the schedules
+the test happened not to exercise. Repeating the test does not
+help; the next run picks a different (or the same) interleaving.
+
+The remedy is *not* "more tests of the same kind." It is
+*controlling the scheduler*: choose interleavings deliberately,
+exhaustively, reproducibly. The second half of this module
+introduces the OCaml 5 tool that makes that control natural,
+*effect handlers*, and uses them to build a tiny concurrency
+library whose schedule we can pin down inside a unit test.
+
+:::slide
+
+## Concurrency adds a new failure mode
+
+- Sequential bugs: same input, same output, every run.
+- Concurrent bugs depend on *interleaving*, not just input.
+- A race condition can be "right" on 99 schedules and "wrong"
+  on the 100th.
+- Repeating the test does not catch it; controlling the
+  *scheduler* does.
+- L6-L7: effect handlers + fibers, with a deterministic
+  scheduler we can test against.
+
+:::
+
+The lesson generalises beyond races. *Any* time the runtime
+makes a non-deterministic choice (which thread runs next, which
+timer fires first, in what order I/O completions are delivered),
+sequential testing techniques degrade: a passing test no longer
+means "the code is right on this input"; it means "the code was
+right on this input *under this particular schedule*." Closing
+that gap is what L06's effect handlers and L07's deterministic
+scheduler will buy us.
+
+:::slide
+
+## Reproducibility, the harder challenge
+
+- Each scheduler decision is a hidden input to the test.
+- Two failure modes of concurrent test suites:
+  1. **Flaky tests**: passes today, fails tomorrow on a new
+     interleaving.
+  2. **Heisenbug**: only fails when you are NOT looking
+     (under a debugger, the timing changes).
+- Effect-handler schedulers let us *pin the schedule*: same
+  inputs + same scheduler = same outcome, every run.
+- That makes a failing concurrent test *debuggable*, not just
+  observable.
+
+:::
+
 ## What's next
+
+This module has eight lectures in two halves. Five on testing,
+two on concurrency, one tutorial that brings them together.
 
 [Module 9 Lecture 2](M09-L02-unit-testing.html) gives you a
 concrete unit-testing tool: OUnit2. We will write tests for a
@@ -626,27 +700,56 @@ property-based testing with QCheck. You will see why FP makes
 PBT natural, watch the shrinker minimise a failing input, and
 write your first generators.
 
-[Lecture 4](M09-L04-model-based-testing.html) extends PBT to
-stateful code: how to test a hash table or a queue against a
+[Lecture 4](M09-L04-custom-generators-stateful.html) extends
+QCheck with custom generators (sorted lists, balanced trees,
+DAGs by construction) and shows how to stage a stateful test as
+a sequence of commands.
+
+[Lecture 5](M09-L05-model-based-testing.html) goes further on
+the stateful side: testing a hash table or a queue against a
 simple reference implementation using random sequences of
 operations.
 
-[Lecture 5](M09-L05-tutorial.html) puts both tools to work on a
-function from earlier in the course, ending with a deliberately
-buggy implementation that QCheck finds in seconds.
+[Lecture 6](M09-L06-effect-handlers.html) turns to OCaml 5's
+*effect handlers*: a user-defined non-local control-flow
+mechanism we will use both to implement and to test concurrent
+code.
+
+[Lecture 7](M09-L07-fibers-concurrency.html) builds a small
+Go-style fibers-and-channels library on top of the effect
+handler from L06, with a single deterministic scheduler that
+makes the library testable.
+
+[Lecture 8](M09-L08-tutorial.html) is the wrap-up tutorial:
+OUnit2 + QCheck on a function from earlier in the course, with
+a deliberately buggy implementation that QCheck finds in
+seconds, plus an effect-handler stub that lets us test a
+side-effecting evaluator in isolation.
 
 :::slide
 
-## What's next
+## What's next: the eight lectures of M9
 
-- L2: **OUnit2 unit testing.** The Stack example. `dune`
-  integration.
-- L3: **QCheck property-based testing.** Generators, shrinking,
-  generating values that satisfy invariants, custom arbitraries.
-- L4: **Model-based testing.** Stateful data structures vs. a
-  reference implementation.
-- L5: **Tutorial.** A function from M01-M08, fully tested both
-  ways, with a deliberately buggy version for QCheck to find.
+Testing half:
+
+- L2: **OUnit2 unit testing.**
+- L3: **QCheck PBT.** Properties, shrinking, generators.
+- L4: **Custom generators, stateful PBT.** Sorted lists,
+  balanced trees, command sequences.
+- L5: **Model-based testing.** Stateful data structures vs.
+  a reference implementation.
+
+Concurrency half:
+
+- L6: **Effect handlers.** OCaml 5's mechanism for user-defined
+  effects and non-local control flow.
+- L7: **Fibers and lightweight concurrency.** Channels +
+  scheduler built from effect handlers.
+
+Bringing them together:
+
+- L8: **Tutorial.** OUnit2 + QCheck on an evaluator, plus
+  effect-handler stubs for side effects.
 
 :::
 

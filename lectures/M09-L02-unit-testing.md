@@ -980,10 +980,14 @@ see how PBT complements unit tests, why functional programming
 makes properties especially natural to state, and watch the
 shrinker minimise a failing input to its smallest form.
 
-[Lecture 4](M09-L04-model-based-testing.html) extends PBT to
-stateful code with model-based testing.
-[Lecture 5](M09-L05-tutorial.html) puts both tools to work on a
-real function from earlier in the course.
+[Lecture 4](M09-L04-custom-generators-stateful.html) builds
+custom generators (sorted lists, valid BSTs, command
+sequences). [Lecture 5](M09-L05-model-based-testing.html)
+extends PBT to stateful code with model-based testing against
+a reference. [L6-L7](M09-L06-effect-handlers.html) turn to
+*concurrency* via effect handlers. [Lecture 8](M09-L08-tutorial.html)
+puts the testing tools to work on a real function from
+earlier in the course.
 
 :::slide
 
@@ -991,9 +995,11 @@ real function from earlier in the course.
 
 - L3: **property-based testing with QCheck**. Generators,
   shrinking, why FP makes PBT natural.
-- L4: **model-based testing**. Hash table vs. reference.
-- L5: **tutorial**. Both tools on a function from M01-M08; a
-  deliberately buggy implementation; QCheck finds it.
+- L4: **custom generators and stateful PBT**.
+- L5: **model-based testing**. Hash table vs reference.
+- L6-L7: **concurrency** via effect handlers.
+- L8: **tutorial**. OUnit2 + QCheck + handler-stubs on the
+  M05-L06 evaluator.
 
 :::
 

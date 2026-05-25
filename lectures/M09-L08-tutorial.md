@@ -1,10 +1,10 @@
 ---
-title: "Tutorial: testing the expr evaluator with OUnit2 and QCheck"
-lecture_no: 5
+title: "Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs"
+lecture_no: 8
 week: 9
 duration_target_min: 25
-concepts: [testing tutorial, OUnit2, QCheck, properties, invariants, expression evaluator, debugging]
-keywords: [OCaml, testing, OUnit2, QCheck, tutorial, expression evaluator, AST, property-based testing, debugging, shrinking]
+concepts: [testing tutorial, OUnit2, QCheck, properties, invariants, expression evaluator, debugging, effect-handler stubs, dependency stubbing]
+keywords: [OCaml, testing, OUnit2, QCheck, tutorial, expression evaluator, AST, property-based testing, debugging, shrinking, effect handlers, stubs]
 activity_question: "Take the expr AST eval from M05-L06 and pretend its Sub case is buggy (swapped arguments). Which OUnit2 case catches this? Which QCheck property catches this most quickly, and what is the shrunk counterexample likely to look like?"
 think_about_this: "If your QCheck property compares the OCaml-implemented eval against a hand-written reference (e.g. via float arithmetic in the property itself), what happens when the reference is also buggy? How do you avoid testing one bug against itself?"
 reading:
@@ -14,22 +14,25 @@ reading:
     url: https://github.com/c-cube/qcheck
 ---
 
-# Tutorial: testing the `expr` evaluator with OUnit2 and QCheck
+# Tutorial: testing the `expr` evaluator with OUnit2, QCheck, and effect-handler stubs
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: testing the expr evaluator with OUnit2 and QCheck</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 5</p>
+<h2 class="title-slide-lecture">Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs</h2>
+<p class="title-slide-label">Module 9 &middot; Lecture 8</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-This tutorial puts the previous four lectures to work on a single
-larger example. We take the [`expr` AST and `eval`
+This tutorial puts the testing half of this module (lectures
+L01 through L05) to work on a single larger example, then
+borrows one idea from the concurrency half (L06's effect
+handlers) to stub a side effect so the function under test
+becomes pure. We take the [`expr` AST and `eval`
 function from M05-L06](M05-L06-tutorial.html), give them a full
 test suite, deliberately break the implementation, and watch
 QCheck find the bug. By the end you should have a complete test
@@ -57,6 +60,9 @@ different.
 - Write **4-5 OUnit2 unit tests** for specific cases.
 - Write **3-4 QCheck properties** for invariants.
 - Break one operation deliberately; watch QCheck find the bug.
+- Extend the evaluator with a *side effect* (a `Print`).
+- Use an **effect-handler stub** from L06 to test it without
+  touching stdout.
 - Walk away with a complete test file.
 
 :::
@@ -769,9 +775,220 @@ that exercises everything.
 
 :::
 
+## Part 5: stubbing side effects with effect handlers
+
+So far the function under test is pure: input goes in, output
+comes out. Real code is not always like that. Suppose we
+extend the AST with a `Print` constructor (mimicking a
+statement-style language):
+
+```ocaml skip
+type expr =
+  | Num of float
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Div of expr * expr
+  | Print of expr  (* evaluate, then send to stdout, return value *)
+```
+
+The natural evaluator calls `print_endline`:
+
+```ocaml skip
+let rec eval = function
+  | ...
+  | Print e ->
+    let v = eval e in
+    print_endline (string_of_float v);
+    v
+```
+
+Now `eval` is not pure: every call writes to stdout. Two
+problems for the test suite.
+
+1. **Output noise.** Running 1000 QCheck cases on a generator
+   that produces nested `Print`s buries the test runner's
+   output in numeric noise.
+2. **No oracle.** We cannot assert in OCaml that "the program
+   would have printed exactly these values." Capturing stdout
+   from inside the same process is awkward; using
+   `Unix.dup2` to redirect is brittle.
+
+The clean fix, in OCaml 5: replace the direct call to
+`print_endline` with an effect. The effect's *handler* is the
+boundary: in production, it calls `print_endline`; in tests,
+it records the printed values into a buffer the test can
+inspect.
+
+```ocaml skip
+open Effect
+open Effect.Deep
+
+type _ Effect.t += Print : float -> unit Effect.t
+
+let rec eval = function
+  | ...
+  | Print e ->
+    let v = eval e in
+    perform (Print v);
+    v
+```
+
+`eval` now mentions no I/O primitive. The `perform` is the only
+side-effecting construct; the *meaning* of `Print` depends
+entirely on whichever handler is in scope.
+
+:::slide
+
+## A side-effecting evaluator
+
+```ocaml skip
+type _ Effect.t += Print : float -> unit Effect.t
+
+let rec eval = function
+  | ...
+  | Print e ->
+    let v = eval e in
+    perform (Print v);
+    v
+```
+
+- `Print` is an effect, not a direct I/O call.
+- The handler decides what `Print` does.
+- Production: `print_endline`. Test: append to a buffer.
+- The evaluator's *source* does not change between the two.
+
+:::
+
+### The production handler: print to stdout
+
+```ocaml skip
+let with_stdout_printing f =
+  try f () with
+  | effect (Print v), k ->
+    print_endline (string_of_float v);
+    continue k ()
+```
+
+A four-line wrapper. Any code run inside `with_stdout_printing
+(fun () -> ...)` sees `Print` translated to a real
+`print_endline`. The semantics are exactly what we removed
+from `eval`.
+
+### The test handler: capture the trace
+
+```ocaml skip
+let with_captured_printing f =
+  let trace = ref [] in
+  let result =
+    try f () with
+    | effect (Print v), k ->
+      trace := v :: !trace;
+      continue k ()
+  in
+  (List.rev !trace, result)
+```
+
+This handler does not print; it appends to a local list. The
+return value is `(list_of_printed_floats, original_result)`.
+A test can call
+
+```ocaml skip
+let trace, v = with_captured_printing (fun () ->
+  eval (Print (Add (Num 1.0, Num 2.0)))) in
+assert (trace = [3.0]);
+assert (v = 3.0)
+```
+
+The evaluator under test is *exactly* the production
+evaluator, byte for byte. No mocks, no dependency injection,
+no global flags. The substitution happens at the handler
+boundary.
+
+:::slide
+
+## Stubbing Print: production vs test handler
+
+```ocaml skip
+(* production *)
+let with_stdout_printing f =
+  try f () with
+  | effect (Print v), k ->
+    print_endline (string_of_float v); continue k ()
+
+(* test *)
+let with_captured_printing f =
+  let trace = ref [] in
+  let r = try f () with
+    | effect (Print v), k -> trace := v :: !trace; continue k ()
+  in (List.rev !trace, r)
+```
+
+- Same `eval`. Two handlers.
+- Production: real I/O.
+- Test: capture into a list the test can assert on.
+
+:::
+
+### A QCheck property that uses the stub
+
+The combination is striking. We can now write QCheck
+properties that *predict* the printed output:
+
+```ocaml skip
+let test_print_returns_value =
+  QCheck.Test.make
+    ~name:"Print e returns the same value as e"
+    arb_expr
+    (fun e ->
+       let trace, v = with_captured_printing (fun () -> eval (Print e)) in
+       List.length trace = 1 && List.hd trace = v)
+```
+
+This property asserts two things at once: `Print e` prints
+exactly one value, and the value it prints equals the value
+it returns. The production handler would not let us assert
+this without intercepting stdout; the test handler does.
+
+The same recipe scales to *any* side effect: file I/O, network,
+database, random number generation, time-of-day, even
+non-determinism in a scheduler. Declare an effect, perform
+inside the code under test, swap the handler between
+production and test.
+
+:::slide
+
+## QCheck + captured trace
+
+```ocaml skip
+let test_print_returns_value =
+  QCheck.Test.make ~name:"Print e returns e's value"
+    arb_expr
+    (fun e ->
+       let trace, v =
+         with_captured_printing (fun () -> eval (Print e))
+       in
+       List.length trace = 1 && List.hd trace = v)
+```
+
+- Generate any expression, wrap in `Print`.
+- Run under the test handler; capture the trace.
+- Assert that what was printed matches what was returned.
+- Stubbing a side effect = swapping a handler.
+
+:::
+
+The technique generalises beyond testing. The same handler
+swap lets a debugger record every print, lets a
+deterministic-replay system log every random choice, lets a
+golden-file test compare actual vs expected traces, lets a
+property-based test on a "would-be-stateful" function
+exercise it as if it were pure. Effect handlers turn side
+effects into *programmable* boundaries.
+
 ## Activity
 
-:::quiz code id=M09-L05-q1
+:::quiz code id=M09-L08-q1
 The `eval` function above does not have an explicit property
 asserting that *multiplication by zero gives zero*. Write a
 QCheck property that:
@@ -827,11 +1044,11 @@ statement is just one equation, plus a NaN guard.
 
 :::
 
-:::quiz mcq id=M09-L05-q2
+:::quiz mcq id=M09-L08-q2
 A colleague writes a single QCheck property for the
 [`safe_div` function from M04-L05](M04-L04-recursive-types.html):
 
-```text
+```ocaml skip
 let test = QCheck.Test.make QCheck.(pair int int)
   (fun (a, b) ->
      match safe_div a b with
@@ -918,14 +1135,21 @@ After this module:
   `assert_equal`, `assert_raises`, `>::`, `TestList`, `dune`
   integration ([L02](M09-L02-unit-testing.html)).
 - Write QCheck properties for invariants of a function:
-  generators, properties, shrinking, statistics, generating
-  values that satisfy an invariant, custom arbitraries
+  generators, properties, shrinking, statistics
   ([L03](M09-L03-property-based-testing.html)).
+- Build custom generators (sorted lists, valid BSTs, DAGs)
+  by construction, and bundle generator + printer + shrinker
+  into an `arbitrary` ([L04](M09-L04-custom-generators-stateful.html)).
 - Test stateful data structures against a reference
   implementation using sequences of operations
-  ([L04](M09-L04-model-based-testing.html)).
-- Combine the two on a real function, including catching a
-  deliberately introduced bug (this lecture).
+  ([L05](M09-L05-model-based-testing.html)).
+- Write code that uses **effect handlers** for non-local
+  control flow, including cooperative concurrency
+  ([L06](M09-L06-effect-handlers.html),
+  [L07](M09-L07-fibers-concurrency.html)).
+- Combine OUnit2 + QCheck on a real function, including
+  catching a deliberately introduced bug, and stubbing side
+  effects with effect handlers (this lecture).
 
 The next module, [Memory safety and security](M10-L01-ub-and-the-zoo.html),
 moves in the other direction: from what tests catch to what
@@ -938,10 +1162,14 @@ context of memory safety, with security as the application.
 ## What you can do now
 
 - Explain why a well-typed program can still be wrong (L1).
-- Write OUnit2 unit tests for any module (L2).
-- Write QCheck properties for any invariant (L3).
-- Apply model-based testing to stateful code (L4).
-- Combine both on a real function (this lecture).
+- Write OUnit2 unit tests (L2).
+- Write QCheck properties for invariants (L3).
+- Build custom generators and stateful PBT harnesses (L4).
+- Apply model-based testing to stateful code (L5).
+- Use effect handlers for non-local control flow and
+  cooperative concurrency (L6-L7).
+- Combine OUnit2 + QCheck + handler-stubs on a real function
+  (this lecture).
 
 Next module: M10 on memory safety. Tests catch behaviour;
 *types and the runtime* catch the next layer.

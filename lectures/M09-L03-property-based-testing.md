@@ -687,9 +687,27 @@ let test_hd_first =
 
 :::
 
-## The input-space problem
+## A note on what comes next
 
-There is a question we have been ducking. When we wrote
+What we have so far is enough to write *interesting* properties
+for any pure function whose input fits one of QCheck's built-in
+generators (lists of ints, strings, pairs, options). For real
+codebases, two pieces are still missing:
+
+- a way to **bias the input distribution** so the interesting
+  region of the input space gets exercised (sorted lists, valid
+  BSTs, schema-conformant JSON);
+- a way to test **stateful APIs** where a single call is not
+  the unit of testing.
+
+Both are the topic of [Lecture 4](M09-L04-custom-generators-stateful.html).
+The intuition for why this matters appears at the end of this
+lecture under "When PBT does not help"; the *how* lives in L04.
+
+## The input-space problem (preview)
+
+Before we close out, one observation that motivates L04. When we
+wrote
 
 ```ocaml
 QCheck.Test.make ~count:1000 QCheck.(list int)
@@ -745,431 +763,6 @@ and the boundary regions rarely. PBT can pass 1000 trials and
 still miss a boundary bug.
 
 :::
-
-The framework Cornell CS3110 uses for this is *paths through the
-specification* (see the `Reading` section's pointer to *Black-box
-and glass-box testing*). The idea is to look at the spec and
-identify the disjoint *regions* of input space where the function
-behaves differently: empty input, singleton input, "happy path",
-boundary case, error case. PBT does not free you from that
-thinking; it changes *where* you do it. Instead of writing 20
-hand-picked inputs, you write a generator that *covers each
-region*.
-
-Three practical reactions to the distribution problem:
-
-**Reaction 1: read your statistics.** Add `QCheck.collect` to
-your property and inspect the distribution. If lengths cluster in
-one bucket, the generator is not exercising the others. CS3110
-calls this *coverage*; we discussed it briefly in the previous
-section.
-
-**Reaction 2: bias the generator.** Use `QCheck.frequency` to
-weight cases so that interesting inputs appear more often:
-
-```ocaml
-let biased_list_gen : int list QCheck.arbitrary =
-  let open QCheck in
-  let small = list_of_size (Gen.return 0) int in
-  let medium = list_of_size (Gen.int_range 1 10) int in
-  let large = list_of_size (Gen.int_range 100 200) int in
-  QCheck.choose [small; medium; large]
-```
-
-The `choose` combinator picks uniformly among the listed
-generators. To weight them, use the `QCheck.frequency` family:
-give each generator a positive integer weight and the picker
-samples in proportion to those weights. A small list shows up
-often, a large list shows up rarely, but *both* are exercised.
-
-**Reaction 3: generate inputs that already satisfy the
-invariant.** If the bug fires on sorted lists, generate sorted
-lists deliberately, not random ones that happen to be sorted.
-That is the central topic of the next section.
-
-:::slide
-
-## Three reactions to the distribution problem
-
-1. **Read your statistics**: `QCheck.collect` reports the
-   distribution of generated inputs.
-2. **Bias the generator**: `QCheck.frequency` weights cases so
-   the interesting regions are visited often.
-3. **Generate inputs that satisfy the invariant**: build a
-   generator whose outputs are *by construction* in the region
-   you care about. See next section.
-
-:::
-
-## Generating values that satisfy an invariant
-
-The single hardest skill in PBT is writing a generator that
-produces inputs satisfying a non-trivial precondition or
-invariant. "Generate a sorted array" is not "generate an array";
-"generate a valid red-black tree" is far harder than "generate a
-tree." The default `QCheck.list int` produces something that has
-*almost certainly* none of the structural properties you want.
-
-Three escalating examples, with running code.
-
-### Example A: a sorted array
-
-The naive approach is rejection sampling: generate a random
-array, check if it is sorted, retry if not. For length-3 arrays
-of small integers this works (about one in six are sorted); for
-length-20 arrays the rejection rate is ~99.999999% and the
-generator stalls.
-
-The correct approach is *constructive*: build something that is
-sorted *by construction*. Two natural recipes.
-
-**Recipe A1: generate, then sort.** Generate a random list, then
-apply `List.sort compare` and return the result. The output is
-guaranteed sorted.
-
-```ocaml
-let sorted_int_list_gen : int list QCheck.arbitrary =
-  QCheck.(map (fun xs -> List.sort compare xs) (list int))
-```
-
-`QCheck.map` lifts a function `'a -> 'b` over a generator,
-producing an `'b QCheck.arbitrary`. The body says: "generate a
-random list, then sort it." Every output of this generator is
-sorted. The cost is one `List.sort` per test, which is cheap.
-
-A caveat: this generator visits *every* sorted list eventually,
-but the distribution is biased toward lists that are
-*permutations of typical random inputs*. Lists with all equal
-elements are unlikely; lists where consecutive elements differ
-by exactly 1 are unlikely; lists of all `min_int` will never
-occur. For most properties this is fine; for properties that
-fire on specific shapes (a run of equal elements, perhaps), you
-may want recipe A2.
-
-**Recipe A2: prefix-sum of non-negative increments.** Start with
-an initial value, generate a list of non-negative increments,
-take the running sum. The output is sorted *and* you control the
-distribution of gaps.
-
-```ocaml
-let sorted_int_list_via_prefix_sum_gen : int list QCheck.arbitrary =
-  let open QCheck in
-  map
-    (fun (start, gaps) ->
-       let _, acc =
-         List.fold_left
-           (fun (cur, acc) gap ->
-              let next = cur + gap in
-              (next, next :: acc))
-           (start, [start])
-           gaps
-       in
-       List.rev acc)
-    (pair small_int (list small_nat))
-```
-
-Read the body: pick a starting integer and a list of small non-
-negative gaps; fold over the gaps accumulating a running prefix
-sum; reverse the accumulator. The result is a sorted list whose
-*first* element is `start` and whose remaining elements are
-spaced by the random gaps.
-
-If you want a generator for sorted lists with possible
-duplicates, the gaps can be zero. If you want strictly
-increasing, use `small_int` (which can be zero, but rarely) with
-a small constant `+1` to force a strict increase. The point is
-that the distribution is now *in your hands*, not the framework's.
-
-```ocaml
-let test_binary_search_finds_existing =
-  QCheck.Test.make
-    ~name:"binary_search finds elements present in a sorted list"
-    QCheck.(pair sorted_int_list_gen small_int)
-    (fun (xs, idx) ->
-       match xs with
-       | [] -> true (* trivially: nothing to find *)
-       | _ ->
-         let n = List.length xs in
-         let i = abs idx mod n in
-         let target = List.nth xs i in
-         (* property: a value present in the list is findable *)
-         List.mem target xs)
-```
-
-The property reads naturally because the precondition (sorted
-input) is built into the generator. If we had used
-`QCheck.(list int)` and added `QCheck.assume (is_sorted xs)`, the
-test would have skipped 99% of generated inputs. By baking the
-invariant into the generator, every single test exercises the
-function on a relevant input.
-
-:::slide
-
-## Sorted-list generators: two recipes
-
-```ocaml
-(* Recipe A1: generate, then sort *)
-let sorted_a =
-  QCheck.(map (fun xs -> List.sort compare xs) (list int))
-
-(* Recipe A2: prefix-sum of non-negative increments *)
-let sorted_b =
-  QCheck.(map
-    (fun (start, gaps) ->
-       List.fold_left (fun acc g ->
-         (match acc with
-          | x :: _ -> (x + g) :: acc
-          | [] -> [start]))
-         [start] gaps
-       |> List.rev)
-    (pair small_int (list small_nat)))
-```
-
-- A1: simple, cheap, biased toward random-shape distributions.
-- A2: more control over gap distribution.
-- Both produce *only* sorted lists; no rejection.
-
-:::
-
-### Example B: a balanced binary search tree
-
-Now the harder case. We want to test operations on a balanced
-binary search tree (BST): `mem`, `delete`, `union`, `inorder`,
-balance-after-rebalance, and so on. Every operation has an
-implicit precondition: *the input tree is itself a valid BST*. If
-we generate a random tree shape and stuff random integers into
-it, we get a tree that violates the BST invariant (some left
-child larger than its parent, some right child smaller). The
-test exercises the function on garbage input; its results tell
-us nothing about behaviour on real BSTs.
-
-How do you generate a valid BST?
-
-**Recipe B1: insert random keys into an empty tree.** This is the
-*operation-based generator* pattern, and it is the canonical way
-to generate values of a complex algebraic data structure that
-has a non-trivial invariant. Use the well-tested `insert`
-operation of the data structure to *build* the value; the
-operation itself preserves the invariant, so the output is valid
-by construction.
-
-```ocaml
-(* A simple unbalanced BST for illustration. The same technique
-   works for red-black, AVL, etc.: just call the real insert. *)
-type tree = Leaf | Node of tree * int * tree
-
-let rec insert t x =
-  match t with
-  | Leaf -> Node (Leaf, x, Leaf)
-  | Node (l, y, r) ->
-    if x < y then Node (insert l x, y, r)
-    else if x > y then Node (l, y, insert r x)
-    else t  (* already present *)
-
-let bst_gen : tree QCheck.arbitrary =
-  QCheck.(map
-    (fun xs -> List.fold_left insert Leaf xs)
-    (list int))
-```
-
-That is it. A list of random integers folded with `insert` over
-the empty tree produces *exactly* the BSTs that `insert` itself
-can produce; the BST invariant is preserved by `insert` (we
-trust this from the implementation of `insert`); therefore every
-generated tree is a valid BST.
-
-The properties we can now write are the interesting ones:
-
-```ocaml
-let rec inorder = function
-  | Leaf -> []
-  | Node (l, x, r) -> inorder l @ [x] @ inorder r
-
-let is_sorted xs =
-  let rec go = function
-    | [] | [_] -> true
-    | a :: (b :: _ as t) -> a <= b && go t
-  in
-  go xs
-
-let test_inorder_is_sorted =
-  QCheck.Test.make
-    ~name:"in-order traversal of a BST is sorted"
-    bst_gen
-    (fun t -> is_sorted (inorder t))
-```
-
-The property is the *defining* invariant of a BST: an in-order
-traversal yields a sorted sequence. It is mathematically trivial
-to state, but writing it required a generator that produces only
-valid BSTs. Random tree-shaped data would have failed this
-property immediately, but the failure would tell us nothing
-useful: the input was not a BST in the first place.
-
-There is a subtle question to address with this generator: are
-we testing `insert` against itself? Not quite. We are testing
-*other operations* (like `inorder`) on values produced by
-`insert`. If `insert` had a bug, the generated trees might not
-satisfy the BST invariant, and the property `is_sorted (inorder
-t)` would catch *that bug too*. Operation-based generators are
-in fact a beautiful self-checking technique: they exercise the
-constructor *and* the consumer simultaneously.
-
-The same recipe scales to red-black, AVL, splay, and any other
-self-balancing tree. Use the library's `insert` (and `delete`,
-if you want to test deletion). The invariant is whatever the
-library promises; the generator inherits it from the operations.
-
-```text
-(* Sketch: the same recipe for a red-black tree from a library *)
-let rb_tree_gen : Rb.t QCheck.arbitrary =
-  QCheck.(map
-    (fun xs -> List.fold_left Rb.insert Rb.empty xs)
-    (list int))
-
-let test_rb_tree_height_logarithmic =
-  QCheck.Test.make
-    ~name:"red-black tree height is O(log n)"
-    rb_tree_gen
-    (fun t ->
-       let n = Rb.cardinality t in
-       let h = Rb.height t in
-       n = 0 || h <= 2 * int_of_float (log (float_of_int n) /. log 2.0) + 2)
-```
-
-Every generated tree is a valid red-black tree because `Rb.insert`
-maintains the red-black invariant. The property checks a *derived*
-invariant (height is logarithmic in size). If the implementation of
-`insert` ever fails to rebalance correctly, the height bound is
-violated and the property catches it. We did not have to write a
-"generate-a-valid-red-black-tree-from-scratch" generator; we let
-`insert` do that work.
-
-**Recipe B2: generate the shape directly with invariants
-threaded through.** A more advanced approach, useful when you
-want a *uniform* distribution over valid values rather than the
-distribution induced by repeated insertion. For BSTs, generate a
-sorted list of integers, then build a balanced BST by repeated
-midpoint splitting:
-
-```ocaml
-let balanced_bst_from_sorted xs =
-  let arr = Array.of_list xs in
-  let rec go lo hi =
-    if lo >= hi then Leaf
-    else
-      let mid = (lo + hi) / 2 in
-      Node (go lo mid, arr.(mid), go (mid + 1) hi)
-  in
-  go 0 (Array.length arr)
-
-let balanced_bst_gen : tree QCheck.arbitrary =
-  QCheck.(map balanced_bst_from_sorted
-    (map
-      (fun xs -> List.sort_uniq compare xs)
-      (list int)))
-```
-
-This generator produces only *balanced* BSTs (height differs by
-at most 1 between sibling subtrees, by midpoint construction).
-The distribution is different from B1: B1 produces the
-distribution-of-insertion-orders, which on uniformly random
-keys is not balanced; B2 produces balanced trees with a uniform
-distribution over the key set. Choose B1 when you want to
-exercise *what the insert operation actually produces*; choose
-B2 when you want to test, say, traversal operations on canonical
-balanced shapes.
-
-:::slide
-
-## Generator for a valid BST
-
-```ocaml
-let bst_gen : tree QCheck.arbitrary =
-  QCheck.(map
-    (fun xs -> List.fold_left insert Leaf xs)
-    (list int))
-```
-
-Use the data structure's *own* insert function as the generator.
-
-- Every output is a valid BST (because `insert` preserves the
-  invariant).
-- The same recipe works for red-black, AVL, splay, etc.
-- Bonus: a bug in `insert` will show up via the consumer
-  properties (`inorder t` should be sorted, height should be
-  logarithmic, ...).
-
-:::
-
-### Example C: other invariants in passing
-
-The same patterns generalise. A few sketches.
-
-**Acyclic graph.** Generate vertices as `0 .. n-1`. For each
-ordered pair `(i, j)` with `i < j`, decide independently whether
-to include the edge. The resulting graph is a DAG by
-construction because no edge points backward in the vertex
-ordering.
-
-Here `>>=` is QCheck's monadic bind on arbitraries, the same
-shape as the `let*` form we used earlier: pull a value out of
-the generator on the left, then build the next generator using
-it.
-
-```ocaml
-let dag_gen : (int * int) list QCheck.arbitrary =
-  let open QCheck in
-  small_int >>= fun n ->
-  let pairs = ref [] in
-  for i = 0 to n - 1 do
-    for j = i + 1 to n - 1 do
-      pairs := (i, j) :: !pairs
-    done
-  done;
-  list_of_size (Gen.int_range 0 (List.length !pairs)) (oneofl !pairs)
-  |> map (fun edges -> List.sort_uniq compare edges)
-```
-
-The point is the *invariant by construction*: by only adding
-edges from a smaller-indexed vertex to a larger one, acyclicity
-is guaranteed.
-
-**Valid arithmetic expression tree (no division by zero).**
-Recursively build expression trees, but in the `Div` case
-generate the right-hand side from `Gen.int_range 1 max_int` or
-`Gen.int_range min_int (-1)`, never including 0. The generator
-encodes the precondition "no zero divisor anywhere" by
-construction.
-
-**JSON value with a specific schema.** Generate at each step the
-constructor allowed by the schema's grammar; recurse with the
-schema's children. The generator *is* the grammar.
-
-The shared pattern: don't generate-then-filter, *generate-by-
-construction*. Filtering with `QCheck.assume` works when most
-inputs already satisfy the precondition (e.g. "non-empty list");
-it does not work when the precondition is restrictive (e.g.
-"sorted, balanced, acyclic"). For those, build the structure to
-satisfy the invariant from the start.
-
-:::slide
-
-## The general pattern
-
-| Invariant | Generator pattern |
-| --- | --- |
-| Sorted list | `map List.sort (list int)` |
-| Valid BST | Fold `insert` over a random list |
-| Balanced BST | Sort, then midpoint-split |
-| DAG | Edges only from low to high vertex index |
-| Non-zero divisor | Pick from `int_range 1 max_int` |
-| Schema-valid JSON | Generator mirrors the grammar |
-
-**Don't generate-then-filter. Generate-by-construction.**
-
-:::
-
 ## Shrinking, in depth
 
 We introduced shrinking informally with the `bad_sort` example: a
@@ -1370,97 +963,6 @@ counterexample," which is what a debugger needs.
 
 If you take one thing from QCheck's API, take the shrinker. The
 generator does the search; the shrinker does the diagnosis.
-
-## Bundling generator, printer, and shrinker
-
-By now you have seen `QCheck.make` used in passing several
-times: it is how generator, printer, and shrinker get bundled
-into a single `'a QCheck.arbitrary` that a property can quantify
-over. The end-to-end shape, for a custom recursive type, looks
-like this:
-
-```ocaml
-type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
-
-let rec tree_gen depth elem_gen =
-  let open QCheck.Gen in
-  if depth <= 0 then return Leaf
-  else
-    frequency [
-      1, return Leaf;
-      3, (let* x = elem_gen in
-          let* l = tree_gen (depth - 1) elem_gen in
-          let* r = tree_gen (depth - 1) elem_gen in
-          return (Node (l, x, r)));
-    ]
-
-let rec tree_to_string elem_to_string = function
-  | Leaf -> "Leaf"
-  | Node (l, x, r) ->
-    Printf.sprintf "Node (%s, %s, %s)"
-      (tree_to_string elem_to_string l)
-      (elem_to_string x)
-      (tree_to_string elem_to_string r)
-
-let rec tree_shrink shrink_elem = function
-  | Leaf -> QCheck.Iter.empty
-  | Node (l, x, r) ->
-    let open QCheck.Iter in
-    (* Drop a sub-tree: replace the whole node by either child *)
-    of_list [l; r] <+>
-    (* Or shrink the element *)
-    (shrink_elem x >|= fun x' -> Node (l, x', r)) <+>
-    (* Or shrink the left sub-tree *)
-    (tree_shrink shrink_elem l >|= fun l' -> Node (l', x, r)) <+>
-    (* Or shrink the right sub-tree *)
-    (tree_shrink shrink_elem r >|= fun r' -> Node (l, x, r'))
-
-let tree_arb : int tree QCheck.arbitrary =
-  QCheck.make
-    ~print:(tree_to_string string_of_int)
-    ~shrink:(tree_shrink QCheck.Shrink.int)
-    (tree_gen 4 QCheck.Gen.small_int)
-```
-
-The generator uses `frequency` (1 leaf for every 3 nodes) and
-a depth bound to keep the tree finite. The printer and shrinker
-follow the patterns from the shrinking section above: recursive
-descent, structural simplifications first, element shrinks
-second.
-
-Once `tree_arb` exists, properties on the type are one-liners:
-
-```ocaml
-let rec size = function Leaf -> 0 | Node (l, _, r) -> 1 + size l + size r
-let rec mirror = function
-  | Leaf -> Leaf
-  | Node (l, x, r) -> Node (mirror r, x, mirror l)
-
-let test_mirror_size_preserved =
-  QCheck.Test.make
-    ~name:"mirror preserves size"
-    tree_arb
-    (fun t -> size (mirror t) = size t)
-
-let test_mirror_involutive =
-  QCheck.Test.make
-    ~name:"mirror is its own inverse"
-    tree_arb
-    (fun t -> mirror (mirror t) = t)
-```
-
-The printer is the cheapest investment with the largest payoff:
-write one whenever a type appears in any property. Skipping the
-printer means failure messages say `<opaque>` and you lose the
-counter-example. The shrinker is worth writing once a type
-appears in more than one property, or once a property fails
-often enough that the minimal counterexample matters.
-
-The same pattern will reappear in the next lecture's
-model-based-testing harness, where the custom arbitrary is over
-*sequences of commands* rather than over trees, and again in
-the [tutorial](M09-L05-tutorial.html) where it is over
-arithmetic expressions.
 
 ## When PBT does not help
 
@@ -1685,7 +1187,13 @@ much of real software is stateful: a hash table you `add` to and
 data structure, where each operation depends on every operation
 that came before?
 
-[Lecture 4](M09-L04-model-based-testing.html) answers this with
+[Lecture 4](M09-L04-custom-generators-stateful.html) builds the
+generator toolkit: sorted lists, valid BSTs, DAGs, JSON
+matching a schema; how to bundle a generator, printer, and
+shrinker for a custom recursive type; and the first taste of
+testing stateful APIs by generating *sequences of commands*.
+
+[Lecture 5](M09-L05-model-based-testing.html) goes further with
 *model-based testing*: test a sophisticated stateful
 implementation against a simple reference implementation, by
 generating random sequences of operations and asserting
@@ -1693,23 +1201,23 @@ observable equivalence at each step. It is the canonical PBT
 pattern for stateful code, and it cleanly extends what we have
 built in this lecture.
 
-[Lecture 5](M09-L05-tutorial.html) then puts unit testing and
+[Lecture 8](M09-L08-tutorial.html) puts unit testing and
 property-based testing together on a single, larger example: a
-function from Modules 1-8 of this course. You will see a full
-test suite (OUnit2 cases plus QCheck properties), watch QCheck
-find a bug in a deliberately broken implementation, and finish
-with a working test file you could copy into your own project.
+function from earlier in the course (the M05-L06 evaluator),
+with a deliberately broken implementation that QCheck finds in
+seconds.
 
 :::slide
 
 ## What's next
 
-- L4: **model-based testing.** Test a stateful hash table
-  against a list-based reference.
-- L5: **tutorial.** OUnit2 + QCheck on a real M01-M08 function.
-- A deliberately buggy implementation; watch the shrinker find
-  it.
-- A complete `dune` test file you can copy.
+- L4: **custom generators and stateful PBT.** Sorted lists,
+  valid BSTs, DAGs by construction; command-sequence
+  generators.
+- L5: **model-based testing.** A custom hash table vs. a
+  list-based reference.
+- L8: **tutorial.** OUnit2 + QCheck on the M05-L06 evaluator;
+  a deliberately buggy version found by the shrinker.
 
 :::
 

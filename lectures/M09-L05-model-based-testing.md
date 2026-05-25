@@ -1,6 +1,6 @@
 ---
 title: "Model-based testing of stateful data structures"
-lecture_no: 4
+lecture_no: 5
 week: 9
 duration_target_min: 25
 concepts: [model-based testing, stateful testing, reference implementation, command sequences, observable equivalence, hash table, PBT for state]
@@ -24,7 +24,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Model-based testing of stateful data structures</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 4</p>
+<p class="title-slide-label">Module 9 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -1074,7 +1074,7 @@ let run_real_q q c =
 
 ## Activity
 
-:::quiz mcq id=M09-L04-q1
+:::quiz mcq id=M09-L05-q1
 You are testing a custom red-black tree implementation using
 model-based PBT against an association-list reference. The
 default `command_gen` produces `Add k v`, `Remove k`, and
@@ -1109,7 +1109,7 @@ space so that random commands frequently target existing keys
 and exercise the algorithm's interesting branches.
 :::
 
-:::quiz mcq id=M09-L04-q2
+:::quiz mcq id=M09-L05-q2
 In the hash-table example, the property compares observations
 step-by-step:
 
@@ -1140,7 +1140,7 @@ shrinking, this gives you the smallest possible bug reproducer:
 4-command sequence ending in this `Find`."
 :::
 
-:::quiz code id=M09-L04-q3
+:::quiz code id=M09-L05-q3
 Write a `command` variant type for a *stack* with three
 operations: `push : int -> unit`, `pop : unit -> int option`,
 and `top : unit -> int option`. (Each operation takes only the
@@ -1247,21 +1247,33 @@ as the oracle. Garbage in, garbage out.
 
 ## What's next
 
-[Lecture 5](M09-L05-tutorial.html) is the module's wrap-up
+The next two lectures take a sharp turn from data-structure
+testing into the second half of this module: concurrency. In
+[Lecture 6](M09-L06-effect-handlers.html) we introduce OCaml 5's
+*effect handlers*, the new control-flow mechanism that lets us
+intercept and re-route user-defined effects. In
+[Lecture 7](M09-L07-fibers-concurrency.html) we use effect
+handlers to build a small lightweight-concurrency library
+(fibers + channels) whose schedule is deterministic enough to
+test.
+
+[Lecture 8](M09-L08-tutorial.html) is the module's wrap-up
 tutorial: putting OUnit2 and QCheck side by side on a single
 worked example (the `expr` evaluator from M05-L06), watching
-QCheck catch a deliberately introduced bug. The model-based
-technique from this lecture is implicit in any nontrivial
-testing of stateful code; the tutorial focuses on the pure-
-function case to keep the example self-contained.
+QCheck catch a deliberately introduced bug, and stubbing
+side-effecting operations with effect handlers so the
+interpreter becomes testable in isolation.
 
 :::slide
 
 ## What's next
 
-- L5: tutorial wrap-up. OUnit2 + QCheck on the `expr`
-  evaluator. A deliberately buggy implementation. A complete
-  `dune` test file.
+- L6: **effect handlers.** OCaml 5's mechanism for
+  user-defined effects and non-local control flow.
+- L7: **fibers and lightweight concurrency.** A small
+  scheduler built from effect handlers.
+- L8: **tutorial wrap-up.** OUnit2 + QCheck on the `expr`
+  evaluator, plus effect-handler stubs for side effects.
 
 :::
 
