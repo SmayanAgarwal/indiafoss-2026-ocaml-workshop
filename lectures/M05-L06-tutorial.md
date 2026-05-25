@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: an interpreter for the M04-L05 AST"
-lecture_no: 7
+lecture_no: 6
 week: 5
 duration_target_min: 28
 concepts: [worked AST walk, structural recursion, interpreter, environment, multi-purpose pattern matching]
@@ -19,7 +19,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Tutorial: an interpreter for the M04-L05 AST</h2>
-<p class="title-slide-label">Module 5 &middot; Lecture 7</p>
+<p class="title-slide-label">Module 5 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -93,7 +93,7 @@ will have one clause per constructor, three of which recurse.
 
 ## The AST
 
-```ocaml
+```ocaml skip
 type ty = T_int | T_bool
 
 type expr =
@@ -123,16 +123,6 @@ if true then x + 5 else 0
 The same in our AST:
 
 ```ocaml
-type ty = T_int | T_bool
-
-type expr =
-  | Int of int
-  | Bool of bool
-  | Add of expr * expr
-  | If of expr * expr * expr
-  | Var of string
-  | Let_in of string * ty option * expr * expr
-
 let example =
   Let_in ("x", Some T_int, Int 10,
     If (Bool true,
@@ -144,6 +134,30 @@ Every constructor of `expr` appears at least once. The program
 should pretty-print back to something resembling the source,
 have a small finite depth, and evaluate to `15`.
 
+:::slide
+
+## The example program
+
+```text
+let x : int = 10 in
+if true then x + 5 else 0
+```
+
+as an `expr` value:
+
+```ocaml skip
+let example =
+  Let_in ("x", Some T_int, Int 10,
+    If (Bool true,
+        Add (Var "x", Int 5),
+        Int 0))
+```
+
+- Every constructor appears at least once.
+- Should evaluate to `15`.
+
+:::
+
 ## Function 1: `pretty`
 
 A pretty printer turns an `expr` back into a string. We will
@@ -153,16 +167,6 @@ prints all three sub-expressions; `Let_in` has to decide whether
 to emit the optional type annotation.
 
 ```ocaml
-type ty = T_int | T_bool
-
-type expr =
-  | Int of int
-  | Bool of bool
-  | Add of expr * expr
-  | If of expr * expr * expr
-  | Var of string
-  | Let_in of string * ty option * expr * expr
-
 let pretty_ty t =
   match t with
   | T_int  -> "int"
@@ -187,12 +191,6 @@ let rec pretty e =
     "(let " ^ x ^ annot ^ " = " ^ pretty e1
     ^ " in " ^ pretty e2 ^ ")"
 
-let example =
-  Let_in ("x", Some T_int, Int 10,
-    If (Bool true,
-        Add (Var "x", Int 5),
-        Int 0))
-
 let _ = pretty example
 ```
 
@@ -212,7 +210,7 @@ sub-result level rather than at the outer pattern. Output on
 
 ## `pretty`: one clause per constructor
 
-```ocaml
+```ocaml skip
 let rec pretty e =
   match e with
   | Int n  -> string_of_int n
@@ -235,8 +233,22 @@ let rec pretty e =
 
 - Six clauses, one per constructor of `expr`.
 - Inner `match` on `ty option` for the annotation.
-- Output on `example`:
-  `(let x : int = 10 in (if true then (x + 5) else 0))`.
+
+:::
+
+:::slide
+
+## `pretty example`
+
+```ocaml
+let _ = pretty example
+(* = "(let x : int = 10 in (if true then (x + 5) else 0))" *)
+```
+
+- The `Let_in` clause prints `let x : int = 10 in ...`.
+- The annotation `: int` came from the inner `match` on the
+  `ty option` payload.
+- Every internal node parenthesised; no precedence to worry about.
 
 :::
 
@@ -248,16 +260,6 @@ clause with an [or-pattern](M05-L03-nested-and-or-patterns.html#or-patterns-shar
 since they share the same right-hand side.
 
 ```ocaml
-type ty = T_int | T_bool
-
-type expr =
-  | Int of int
-  | Bool of bool
-  | Add of expr * expr
-  | If of expr * expr * expr
-  | Var of string
-  | Let_in of string * ty option * expr * expr
-
 let rec depth e =
   match e with
   | Int _ | Bool _ | Var _ -> 1
@@ -266,13 +268,7 @@ let rec depth e =
     1 + max (depth c) (max (depth t) (depth f))
   | Let_in (_, _, e1, e2)  -> 1 + max (depth e1) (depth e2)
 
-let example =
-  Let_in ("x", Some T_int, Int 10,
-    If (Bool true,
-        Add (Var "x", Int 5),
-        Int 0))
-
-let _ = depth example
+let _ = depth example  (* = 4 *)
 ```
 
 The or-pattern `Int _ | Bool _ | Var _` collapses three clauses
@@ -336,9 +332,6 @@ recursive function over the list; returns `None` if the name is
 absent:
 
 ```ocaml
-type value = VInt of int | VBool of bool
-type env = (string * value) list
-
 let rec lookup x (e : env) =
   match e with
   | []              -> None
@@ -349,7 +342,7 @@ let rec lookup x (e : env) =
 
 ## `eval`: values, environment, and lookup
 
-```ocaml
+```ocaml skip
 type value = VInt of int | VBool of bool
 type env = (string * value) list
 
@@ -373,24 +366,6 @@ propagate `None` and to enforce the expected value shape (an
 `Add` needs two `VInt`s, an `If` needs a `VBool` condition).
 
 ```ocaml
-type ty = T_int | T_bool
-
-type expr =
-  | Int of int
-  | Bool of bool
-  | Add of expr * expr
-  | If of expr * expr * expr
-  | Var of string
-  | Let_in of string * ty option * expr * expr
-
-type value = VInt of int | VBool of bool
-type env = (string * value) list
-
-let rec lookup x (e : env) =
-  match e with
-  | []              -> None
-  | (k, v) :: rest  -> if x = k then Some v else lookup x rest
-
 let rec eval (env : env) e =
   match e with
   | Int n   -> Some (VInt n)
@@ -410,13 +385,7 @@ let rec eval (env : env) e =
      | Some v -> eval ((x, v) :: env) e2
      | None   -> None)
 
-let example =
-  Let_in ("x", Some T_int, Int 10,
-    If (Bool true,
-        Add (Var "x", Int 5),
-        Int 0))
-
-let _ = eval [] example
+let _ = eval [] example  (* = Some (VInt 15) *)
 ```
 
 Reading the clauses:

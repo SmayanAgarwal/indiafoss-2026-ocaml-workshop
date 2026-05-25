@@ -165,9 +165,9 @@ the current draft state. Estimate uses slide_count x 1.5 min.
 | M05-L03 | Nested patterns, records, inline records, or-patterns | 21 | 32 | 45 |
 | M05-L04 | Guards: when-clauses on patterns | 11 | 17 | 24 |
 | M05-L05 | Exhaustiveness checking | 13 | 20 | 28 |
-| M05-L06 | Tutorial: an interpreter for the M04-L05 AST | 14 | 21 | 29 |
-| **M05 total** | | **95** | **144** | **202** |
-| | | | **(2.4 h)** | **(3.4 h)** |
+| M05-L06 | Tutorial: an interpreter for the M04-L05 AST | 16 | 24 | 34 |
+| **M05 total** | | **97** | **147** | **207** |
+| | | | **(2.5 h)** | **(3.5 h)** |
 
 M05-L01 sits right at the NPTEL 30-min ceiling at 30 video min
 and is the longest in M05. M05-L04 (10 slides / 15 min) and
@@ -374,9 +374,9 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1496 min (24.9 hours) across
+- **Final video**: 1499 min (25.0 hours) across
   71 lectures and 12 modules.
-- **Estimated recording time**: 2093 min (34.9 hours)
+- **Estimated recording time**: 2098 min (35.0 hours)
   at the 1.4× multiplier.
 
 The 25.0 hours of final video falls under NPTEL's ~30 hr target;
@@ -408,7 +408,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **34.9 hours of recording / 4.3 hours per day = ~8.1 studio days.**
+- **35.0 hours of recording / 4.3 hours per day = ~8.1 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -419,7 +419,7 @@ sessions:
 | M02 Expressions | 3.1 | 0.7 |
 | M03 Functions | 2.8 | 0.7 |
 | M04 Data types | 3.4 | 0.8 |
-| M05 Pattern matching | 3.4 | 0.8 |
+| M05 Pattern matching | 3.5 | 0.8 |
 | M06 Higher-order programming | 2.8 | 0.7 |
 | M07 Side effects and modular programming | 4.4 | 1.0 |
 | M08 Monads and GADTs | 3.3 | 0.8 |
@@ -427,7 +427,7 @@ sessions:
 | M10 Memory safety and security | 2.3 | 0.5 |
 | M11 OxCaml: type-level extensions of safety | 2.2 | 0.5 |
 | M12 Unikernels (MirageOS) | 1.8 | 0.4 |
-| **Total** | **35.0** | **8.1** |
+| **Total** | **35.1** | **8.2** |
 
 ## Caveats
 
