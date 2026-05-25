@@ -68,25 +68,29 @@ the basic shape and the three simplest pattern forms:
 2. **Variable patterns** match *anything* and give the matched value a name.
 3. **The wildcard** `_` matches anything and binds no name.
 
-The next four lectures build on this base.
-[Lecture 2](M05-L02-nested-and-or-patterns.html) covers patterns
-inside patterns, and or-patterns. [Lecture 3](M05-L03-guards.html)
-covers `when`-guards. [Lecture 4](M05-L04-exhaustiveness.html) is
-about exhaustiveness, the most load-bearing static check in the
-language. [Lecture 5](M05-L05-records-variants.html) puts it all
-together for records and variants. [Lecture 6](M05-L06-tutorial.html)
-is the tutorial.
+The next five lectures build on this base.
+[Lecture 2](M05-L02-recursive-patterns.html) pairs these patterns
+with the recursive types from M04 (lists, trees) and gives us the
+canonical shape of every list and tree function.
+[Lecture 3](M05-L03-nested-and-or-patterns.html) covers patterns
+inside patterns, record-pattern shorthands, the diagonal idiom,
+inline records inside variants, and or-patterns.
+[Lecture 4](M05-L04-guards.html) covers `when`-guards.
+[Lecture 5](M05-L05-exhaustiveness.html) is about exhaustiveness,
+the most load-bearing static check in the language.
+[Lecture 6](M05-L06-tutorial.html) is the tutorial: an
+interpreter for the [M04-L05 AST](M04-L05-tutorial.html).
 
 :::slide
 
 ## The plan for Module 5
 
 - **L1** (this lecture): the three simplest patterns: literal, variable, wildcard.
-- **L2** ([nested and or-patterns](M05-L02-nested-and-or-patterns.html)): patterns inside patterns.
-- **L3** ([guards](M05-L03-guards.html)): `when`-guards on cases.
-- **L4** ([exhaustiveness](M05-L04-exhaustiveness.html)): the most load-bearing static check in the language.
-- **L5** ([records & variants](M05-L05-records-variants.html)): putting it together on real data types.
-- **L6** ([tutorial](M05-L06-tutorial.html)).
+- **L2** ([lists and trees](M05-L02-recursive-patterns.html)): pattern matching on recursive structures.
+- **L3** ([nested and or-patterns](M05-L03-nested-and-or-patterns.html)): patterns inside patterns; records, inline records, the diagonal idiom; or-patterns.
+- **L4** ([guards](M05-L04-guards.html)): `when`-guards on cases.
+- **L5** ([exhaustiveness](M05-L05-exhaustiveness.html)): the most load-bearing static check in the language.
+- **L6** ([tutorial](M05-L06-tutorial.html)): an interpreter for the M04-L05 AST.
 
 :::
 
@@ -279,7 +283,7 @@ Warning 11 [redundant-case]: this match case is unused.
 ```
 
 Warning 11 is the dual of the exhaustiveness warning (warning 8,
-which we will meet in [Lecture 4](M05-L04-exhaustiveness.html)): it
+which we will meet in [Lecture 5](M05-L05-exhaustiveness.html)): it
 says you have a clause that *never* fires, usually because an
 earlier clause already covers it. When you see warning 11, you have
 almost certainly put a variable pattern (or a wildcard) before
@@ -426,7 +430,7 @@ type with five constructors and you write four specific cases
 plus a wildcard, and then later add a sixth constructor, the
 compiler will *not* warn you, because the wildcard "covers" the
 new case (probably with the wrong answer). We will return to
-this in [Lecture 4](M05-L04-exhaustiveness.html#when-to-use-a-wildcard-catch-all-on-variants).
+this in [Lecture 5](M05-L05-exhaustiveness.html#prefer-to-avoid-catch-all-on-variants).
 For now, use the wildcard freely on `int`s and `string`s, where
 there is no other way to enumerate the cases; use it more
 cautiously on variants.
@@ -561,7 +565,7 @@ on `let`-bindings and function-parameter patterns is: they accept
 records are always safe (every value of `int * int` is a pair,
 every value of `point` has an `x` and a `y`); variants with more
 than one constructor are not. We come back to this in
-[Lecture 4](M05-L04-exhaustiveness.html).
+[Lecture 5](M05-L05-exhaustiveness.html).
 
 You can write the destructure separately if you prefer:
 
@@ -597,7 +601,7 @@ let k (Some n) = n
 - `Some n`: variant with > 1 constructor: *non-exhaustive*.
 - Compiler warns at compile time; `k None` would raise
   `Match_failure` at runtime.
-- Total patterns in [Lecture 4](M05-L04-exhaustiveness.html).
+- Total patterns in [Lecture 5](M05-L05-exhaustiveness.html).
 
 :::
 
@@ -631,7 +635,7 @@ Here is an example of a case that is not matched: 2
 
 - The compiler shows a sample input no clause covers.
 - Fix: add more clauses, or add a wildcard `_`.
-- Full coverage in Lecture 4.
+- Full coverage in [Lecture 5](M05-L05-exhaustiveness.html).
 
 :::
 
@@ -640,7 +644,7 @@ fix is either to add more specific clauses (`| 2 -> "two"`, etc.)
 or to add a wildcard catch-all (`| _ -> "many"`). On finite types
 like booleans or small variants, you can usually enumerate every
 case; on `int`, you almost always end with a wildcard.
-[Lecture 4](M05-L04-exhaustiveness.html) covers exhaustiveness in
+[Lecture 5](M05-L05-exhaustiveness.html) covers exhaustiveness in
 detail; for now, just know that the warning exists and is helpful.
 
 ## How `match` evaluates
@@ -837,13 +841,17 @@ match is incomplete.
 What does the following return? Then swap the two clauses: does
 the answer change?
 
-```text
+```ocaml
 let f = function
   | x -> x
   | 0 -> 99
 
 let _ = f 0
 let _ = f 5
+```
+```mdx-error
+Line 3, characters 7-8:
+Warning 11 [redundant-case]: this match case is unused.
 ```
 
 :::
@@ -852,12 +860,16 @@ Predict before reading on.
 
 :::slide
 
-## Activity discussion
+## Activity discussion: the broken version
 
-```text
+```ocaml
 let f = function
   | x -> x
   | 0 -> 99
+```
+```mdx-error
+Line 3, characters 7-8:
+Warning 11 [redundant-case]: this match case is unused.
 ```
 
 - Variable pattern `x` matches *any* integer, including `0`.
@@ -865,17 +877,23 @@ let f = function
 - Second clause is unreachable; warning 11.
 - `f 0` returns `0`; `f 5` returns `5`.
 
-The fix:
+:::
 
-```text
+:::slide
+
+## Activity discussion: the fix
+
+```ocaml
 let f = function
   | 0 -> 99
   | x -> x
 ```
 
+- Swap the clauses: specific first, general last.
 - Now `f 0` returns `99`; `f n` returns `n` for any other `n`.
+- The rule to internalise: **specific first, general last**.
 
-:::
+::: 
 
 The variable pattern `x` matches everything. The clause that says
 "return `99` when the input is `0`" never runs because `x` already
@@ -887,22 +905,23 @@ and why "specific first, general last" is the rule to internalise.
 
 ## What's next
 
-[Lecture 2](M05-L02-nested-and-or-patterns.html) covers two
-extensions to the patterns we have seen: patterns inside patterns
-(nesting), and or-patterns (`p1 | p2`) that let multiple alternatives
-share a right-hand side. Both let you express more in a single
-clause. [Lecture 3](M05-L03-guards.html) adds `when` guards.
-[Lecture 4](M05-L04-exhaustiveness.html) puts exhaustiveness on a
-firmer footing. By the end of Module 5 you will be writing pattern
-matches as easily as you write arithmetic.
+[Lecture 2](M05-L02-recursive-patterns.html) pairs the patterns
+we have seen with the recursive types from
+[M04-L04](M04-L04-recursive-types.html). With one new piece of
+notation (`[]` and `h :: t` for lists, `Leaf` and `Node` for
+trees), pattern matching turns into the canonical shape of every
+list and tree function: one clause per constructor, recursing on
+the structurally smaller sub-value. After that, Lectures 3 to 6
+generalise: patterns inside patterns, `when` guards,
+exhaustiveness, and records.
 
 :::slide
 
 ## What's next
 
-- Lecture 2: **nested patterns and or-patterns**.
-- Patterns can contain other patterns: `Some (x, _)`, `(0, _) :: _`.
-- `|` inside a clause lets multiple shapes share a right-hand side.
+- Lecture 2: **pattern matching on lists and trees**.
+- `[]` and `h :: t` for lists; `Leaf` and `Node` for trees.
+- One clause per constructor; the structural-recursion recipe.
 
 :::
 

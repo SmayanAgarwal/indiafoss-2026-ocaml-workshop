@@ -304,7 +304,7 @@ the `Less` branch.
 :::
 
 A useful detail: the
-[exhaustiveness checker from Module 5](M05-L04-exhaustiveness.html)
+[exhaustiveness checker from Module 5](M05-L05-exhaustiveness.html)
 still works for GADTs. When you add `Less` to the type and forget
 to add it to `eval`, the compiler warns about a non-exhaustive
 match. This is one of the things you would lose if you encoded the

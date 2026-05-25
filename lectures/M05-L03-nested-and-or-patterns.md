@@ -1,11 +1,11 @@
 ---
 title: "Nested patterns and or-patterns"
-lecture_no: 2
+lecture_no: 3
 week: 5
 duration_target_min: 22
 concepts: [nested patterns, or-patterns, tuple patterns inside variants, alternation]
 keywords: [OCaml, pattern matching, nested patterns, or-patterns, alternation]
-activity_question: "Write [first_of_pair_in_list : (int * int) list -> int option] returning the first component of the first pair, or [None] if the list is empty. Use nested patterns."
+activity_question: "Write [is_unit_shape : shape -> bool] returning [true] for [Circle 1.0] or [Rectangle (1.0, 1.0)] and [false] for everything else. Use a single clause with an or-pattern containing nested literal patterns."
 think_about_this: "An or-pattern lets multiple shapes share a right-hand side. What constraint does the compiler impose on the variables bound by each alternative?"
 reading:
   - title: "Cornell CS3110, Pattern matching (continued)"
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Nested patterns and or-patterns</h2>
-<p class="title-slide-label">Module 5 &middot; Lecture 2</p>
+<p class="title-slide-label">Module 5 &middot; Lecture 3</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -70,25 +70,72 @@ The most common nested pattern is to look inside a constructor's
 payload. We saw [variant types in M04-L03](M04-L03-variants.html)
 and you have seen `Some` and `None` and you have seen [records](M04-L02-records.html)
 and [lists](M04-L04-recursive-types.html#lists-are-a-recursive-variant).
-Here is a record example:
+Start with a record. Suppose we want to describe where a point
+sits relative to the axes. Without any nesting, you would write
+the logic as a cascade of `if`s on the two fields:
 
 ```ocaml
 type point = { x : float; y : float }
 
-let describe = function
-  | { x = 0.0; y = 0.0 } -> "origin"
-  | { x = 0.0; y = _   } -> "on the y-axis"
-  | { x = _;   y = 0.0 } -> "on the x-axis"
-  | { x = _;   y = _   } -> "somewhere else"
+let describe p =
+  if p.x = 0.0 && p.y = 0.0 then "origin"
+  else if p.x = 0.0 then "on the y-axis"
+  else if p.y = 0.0 then "on the x-axis"
+  else "somewhere else"
 
 let _ = describe { x = 0.0; y = 0.0 }
 let _ = describe { x = 3.0; y = 0.0 }
 let _ = describe { x = 1.0; y = 2.0 }
 ```
 
+`"origin"`, `"on the x-axis"`, `"somewhere else"`. It works, but
+the shape of the four cases is buried inside boolean tests. A
+record *pattern* with nested field-patterns lets us write the same
+function as a single match:
+
+```ocaml
+let describe = function
+  | { x = 0.0; y = 0.0 } -> "origin"
+  | { x = 0.0; y = _   } -> "on the y-axis"
+  | { x = _;   y = 0.0 } -> "on the x-axis"
+  | { x = _;   y = _   } -> "somewhere else"
+
+let _ = describe { x = 0.0; y = 0.0 }  (* = "origin" *)
+let _ = describe { x = 3.0; y = 0.0 }  (* = "on the x-axis" *)
+let _ = describe { x = 1.0; y = 2.0 }  (* = "somewhere else" *)
+```
+
+Each clause describes a shape: "x is zero and y is zero," "x is
+zero and y is anything," and so on. The four shapes are visible
+at a glance.
+
 :::slide
 
-## Nesting in record patterns
+## First, without nesting
+
+```ocaml
+type point = { x : float; y : float }
+
+let describe p =
+  if p.x = 0.0 && p.y = 0.0 then "origin"
+  else if p.x = 0.0 then "on the y-axis"
+  else if p.y = 0.0 then "on the x-axis"
+  else "somewhere else"
+
+let _ = describe { x = 0.0; y = 0.0 }  (* = "origin" *)
+let _ = describe { x = 3.0; y = 0.0 }  (* = "on the x-axis" *)
+let _ = describe { x = 1.0; y = 2.0 }  (* = "somewhere else" *)
+```
+
+- Four cases, but the shapes are hidden inside `if`s.
+- Each case tests `p.x` and `p.y` separately.
+- Works, but reads top-down rather than shape-by-shape.
+
+:::
+
+:::slide
+
+## Same logic, with nested patterns
 
 ```ocaml
 type point = { x : float; y : float }
@@ -98,13 +145,15 @@ let describe = function
   | { x = 0.0; y = _   } -> "on the y-axis"
   | { x = _;   y = 0.0 } -> "on the x-axis"
   | { x = _;   y = _   } -> "somewhere else"
-```
 
-`"origin"`, `"on the x-axis"`, `"somewhere else"` for the three calls.
+let _ = describe { x = 0.0; y = 0.0 }  (* = "origin" *)
+let _ = describe { x = 3.0; y = 0.0 }  (* = "on the x-axis" *)
+let _ = describe { x = 1.0; y = 2.0 }  (* = "somewhere else" *)
+```
 
 - The values after `=` are themselves patterns.
 - A literal `0.0`, a wildcard `_`. **Nested**.
-- The compiler matches each field's pattern against that field's value.
+- The four shapes line up visually.
 
 :::
 
@@ -115,6 +164,117 @@ is "`y` can be anything." Both are sub-patterns of the larger
 record pattern. When you read the clause `{ x = 0.0; y = 0.0 }`,
 read it as: this record's `x`-field matches `0.0`, *and* its
 `y`-field matches `0.0`. Both must hold.
+
+## Record patterns: name only the fields you need
+
+Often you do not want to match on values at all; you just want
+to *bind* the fields you need and ignore the rest. The
+shorthand form drops the `=` and uses just the field name:
+
+```ocaml
+type user = { name : string; age : int; admin : bool }
+
+let summary { name; age; _ } =
+  Printf.sprintf "%s, age %d" name age
+
+let _ = summary { name = "Alice"; age = 30; admin = true }
+(* = "Alice, age 30" *)
+```
+
+`{ name; age; _ }` does three things at once: it matches any
+`user` record (the type is inferred from the field names), binds
+`name` and `age` locally, and the trailing `_` says "there are
+other fields; I am ignoring them on purpose."
+
+Without the trailing `_`, OCaml warns:
+
+```text
+Warning 9 [missing-record-field-pattern]: the following labels
+are not bound in this record pattern: admin
+```
+
+This warning is worth keeping on: when the record gains a new
+field later, every existing pattern lights up so you decide
+case-by-case whether the new field matters. With `_`, you opt
+out of that warning for *this* pattern, saying "I have seen the
+new field, and I do not need to update this site."
+
+The shorthand `{ name; age }` (no equals signs) is the everyday
+form. The longer `{ name = name; age = age }` is equivalent but
+verbose. Use the short form unless you want to rename a field
+locally.
+
+:::slide
+
+## Record patterns: name only the fields you need
+
+```ocaml
+type user = { name : string; age : int; admin : bool }
+
+let summary { name; age; _ } =
+  Printf.sprintf "%s, age %d" name age
+
+let _ = summary { name = "Alice"; age = 30; admin = true }
+(* = "Alice, age 30" *)
+```
+
+- `{ name; age; _ }` binds `name` and `age`; `_` ignores the rest.
+- Sugar for `{ name = name; age = age }`.
+- Without `_`, OCaml warns (warning 9) about unhandled fields.
+- The warning is your refactoring aid when the record grows.
+
+:::
+
+## Renaming a field on the way in
+
+Sometimes you want to bind a field to a *different* name. The
+syntax is `{ field = local_name }`, the same form as the
+value-match record but with a variable pattern instead of a
+literal:
+
+```ocaml
+type user = { name : string; age : int; admin : bool }
+
+let role { name = n; admin } =
+  if admin then n ^ " (admin)" else n
+
+let _ = role { name = "Bob";   age = 25; admin = true }
+(* = "Bob (admin)" *)
+let _ = role { name = "Carol"; age = 28; admin = false }
+(* = "Carol" *)
+```
+
+`name = n` says "match the `name` field, and call it `n`
+locally." `admin` alone uses the shorthand (sugar for `admin =
+admin`).
+
+When you explicitly list one or more specific fields, ignoring
+the rest is implicit (no `_` needed). Some codebases write `_`
+anyway to make the intent more visible. Both styles are common.
+
+:::slide
+
+## Renaming a field on the way in
+
+```ocaml
+type user = { name : string; age : int; admin : bool }
+
+let role { name = n; admin } =
+  if admin then n ^ " (admin)" else n
+
+let _ = role { name = "Bob";   age = 25; admin = true }
+(* = "Bob (admin)" *)
+let _ = role { name = "Carol"; age = 28; admin = false }
+(* = "Carol" *)
+```
+
+- `{ name = n; admin }` renames `name` to local `n`.
+- `admin` alone is shorthand for `admin = admin`.
+- Listing only some fields: "ignore the rest" is implicit.
+
+:::
+
+## Patterns inside a variant constructor
 
 A pattern can also nest inside a variant constructor:
 
@@ -144,9 +304,11 @@ type shape =
 let is_unit_circle = function
   | Circle 1.0 -> true
   | _ -> false
-```
 
-`true`, `false`, `false`.
+let _ = is_unit_circle (Circle 1.0)             (* = true *)
+let _ = is_unit_circle (Circle 2.0)             (* = false *)
+let _ = is_unit_circle (Rectangle (1.0, 1.0))   (* = false *)
+```
 
 - `Circle 1.0` requires the constructor to be `Circle`.
 - **And** its payload must be exactly `1.0`.
@@ -176,6 +338,73 @@ The pattern `Rectangle (1.0, 1.0)` looks for the constructor
 patterns nested inside a tuple pattern inside a constructor
 pattern. Three levels.
 
+## Inline records inside constructors
+
+Since OCaml 4.03, a constructor's payload can be a record
+declared inline. This is the cleanest way to make a payload's
+fields self-documenting, and the pattern destructures the
+record exactly like any other record pattern:
+
+```ocaml
+type event =
+  | Click of { x : int; y : int }
+  | Key   of char
+  | Quit
+
+let describe = function
+  | Click { x; y } -> Printf.sprintf "click at (%d, %d)" x y
+  | Key c          -> Printf.sprintf "key: %c" c
+  | Quit           -> "quit"
+
+let _ = describe (Click { x = 100; y = 200 })
+(* = "click at (100, 200)" *)
+let _ = describe (Key 'q')   (* = "key: q" *)
+let _ = describe Quit        (* = "quit" *)
+```
+
+`Click of { x : int; y : int }` is an inline record payload. You
+do not need to declare a separate `type click = ...` and use
+`Click of click`; the record is part of the constructor's
+definition.
+
+Inside the pattern, `Click { x; y }` destructures the inline
+record exactly like any other record pattern. You can ignore
+fields with `_`, rename fields with `field = local_name`, or
+list only some, all the same way we just saw.
+
+A small caveat: a value of type `event` cannot have a value of
+type "click record" lifted out separately. The inline record
+exists only as the payload of `Click`. If you want to share the
+record shape between constructors, define it as a named record
+type instead.
+
+:::slide
+
+## Variant with inline record payload
+
+```ocaml
+type event =
+  | Click of { x : int; y : int }
+  | Key   of char
+  | Quit
+
+let describe = function
+  | Click { x; y } -> Printf.sprintf "click at (%d, %d)" x y
+  | Key c          -> Printf.sprintf "key: %c" c
+  | Quit           -> "quit"
+
+let _ = describe (Click { x = 100; y = 200 })
+(* = "click at (100, 200)" *)
+let _ = describe (Key 'q')   (* = "key: q" *)
+let _ = describe Quit        (* = "quit" *)
+```
+
+- `Click`'s payload is a **record declared inline**.
+- Pattern destructures it like any record pattern.
+- Avoids declaring a separate `type click = ...`.
+
+:::
+
 ## Nesting in lists
 
 Lists are where nested patterns earn their keep. A list is built
@@ -203,13 +432,14 @@ let _ = head_first []
 let head_first = function
   | (x, _) :: _ -> Some x
   | [] -> None
-```
 
-`Some 1`, `None`.
+let _ = head_first [(1, "a"); (2, "b"); (3, "c")]
+let _ = head_first []
+```
 
 - Pattern `(x, _) :: _` matches a non-empty list whose head is a pair.
 - Binds the first component of that head to `x`.
-- Three layers of nesting: cons, tuple, inner positions.
+- Three nested patterns: **Cons** at the top, **Tuple** in the head position, **Variable** `x` and **wildcard** `_` inside the tuple.
 
 :::
 
@@ -266,6 +496,108 @@ the list ignored."
 If you can say it cleanly in English, the pattern is doing what
 you think it does.
 
+## Matching a tuple of values: the diagonal idiom
+
+A common shape in real code is "the answer depends on the
+combination of two values." The classic case is comparing two
+`option`s: we want one branch each for `(None, None)`,
+`(Some _, None)`, `(None, Some _)`, and `(Some _, Some _)`.
+
+The obvious way is to nest one `match` inside another, once per
+value:
+
+```ocaml
+let combine a b =
+  match a with
+  | None ->
+    (match b with
+     | None   -> "both empty"
+     | Some _ -> "second only")
+  | Some _ ->
+    (match b with
+     | None   -> "first only"
+     | Some _ -> "both present")
+
+let _ = combine (Some 1) None     (* = "first only" *)
+```
+
+It works, but the structure is muddled: the four logical cases
+are spread across two `match`es, the parentheses around the
+inner match are required, and the indentation grows with each
+level. Worse, exhaustiveness checking happens twice (once per
+match) instead of on the cross-product.
+
+:::slide
+
+## First, the nested way
+
+```ocaml
+let combine a b =
+  match a with
+  | None ->
+    (match b with
+     | None   -> "both empty"
+     | Some _ -> "second only")
+  | Some _ ->
+    (match b with
+     | None   -> "first only"
+     | Some _ -> "both present")
+```
+
+- Four logical cases, spread across two nested matches.
+- Inner `match` needs parentheses (or `begin...end`).
+- Indentation grows with depth.
+- Exhaustiveness checked **per inner match**, not on the cross-product.
+
+:::
+
+The cleaner option is to *form a tuple* of the two values and
+match the whole tuple at once. `match a, b with` is shorthand
+for `match (a, b) with`: the comma forms an implicit tuple, and
+each clause matches a pair of patterns:
+
+```ocaml
+let combine a b =
+  match a, b with
+  | None,   None   -> "both empty"
+  | Some _, None   -> "first only"
+  | None,   Some _ -> "second only"
+  | Some _, Some _ -> "both present"
+
+let _ = combine (Some 1) None     (* = "first only" *)
+let _ = combine None     None     (* = "both empty" *)
+let _ = combine (Some 1) (Some 2) (* = "both present" *)
+```
+
+The four clauses line up visually, the cases read in any order,
+and the compiler checks exhaustiveness on the 2x2 cross-product
+in one pass. Reach for the tuple form whenever the answer
+depends on the *combination* of two (or more) related values.
+
+:::slide
+
+## The diagonal idiom: match on a pair
+
+```ocaml
+let combine a b =
+  match a, b with
+  | None,   None   -> "both empty"
+  | Some _, None   -> "first only"
+  | None,   Some _ -> "second only"
+  | Some _, Some _ -> "both present"
+
+let _ = combine (Some 1) None     (* = "first only" *)
+let _ = combine None     None     (* = "both empty" *)
+let _ = combine (Some 1) (Some 2) (* = "both present" *)
+```
+
+- `match a, b with` is sugar for `match (a, b) with`.
+- Four clauses cover the 2x2 grid in one match.
+- Cases line up visually; order is flexible.
+- Exhaustiveness checked on the cross-product.
+
+:::
+
 ## Or-patterns: shared right-hand sides
 
 Often you want several patterns to share the same right-hand
@@ -288,9 +620,10 @@ let _ = is_vowel 'b'
 let is_vowel = function
   | 'a' | 'e' | 'i' | 'o' | 'u' -> true
   | _ -> false
-```
 
-`true`, `false`.
+let _ = is_vowel 'a'  (* = true *)
+let _ = is_vowel 'b'  (* = false *)
+```
 
 - `'a' | 'e' | 'i' | 'o' | 'u'`: an **or-pattern**, five literals.
 - Any one matching triggers the same right-hand side.
@@ -344,9 +677,10 @@ type direction = North | South | East | West
 let is_horizontal = function
   | East | West -> true
   | North | South -> false
-```
 
-`true`, `false`.
+let _ = is_horizontal East   (* = true *)
+let _ = is_horizontal North  (* = false *)
+```
 
 - Two groups, each sharing a right-hand side.
 - Reads almost like English.
@@ -388,8 +722,11 @@ let _ =
 - Or-pattern requires all alternatives to bind the **same set of variables**.
 - And at **compatible types**.
 
-If both alternatives bind `x` at the same type, the right-hand side
-can use `x`:
+:::
+
+:::slide
+
+## Fix: use the same name in each alternative
 
 ```ocaml
 type tagged = A of int | B of int
@@ -401,7 +738,8 @@ let _ = to_int (A 5)
 let _ = to_int (B 7)
 ```
 
-`5` and `7`. Each alternative binds an `int` to `x`.
+- `5` and `7`. Each alternative binds an `int` to `x`.
+- Right-hand side can now refer to `x` unambiguously.
 
 :::
 
@@ -448,6 +786,11 @@ let summary = function
   | (0 | 1) :: _ -> "starts with 0 or 1"
   | _ :: _       -> "starts with something else"
   | []           -> "empty"
+
+let _ = summary [0; 5; 6]  (* = "starts with 0 or 1" *)
+let _ = summary [1; 5; 6]  (* = "starts with 0 or 1" *)
+let _ = summary [5; 6]     (* = "starts with something else" *)
+let _ = summary []         (* = "empty" *)
 ```
 
 - Pattern `(0 | 1) :: _` reads "either 0 or 1, followed by anything".
@@ -473,13 +816,32 @@ let starts_nonpositive = function
 
 The or-pattern has four literal alternatives. (For a real
 "non-positive" check, you would use a guard, which is the topic
-of [Lecture 3](M05-L03-guards.html); this is just an illustration.)
+of [Lecture 4](M05-L04-guards.html); this is just an illustration.)
 
 ## The `as` binder: keep a name for the whole
 
 One more pattern form fits naturally in this lecture: `as`,
 which lets you destructure a value *and* keep a name for the
 whole thing.
+
+Suppose we want to return the head of a list paired with the
+list's length. Without `as`, you have to name the parameter and
+reach for it on the right:
+
+```ocaml
+let head_and_full xs =
+  match xs with
+  | x :: _ -> Some (x, List.length xs)
+  | [] -> None
+
+let _ = head_and_full [10; 20; 30]
+```
+
+`Some (10, 3)`. The clause destructures (`x :: _`) and *also*
+needs the whole list (`xs`) on the right. We can get `xs` because
+the parameter has a name. Inside `function` (no parameter name),
+this trick is not available; `as` is the cleanest way to keep the
+name in either style:
 
 ```ocaml
 let head_and_full = function
@@ -489,6 +851,29 @@ let head_and_full = function
 let _ = head_and_full [10; 20; 30]
 ```
 
+Same result, `Some (10, 3)`. The pattern `(x :: _) as xs` first
+destructures (`x` is the head); then `as xs` names the *entire*
+matched list `xs`. The right-hand side has both names available.
+
+:::slide
+
+## First, without `as`: name the parameter
+
+```ocaml
+let head_and_full xs =
+  match xs with
+  | x :: _ -> Some (x, List.length xs)
+  | [] -> None
+
+let _ = head_and_full [10; 20; 30]  (* = Some (10, 3) *)
+```
+
+- Clause destructures (`x :: _`) and reaches for `xs` on the right.
+- Works because the parameter has the name `xs`.
+- Fails the moment you switch to `function` (no parameter name).
+
+:::
+
 :::slide
 
 ## `as` patterns: name what you matched
@@ -497,29 +882,15 @@ let _ = head_and_full [10; 20; 30]
 let head_and_full = function
   | (x :: _) as xs -> Some (x, List.length xs)
   | [] -> None
+
+let _ = head_and_full [10; 20; 30]  (* = Some (10, 3) *)
 ```
 
-`Some (10, 3)`.
-
-- `(x :: _) as xs` destructures: `x` is the head.
-- Also binds the **whole** list to `xs`.
-- Without `as`: you would `match` and then rebuild, or use the
-  outer variable.
+- `(x :: _) as xs` destructures *and* names the whole.
+- `x` is the head, `xs` is the full list, in one pattern.
+- Works inside `function`, where there is no outer parameter.
 
 :::
-
-The pattern `(x :: _) as xs` first destructures the value: `x`
-becomes the head of the list. Then `as xs` binds the *entire
-matched list* to the name `xs`. Inside the right-hand side, `x`
-is the head and `xs` is the full list. The pattern matched the
-same shape it would have matched without `as`; the only addition
-is the name `xs` for the whole.
-
-This is occasionally just what you want. The alternative is to
-match without `as`, and then refer to the outer parameter
-directly. That works only if the outer parameter has a name;
-inside a `function` shorthand, it does not, and `as` is the
-cleanest way to keep the name.
 
 `as` reads almost like an English aside: "the head is `x`, and
 the whole list is `xs`."
@@ -579,7 +950,7 @@ right-hand sides express *what to do*.
 
 ## Two checks
 
-:::quiz mcq id=M05-L02-q3
+:::quiz mcq id=M05-L03-q3
 What does `head_and_second [1; 2; 3]` return, given:
 
 ```ocaml
@@ -598,7 +969,7 @@ two elements. `a` is the head (`1`), `b` is the next element
 (`2`), and the tail (`[3]`) is discarded.
 :::
 
-:::quiz mcq id=M05-L02-q2
+:::quiz mcq id=M05-L03-q2
 The compiler rejects this with an error. Why?
 
 ```ocaml skip
@@ -622,32 +993,42 @@ is rejected.
 
 A code task:
 
-:::quiz code id=M05-L02-q1
-Write `first_of_pair_in_list : (int * int) list -> int option`
-returning the first component of the first pair, or `None` if
-the list is empty. Use a single clause with a nested pattern for
-the non-empty case.
+:::quiz code id=M05-L03-q1
+Given the `shape` type from earlier, write `is_unit_shape : shape
+-> bool` that returns `true` for a unit circle (`Circle 1.0`) or a
+unit square (`Rectangle (1.0, 1.0)`), and `false` otherwise. Use a
+single clause with an or-pattern combining the two nested literal
+patterns.
 
 ```ocaml
-let first_of_pair_in_list xs =
+type shape =
+  | Circle of float
+  | Rectangle of float * float
+
+let is_unit_shape s =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (first_of_pair_in_list [(10, 20); (30, 40)] = Some 10) "two pairs";
-  check (first_of_pair_in_list [(5, 5)] = Some 5) "one pair";
-  check (first_of_pair_in_list [] = None) "empty";
+  check (is_unit_shape (Circle 1.0) = true) "unit circle";
+  check (is_unit_shape (Rectangle (1.0, 1.0)) = true) "unit rectangle";
+  check (is_unit_shape (Circle 2.0) = false) "non-unit circle";
+  check (is_unit_shape (Rectangle (1.0, 2.0)) = false) "non-unit rectangle";
+  check (is_unit_shape (Rectangle (2.0, 1.0)) = false) "another non-unit rectangle";
   print_endline "all tests passed"
 ```
+
 :::
 
 :::solution
 
-The shape: `function | (x, _) :: _ -> Some x | [] -> None`. The
-nested pattern in the first clause extracts the first component
-of the first pair in one step.
+The shape: `function | Circle 1.0 | Rectangle (1.0, 1.0) -> true |
+_ -> false`. One or-pattern with two nested constructor patterns:
+the literal `1.0` lives inside `Circle`, the tuple `(1.0, 1.0)`
+lives inside `Rectangle`. Both alternatives bind no variables, so
+the same-bindings rule is trivially satisfied.
 
 :::
 
@@ -680,9 +1061,17 @@ be too.
 
 ## Activity
 
-Write `first_of_pair_in_list : (int * int) list -> int option`
-returning the first component of the first pair, or `None` if
-the list is empty. Use a nested pattern.
+Write `is_unit_shape : shape -> bool` that returns `true` for
+`Circle 1.0` or `Rectangle (1.0, 1.0)`, and `false` for any other
+shape. Use a single clause whose left side is an **or-pattern**
+combining the two nested literal patterns.
+
+```ocaml skip
+type shape = Circle of float | Rectangle of float * float
+(* is_unit_shape (Circle 1.0)            => true  *)
+(* is_unit_shape (Rectangle (1.0, 1.0))  => true  *)
+(* is_unit_shape (Circle 2.0)            => false *)
+```
 
 :::
 
@@ -693,45 +1082,50 @@ Try it before reading the solution.
 ## Activity solution
 
 ```ocaml
-let first_of_pair_in_list = function
-  | (x, _) :: _ -> Some x
-  | [] -> None
+type shape =
+  | Circle of float
+  | Rectangle of float * float
 
-let _ = first_of_pair_in_list [(10, 20); (30, 40)]
-let _ = first_of_pair_in_list []
+let is_unit_shape = function
+  | Circle 1.0 | Rectangle (1.0, 1.0) -> true
+  | _ -> false
+
+let _ = is_unit_shape (Circle 1.0)             (* = true *)
+let _ = is_unit_shape (Rectangle (1.0, 1.0))   (* = true *)
+let _ = is_unit_shape (Circle 2.0)             (* = false *)
 ```
 
-`Some 10`, `None`.
-
-- `(x, _) :: _`: a list whose head is a pair.
-- First component of that head is bound to `x`.
-- Three nested patterns in one clause.
+- One or-pattern: `Circle 1.0 | Rectangle (1.0, 1.0)`.
+- Each alternative is a constructor with a nested literal payload.
+- Neither alternative binds a variable, so the same-bindings rule
+  holds trivially.
 
 :::
 
-The pattern `(x, _) :: _` reads inside-out: a list (the outer
-`::`), whose head is a pair (the tuple pattern), whose first
-component is `x`. The tail of the list is discarded; the second
-component of the head pair is discarded.
+The or-pattern combines two constructor patterns, each with a
+nested literal payload. `Circle 1.0` requires the constructor
+*and* the float `1.0`; `Rectangle (1.0, 1.0)` requires the
+constructor *and* the tuple `(1.0, 1.0)`. Either match sends us
+to the same right-hand side.
 
-This is the workhorse shape for "extract one piece of the front
-of a list, ignore the rest." You will use it constantly.
+This is the everyday shape for "one of these specific shapes,"
+where each shape needs its own nested check.
 
 ## What's next
 
-[Lecture 3](M05-L03-guards.html) introduces `when`-guards:
+[Lecture 4](M05-L04-guards.html) introduces `when`-guards:
 predicates attached to a pattern that further filter when the clause
 fires. Guards let you express conditions that pure patterns cannot,
 like "this list has a positive number at the front." They come with
 one important caveat: they disable the compiler's exhaustiveness
 check for that clause, which we will see why in
-[Lecture 4](M05-L04-exhaustiveness.html#exhaustiveness-and-guards-one-more-reminder).
+[Lecture 5](M05-L05-exhaustiveness.html#exhaustiveness-and-guards-one-more-reminder).
 
 :::slide
 
 ## What's next
 
-- Lecture 3: **guards** (`when`-clauses).
+- Lecture 4: **guards** (`when`-clauses).
 - Combine a pattern with an arbitrary boolean test.
 - Express conditions that pure patterns cannot.
 

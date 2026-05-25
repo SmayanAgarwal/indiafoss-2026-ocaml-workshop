@@ -582,7 +582,7 @@ let rec zip_with f xs ys =
   | x :: xr, y :: yr -> f x y :: zip_with f xr yr
 ```
 
-The interesting part is the `[], _ | _, []` [or-pattern](M05-L02-nested-and-or-patterns.html#or-patterns-shared-right-hand-sides)
+The interesting part is the `[], _ | _, []` [or-pattern](M05-L03-nested-and-or-patterns.html#or-patterns-shared-right-hand-sides)
 from Module 5: if either list is empty, return the empty list. The
 other case takes one head from each and combines them. If you prefer,
 you can write the two cases separately: `| [], _ -> [] | _, [] -> []

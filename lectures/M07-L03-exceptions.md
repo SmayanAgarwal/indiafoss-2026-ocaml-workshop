@@ -243,7 +243,7 @@ let _ = safe_divide 10 3
 The patterns on the right of `with` are real
 [*patterns*](M05-L01-basic-patterns.html): they can match on the
 constructor, bind the payload, and even include
-[nested patterns](M05-L02-nested-and-or-patterns.html). The
+[nested patterns](M05-L03-nested-and-or-patterns.html). The
 wildcard `_` matches any payload. You can have multiple clauses,
 each catching a different exception:
 

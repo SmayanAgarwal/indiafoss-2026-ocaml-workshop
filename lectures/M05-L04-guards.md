@@ -1,6 +1,6 @@
 ---
 title: "Guards: when-clauses on patterns"
-lecture_no: 3
+lecture_no: 4
 week: 5
 duration_target_min: 20
 concepts: [when-guards, conditional pattern matching, exhaustiveness with guards]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Guards: when-clauses on patterns</h2>
-<p class="title-slide-label">Module 5 &middot; Lecture 3</p>
+<p class="title-slide-label">Module 5 &middot; Lecture 4</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -45,7 +45,7 @@ next clause.
 Guards extend what you can express in a `match`, but they come at
 a cost: they suppress exhaustiveness checking for the guarded
 clause. We will see why and what to do about it in this lecture,
-and revisit the trade-off in [Lecture 4](M05-L04-exhaustiveness.html#exhaustiveness-and-guards-one-more-reminder).
+and revisit the trade-off in [Lecture 5](M05-L05-exhaustiveness.html#exhaustiveness-and-guards-one-more-reminder).
 
 :::slide
 
@@ -83,9 +83,11 @@ let sign = function
   | n when n > 0 -> "positive"
   | n when n < 0 -> "negative"
   | _ -> "zero"
-```
 
-`"positive"`, `"negative"`, `"zero"`.
+let _ = sign 5     (* = "positive" *)
+let _ = sign (-3)  (* = "negative" *)
+let _ = sign 0     (* = "zero" *)
+```
 
 - Each clause has a pattern (`n` or `_`) and **optionally** a guard.
 - Pattern matches **and** guard is `true`: clause fires.
@@ -158,9 +160,12 @@ let report = function
   | (x, _) when x = 0 -> "on the y-axis"
   | (_, y) when y = 0 -> "on the x-axis"
   | _                 -> "elsewhere"
-```
 
-`"diagonal"`, `"on the y-axis"`, `"on the x-axis"`, `"elsewhere"`.
+let _ = report (1, 1)  (* = "diagonal" *)
+let _ = report (0, 5)  (* = "on the y-axis" *)
+let _ = report (3, 0)  (* = "on the x-axis" *)
+let _ = report (2, 4)  (* = "elsewhere" *)
+```
 
 - Pattern destructures the pair; guard filters further.
 - First clause: needs both names because we compare them.
@@ -210,9 +215,11 @@ let starts_negative = function
   | [] -> false
   | x :: _ when x < 0 -> true
   | _ -> false
-```
 
-`true`, `false`, `false`.
+let _ = starts_negative [-3; 5; 7]  (* = true *)
+let _ = starts_negative [1; 2; 3]   (* = false *)
+let _ = starts_negative []          (* = false *)
+```
 
 - Guard `when x < 0` uses `x`, bound by the pattern `x :: _`.
 - Guards see names from the **same clause's** pattern only.
@@ -239,79 +246,115 @@ match) or moves on; there is no backtracking.
 
 ## Exhaustiveness with guards is conservative
 
-Here is the rub. Look at this version of `sign`:
+Here is the rub. Consider this match, where the two guards
+together *logically* cover every integer:
 
-```text
+```ocaml
 let classify n =
   match n with
-  | n when n > 0 -> "positive"
-  | n when n < 0 -> "negative"
+  | n when n > 0  -> "positive"
+  | n when n <= 0 -> "non-positive"
 ```
-
-We have two clauses, and between them they cover positive and
-negative numbers. They also leave zero uncovered. The compiler
-warns:
-
-```
+```mdx-error
+Lines 2-4, characters 5-38:
 Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched: 0
+  All clauses in this pattern-matching are guarded.
 ```
+
+The guards `n > 0` and `n <= 0` between them handle every `n`.
+We can see that. The compiler cannot, and it still warns
+(warning 8).
+
+The exhaustiveness checker reasons about *patterns*, not about
+arbitrary boolean expressions. A guard might call a function,
+read from a file, depend on state; from the compiler's point of
+view every guard is a black box that "might fail at runtime." So
+even though we know the two guards partition the integers, the
+checker treats both clauses as "might be skipped" and reports
+the value `0` as a hypothetical fall-through.
 
 :::slide
 
 ## Exhaustiveness with guards is conservative
 
-```text
+```ocaml
+let classify n =
+  match n with
+  | n when n > 0  -> "positive"
+  | n when n <= 0 -> "non-positive"
+```
+```mdx-error
+Lines 2-4, characters 5-38:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  All clauses in this pattern-matching are guarded.
+```
+
+- Guards together cover every integer; **the compiler does not know**.
+- Exhaustiveness reasons about patterns, not about boolean expressions.
+- The checker treats every guard as "might fail at runtime."
+- Add an unguarded clause (or wildcard) to close the match.
+
+:::
+
+When the gap is real, the compiler is right; when the guards
+happen to be total, the compiler errs on the side of warning
+anyway. Both produce the same warning text, and from the
+warning alone you cannot tell which case you are in. Compare a
+version with a genuine gap:
+
+```ocaml
 let classify n =
   match n with
   | n when n > 0 -> "positive"
   | n when n < 0 -> "negative"
 ```
-
+```mdx-error
+Lines 2-4, characters 5-33:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  All clauses in this pattern-matching are guarded.
 ```
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched: 0
-```
 
-- Compiler treats every guard as if it can fail.
-- Cannot prove arithmetic facts like "`n > 0` or `n < 0` or `n = 0` is total".
-- Always add an unguarded clause (or wildcard) to close the match.
-
-:::
-
-The warning is correct: there is an integer (zero) that neither
-clause handles. The fix is to add an explicit zero case (or a
-wildcard) as we did earlier:
+Here zero really is uncovered: at runtime `classify 0` raises
+`Match_failure`. Same warning, real bug. The fix in both cases
+is the same: add an unguarded clause that covers the rest.
 
 ```ocaml
 let classify = function
   | n when n > 0 -> "positive"
   | n when n < 0 -> "negative"
   | _ -> "zero"
+
+let _ = classify 5     (* = "positive" *)
+let _ = classify (-3)  (* = "negative" *)
+let _ = classify 0     (* = "zero" *)
 ```
 
-But notice something deeper. The compiler's check is
-*conservative*: even if you wrote
+:::slide
 
-```text
-let classify n =
-  match n with
+## Fix: close the match with an unguarded clause
+
+```ocaml
+let classify = function
   | n when n > 0 -> "positive"
-  | n when n <= 0 -> "non-positive"
+  | n when n < 0 -> "negative"
+  | _ -> "zero"
+
+let _ = classify 5     (* = "positive" *)
+let _ = classify (-3)  (* = "negative" *)
+let _ = classify 0     (* = "zero" *)
 ```
 
-the compiler would still warn. The two guards together logically
-cover every integer; the compiler does not know that. Its
-exhaustiveness checker reasons about *patterns*, not about
-arbitrary boolean expressions. A guard might do anything: call a
-function, read from a file, depend on state. The compiler
-treats every guard as "can fail," because it has to. The only
-way to prove the match is total is to have at least one *unguarded*
-clause that covers the remaining shapes.
+- `| _ -> "zero"` is unguarded; the checker can lean on it.
+- Warning 8 goes away.
+- Same fix whether the gap is real (`n > 0` / `n < 0`) or
+  conservative (`n > 0` / `n <= 0`).
 
-This is the price of allowing arbitrary computation in guards.
-The compiler proves what it can prove (which constructors and
-shapes are covered); the rest is up to you.
+:::
+
+The cost of allowing arbitrary computation in guards is that the
+checker has to be conservative. It proves what it can prove
+(which constructors and shapes the patterns cover); the rest is
+up to you.
 
 So the rule for guards is: **add an unguarded catch-all to close
 the match**, unless you are certain the guarded clauses are
@@ -352,6 +395,9 @@ let is_origin = function
 let is_origin = function
   | (0.0, 0.0) -> true
   | _ -> false
+
+let _ = is_origin (0.0, 0.0)  (* = true *)
+let _ = is_origin (1.0, 2.0)  (* = false *)
 ```
 
 - Same behaviour; no guard needed.
@@ -423,7 +469,7 @@ call it from the guard. Keeps the `match` readable.
 
 ## Two checks
 
-:::quiz mcq id=M05-L03-q3
+:::quiz mcq id=M05-L04-q3
 What does this evaluate to?
 
 ```ocaml
@@ -444,7 +490,7 @@ the clause does not fire. The wildcard catches everything else
 and returns `"non-positive"`.
 :::
 
-:::quiz mcq id=M05-L03-q2
+:::quiz mcq id=M05-L04-q2
 Why does the compiler warn about this match as non-exhaustive?
 
 ```text
@@ -466,7 +512,7 @@ facts. The fix is an unguarded `| _ -> ...` to close the match.
 
 A code task:
 
-:::quiz code id=M05-L03-q1
+:::quiz code id=M05-L04-q1
 Write `sign : int -> string` returning `"negative"`, `"zero"`, or
 `"positive"`. Use a single `function` with `when`-guards; no
 `if`/`else`. Make sure the match is exhaustive (no warning 8).
@@ -538,12 +584,10 @@ let sign = function
   | n when n < 0 -> "negative"
   | _ -> "zero"
 
-let _ = sign 7
-let _ = sign (-3)
-let _ = sign 0
+let _ = sign 7     (* = "positive" *)
+let _ = sign (-3)  (* = "negative" *)
+let _ = sign 0     (* = "zero" *)
 ```
-
-`"positive"`, `"negative"`, `"zero"`.
 
 - Two guarded clauses, one unguarded wildcard.
 - The wildcard *must* be present; otherwise warning 8.
@@ -560,7 +604,7 @@ at runtime.
 
 We have now seen four pattern forms (literal, variable,
 wildcard, structured) and one extension (`when` guards).
-[Lecture 4](M05-L04-exhaustiveness.html) zooms in on the static
+[Lecture 5](M05-L05-exhaustiveness.html) zooms in on the static
 check that has been hovering in the background: exhaustiveness. Why
 it matters, how the compiler proves it, what to do when it warns,
 and why it is the single biggest argument for using
@@ -570,7 +614,7 @@ and why it is the single biggest argument for using
 
 ## What's next
 
-- Lecture 4: **exhaustiveness checking** in depth.
+- Lecture 5: **exhaustiveness checking** in depth.
 - We've seen warning 8 in passing. Now we look at how it works.
 - The strongest argument for variants over strings or ints.
 

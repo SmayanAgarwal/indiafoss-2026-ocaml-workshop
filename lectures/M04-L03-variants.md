@@ -358,7 +358,7 @@ let s3 = Connected  { peer = "10.0.0.1"; bytes_sent = 4096 }
 
 Extracting the data uses pattern matching with the inline-record
 syntax on the pattern side, which we will see in
-[M05](M05-L05-records-variants.html#matching-on-inline-records).
+[M05](M05-L03-nested-and-or-patterns.html#inline-records-inside-constructors).
 
 :::slide
 

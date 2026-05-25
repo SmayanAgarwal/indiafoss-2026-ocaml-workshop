@@ -1,6 +1,6 @@
 ---
 title: "Exhaustiveness checking"
-lecture_no: 4
+lecture_no: 5
 week: 5
 duration_target_min: 22
 concepts: [exhaustiveness, partial match, redundant clauses, refactor with the compiler]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Exhaustiveness checking</h2>
-<p class="title-slide-label">Module 5 &middot; Lecture 4</p>
+<p class="title-slide-label">Module 5 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -66,12 +66,17 @@ projects.
 
 Take the traffic-light example from [Module 4](M04-L03-variants.html#exhaustiveness-checking):
 
-```text
+```ocaml
 type traffic_light = Red | Yellow | Green
 
 let action = function
   | Red -> "stop"
   | Green -> "go"
+```
+```mdx-error
+Lines 3-5, characters 16-20:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched: Yellow
 ```
 
 We forgot `Yellow`. The compiler tells us:
@@ -85,12 +90,17 @@ Here is an example of a case that is not matched: Yellow
 
 ## A non-exhaustive match
 
-```text
+```ocaml
 type traffic_light = Red | Yellow | Green
 
 let action = function
   | Red -> "stop"
   | Green -> "go"
+```
+```mdx-error
+Lines 3-5, characters 16-20:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched: Yellow
 ```
 
 OCaml warns:
@@ -113,7 +123,7 @@ clause covers, showing you the shape of the gap.
 
 The fix is straightforward: add the missing clause.
 
-```text
+```ocaml
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
@@ -144,11 +154,16 @@ value and warns unless you have a wildcard or a variable pattern
 that catches everything else. On `string`, the same: literals
 cover only themselves; you need a catch-all.
 
-```text
+```ocaml
 let small = function
   | 0 -> "zero"
   | 1 -> "one"
   | 2 -> "two"
+```
+```mdx-error
+Lines 1-4, characters 13-17:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched: 3
 ```
 
 Warns: there are infinitely many integers, and you have covered
@@ -191,14 +206,14 @@ bugs (the "forgot a case" bug) from runtime to compile time.
 The reason exhaustiveness pays for itself many times over is
 *refactoring*. Suppose you have a variant in a real codebase:
 
-```text
+```ocaml
 type traffic_light = Red | Yellow | Green
 ```
 
 and twelve different functions that pattern-match on it. Now a
 new requirement comes in: add a fourth state, `FlashingRed`.
 
-```text
+```ocaml
 type traffic_light = Red | Yellow | Green | FlashingRed
 ```
 
@@ -211,7 +226,7 @@ visit every flagged site and decide what to do for `FlashingRed`.
 
 ## Refactor with the compiler
 
-```text
+```ocaml
 type traffic_light = Red | Yellow | Green | FlashingRed
 ```
 
@@ -219,7 +234,7 @@ type traffic_light = Red | Yellow | Green | FlashingRed
 - Compiler prints a punch-list: file + line for each match.
 - Refactoring goes from "grep and pray" to "compile and fix the warnings".
 
-```text
+```ocaml
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
@@ -253,6 +268,52 @@ Once you internalise this, you will start to look at any code
 that branches on a string and ask: *should this be a variant?*
 The answer is almost always yes.
 
+## The wildcard tax: `_` forfeits the punch list
+
+There is one way to lose this benefit by accident: a `_`
+catch-all on a variant. The catch-all tells the compiler "I have
+covered everything," so the match is exhaustive *as written*,
+and the compiler stops checking. Adding a new constructor is
+then silent at this site: the new value flows into whatever the
+`_` clause returns.
+
+```ocaml
+let action = function
+  | Red -> "stop"
+  | Yellow -> "slow down"
+  | _ -> "go"
+
+let _ = action FlashingRed  (* = "go" -- silently! *)
+```
+
+`action FlashingRed` returns `"go"`. No warning. No error. The
+program ships, and the bug is found in production: a flashing
+red light is treated like green.
+
+:::slide
+
+## Caveat: `_` forfeits the punch list
+
+```ocaml
+let action = function
+  | Red -> "stop"
+  | Yellow -> "slow down"
+  | _ -> "go"
+
+let _ = action FlashingRed  (* = "go" -- silently! *)
+```
+
+- `_` makes the match exhaustive *as written*; compiler stops checking.
+- Adding `FlashingRed` triggers **no warning** at this site.
+- `action FlashingRed` returns `"go"`, almost certainly wrong.
+- **Prefer to avoid `_` on a variant** so the compiler keeps helping.
+
+:::
+
+This is the price of a wildcard on a variant. We come back to
+this rule, with the recommended alternatives, in
+[the wildcard discussion below](#prefer-to-avoid-catch-all-on-variants).
+
 ## The dual: redundant clauses
 
 Exhaustiveness has a sibling check: **redundancy**. The
@@ -265,29 +326,35 @@ warnings are different in direction (missing vs unreachable)
 but related in spirit: both compare the set of values a type
 admits against the set the clauses cover.
 
-```text
+```ocaml
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
   | Green -> "go"
+  | FlashingRed -> "stop, then proceed with caution"
   | Red -> "redundant"
 
 let _ = action Red
+```
+```mdx-error
+Line 6, characters 7-10:
+Warning 11 [redundant-case]: this match case is unused.
 ```
 
 :::slide
 
 ## Redundant clauses (warning 11)
 
-```text
+```ocaml
 let action = function
   | Red -> "stop"
   | Yellow -> "slow down"
   | Green -> "go"
+  | FlashingRed -> "stop, then proceed with caution"
   | Red -> "redundant"
 ```
-
-```
+```mdx-error
+Line 6, characters 7-10:
 Warning 11 [redundant-case]: this match case is unused.
 ```
 
@@ -302,10 +369,14 @@ The duplicate `Red` clause can never run, because the first
 in [Lecture 1](M05-L01-basic-patterns.html#why-pattern-order-matters)
 when a variable pattern appeared before a literal:
 
-```text
+```ocaml
 let label = function
   | n -> "got " ^ string_of_int n
   | 0 -> "zero"
+```
+```mdx-error
+Line 3, characters 7-8:
+Warning 11 [redundant-case]: this match case is unused.
 ```
 
 Again, the variable `n` matches everything, so the literal `0`
@@ -319,7 +390,7 @@ flagged, and every dead branch is flagged.
 
 The checker handles nested patterns too. Take a pair of booleans:
 
-```text
+```ocaml
 let category = function
   | (true, true)  -> "both"
   | (true, false) -> "only first"
@@ -327,16 +398,28 @@ let category = function
 
 let _ = category (false, false)
 ```
+```mdx-error
+Lines 1-4, characters 16-37:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched: (false, false)
+
+Exception: Match_failure ("//toplevel//", 1, 16).
+```
 
 :::slide
 
 ## Exhaustiveness on nested patterns
 
-```text
+```ocaml
 let category = function
   | (true, true)  -> "both"
   | (true, false) -> "only first"
   | (false, true) -> "only second"
+```
+```mdx-error
+Lines 1-4, characters 16-37:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched: (false, false)
 ```
 
 ```
@@ -365,7 +448,7 @@ would enumerate `3 * 3 = 9` combinations.
 
 ## Exhaustiveness and guards: one more reminder
 
-We saw in [Lecture 3](M05-L03-guards.html#exhaustiveness-with-guards-is-conservative)
+We saw in [Lecture 4](M05-L04-guards.html#exhaustiveness-with-guards-is-conservative)
 that guards suppress exhaustiveness. The
 compiler treats a guarded clause as "may fail," so the cases
 covered by a guarded pattern are not considered part of the
@@ -450,10 +533,16 @@ If you write OCaml seriously, set this in your dune files from
 day one. The few minutes you spend appeasing the compiler in
 each function will save you hours of debugging in production.
 
-## When to use a wildcard catch-all on variants
+## Prefer to avoid catch-all on variants
 
-A wildcard on a variant type *suppresses exhaustiveness* for
-that match. If you write
+We saw above that a `_` on a variant
+[silently swallows new constructors](#the-wildcard-tax-_-forfeits-the-punch-list).
+The general recommendation follows: **on variant types, prefer
+to avoid the catch-all pattern.** Enumerate every constructor,
+or group them with an or-pattern; either way, the compiler stays
+on your side when the type grows.
+
+Concretely, instead of
 
 ```ocaml
 type traffic_light = Red | Yellow | Green
@@ -463,14 +552,7 @@ let is_red = function
   | _ -> false
 ```
 
-then later add a `FlashingRed` constructor, the wildcard
-silently swallows it. `is_red FlashingRed` returns `false`,
-which might be what you want or might be a serious bug. The
-compiler will not tell you.
-
-The discipline: avoid wildcards on variants unless you really
-mean "everything else." For grouping cases that share a
-right-hand side, prefer or-patterns:
+prefer an or-pattern that names every other constructor:
 
 ```ocaml
 type traffic_light = Red | Yellow | Green
@@ -482,6 +564,9 @@ let is_red = function
 
 Now if you add `FlashingRed`, the compiler warns and you make a
 conscious choice about which side of the split it belongs on.
+The first version (with `_`) would silently treat `FlashingRed`
+as not-red; the second version makes that decision a deliberate
+edit.
 
 This is a strong rule worth internalising: *on variant types,
 enumerate the cases explicitly*. Save the wildcard for `int`,
@@ -489,7 +574,7 @@ enumerate the cases explicitly*. Save the wildcard for `int`,
 
 ## Two checks
 
-:::quiz mcq id=M05-L04-q3
+:::quiz mcq id=M05-L05-q3
 Which of the following is the **strongest** reason to use a
 variant type instead of a string when representing the set
 `{"red", "yellow", "green"}`?
@@ -508,7 +593,7 @@ check, and surfaces every place that needs updating when the
 type grows.
 :::
 
-:::quiz mcq id=M05-L04-q2
+:::quiz mcq id=M05-L05-q2
 After adding `FlashingRed` to the type below, what does the
 compiler do for an existing function
 
@@ -532,7 +617,7 @@ aids.
 
 A code task:
 
-:::quiz code id=M05-L04-q1
+:::quiz code id=M05-L05-q1
 Write `is_weekend : day -> bool` exhaustively, where:
 
 ```ocaml
@@ -619,7 +704,11 @@ The compiler:
 - Tells you the missing case (`Yellow`) by example, with location.
 - Does **not** tell you *what behaviour* `Yellow` should produce; that's a design decision.
 
-Takeaways:
+:::
+
+:::slide
+
+## Takeaways
 
 - Structural completeness: mechanically checked.
 - Semantic correctness: up to you.
@@ -647,19 +736,20 @@ yours. Without exhaustiveness, you would do both, badly.
 
 ## What's next
 
-We have now covered the static analysis. [Lecture 5](M05-L05-records-variants.html)
-returns to *syntax*: the everyday patterns for matching on records
-and variants in real code, including the short forms for ignoring
-fields, deeply nested matches, and the combination of patterns
-that comes up in everyday OCaml.
+We have now covered the static analysis. [Lecture 6](M05-L06-tutorial.html)
+is the module tutorial: a small interpreter for the
+[M04-L05 AST](M04-L05-tutorial.html). It exercises every pattern
+form from this module, plus the exhaustiveness check we just
+covered, on a single recursive ADT.
 
 :::slide
 
 ## What's next
 
-- Lecture 5: **matching records and variants** in everyday code.
-- Short forms (`{ field; _ }`), deeply nested matches, combinations.
-- The patterns you reach for a hundred times a day.
+- Lecture 6: **the tutorial** — an interpreter for the M04-L05 AST.
+- Every pattern form from this module, on a single recursive ADT.
+- Exhaustiveness does real work: forgetting a constructor in
+  the interpreter is a compile-time warning, not a runtime crash.
 
 :::
 

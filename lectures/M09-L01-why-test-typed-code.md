@@ -550,7 +550,7 @@ caught at compile time, before any tests run?
   positive input.
 
 **Why:** the missing-`None`-case is exactly what
-[exhaustiveness warnings](M05-L04-exhaustiveness.html) catch.
+[exhaustiveness warnings](M05-L05-exhaustiveness.html) catch.
 The other three are behaviour bugs in well-typed code: returning
 the wrong element type-checks (any element will do); swapping
 two `int` arguments type-checks (both have the same type); and

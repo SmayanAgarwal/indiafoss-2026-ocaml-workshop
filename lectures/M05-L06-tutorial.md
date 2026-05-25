@@ -1,727 +1,732 @@
 ---
-title: "Tutorial: walking an arithmetic expression AST"
-lecture_no: 6
+title: "Tutorial: an interpreter for the M04-L05 AST"
+lecture_no: 7
 week: 5
 duration_target_min: 28
-concepts: [worked AST walk, structural recursion, multi-purpose pattern matching]
-keywords: [OCaml, AST, expression, evaluator, pretty printer, pattern matching tutorial]
-activity_question: "Extend the [expr] type with a [Var of string] constructor and a unary [Neg of expr]. Update [eval] (Var requires an environment) and [pretty]. Where does the compiler help?"
-think_about_this: "An AST walker pattern-matches on every constructor every time. What is the cost of that, and what is the cost of the alternative?"
+concepts: [worked AST walk, structural recursion, interpreter, environment, multi-purpose pattern matching]
+keywords: [OCaml, AST, expression, interpreter, eval, environment, pattern matching tutorial]
+activity_question: "Extend the AST with [Sub of expr * expr] and [Mul of expr * expr]. Update [pretty], [depth], and [eval]. Where does the compiler help? Where does it stay silent?"
+think_about_this: "The `eval` function returns `value option`, not `value`. Why is that the natural choice given everything we know about M05 so far?"
 reading:
   - title: "Cornell CS3110, Walking an AST"
     url: https://cs3110.github.io/textbook/chapters/data/pattern_matching.html
 ---
 
-# Tutorial: walking an arithmetic expression AST
-
+# Tutorial: an interpreter for the M04-L05 AST
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: walking an arithmetic expression AST</h2>
-<p class="title-slide-label">Module 5 &middot; Lecture 6</p>
+<h2 class="title-slide-lecture">Tutorial: an interpreter for the M04-L05 AST</h2>
+<p class="title-slide-label">Module 5 &middot; Lecture 7</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-In this tutorial we build a tiny expression language and four
-functions over it: an evaluator, a pretty printer, a depth
-calculator, and a constant folder. Each function is a pattern
-match on the same [algebraic data type](M04-L04-recursive-types.html#modelling-arithmetic-expressions),
-and each illustrates a different facet of the patterns we have
-learned over the module. By the end, you will have seen the
-workhorse shape of pattern matching on [recursive data](M04-L04-recursive-types.html),
-the shape you will reach for every time you build a parser, a
-transformer, an interpreter, a query compiler, or any other code
-that walks a tree.
+In the [M04-L05 tutorial](M04-L05-tutorial.html) you *built* an
+algebraic data type for a tiny subset of OCaml: integer and
+boolean literals, addition, variables, and `let ... in`. We
+constructed example trees but never walked them. This lecture
+closes the loop. We will write three walkers over the same AST:
+a pretty printer, a depth function, and the centrepiece, an
+*interpreter* that evaluates an expression to a value. The
+interpreter is the natural home for almost everything we have
+seen in Module 5, from
+[basic patterns](M05-L01-basic-patterns.html) to
+[or-patterns](M05-L03-nested-and-or-patterns.html) to
+[exhaustiveness](M05-L05-exhaustiveness.html).
 
-The choice of "arithmetic expressions" is not arbitrary. It is
-the simplest interesting *algebraic data type*: leaves are
-numbers, internal nodes are operators with sub-expressions.
-Compilers, calculators, spreadsheet engines, query planners,
-typecheckers, all generalise this same shape. Once you can
-walk one tree comfortably, you can walk any of them.
-
-We will build everything from scratch, so by the end of this
-lecture you should have a small working library you could copy
-into a project and extend.
+We will extend the M04-L05 AST with *one* new constructor,
+`If`, so that the existing `Bool` constructor has somewhere to
+flow. Everything else stays as it was. The interpreter uses
+nothing beyond the language features introduced in Modules 1
+through 5: pattern matching, recursion, `option`, lists. No
+higher-order functions, no exceptions, no modules.
 
 :::slide
 
-## This tutorial: a tiny expression language
+## This tutorial
 
-- Build an algebraic data type for arithmetic expressions.
-- Four functions, each a pattern match on the same type:
-  - *Evaluator*: produce a number.
-  - *Pretty printer*: produce a string.
-  - *Depth*: how tall is the tree.
-  - *Constant folder*: simplify by collapsing constants.
-- This is the workhorse shape: parsers, interpreters, query
-  compilers, transformers all walk trees this way.
-- From scratch; by the end, a small library you could extend.
+- Reuse the [M04-L05 AST](M04-L05-tutorial.html): `Int`, `Bool`,
+  `Add`, `Var`, `Let_in`.
+- Add **one** new constructor: `If` (so `Bool` earns its keep).
+- Three walkers, each a pattern match on the same type:
+  - **`pretty`**: produce a string.
+  - **`depth`**: how tall is the tree.
+  - **`eval`**: the centrepiece; reduce an expression to a value.
+- Only M01-M05 features inside the interpreter. No
+  exceptions, no higher-order functions, no modules.
 
 :::
 
-## The type
+## The type, extended with `If`
+
+The M04-L05 final form, with `If (cond, then, else)` added so
+that `Bool` actually does something. The annotation on `Let_in`
+is `ty option` to keep the M04-L05 *make-illegal-states-
+unrepresentable* choice: programs either supplied a type or did
+not.
 
 ```ocaml
+type ty =
+  | T_int
+  | T_bool
+
 type expr =
-  | Num of float
+  | Int of int
+  | Bool of bool
   | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
 ```
+
+Six constructors. Three of them carry payloads with sub-
+expressions (`Add`, `If`, `Let_in`), so they are *recursive*.
+The other three (`Int`, `Bool`, `Var`) are leaves at the AST
+level: they carry data but no sub-expressions. Every walker
+will have one clause per constructor, three of which recurse.
 
 :::slide
 
-## The type
+## The AST
 
 ```ocaml
+type ty = T_int | T_bool
+
 type expr =
-  | Num of float
+  | Int of int
+  | Bool of bool
   | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
 ```
 
-- Five constructors.
-- `Num` carries a numeric leaf.
-- The four binary operators carry two sub-expressions each.
-- *Recursive*: `expr` appears in its own definition.
+- Six constructors: three leaves (`Int`, `Bool`, `Var`), three
+  recursive (`Add`, `If`, `Let_in`).
+- `If` is the one new constructor beyond M04-L05.
+- `ty option` keeps "type annotation present or absent" as a
+  type-level distinction, same choice as M04-L05.
 
 :::
 
-Five constructors. `Num` is the *leaf*: a literal number. The
-other four are *internal nodes*: each carries two sub-expressions
-as its payload. The type is recursive: an `expr` can contain
-other `expr`s. This is the definition that makes the type a
-*tree*.
+A small example program to test our walkers on. In OCaml syntax:
 
-To exercise the type, here is a small expression that computes
-`(1 + 2) * (4 - 0.5)`:
-
-```ocaml
-type expr =
-  | Num of float
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
-
-let example =
-  Mul (Add (Num 1.0, Num 2.0),
-       Sub (Num 4.0, Num 0.5))
+```text
+let x : int = 10 in
+if true then x + 5 else 0
 ```
 
-By hand: `(1 + 2) = 3`; `(4 - 0.5) = 3.5`; `3 * 3.5 = 10.5`. We
-will use this as the running test value through the lecture.
-
-Notice the parenthesisation. `Mul` takes a tuple of two
-sub-expressions. The first is `Add (Num 1.0, Num 2.0)`; the
-second is `Sub (Num 4.0, Num 0.5)`. We could break it into
-multiple `let` bindings, but a single nested expression is
-fine for a small example.
-
-## Function 1: eval
-
-The first function is an *evaluator*: given an `expr`, return
-the `float` value it computes to.
+The same in our AST:
 
 ```ocaml
-type expr =
-  | Num of float
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
+type ty = T_int | T_bool
 
-let rec eval = function
-  | Num n      -> n
-  | Add (a, b) -> eval a +. eval b
-  | Sub (a, b) -> eval a -. eval b
-  | Mul (a, b) -> eval a *. eval b
-  | Div (a, b) -> eval a /. eval b
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
 
 let example =
-  Mul (Add (Num 1.0, Num 2.0),
-       Sub (Num 4.0, Num 0.5))
-
-let _ = eval example
+  Let_in ("x", Some T_int, Int 10,
+    If (Bool true,
+        Add (Var "x", Int 5),
+        Int 0))
 ```
 
-:::slide
+Every constructor of `expr` appears at least once. The program
+should pretty-print back to something resembling the source,
+have a small finite depth, and evaluate to `15`.
 
-## Function 1: `eval`
+## Function 1: `pretty`
 
-```ocaml
-let rec eval = function
-  | Num n      -> n
-  | Add (a, b) -> eval a +. eval b
-  | Sub (a, b) -> eval a -. eval b
-  | Mul (a, b) -> eval a *. eval b
-  | Div (a, b) -> eval a /. eval b
-```
-
-`float = 10.5` on the example.
-
-- One clause per constructor.
-- Leaf case: return the literal.
-- Recursive case: evaluate sub-expressions and combine with the operator.
-
-:::
-
-The function is recursive (`let rec`) because the type is
-recursive: to evaluate an `Add`, we need to evaluate its sub-
-expressions, which are themselves `expr`s.
-
-Five clauses, one per constructor. The shape is:
-
-- **Leaf case** (`Num n`): return the carried number.
-- **Recursive cases** (`Add`, `Sub`, `Mul`, `Div`): recursively
-  evaluate the two sub-expressions, then combine them with the
-  appropriate operator.
-
-Crucially, OCaml's [exhaustiveness check](M05-L04-exhaustiveness.html)
-guarantees we handled every constructor: the match has no warning.
-If we had forgotten `Div`, the compiler would warn ("not exhaustive;
-here is an example that is not matched: `Div (...)`"). The check is
-doing real work even in a tutorial.
-
-This is [*structural recursion*](M04-L04-recursive-types.html#structural-induction):
-each recursive call is on a *strictly smaller* sub-expression, so
-the function is guaranteed to terminate. The base case (`Num n`)
-does not recurse. Every other case recurses on a sub-expression,
-which has one fewer constructor than the parent.
-
-`eval example` returns `10.5`, matching our hand calculation.
-
-## Function 2: pretty printer
-
-The pretty printer turns an `expr` back into a string that
-represents it. We will not be clever about parentheses; we
-will simply parenthesise every binary application:
+A pretty printer turns an `expr` back into a string. We will
+parenthesise every internal node so we never have to worry
+about operator precedence. Two clauses are interesting: `If`
+prints all three sub-expressions; `Let_in` has to decide whether
+to emit the optional type annotation.
 
 ```ocaml
+type ty = T_int | T_bool
+
 type expr =
-  | Num of float
+  | Int of int
+  | Bool of bool
   | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
 
-let rec pretty = function
-  | Num n      -> string_of_float n
-  | Add (a, b) -> "(" ^ pretty a ^ " + " ^ pretty b ^ ")"
-  | Sub (a, b) -> "(" ^ pretty a ^ " - " ^ pretty b ^ ")"
-  | Mul (a, b) -> "(" ^ pretty a ^ " * " ^ pretty b ^ ")"
-  | Div (a, b) -> "(" ^ pretty a ^ " / " ^ pretty b ^ ")"
+let pretty_ty t =
+  match t with
+  | T_int  -> "int"
+  | T_bool -> "bool"
+
+let rec pretty e =
+  match e with
+  | Int n  -> string_of_int n
+  | Bool b -> string_of_bool b
+  | Add (e1, e2) ->
+    "(" ^ pretty e1 ^ " + " ^ pretty e2 ^ ")"
+  | If (c, t, f) ->
+    "(if " ^ pretty c ^ " then " ^ pretty t
+    ^ " else " ^ pretty f ^ ")"
+  | Var x  -> x
+  | Let_in (x, opt_ty, e1, e2) ->
+    let annot =
+      match opt_ty with
+      | None    -> ""
+      | Some ty -> " : " ^ pretty_ty ty
+    in
+    "(let " ^ x ^ annot ^ " = " ^ pretty e1
+    ^ " in " ^ pretty e2 ^ ")"
 
 let example =
-  Mul (Add (Num 1.0, Num 2.0),
-       Sub (Num 4.0, Num 0.5))
+  Let_in ("x", Some T_int, Int 10,
+    If (Bool true,
+        Add (Var "x", Int 5),
+        Int 0))
 
 let _ = pretty example
 ```
 
-:::slide
+The `Let_in` clause uses an *inner* `match` on the
+`ty option`: present or absent, decided once, plugged back into
+the surrounding string. This is the
+[nested-pattern](M05-L03-nested-and-or-patterns.html#nesting-in-tuples-and-records)
+shape, used here at the
+sub-result level rather than at the outer pattern. Output on
+`example`:
 
-## Function 2: `pretty`
-
-```ocaml
-let rec pretty = function
-  | Num n      -> string_of_float n
-  | Add (a, b) -> "(" ^ pretty a ^ " + " ^ pretty b ^ ")"
-  | Sub (a, b) -> "(" ^ pretty a ^ " - " ^ pretty b ^ ")"
-  | Mul (a, b) -> "(" ^ pretty a ^ " * " ^ pretty b ^ ")"
-  | Div (a, b) -> "(" ^ pretty a ^ " / " ^ pretty b ^ ")"
+```text
+(let x : int = 10 in (if true then (x + 5) else 0))
 ```
 
-On the example: `"((1. + 2.) * (4. - 0.5))"`.
+:::slide
 
-- Same shape as `eval`: one clause per constructor.
-- Recursive calls on sub-expressions; combine with operator string.
-- Real pretty-printer would suppress unnecessary parens by tracking precedence; we keep them for simplicity.
+## `pretty`: one clause per constructor
+
+```ocaml
+let rec pretty e =
+  match e with
+  | Int n  -> string_of_int n
+  | Bool b -> string_of_bool b
+  | Add (e1, e2) ->
+    "(" ^ pretty e1 ^ " + " ^ pretty e2 ^ ")"
+  | If (c, t, f) ->
+    "(if " ^ pretty c ^ " then " ^ pretty t
+    ^ " else " ^ pretty f ^ ")"
+  | Var x  -> x
+  | Let_in (x, opt_ty, e1, e2) ->
+    let annot =
+      match opt_ty with
+      | None    -> ""
+      | Some ty -> " : " ^ pretty_ty ty
+    in
+    "(let " ^ x ^ annot ^ " = " ^ pretty e1
+    ^ " in " ^ pretty e2 ^ ")"
+```
+
+- Six clauses, one per constructor of `expr`.
+- Inner `match` on `ty option` for the annotation.
+- Output on `example`:
+  `(let x : int = 10 in (if true then (x + 5) else 0))`.
 
 :::
 
-The shape of `pretty` is *exactly* the same as the shape of
-`eval`. One clause per constructor. Leaf returns a string. Each
-recursive case recurses on the sub-expressions and combines the
-results. The only thing that changes is the *combination
-operator*: `+.`/`-.`/`*.`/`/.` in `eval`, string concatenation
-with a printed symbol in `pretty`.
+## Function 2: `depth`
 
-This already starts to look like a *template*: walk the
-expression, do something at the leaf, combine recursive results
-at each node. [Module 6](M06-L01-functions-revisited.html) will
-give us the tool ([`fold`](M06-L04-fold.html#beyond-lists-fold-any-structure))
-for capturing this template generically, so we can write just the
-"do something" parts and let the walker be supplied. For now we
-write out the template by hand each time.
-
-A real pretty printer would track operator precedence and
-suppress unnecessary parens: `1 + 2 + 3` instead of `(1 + (2 +
-3))`. That is an exercise in conditional parenthesisation that
-does not add anything to our understanding of pattern matching,
-so we skip it.
-
-## Function 3: depth, with an or-pattern
-
-The depth of an expression is the maximum nesting level. A leaf
-has depth 0; an internal node has depth one plus the maximum
-depth of its sub-expressions.
+`depth` returns the height of the AST. The three leaf
+constructors all return `1`; we can fold them into a single
+clause with an [or-pattern](M05-L03-nested-and-or-patterns.html#or-patterns-shared-right-hand-sides),
+since they share the same right-hand side.
 
 ```ocaml
-type expr =
-  | Num of float
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
+type ty = T_int | T_bool
 
-let rec depth = function
-  | Num _ -> 0
-  | Add (a, b) | Sub (a, b) | Mul (a, b) | Div (a, b) ->
-      1 + max (depth a) (depth b)
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
+
+let rec depth e =
+  match e with
+  | Int _ | Bool _ | Var _ -> 1
+  | Add (e1, e2)           -> 1 + max (depth e1) (depth e2)
+  | If (c, t, f)           ->
+    1 + max (depth c) (max (depth t) (depth f))
+  | Let_in (_, _, e1, e2)  -> 1 + max (depth e1) (depth e2)
 
 let example =
-  Mul (Add (Num 1.0, Num 2.0),
-       Sub (Num 4.0, Num 0.5))
+  Let_in ("x", Some T_int, Int 10,
+    If (Bool true,
+        Add (Var "x", Int 5),
+        Int 0))
 
 let _ = depth example
 ```
 
+The or-pattern `Int _ | Bool _ | Var _` collapses three clauses
+into one. The depth of `example` is `4`: `Let_in` at the top,
+`If` underneath, `Add` underneath that, `Var` (or `Int`) at the
+bottom.
+
 :::slide
 
-## Function 3: `depth` (with an or-pattern)
+## `depth`: or-pattern across the leaves
 
 ```ocaml
-let rec depth = function
-  | Num _ -> 0
-  | Add (a, b) | Sub (a, b) | Mul (a, b) | Div (a, b) ->
-      1 + max (depth a) (depth b)
+let rec depth e =
+  match e with
+  | Int _ | Bool _ | Var _ -> 1
+  | Add (e1, e2)           -> 1 + max (depth e1) (depth e2)
+  | If (c, t, f)           ->
+    1 + max (depth c) (max (depth t) (depth f))
+  | Let_in (_, _, e1, e2)  -> 1 + max (depth e1) (depth e2)
 ```
 
-`int = 2` on the example.
-
-- Leaf: depth 0; payload is discarded with `_`.
-- Four binary operators do the **same** computation.
-- Or-pattern groups them; same right-hand side.
-- The names `a` and `b` are bound in **every** alternative.
+- Three leaves share the same right-hand side: one clause via
+  the or-pattern `Int _ | Bool _ | Var _`.
+- Each recursive case adds `1` and takes the `max` over its
+  sub-expressions.
+- `depth example` = `4`.
 
 :::
 
-`depth` introduces an or-pattern. The four binary-operator
-clauses all compute the same thing: `1 + max (depth a) (depth
-b)`. Instead of writing four near-identical clauses, we combine
-them into one with `|`:
+## Function 3: `eval`
 
-```text
-| Add (a, b) | Sub (a, b) | Mul (a, b) | Div (a, b) ->
-    1 + max (depth a) (depth b)
-```
+`eval` is the heart of the tutorial. Given an expression and
+an *environment* mapping variable names to values, return the
+value the expression reduces to.
 
-Recall from [Lecture 2](M05-L02-nested-and-or-patterns.html#the-binding-constraint-on-or-patterns):
-every alternative of an or-pattern must bind the same variables at
-the same types. Here, each alternative binds `a : expr` and `b :
-expr`. The compiler is happy: regardless of which constructor
-matched, the right-hand side has both `a` and `b` in scope as
-`expr`.
-
-The leaf case `Num _` uses a wildcard because we do not care
-what number a leaf carries: every leaf has depth `0` regardless.
-
-On the example expression, depth is 2: the outer `Mul` is depth
-1 above its sub-expressions, and each sub-expression is itself
-an internal node of depth 1.
-
-## Function 4: constant folding
-
-Constant folding is a small compiler optimisation: if both sides
-of an operator reduce to numeric literals, evaluate them at
-compile time and replace the whole sub-expression with the
-result.
+A value is either an integer or a boolean. We model this with
+a new variant; we cannot reuse OCaml's own `int` or `bool`
+directly, because the same `eval` has to return both kinds of
+result depending on the expression. An environment is a list of
+`(name, value)` pairs:
 
 ```ocaml
-type expr =
-  | Num of float
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
+type value =
+  | VInt of int
+  | VBool of bool
 
-let rec fold = function
-  | Num n -> Num n
-  | Add (a, b) ->
-      (match fold a, fold b with
-       | Num x, Num y -> Num (x +. y)
-       | a', b'       -> Add (a', b'))
-  | Sub (a, b) ->
-      (match fold a, fold b with
-       | Num x, Num y -> Num (x -. y)
-       | a', b'       -> Sub (a', b'))
-  | Mul (a, b) ->
-      (match fold a, fold b with
-       | Num x, Num y -> Num (x *. y)
-       | a', b'       -> Mul (a', b'))
-  | Div (a, b) ->
-      (match fold a, fold b with
-       | Num x, Num y -> Num (x /. y)
-       | a', b'       -> Div (a', b'))
+type env = (string * value) list
+```
+
+`eval` can *fail*. If we ask for `Add (Bool true, Int 1)` the
+expression is type-incorrect and we have no answer. We have not
+covered exceptions yet ([Module 7](M07-L03-exceptions.html)), so
+we return `value option`: `Some v` on success, `None` on any
+runtime mismatch. That matches the
+[*make-illegal-states-unrepresentable*](M04-L04-recursive-types.html#when-to-use-option-the-fix)
+slogan from M04-L04: the type forces the caller to handle the
+failure.
+
+We also need to look up a variable in the environment. A plain
+recursive function over the list; returns `None` if the name is
+absent:
+
+```ocaml
+type value = VInt of int | VBool of bool
+type env = (string * value) list
+
+let rec lookup x (e : env) =
+  match e with
+  | []              -> None
+  | (k, v) :: rest  -> if x = k then Some v else lookup x rest
+```
+
+:::slide
+
+## `eval`: values, environment, and lookup
+
+```ocaml
+type value = VInt of int | VBool of bool
+type env = (string * value) list
+
+let rec lookup x (e : env) =
+  match e with
+  | []              -> None
+  | (k, v) :: rest  -> if x = k then Some v else lookup x rest
+```
+
+- A `value` is `VInt _` or `VBool _`; eval returns *either*
+  shape, so we need a tagged union.
+- `env` is a `(name, value) list`: a fresh binding at the head
+  shadows older ones.
+- `lookup` walks the list; returns `None` if the name is unbound.
+
+:::
+
+Now `eval` itself. One clause per constructor of `expr`. The
+recursive cases use nested `match`es on the sub-results to
+propagate `None` and to enforce the expected value shape (an
+`Add` needs two `VInt`s, an `If` needs a `VBool` condition).
+
+```ocaml
+type ty = T_int | T_bool
+
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
+
+type value = VInt of int | VBool of bool
+type env = (string * value) list
+
+let rec lookup x (e : env) =
+  match e with
+  | []              -> None
+  | (k, v) :: rest  -> if x = k then Some v else lookup x rest
+
+let rec eval (env : env) e =
+  match e with
+  | Int n   -> Some (VInt n)
+  | Bool b  -> Some (VBool b)
+  | Add (e1, e2) ->
+    (match eval env e1, eval env e2 with
+     | Some (VInt a), Some (VInt b) -> Some (VInt (a + b))
+     | _ -> None)
+  | If (c, t, f) ->
+    (match eval env c with
+     | Some (VBool true)  -> eval env t
+     | Some (VBool false) -> eval env f
+     | _ -> None)
+  | Var x -> lookup x env
+  | Let_in (x, _, e1, e2) ->
+    (match eval env e1 with
+     | Some v -> eval ((x, v) :: env) e2
+     | None   -> None)
 
 let example =
-  Mul (Add (Num 1.0, Num 2.0),
-       Sub (Num 4.0, Num 0.5))
+  Let_in ("x", Some T_int, Int 10,
+    If (Bool true,
+        Add (Var "x", Int 5),
+        Int 0))
 
-let _ = fold example
+let _ = eval [] example
 ```
+
+Reading the clauses:
+
+- `Int n` and `Bool b` are leaves; they evaluate to themselves.
+- `Add` evaluates both sub-expressions, then requires both to be
+  `VInt`. The nested pattern `Some (VInt a), Some (VInt b)`
+  binds the two integers and rebuilds a `VInt`. Anything else
+  (a `None`, a `VBool`) collapses to `None`.
+- `If` evaluates the condition, requires it to be `VBool`, and
+  picks the branch. The runtime annotation `ty option` is
+  ignored: it would matter to a *type checker*, not to the
+  interpreter.
+- `Var` delegates to `lookup`.
+- `Let_in` evaluates the bound expression, extends the
+  environment, and evaluates the body. The type annotation is
+  again ignored at runtime.
+
+`eval [] example` returns `Some (VInt 15)`.
 
 :::slide
 
-## Function 4: `fold` (constant folding)
+## `eval`: the easy cases
+
+```ocaml skip
+let rec eval (env : env) e =
+  match e with
+  | Int n  -> Some (VInt n)
+  | Bool b -> Some (VBool b)
+  | Add (e1, e2) ->
+    (match eval env e1, eval env e2 with
+     | Some (VInt a), Some (VInt b) -> Some (VInt (a + b))
+     | _ -> None)
+  | ...
+```
+
+- Leaves wrap themselves in the matching `value` constructor.
+- `Add` recurses on both children, then matches **the pair** of
+  options to enforce "both `Some`, both `VInt`."
+- Anything off-shape collapses to `None`.
+
+:::
+
+:::slide
+
+## `eval`: `If`, `Var`, `Let_in`
+
+```ocaml skip
+  | If (c, t, f) ->
+    (match eval env c with
+     | Some (VBool true)  -> eval env t
+     | Some (VBool false) -> eval env f
+     | _ -> None)
+  | Var x -> lookup x env
+  | Let_in (x, _, e1, e2) ->
+    (match eval env e1 with
+     | Some v -> eval ((x, v) :: env) e2
+     | None   -> None)
+```
+
+- `If`: condition must be `VBool`; branch on it.
+- `Var`: delegate to `lookup`.
+- `Let_in`: eval the binding, extend env at the head, eval the
+  body. The `ty option` is ignored at runtime (`_`).
+- `eval [] example` = `Some (VInt 15)`.
+
+:::
+
+## The meta-pattern
+
+Three different walkers, one shared skeleton. Each function has
+exactly one clause per constructor. The base cases are the
+leaves; the recursive cases recurse on the sub-expressions and
+combine the results.
+
+:::slide
+
+## Every walker on `expr` has the same shape
 
 ```text
-let rec fold = function
-  | Num n -> Num n
-  | Add (a, b) ->
-      (match fold a, fold b with
-       | Num x, Num y -> Num (x +. y)
-       | a', b'       -> Add (a', b'))
-  (* similar for Sub, Mul, Div *)
+let rec f e =
+  match e with
+  | Int _ -> <leaf answer>
+  | Bool _ -> <leaf answer>
+  | Add (e1, e2) -> <combine f e1 and f e2>
+  | If (c, t, f') -> <combine f c, f t, f f'>
+  | Var _ -> <leaf answer>
+  | Let_in (_, _, e1, e2) -> <combine f e1 and f e2>
 ```
 
-`expr = Num 10.5` on the example (the whole expression was constant).
-
-- Outer match: on the original `expr`.
-- Inner match: on the **pair** of folded sub-expressions.
-- If both are `Num`: combine into a single `Num`.
-- Otherwise: rebuild with the folded subtrees.
+- One clause per constructor of `expr`.
+- The *exhaustiveness checker* tells you when you have missed
+  one. We will lean on that in the activity.
+- [Module 6](M06-L04-fold.html) extracts this skeleton as a
+  generic *fold* over `expr` so you do not write it three times.
 
 :::
 
-This is the most interesting of the four functions. The shape
-is:
+The type definition gives the template; you fill in the actions.
+The compiler will complain if you skip a constructor. After
+Module 5 this should be muscle memory: "I have a recursive ADT;
+my function has one clause per constructor; I recurse on the
+sub-expressions and combine."
 
-1. Match on the original constructor.
-2. For each binary operator, recursively fold the two
-   sub-expressions.
-3. Pattern match the *pair* of folded results: if both are
-   `Num`, combine into a single `Num`; otherwise rebuild the
-   original constructor with the folded subtrees.
+## Two checks
 
-The inner `match ... with` uses the tuple-form pattern from
-[Lecture 5](M05-L05-records-variants.html#matching-a-tuple-of-values-the-diagonal-idiom):
-`match fold a, fold b with | Num x, Num y -> ... | a', b' -> ...`.
-This is the cleanest way to dispatch on the combination of two
-values.
-
-On our example, *every* sub-expression is constant, so the whole
-thing folds to a single `Num 10.5`. On an expression that
-contained variables (which we have not added yet), folding would
-leave a tree with constants pre-computed and variables
-preserved. This is what real compilers do for arithmetic
-expressions in source code.
-
-The structure is repetitive: four cases that differ only in the
-operator. [Module 6's `fold`](M06-L04-fold.html) will let us
-collapse this repetition; for now, four near-identical cases is the
-price of the explicit walk.
-
-## The meta-pattern
-
-Take a step back. Each of the four functions has the same
-skeleton:
-
-:::slide
-
-## The meta-pattern
-
-Every function on `expr` has the same skeleton:
-
-```
-let rec f = function
-  | Num n -> <answer for a leaf>
-  | Add (a, b) -> <combine f a and f b>
-  | Sub (a, b) -> <combine f a and f b>
-  | Mul (a, b) -> <combine f a and f b>
-  | Div (a, b) -> <combine f a and f b>
-```
-
-- This is **structural recursion** on the type.
-- Every walk over `expr` follows this template.
-- Differences live in the right-hand sides.
-- Module 6 will extract this template into a generic **fold**.
-- One generic walker; reuse for `eval`, `pretty`, `depth`, `fold`, etc.
-
-:::
-
-The skeleton is fixed by the *type definition*: one clause per
-constructor, the base case for the leaf, recursive cases for the
-internal nodes. The only thing that varies between `eval`,
-`pretty`, `depth`, and `fold` is what each clause *does*.
-
-This is the central insight: a type definition gives you a
-*template* for walking values of that type. The compiler can
-even check that you have filled the template completely
-(exhaustiveness). And once you notice the template, you can
-abstract it: write the template once, parameterise on the
-per-constructor actions, and use the result a hundred times.
-That is what `fold` does in Module 6.
-
-For now, internalise the shape. When you see a recursive ADT,
-your first reflex should be: one clause per constructor, base
-case for the leaf, recursive cases for the rest. After Module 5,
-this should be muscle memory.
-
-## A small quiz
-
-:::quiz mcq id=M05-L06-q3
-Suppose we extend the `expr` type with a new constructor `Neg of
-expr` (unary minus). What does the compiler do to `eval`,
-`pretty`, `depth`, and `fold` as written above?
-
-- [ ] Adds `Neg` automatically based on context.
-- [ ] Refuses to compile any of them.
-- [x] Warns each one with warning 8, showing `Neg _` as the missing case.
-- [ ] Silently dispatches `Neg` to the `Num` branch.
-
-**Why:** the four functions are exhaustive *as written*, but
-adding a constructor breaks that. The compiler issues warning 8
-for each match site, naming `Neg _` as the missing case. This is
-exactly the refactoring-with-the-compiler pattern from
-[Lecture 4](M05-L04-exhaustiveness.html#the-big-payoff-refactoring-with-the-compiler).
+:::quiz mcq id=M05-L06-q1
+question: |
+  Why does `eval` return `value option` rather than `value`?
+options:
+  - text: "OCaml functions cannot return non-option values from a `match`."
+  - text: "Because some `expr` values are ill-typed at runtime (e.g., `Add (Bool true, Int 1)`), and we have not yet introduced exceptions to signal failure."
+    correct: true
+  - text: "Because every variable lookup might fail, and that is the only failure mode."
+  - text: "It is a style preference; `value` would work just as well."
+explanation: |
+  Two sources of failure: an off-shape arithmetic operand (e.g.,
+  `Add (Bool true, Int 1)`) and an unbound variable. With no
+  exceptions yet, `option` is the natural way to surface either
+  one to the caller. The slogan from M04-L04 is at work:
+  `value option` *forces* the caller to handle failure.
 :::
 
 :::quiz mcq id=M05-L06-q2
-Why is the `depth` function above written with an or-pattern
-across `Add`, `Sub`, `Mul`, `Div`?
-
-- [ ] To save space.
-- [x] Because all four constructors contribute the same depth (1) and the same recursion on `a` and `b`; the or-pattern shares the right-hand side.
-- [ ] To force the compiler to emit a warning.
-- [ ] To prevent the depth from being too large.
-
-**Why:** the four binary operators all compute depth the same
-way: one level for the node itself, plus the max of the children's
-depths. The or-pattern groups them and shares the right-hand side.
-Each alternative binds the same names (`a` and `b`) at the same
-types, which is what the or-pattern constraint requires.
+question: |
+  In the `Add` case, why do we match on the *pair* `(eval env e1, eval env e2)` instead of nesting two separate `match`es?
+options:
+  - text: "It is the only way to compile this in OCaml."
+  - text: "Because pattern matching on a tuple lets us examine both sub-results in a single clause, including the `Some (VInt _), Some (VInt _)` joint shape."
+    correct: true
+  - text: "Because it is faster."
+  - text: "Because nested matches would silently ignore one sub-result."
+explanation: |
+  Matching on the pair lets one clause name both expected
+  shapes (`Some (VInt a), Some (VInt b)`) in a single nested
+  pattern. The catch-all `_` then handles every off-shape pair
+  in one go. Two nested matches would work too but would force
+  us to repeat the failure case.
 :::
 
-A code task. Extend the type with a constant negate, and write
-the new clause for `pretty`:
+:::quiz code id=M05-L06-q3
+question: |
+  Add a new constructor `Sub of expr * expr` to `expr`. Write
+  the corresponding clause for `eval`. Assume the surrounding
+  definitions of `eval`, `lookup`, and `value` are in scope.
+starter: |
+  type ty = T_int | T_bool
+  type expr =
+    | Int of int
+    | Bool of bool
+    | Add of expr * expr
+    | Sub of expr * expr
+    | If of expr * expr * expr
+    | Var of string
+    | Let_in of string * ty option * expr * expr
 
-:::quiz code id=M05-L06-q1
-Given:
+  (* Write the Sub clause. *)
+  let sub_clause () = failwith "TODO"
+solution: |
+  (* Add this clause between `Add` and `If` in `eval`:
 
-```ocaml
-type expr =
-  | Num of float
-  | Neg of expr
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
-```
-
-Write `pretty : expr -> string` that handles `Neg e` by
-producing `"-(" ^ pretty e ^ ")"`. The other cases:
-
-- `Num n` -> `string_of_float n`,
-- `Add (a, b)` -> `"(" ^ pretty a ^ " + " ^ pretty b ^ ")"`,
-- analogous for `Sub`, `Mul`, `Div`.
-
-```ocaml
-let rec pretty e =
-  failwith "not implemented"
-```
-
-```ocaml skip
-let check b m = if not b then failwith m
-let () =
-  check (pretty (Num 3.0) = "3.") "num";
-  check (pretty (Neg (Num 3.0)) = "-(3.)") "neg of num";
-  check (pretty (Add (Num 1.0, Num 2.0)) = "(1. + 2.)") "add";
-  check (pretty (Neg (Add (Num 1.0, Num 2.0))) = "-((1. + 2.))") "neg of add";
-  print_endline "all tests passed"
-```
+     | Sub (e1, e2) ->
+       (match eval env e1, eval env e2 with
+        | Some (VInt a), Some (VInt b) -> Some (VInt (a - b))
+        | _ -> None)
+  *)
+  let sub_clause () = ()
+checks:
+  - call: sub_clause ()
+    expect: ()
 :::
 
-:::solution
+## Activity
 
-The shape: six clauses, one per constructor, matching the
-skeleton from earlier.
-
-:::
-
-## Activity: extend the type
+The point of the activity is to see the
+[refactoring-with-the-compiler](M05-L05-exhaustiveness.html#the-big-payoff-refactoring-with-the-compiler)
+loop end to end. Add two constructors. Build. Read the warnings.
+Update each match site.
 
 :::slide
 
 ## Activity
 
-Extend `expr` with:
+Add `Sub of expr * expr` and `Mul of expr * expr` to `expr`.
 
-- `Var of string` (variables, like `"x"`).
-- `Neg of expr` (unary minus).
-
-Update `pretty` to print these (variables as their name, `Neg e`
-as `"-(" ^ pretty e ^ ")"`). What does the compiler tell you
-about `eval`, `depth`, and `fold`?
+- What does the compiler say when you re-build `pretty`,
+  `depth`, and `eval`?
+- Which match in `depth` can use a *wider* or-pattern after
+  the change?
+- Does `lookup` need updating? Why or why not?
 
 :::
 
-Try the extension before reading on. Run the build; collect the
-warnings; fix each one.
+Run the build before reading on. The compiler should report
+three sites that need attention.
 
 :::slide
 
-## Activity discussion: the extended type
+## Activity discussion: which matches need updating
 
-Adding `Var of string` (variables) and `Neg of expr` (unary minus):
+Adding `Sub` and `Mul`:
 
-```text
+```ocaml
 type expr =
-  | Num of float
-  | Var of string
-  | Neg of expr
+  | Int of int
+  | Bool of bool
   | Add of expr * expr
   | Sub of expr * expr
   | Mul of expr * expr
-  | Div of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
 ```
 
-- Compiler warns *every match on `expr`*: `eval`, `pretty`,
-  `depth`, `fold`.
-- Each needs new clauses for `Var` and `Neg`.
+- `pretty`, `depth`, `eval`: each gets warning 8, naming
+  `Sub _` and `Mul _` as missing.
+- `lookup` is untouched: it walks an `env`, not an `expr`.
+- The compiler points at every match site, not at every *file*.
 
 :::
 
 :::slide
 
-## Activity discussion: the easy three
+## Activity discussion: `depth` and `eval`
 
-- `pretty`: stringify the variable name; prefix `Neg`'s recursive
-  result.
-- `depth`: `Var _ -> 0`, `Neg e -> 1 + depth e`.
-- `fold`: for `Neg`, if inside is `Num x` return `Num (-. x)`;
-  else keep as `Neg (fold e)`. For `Var`, no folding (it stays).
+```ocaml skip
+(* depth: extend the binary or-pattern *)
+| Add (e1, e2) | Sub (e1, e2) | Mul (e1, e2) ->
+    1 + max (depth e1) (depth e2)
 
-Each clause is short; the compiler tells you which match needs
-updating.
+(* eval: one clause per new operator *)
+| Sub (e1, e2) ->
+  (match eval env e1, eval env e2 with
+   | Some (VInt a), Some (VInt b) -> Some (VInt (a - b))
+   | _ -> None)
+| Mul (e1, e2) ->
+  (match eval env e1, eval env e2 with
+   | Some (VInt a), Some (VInt b) -> Some (VInt (a * b))
+   | _ -> None)
+```
 
-:::
-
-:::slide
-
-## Activity discussion: `eval` changes shape
-
-- `eval` needs an environment to look up variables.
-- Signature grows from `expr -> float` to
-  `(string -> float) -> expr -> float`.
-- Or `(string * float) list -> expr -> float`.
-
-Takeaway:
-
-- Compiler points at every place needing attention.
-- It surfaces *deeper* changes (`eval`'s signature must grow).
-- You make design calls; the punch list comes from the compiler.
+- `depth`'s or-pattern grows naturally: same right-hand side,
+  three alternatives.
+- `eval`'s `Sub` and `Mul` are near-copies of `Add` with the
+  operator swapped. The repetition is real; we tame it in
+  [Module 6](M06-L04-fold.html).
 
 :::
 
-Three observations from the activity, in increasing depth:
+## What's next
 
-**The compiler does the bookkeeping.** Add two constructors, the
-compiler tells you exactly where each of the four functions is
-incomplete. You do not grep, you do not hope; you read the
-warnings and fix each one.
-
-**Some clauses are obvious.** For `depth`, a variable has depth
-`0`, a `Neg` has depth one above its child. For `pretty`, a
-variable prints as its name, a `Neg` prefixes the recursive
-result with `"-"`.
-
-**Some clauses surface deeper design questions.** `eval` is
-suddenly *insufficient* with its current signature. To evaluate
-a `Var`, you need a value for the variable; that means `eval`
-needs to take an *environment* mapping variable names to
-numbers. The signature becomes `(string -> float) -> expr ->
-float`, or `(string * float) list -> expr -> float`, depending
-on your choice. The compiler does not tell you which to pick;
-that is a design decision. But it *does* tell you to start
-asking the question.
-
-This is exactly what we mean by "refactoring with the compiler":
-the mechanical work is automatic, the design work is yours, and
-the compiler ensures you do not skip a site.
-
-## What you should be able to do now
+This tutorial closes Module 5. You have seen pattern matching
+on flat values
+([Lecture 1](M05-L01-basic-patterns.html)),
+on recursive structures
+([Lecture 2](M05-L02-recursive-patterns.html)),
+inside other patterns (records, inline records, the diagonal
+idiom, or-patterns)
+([Lecture 3](M05-L03-nested-and-or-patterns.html)),
+constrained by guards
+([Lecture 4](M05-L04-guards.html)),
+and under the exhaustiveness checker
+([Lecture 5](M05-L05-exhaustiveness.html)).
+The interpreter above brings all of those together on a single
+recursive ADT.
 
 :::slide
 
 ## What you should know after Module 5
 
-After Module 5 you can:
-
-- Use literal, variable, wildcard, nested, and or-patterns.
-- Match on records (with `_` for ignored fields), variants, and combinations.
-- Use `when`-guards for predicates the pattern language cannot express.
-- Read the compiler's exhaustiveness warnings and act on them.
+- Use literal, variable, wildcard, list, tree, nested, and
+  or-patterns fluently.
+- Match on records (with `_` for ignored fields), variants,
+  and combined shapes.
+- Add `when`-guards for predicates the pattern language cannot
+  express.
+- Read the compiler's exhaustiveness warnings and use them as
+  a refactoring aid.
 - Walk recursive ADTs by pattern matching on the constructors.
-
-- Module 6 picks up the recursive-walk meta-pattern and generalises it.
-- **Higher-order functions** (`map`, `filter`, `fold`) capture *the walk*.
-- You specify only the per-element work; the walker is reused.
+- [Module 6](M06-L01-functions-revisited.html) generalises the
+  walker: `map`, `filter`, and `fold` capture the meta-pattern.
 
 :::
 
-After Module 5, you should be able to:
+## Common pitfalls
 
-- Use literal, variable, wildcard, nested, and or-patterns
-  fluently.
-- Match on records (with `_` for ignored fields), variants, and
-  combinations.
-- Add `when`-guards for predicates the pattern language cannot
-  express, while keeping the match exhaustive.
-- Read the compiler's exhaustiveness warnings, fix the missing
-  cases, and use the warning as a refactoring aid.
-- Walk recursive ADTs by pattern matching on the constructors,
-  with structural recursion as the default shape.
+A handful of mistakes catch almost everyone the first time they
+write an interpreter.
 
-[Module 6](M06-L01-functions-revisited.html) picks up where this
-lecture leaves off. The "meta-pattern" of structural recursion on an
-ADT is so common that the standard library provides higher-order
-functions ([`map`](M06-L02-map.html), [`filter`](M06-L03-filter.html),
-[`fold`](M06-L04-fold.html)) that capture the walker for you. You
-write only the per-element work; the walker is reused. We will
-spend Module 6 making this idea precise.
+:::slide
 
 ## Common pitfalls
 
-**Pitfall 1: nested matches without parentheses.** When the
-right-hand side of a clause is itself a `match`, parenthesise
-the inner match (or use `begin...end`). Otherwise the inner
-`|` clauses get parsed as part of the outer match. We saw this
-in the body of `fold`.
+- **Forgetting to parenthesise an inner `match`.** When the
+  RHS of a clause is itself a `match`, parenthesise it (or use
+  `begin ... end`). Otherwise the inner `|` clauses get parsed
+  as part of the outer match. We did this in every recursive
+  clause of `eval`.
+- **Returning `value` instead of `value option`.** The compiler
+  will tell you on the first off-shape input. Once you commit
+  to `option`, every recursive call has to deal with it.
+- **Forgetting that `Let_in` extends the environment.** The
+  body is evaluated under `(x, v) :: env`, not `env`. Try
+  swapping the two and watch every let-bound program return
+  `None`.
+- **Stale environment on `If`.** Both branches evaluate under
+  the *same* `env`. Do not accidentally pass `[]` to one of
+  them.
 
-**Pitfall 2: forgetting to recurse.** Easy to write `Add (a, b)
--> a +. b` instead of `Add (a, b) -> eval a +. eval b`. The
-compiler will complain (`a` is `expr`, not `float`), but read
-the error: you forgot the recursive call.
-
-**Pitfall 3: making the match non-exhaustive by accident.** Add
-`Neg` to the type, forget to update `eval`, and you may not
-notice until runtime: `Match_failure`. The compiler warning is
-your defence. Read it. Promote it to an error if possible.
-
-**Pitfall 4: writing too clever a pretty printer.** Operator
-precedence and associativity make a "minimal-parens" pretty
-printer tricky. Start with the parenthesise-everything version;
-add precedence only if you actually need it.
+:::
 
 ## Reading
 
@@ -732,11 +737,13 @@ add precedence only if you actually need it.
   <https://dev.realworldocaml.org/lists-and-patterns.html>
 - John Whitington, *OCaml from the Very Beginning*, Chapter 8
   (data types and pattern matching).
+
 ## Sources
 
-This lecture's prose, worked examples, and quizzes are original to
-this course. Materials referenced during preparation are listed in
-the *Reading* section above; Cornell CS3110 and Real World OCaml
-are CC BY-NC-ND-licensed and have not been derivatively reused.
-See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
-at the repository root for the full source posture.
+The AST in this lecture is the one we built in the
+[M04-L05 tutorial](M04-L05-tutorial.html), extended with a
+single `If` constructor. The interpreter, its environment
+representation, and the worked walkers (`pretty`, `depth`,
+`eval`) are original to this course. The "refactoring with the
+compiler" idea is folklore in the OCaml/SML community and is
+also discussed in Cornell CS3110, chapter on pattern matching.
