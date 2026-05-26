@@ -196,7 +196,7 @@ CS3100. Inline-result-comment sweep applied across M06 lectures.
 | M06-L03 | `filter`: keep what passes the predicate | 14 | 21 | 29 |
 | M06-L04 | `fold`: reduce a list to a single value | 22 | 33 | 46 |
 | M06-L05 | Function composition and pipelines | 13 | 20 | 28 |
-| M06-L06 | Tutorial: rebuild parts of `List` | 14 | 21 | 29 |
+| M06-L06 | Tutorial: fold across data structures | 14 | 21 | 29 |
 | **M06 total** | | **92** | **139** | **193** |
 | | | | **(2.3 h)** | **(3.2 h)** |
 

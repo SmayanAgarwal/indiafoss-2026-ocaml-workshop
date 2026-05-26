@@ -602,11 +602,13 @@ Same answer.
 
 ## What's next
 
-We have all the pieces. The next and final lecture in this module is
-the [tutorial](M06-L06-tutorial.html): a series of exercises that
-rebuild parts of `List` using only the higher-order toolkit from
-this module. The exercise is not just about practice; it is about
-seeing how versatile a tiny set of primitives is.
+We have all the pieces. The next and final lecture in this module
+is the [tutorial](M06-L06-tutorial.html): exercises that rebuild
+parts of `List` using only the higher-order toolkit, and then
+lift `fold` itself to binary trees and rose trees. The exercise
+is not just about practice; it is about seeing how versatile a
+tiny set of primitives is, and how the *same* pattern carries
+over to other recursive data types.
 
 :::slide
 
@@ -614,9 +616,9 @@ seeing how versatile a tiny set of primitives is.
 
 Lecture 6: the **tutorial** for Module 6.
 
-- Rebuild small parts of the `List` module.
-- (`map`, `filter`, `fold`, `concat`.)
-- Using only the techniques from this module.
+- Rebuild small parts of `List` (`sum`, `concat`, `count`, ...).
+- Then fold across other shapes: pre / in / post / level-order on
+  binary trees, and rose-tree folds.
 
 :::
 

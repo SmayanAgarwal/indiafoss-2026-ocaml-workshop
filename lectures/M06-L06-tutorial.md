@@ -1,5 +1,5 @@
 ---
-title: "Tutorial: rebuild parts of `List`"
+title: "Tutorial: fold across data structures"
 lecture_no: 6
 week: 6
 duration_target_min: 28
@@ -12,14 +12,14 @@ reading:
     url: https://cs3110.github.io/textbook/chapters/hop/fold.html
 ---
 
-# Tutorial: rebuild parts of `List`
+# Tutorial: fold across data structures
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: rebuild parts of `List`</h2>
+<h2 class="title-slide-lecture">Tutorial: fold across data structures</h2>
 <p class="title-slide-label">Module 6 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>

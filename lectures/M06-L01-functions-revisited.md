@@ -60,8 +60,9 @@ combining the two to express computations that would be much more
 verbose in a first-order language. We are going to meet the famous
 trio [`map`](M06-L02-map.html), [`filter`](M06-L03-filter.html), and
 [`fold`](M06-L04-fold.html); the [pipeline operator `|>`](M06-L05-pipelines.html);
-and finally, in [the tutorial](M06-L06-tutorial.html), rebuild a
-sizeable slice of the standard library out of those few pieces.
+and finally, in [the tutorial](M06-L06-tutorial.html), rebuild
+a slice of the standard library and lift `fold` to binary trees
+and rose trees.
 
 A **higher-order function** is one that does either of two things:
 it takes a function as an argument, or it returns a function as its
@@ -81,7 +82,7 @@ computations.
 - **L3** ([`filter`](M06-L03-filter.html)): keep elements that satisfy a predicate.
 - **L4** ([`fold`](M06-L04-fold.html)): collapse a collection to a value.
 - **L5** ([pipelines](M06-L05-pipelines.html)): the `|>` operator.
-- **L6** ([tutorial](M06-L06-tutorial.html)): rebuild a sizeable slice of the standard library out of these few pieces.
+- **L6** ([tutorial](M06-L06-tutorial.html)): rebuild parts of `List`, then fold across binary trees and rose trees.
 
 :::
 
@@ -682,8 +683,9 @@ functions: [`map`](M06-L02-map.html) (transform each element),
 [`fold`](M06-L04-fold.html) (combine all elements).
 [Lecture 5](M06-L05-pipelines.html) introduces the pipeline operator
 `|>`, which lets us chain these three together in left-to-right
-reading order. [Lecture 6](M06-L06-tutorial.html) is the tutorial:
-rebuild parts of the `List` module from this small toolkit.
+reading order. [Lecture 6](M06-L06-tutorial.html) is the tutorial: rebuild
+parts of `List` from this small toolkit, then lift `fold` to
+binary trees and rose trees.
 
 :::slide
 
