@@ -194,16 +194,18 @@ CS3100. Inline-result-comment sweep applied across M06 lectures.
 | M06-L01 | Functions as values, revisited | 14 | 21 | 29 |
 | M06-L02 | `map`: transform every element | 15 | 23 | 32 |
 | M06-L03 | `filter`: keep what passes the predicate | 14 | 21 | 29 |
-| M06-L04 | `fold`: reduce a list to a single value | 20 | 30 | 42 |
+| M06-L04 | `fold`: reduce a list to a single value | 22 | 33 | 46 |
 | M06-L05 | Function composition and pipelines | 13 | 20 | 28 |
 | M06-L06 | Tutorial: rebuild parts of `List` | 13 | 20 | 28 |
-| **M06 total** | | **89** | **135** | **188** |
-| | | | **(2.2 h)** | **(3.1 h)** |
+| **M06 total** | | **91** | **138** | **192** |
+| | | | **(2.3 h)** | **(3.2 h)** |
 
-M06-L04 lands right at the NPTEL 30-min ceiling now; if delivery
-overshoots, the natural cut is between the fold_left and
-fold_right halves. M06-L05 and L06 sit at the 20-min floor and
-will likely grow during their own polish passes.
+M06-L04 overruns the NPTEL 30-min ceiling at 22 slides / 33 min
+after the 2026-05-26 sweep (added the map_via_fold split, the
+subtlety slide, and the tree-visualisation slides). Natural cut
+if delivery runs long: between the fold_left and fold_right
+halves. M06-L05 and L06 sit at the 20-min floor and will likely
+grow during their own polish passes.
 
 ### M07: Side effects and modular programming (9 lectures)
 
@@ -426,9 +428,9 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1805 min (30.1 hours) across
+- **Final video**: 1808 min (30.1 hours) across
   81 lectures and 12 modules.
-- **Estimated recording time**: 2526 min (42.1 hours)
+- **Estimated recording time**: 2530 min (42.2 hours)
   at the 1.4x multiplier.
 
 The 30.1 hours of final video meets NPTEL's ~30 hr target
@@ -471,7 +473,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **42.1 hours of recording / 4.3 hours per day = ~9.8 studio days.**
+- **42.2 hours of recording / 4.3 hours per day = ~9.8 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -483,14 +485,14 @@ sessions:
 | M03 Functions | 2.8 | 0.7 |
 | M04 Data types | 3.4 | 0.8 |
 | M05 Pattern matching | 3.6 | 0.8 |
-| M06 Higher-order programming | 3.1 | 0.7 |
+| M06 Higher-order programming | 3.2 | 0.7 |
 | M07 Side effects and modular programming | 4.4 | 1.0 |
 | M08 Monads and GADTs | 5.2 | 1.2 |
 | M09 Concurrency and Testing | 4.1 | 1.0 |
 | M10 Memory safety and security | 3.1 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 3.7 | 0.9 |
 | M12 Unikernels (MirageOS) | 2.8 | 0.7 |
-| **Total** | **42.1** | **9.8** |
+| **Total** | **42.2** | **9.8** |
 
 ## Caveats
 
