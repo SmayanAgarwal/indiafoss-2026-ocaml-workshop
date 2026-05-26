@@ -5,7 +5,7 @@ week: 6
 duration_target_min: 20
 concepts: [filter, predicate, list filtering, filter_map, partition]
 keywords: [OCaml, filter, predicate, list, higher-order]
-activity_question: "Write [unique : 'a list -> 'a list] that removes duplicate elements. (Hint: combine [filter] with a notion of 'haven't seen this yet'.)"
+activity_question: "Write [unique : 'a list -> 'a list] that removes duplicate elements, keeping the first occurrence of each (so the output preserves the order in which elements first appear in the input). (Hint: use [List.mem] to check whether a value has already been seen.)"
 think_about_this: "[filter] returns a sublist of its input. [map] returns a list of the same length. What kind of operation would return a list of *different* length but not necessarily a sublist? Where would you reach for [filter_map]?"
 reading:
   - title: "Cornell CS3110, Filter"
@@ -497,9 +497,10 @@ A code challenge:
 
 :::quiz code id=M06-L03-q1
 Write `unique : 'a list -> 'a list` that returns the list with
-duplicates removed, keeping the first occurrence of each value. Use
-`List.mem : 'a -> 'a list -> bool` (returns `true` if the value
-appears in the list).
+duplicates removed, keeping each value's *first occurrence* (so
+the output preserves the order in which elements first appear in
+the input). Use `List.mem : 'a -> 'a list -> bool` (returns `true`
+if the value appears in the list).
 
 ```ocaml
 let unique xs =
@@ -548,7 +549,9 @@ final `List.rev` restores original order. This is `O(n^2)` because
 ## Activity
 
 Write `unique : 'a list -> 'a list` that removes duplicate
-elements, keeping the first occurrence of each.
+elements, keeping each value's *first occurrence*. The output
+should preserve the order in which elements first appear in the
+input.
 
 Hint: use the helper function `List.mem : 'a -> 'a list -> bool`
 which checks if an element is in a list.
@@ -577,6 +580,102 @@ let _ = unique ["a"; "b"; "a"; "c"; "b"]      (* = ["a"; "b"; "c"] *)
 - Include each element only if not already seen.
 - `List.mem` is `O(n)` per call: overall `O(n^2)`.
 - Fine for short lists; use a `Set` ([Module 7](M07-L08-functors.html)) for big lists.
+
+:::
+
+## `List.mem` is not magic
+
+We leaned on `List.mem` to check membership. It is itself a small
+recursive function, the same shape we have been writing all
+along:
+
+```ocaml
+let rec mem x = function
+  | [] -> false
+  | h :: t -> h = x || mem x t
+
+let _ = mem 3 [1; 2; 3; 4]   (* = true *)
+let _ = mem 5 [1; 2; 3; 4]   (* = false *)
+```
+
+`||` short-circuits: as soon as `h = x` is true, the rest of the
+list is not traversed. Worst case (the element is missing or
+last) is a full walk; that is the `O(n)` we counted toward the
+overall `O(n^2)` of `unique`.
+
+:::slide
+
+## `List.mem` is not magic
+
+```ocaml
+let rec mem x = function
+  | [] -> false
+  | h :: t -> h = x || mem x t
+
+let _ = mem 3 [1; 2; 3; 4]   (* = true *)
+let _ = mem 5 [1; 2; 3; 4]   (* = false *)
+```
+
+- Walk the list; return `true` on a match.
+- `||` short-circuits: stop as soon as `h = x` is true.
+- `O(n)` per call (worst case: scan to the end).
+- `List.mem` is the standard library's version.
+
+:::
+
+## Dropping the order-preserving rule
+
+The `O(n^2)` cost above buys us one specific property: the output
+keeps the original *first-appearance* order. If we relax that
+property and let the output be sorted instead, we can do much
+better. The trick is to sort the input first (`O(n log n)`) and
+then walk it once, keeping the first of every consecutive run:
+
+```ocaml
+let unique_sorted xs =
+  match List.sort compare xs with
+  | [] -> []
+  | y :: ys ->
+      let rec go prev = function
+        | [] -> [prev]
+        | x :: rest ->
+            if x = prev then go prev rest
+            else prev :: go x rest
+      in
+      go y ys
+
+let _ = unique_sorted [3; 1; 2; 1; 3; 4; 2]   (* = [1; 2; 3; 4] *)
+```
+
+`List.sort compare` is the stdlib's general-purpose sort
+(`O(n log n)` worst case). After sorting, duplicates sit next to
+each other, so the linear sweep `go` just skips runs of equal
+values.
+
+:::slide
+
+## Relax the order, win the complexity
+
+```ocaml
+let unique_sorted xs =
+  match List.sort compare xs with
+  | [] -> []
+  | y :: ys ->
+      let rec go prev = function
+        | [] -> [prev]
+        | x :: rest ->
+            if x = prev then go prev rest
+            else prev :: go x rest
+      in
+      go y ys
+
+let _ = unique_sorted [3; 1; 2; 1; 3; 4; 2]   (* = [1; 2; 3; 4] *)
+```
+
+- Sort first (`O(n log n)`), then one linear sweep (`O(n)`).
+- Total: `O(n log n)`, beating the `O(n^2)` order-preserving version.
+- Output is sorted, not in first-appearance order.
+- Pick the one whose output guarantee matches your need.
 
 :::
 
