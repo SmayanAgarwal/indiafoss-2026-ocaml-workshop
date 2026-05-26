@@ -100,8 +100,8 @@ that applies its argument twice:
 ```ocaml
 let twice f x = f (f x)
 
-let _ = twice (fun n -> n + 3) 10
-let _ = twice (fun s -> "(" ^ s ^ ")") "x"
+let _ = twice (fun n -> n + 3) 10           (* = 16 *)
+let _ = twice (fun s -> "(" ^ s ^ ")") "x"  (* = "((x))" *)
 ```
 
 :::slide
@@ -111,11 +111,9 @@ let _ = twice (fun s -> "(" ^ s ^ ")") "x"
 ```ocaml
 let twice f x = f (f x)
 
-let _ = twice (fun n -> n + 3) 10
-let _ = twice (fun s -> "(" ^ s ^ ")") "x"
+let _ = twice (fun n -> n + 3) 10           (* = 16 *)
+let _ = twice (fun s -> "(" ^ s ^ ")") "x"  (* = "((x))" *)
 ```
-
-`16` and `"((x))"`.
 
 - Type: `('a -> 'a) -> 'a -> 'a`.
 - Takes a function `'a -> 'a` and a value `'a`; returns an `'a`.
@@ -151,8 +149,8 @@ let make_adder n = fun x -> x + n
 let plus_five = make_adder 5
 let plus_ten  = make_adder 10
 
-let _ = plus_five 1
-let _ = plus_ten 1
+let _ = plus_five 1  (* = 6 *)
+let _ = plus_ten 1   (* = 11 *)
 ```
 
 :::slide
@@ -165,11 +163,9 @@ let make_adder n = fun x -> x + n
 let plus_five = make_adder 5
 let plus_ten  = make_adder 10
 
-let _ = plus_five 1
-let _ = plus_ten 1
+let _ = plus_five 1  (* = 6 *)
+let _ = plus_ten 1   (* = 11 *)
 ```
-
-`6` and `11`.
 
 - `make_adder 5` produces *a new function* that adds 5.
 - The new function holds onto `n` from the enclosing scope.
@@ -374,9 +370,9 @@ operator `+` is normally infix, but `(+)` is a normal two-argument
 function value.
 
 ```ocaml
-let _ = (+) 3 4
-let _ = ( * ) 3 4
-let _ = (^) "hi " "there"
+let _ = (+) 3 4               (* = 7 *)
+let _ = ( * ) 3 4             (* = 12 *)
+let _ = (^) "hi " "there"     (* = "hi there" *)
 ```
 
 :::slide
@@ -386,20 +382,16 @@ let _ = (^) "hi " "there"
 Wrap an infix operator in parens, get a function:
 
 ```ocaml
-let _ = (+) 3 4
-let _ = ( * ) 3 4
-let _ = (^) "hi " "there"
+let _ = (+) 3 4               (* = 7 *)
+let _ = ( * ) 3 4             (* = 12 *)
+let _ = (^) "hi " "there"     (* = "hi there" *)
 ```
-
-`7`, `12`, `"hi there"`.
 
 This composes well with higher-order functions:
 
 ```ocaml
-let _ = List.map ((+) 10) [1; 2; 3]
+let _ = List.map ((+) 10) [1; 2; 3]  (* = [11; 12; 13] *)
 ```
-
-`[11; 12; 13]`.
 
 - `(+) 10` is the partial application "add 10".
 - Pass that function directly to `map`; no lambda needed.
@@ -415,7 +407,7 @@ Combining operators-as-functions with partial application gives a
 particularly compact higher-order idiom:
 
 ```ocaml
-let _ = List.map ((+) 10) [1; 2; 3]
+let _ = List.map ((+) 10) [1; 2; 3]  (* = [11; 12; 13] *)
 ```
 
 `(+) 10` is the function "add 10": we have applied `(+)` to one of
@@ -526,12 +518,12 @@ let curry3 f x y z = f (x, y, z)
 let dist3 (x, y, z) =
   sqrt (float_of_int (x*x + y*y + z*z))
 
-let _ = curry3 dist3 3 4 12
+let _ = curry3 dist3 3 4 12  (* = 13.0 *)
 ```
 
 :::slide
 
-## Functions can return functions can return functions
+## Functions can return functions, which can return functions, which can...
 
 ```ocaml
 let curry3 f x y z = f (x, y, z)
@@ -539,10 +531,8 @@ let curry3 f x y z = f (x, y, z)
 let dist3 (x, y, z) =
   sqrt (float_of_int (x*x + y*y + z*z))
 
-let _ = curry3 dist3 3 4 12
+let _ = curry3 dist3 3 4 12  (* = 13.0 *)
 ```
-
-`13.0`.
 
 - `curry3` takes a function expecting a triple.
 - It turns that into a function of three arguments.
@@ -647,6 +637,7 @@ recursive case: apply `f` once, then apply `n - 1` more times.
 
 Write `twice : ('a -> 'a) -> 'a -> 'a` that applies a function
 twice. Test with `twice (fun x -> x + 3) 10`.
+<!-- KC: Activity should never be repeat of the code that we have already shown. Add it to feedback memory. -->
 
 :::
 
@@ -657,12 +648,10 @@ twice. Test with `twice (fun x -> x + 3) 10`.
 ```ocaml
 let twice f x = f (f x)
 
-let _ = twice (fun x -> x + 3) 10
-let _ = twice (fun s -> s ^ "!") "wow"
-let _ = twice (List.cons 0) [1; 2; 3]
+let _ = twice (fun x -> x + 3) 10      (* = 16 *)
+let _ = twice (fun s -> s ^ "!") "wow" (* = "wow!!" *)
+let _ = twice (List.cons 0) [1; 2; 3]  (* = [0; 0; 1; 2; 3] *)
 ```
-
-`16`, `"wow!!"`, `[0; 0; 1; 2; 3]`.
 
 - Three different types of `'a` (`int`, `string`, `int list`).
 - Same `twice` works for all of them.
