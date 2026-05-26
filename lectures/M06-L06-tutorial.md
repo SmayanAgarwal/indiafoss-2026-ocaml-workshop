@@ -55,18 +55,18 @@ trees).
 
 :::slide
 
-## This tutorial: rebuild the standard library
+## This tutorial: fold across data structures
 
 - The capstone of M06: put the toolkit to work.
 - Toolkit: higher-order functions, `map`, `filter`, `fold`, `|>`, composition.
-- Thesis: this small toolkit covers a surprising amount of list work
-  without hand-coded recursion.
-- Pick a `List` function from the standard library; rebuild it from the toolkit.
-- Not that you should re-derive these in real code; the point is to *see*
-  how few primitives the rest follows from.
+- Thesis: this small toolkit covers a surprising amount of list
+  work without hand-coded recursion, *and* the same pattern lifts
+  to other recursive types.
 - Seven problems: four `List`-fold rebuilds, then three lifts of
   `fold` to other data structures (binary tree pre/in/post/level
   order, rose trees).
+- Not that you should re-derive stdlib functions in real code;
+  the point is to *see* how few primitives the rest follows from.
 
 :::
 
@@ -328,6 +328,7 @@ let rec fold_postorder f acc = function
 - Post-order: root last.
 
 :::
+<!-- KC: split into 3 slides -->
 
 To see the difference, try them on a small binary search tree:
 
