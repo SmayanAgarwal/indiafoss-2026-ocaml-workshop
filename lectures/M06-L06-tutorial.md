@@ -75,7 +75,7 @@ trees).
 ```ocaml
 let sum xs = List.fold_left (+) 0 xs
 
-let _ = sum [1; 2; 3; 4; 5]
+let _ = sum [1; 2; 3; 4; 5]  (* = 15 *)
 ```
 
 :::slide
@@ -124,7 +124,7 @@ in some libraries.)
 let concat xss =
   List.fold_right (fun xs acc -> xs @ acc) xss []
 
-let _ = concat [[1; 2]; [3; 4; 5]; [6]]
+let _ = concat [[1; 2]; [3; 4; 5]; [6]]  (* = [1; 2; 3; 4; 5; 6] *)
 ```
 
 :::slide
@@ -170,9 +170,9 @@ let for_all p xs = List.fold_left (fun acc x -> acc && p x) true xs
 
 let exists p xs = List.fold_left (fun acc x -> acc || p x) false xs
 
-let _ = for_all (fun n -> n > 0) [1; 2; 3]
-let _ = for_all (fun n -> n > 0) [1; -2; 3]
-let _ = exists (fun n -> n < 0) [1; -2; 3]
+let _ = for_all (fun n -> n > 0) [1; 2; 3]    (* = true *)
+let _ = for_all (fun n -> n > 0) [1; -2; 3]   (* = false *)
+let _ = exists (fun n -> n < 0) [1; -2; 3]    (* = true *)
 ```
 
 :::slide
@@ -223,7 +223,7 @@ Count how many elements satisfy a predicate.
 let count p xs =
   List.fold_left (fun n x -> if p x then n + 1 else n) 0 xs
 
-let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]
+let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]  (* = 3 *)
 ```
 
 :::slide
@@ -295,7 +295,7 @@ children. Pre-order: before. Post-order: after.
 
 :::slide
 
-## Problem 5: tree folds in three orderings
+## Problem 5a: in-order
 
 ```ocaml
 type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
@@ -306,14 +306,39 @@ let rec fold_inorder f acc = function
       let acc = fold_inorder f acc l in
       let acc = f acc v in
       fold_inorder f acc r
+```
 
+- Visit *left subtree*, then the *root*, then *right subtree*.
+- `f acc v` sits between the two recursive calls.
+- On a BST, this gives elements in **sorted order**.
+
+:::
+
+:::slide
+
+## Problem 5b: pre-order
+
+```ocaml
 let rec fold_preorder f acc = function
   | Leaf -> acc
   | Node (l, v, r) ->
       let acc = f acc v in
       let acc = fold_preorder f acc l in
       fold_preorder f acc r
+```
 
+- *Root first*, then left subtree, then right subtree.
+- `f acc v` moves *before* both recursive calls.
+- Use when each node should be visited before its descendants
+  (e.g. copying / serialising a tree).
+
+:::
+
+:::slide
+
+## Problem 5c: post-order
+
+```ocaml
 let rec fold_postorder f acc = function
   | Leaf -> acc
   | Node (l, v, r) ->
@@ -322,13 +347,12 @@ let rec fold_postorder f acc = function
       f acc v
 ```
 
-- Same recursion; the `f acc v` line moves.
-- In-order: visit left, root, right.
-- Pre-order: root first.
-- Post-order: root last.
+- Left subtree, right subtree, *then* the root.
+- `f acc v` moves *after* both recursive calls.
+- Use when each node's work depends on its children being done
+  first (e.g. evaluating an expression tree).
 
 :::
-<!-- KC: split into 3 slides -->
 
 To see the difference, try them on a small binary search tree:
 
@@ -460,26 +484,27 @@ node" (pre-order on the rose tree) and an inner `List.fold_left`
 across the children's results. This is the pattern that scales fold
 to almost any algebraic data type: one fold per recursive position.
 
-A small example: a filesystem-like hierarchy.
+A small example: a threaded discussion. Each comment carries text
+(or here, a label) and a list of direct replies; each reply is
+itself a comment that may have its own replies.
 
 ```ocaml
-let fs =
-  Rose ("/",
-    [ Rose ("docs",
-        [ Rose ("a.txt", []);
-          Rose ("b.txt", []) ]);
-      Rose ("src",
-        [ Rose ("main.ml", []);
-          Rose ("util.ml", []) ]);
-      Rose ("README.md", []) ])
+let thread =
+  Rose ("Original post",
+    [ Rose ("Reply A",
+        [ Rose ("Reply A.1", []);
+          Rose ("Reply A.2", []) ]);
+      Rose ("Reply B",
+        [ Rose ("Reply B.1", []) ]);
+      Rose ("Reply C", []) ])
 
-let _ = fold_rose (fun acc s -> acc @ [s]) [] fs
-  (* = ["/"; "docs"; "a.txt"; "b.txt"; "src"; "main.ml"; "util.ml"; "README.md"] *)
+let _ = fold_rose (fun acc s -> acc @ [s]) [] thread  (* = ["Original post"; "Reply A"; ...; "Reply C"] *)
 ```
 
-That's a pre-order walk of the filesystem hierarchy: each node
-visited before its descendants. For "give me every path in the
-tree", that's all you need.
+That is the pre-order walk of the discussion: each comment listed
+before its replies, replies listed before their sub-replies. This
+is the same order most threaded forums use to render comments
+top-to-bottom on a page.
 
 :::slide
 
@@ -496,13 +521,14 @@ let rec fold_rose f acc (Rose (v, children)) =
 - Rose tree: each node has a *list* of children, not exactly two.
 - One fold per recursive position: tree recursion *plus*
   `List.fold_left` across the children.
-- Example: a filesystem walked pre-order:
+- Example: a threaded discussion walked pre-order:
 
 ```ocaml skip
-let _ = fold_rose (fun acc s -> acc @ [s]) [] fs
-(* = ["/"; "docs"; "a.txt"; ...; "README.md"] *)
+let _ = fold_rose (fun acc s -> acc @ [s]) [] thread  (* = ["Original post"; "Reply A"; ...; "Reply C"] *)
 ```
 
+- Each comment is listed before its replies: that's how forums
+  render threads top-to-bottom.
 - This pattern scales fold to almost any algebraic data type:
   one fold per recursive position.
 
@@ -530,7 +556,7 @@ let word_counts text =
        (w, n + 1) :: List.remove_assoc w counts
      ) []
 
-let _ = word_counts "the quick brown fox jumps over the lazy dog the fox"
+let _ = word_counts "the quick brown fox jumps over the lazy dog the fox"  (* = [("fox", 2); ...; ("the", 3)] *)
 ```
 
 The result is something like `[("fox", 2); ("dog", 1); ("lazy", 1);
