@@ -82,10 +82,8 @@ let _ = length [10; 20; 30; 40]
 ```ocaml
 let length xs = List.fold_left (fun n _ -> n + 1) 0 xs
 
-let _ = length [10; 20; 30; 40]
+let _ = length [10; 20; 30; 40]  (* = 4 *)
 ```
-
-`int = 4`.
 
 - Ignore the element; bump the counter.
 - Tail-recursive, constant stack.
@@ -119,10 +117,8 @@ let _ = sum [1; 2; 3; 4; 5]
 ```ocaml
 let sum xs = List.fold_left (+) 0 xs
 
-let _ = sum [1; 2; 3; 4; 5]
+let _ = sum [1; 2; 3; 4; 5]  (* = 15 *)
 ```
-
-`int = 15`.
 
 - `+` is the combining function.
 - `0` is the starting accumulator.
@@ -132,10 +128,8 @@ Same shape for `product`:
 ```ocaml
 let product xs = List.fold_left ( * ) 1 xs
 
-let _ = product [1; 2; 3; 4; 5]
+let _ = product [1; 2; 3; 4; 5]  (* = 120 *)
 ```
-
-`int = 120`.
 
 - Accumulator starts at `1` (identity for multiplication).
 
@@ -170,10 +164,8 @@ let _ = rev [1; 2; 3; 4]
 ```ocaml
 let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
 
-let _ = rev [1; 2; 3; 4]
+let _ = rev [1; 2; 3; 4]  (* = [4; 3; 2; 1] *)
 ```
-
-`[4; 3; 2; 1]`.
 
 - Prepend each element to the accumulator.
 - Left-to-right traversal + prepending: first element ends up *deepest*.
@@ -211,10 +203,9 @@ let _ = map (fun n -> n * n) [1; 2; 3; 4]
 let map f xs =
   List.fold_right (fun x acc -> f x :: acc) xs []
 
-let _ = map (fun n -> n * n) [1; 2; 3; 4]
+let _ = map (fun n -> n * n) [1; 2; 3; 4]  (* = [1; 4; 9; 16] *)
 ```
 
-`[1; 4; 9; 16]`.
 
 - `fold_right` walks right-to-left.
 - Cons-order matches the original order.
@@ -265,10 +256,9 @@ let filter p xs =
     (fun x acc -> if p x then x :: acc else acc)
     xs []
 
-let _ = filter (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5; 6]
+let _ = filter (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5; 6]  (* = [2; 4; 6] *)
 ```
 
-`[2; 4; 6]`.
 
 - For each element, decide whether to include it.
 - Combining function picks either `x :: acc` or `acc`.
@@ -303,10 +293,9 @@ Flatten a list of lists into a single list.
 let concat xss =
   List.fold_right (fun xs acc -> xs @ acc) xss []
 
-let _ = concat [[1; 2]; [3; 4; 5]; [6]]
+let _ = concat [[1; 2]; [3; 4; 5]; [6]]  (* = [1; 2; 3; 4; 5; 6] *)
 ```
 
-`[1; 2; 3; 4; 5; 6]`.
 
 - `@` is list-append.
 - Fold over the outer list; append each inner list to the accumulator.
@@ -351,12 +340,11 @@ let for_all p xs = List.fold_left (fun acc x -> acc && p x) true xs
 
 let exists p xs = List.fold_left (fun acc x -> acc || p x) false xs
 
-let _ = for_all (fun n -> n > 0) [1; 2; 3]
-let _ = for_all (fun n -> n > 0) [1; -2; 3]
-let _ = exists (fun n -> n < 0) [1; -2; 3]
+let _ = for_all (fun n -> n > 0) [1; 2; 3]    (* = true *)
+let _ = for_all (fun n -> n > 0) [1; -2; 3]   (* = false *)
+let _ = exists (fun n -> n < 0) [1; -2; 3]    (* = true *)
 ```
 
-`true`, `false`, `true`.
 
 - `for_all`: accumulator starts `true`; an element with `p x = false`
   drags the whole `&&` to false.
@@ -404,10 +392,8 @@ How many elements satisfy a predicate?
 let count p xs =
   List.fold_left (fun n x -> if p x then n + 1 else n) 0 xs
 
-let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]
+let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]  (* = 3 *)
 ```
-
-`int = 3`.
 
 - Three positive elements.
 - Accumulator counts; combining function bumps on a passing element.
@@ -571,11 +557,9 @@ let maximum xs =
       | Some m -> Some (max m x))
     None xs
 
-let _ = maximum [3; 7; 1; 9; 5]
-let _ = maximum ([] : int list)
+let _ = maximum [3; 7; 1; 9; 5]      (* = Some 9 *)
+let _ = maximum ([] : int list)      (* = None *)
 ```
-
-`Some 9`, `None`.
 
 - Accumulator is an `int option`.
 - Starts at `None` (no element seen yet).

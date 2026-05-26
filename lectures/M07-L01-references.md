@@ -102,10 +102,8 @@ let counter = ref 0
 
 let () = counter := 1
 let () = counter := 2
-let _ = !counter
+let _ = !counter  (* = 2 *)
 ```
-
-`int = 2`.
 
 - `ref x` creates a mutable cell holding `x`.
 - `!cell` reads the current value (dereferencing).
@@ -177,12 +175,10 @@ knowing how many times it has been called before.
 let counter = ref 0
 let get_next () = counter := !counter + 1; !counter
 
-let _ = get_next ()
-let _ = get_next ()
-let _ = get_next ()
+let _ = get_next ()  (* = 1 *)
+let _ = get_next ()  (* = 2 *)
+let _ = get_next ()  (* = 3 *)
 ```
-
-`1`, `2`, `3`.
 
 - `get_next ()` is *not* equal to `get_next ()`.
 - First call returns 1, second returns 2.
@@ -304,12 +300,10 @@ let make_once () =
     end
 
 let f = make_once ()
-let _ = f ()
-let _ = f ()
-let _ = f ()
+let _ = f ()  (* = Some "first call" *)
+let _ = f ()  (* = None *)
+let _ = f ()  (* = None *)
 ```
-
-`Some "first call"`, `None`, `None`.
 
 - The closure captures `used`; first call sets it, later calls see it.
 - **Private mutable state inside a function**: a clean use of `ref`.
@@ -378,10 +372,10 @@ type counter = { mutable n : int }
 let c = { n = 0 }
 let () = c.n <- c.n + 1
 let () = c.n <- c.n + 1
-let _ = c.n
+let _ = c.n  (* = 2 *)
 ```
 
-`int = 2`. The `<-` is the assignment operator for mutable record
+The `<-` is the assignment operator for mutable record
 fields.
 
 :::
@@ -656,12 +650,10 @@ let make_counter () =
   fun () -> incr n; !n
 
 let next = make_counter ()
-let _ = next ()
-let _ = next ()
-let _ = next ()
+let _ = next ()  (* = 1 *)
+let _ = next ()  (* = 2 *)
+let _ = next ()  (* = 3 *)
 ```
-
-`1`, `2`, `3`.
 
 - The closure captures `n`; each call increments and reads.
 - `incr n` is shorthand for `n := !n + 1`; `decr` is the other direction.

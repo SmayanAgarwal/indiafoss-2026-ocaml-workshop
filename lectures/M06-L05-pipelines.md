@@ -109,10 +109,8 @@ let _ =
   [1; 2; 3; 4; 5]
   |> List.map (fun x -> x * x)
   |> List.filter (fun y -> y > 5)
-  |> List.fold_left (+) 0
+  |> List.fold_left (+) 0  (* = 50 *)
 ```
-
-`int = 50`.
 
 - Squares of 1-5: `[1;4;9;16;25]`.
 - Keep those > 5: `[9;16;25]`.
@@ -154,10 +152,10 @@ The same computation:
 let _ = List.fold_left (+) 0
           (List.filter (fun y -> y > 5)
              (List.map (fun x -> x * x)
-                [1; 2; 3; 4; 5]))
+                [1; 2; 3; 4; 5]))  (* = 50 *)
 ```
 
-`int = 50`. Same answer, but:
+Same answer, but:
 
 - You start at the *innermost* parens (`[1; 2; 3; 4; 5]`).
 - Then move outward.
@@ -258,10 +256,10 @@ A composition operator could be defined as:
 let compose f g = fun x -> f (g x)
 
 let square_then_inc = compose (fun x -> x + 1) (fun x -> x * x)
-let _ = square_then_inc 4
+let _ = square_then_inc 4  (* = 17 *)
 ```
 
-`int = 17`. `4 * 4 = 16`, then `+ 1 = 17`.
+`4 * 4 = 16`, then `+ 1 = 17`.
 
 - `compose f g` means "do `g` first, then `f`".
 - Mathematically: `f ∘ g`.
@@ -315,10 +313,8 @@ let _ = process 5
 let compose f g = fun x -> f (g x)
 
 let process = compose (fun x -> x * 2) (fun x -> x + 1)
-let _ = process 5
+let _ = process 5  (* = 12 *)
 ```
-
-`12`.
 
 - `process` doesn't mention its argument explicitly.
 - It's defined entirely as a pipeline of two functions.
@@ -377,10 +373,8 @@ let normalize_words text =
   |> List.filter (fun s -> s <> "")
   |> List.map String.trim
 
-let _ = normalize_words "  Hello World  "
+let _ = normalize_words "  Hello World  "  (* = ["hello"; "world"] *)
 ```
-
-`["hello"; "world"]`.
 
 - `text` is named at the top; inside the pipeline, each function
   receives an *unnamed* value (the previous step's output).
@@ -487,11 +481,11 @@ let average_adult_age people =
       let count = List.length ages in
       Some (float_of_int total /. float_of_int count)
 
-let _ = average_adult_age people
+let _ = average_adult_age people  (* = Some 30.0 *)
 ```
 
-The result is `Some 30.0`: the two adults (Ada and Cleo) have ages
-`36` and `24`, average `30`. The pipeline pulls out the ages of
+The two adults (Ada and Cleo) have ages `36` and `24`, average
+`30`. The pipeline pulls out the ages of
 adults in a clean two-step chain; the final aggregation needs the
 list length (`List.length`) so it lives outside the pipeline. We
 return an `int option` because the average is undefined for an empty
@@ -594,11 +588,11 @@ let square x = x * x
 let inc x = x + 1
 let f2 = compose inc square
 
-let _ = f1 5
-let _ = f2 5
+let _ = f1 5  (* = 26 *)
+let _ = f2 5  (* = 26 *)
 ```
 
-`26`, `26`. Same answer.
+Same answer.
 
 - `f1` is direct: take `x`, square it, add 1.
 - `f2` composes `inc` with `square`: first `square`, then `inc`.

@@ -83,12 +83,12 @@ let describe p =
   else if p.y = 0.0 then "on the x-axis"
   else "somewhere else"
 
-let _ = describe { x = 0.0; y = 0.0 }
-let _ = describe { x = 3.0; y = 0.0 }
-let _ = describe { x = 1.0; y = 2.0 }
+let _ = describe { x = 0.0; y = 0.0 }  (* = "origin" *)
+let _ = describe { x = 3.0; y = 0.0 }  (* = "on the x-axis" *)
+let _ = describe { x = 1.0; y = 2.0 }  (* = "somewhere else" *)
 ```
 
-`"origin"`, `"on the x-axis"`, `"somewhere else"`. It works, but
+It works, but
 the shape of the four cases is buried inside boolean tests. A
 record *pattern* with nested field-patterns lets us write the same
 function as a single match:
@@ -177,8 +177,7 @@ type user = { name : string; age : int; admin : bool }
 let summary { name; age; _ } =
   Printf.sprintf "%s, age %d" name age
 
-let _ = summary { name = "Alice"; age = 30; admin = true }
-(* = "Alice, age 30" *)
+let _ = summary { name = "Alice"; age = 30; admin = true }  (* = "Alice, age 30" *)
 ```
 
 `{ name; age; _ }` does three things at once: it matches any
@@ -214,8 +213,7 @@ type user = { name : string; age : int; admin : bool }
 let summary { name; age; _ } =
   Printf.sprintf "%s, age %d" name age
 
-let _ = summary { name = "Alice"; age = 30; admin = true }
-(* = "Alice, age 30" *)
+let _ = summary { name = "Alice"; age = 30; admin = true }  (* = "Alice, age 30" *)
 ```
 
 - `{ name; age; _ }` binds `name` and `age`; `_` ignores the rest.
@@ -238,10 +236,8 @@ type user = { name : string; age : int; admin : bool }
 let role { name = n; admin } =
   if admin then n ^ " (admin)" else n
 
-let _ = role { name = "Bob";   age = 25; admin = true }
-(* = "Bob (admin)" *)
-let _ = role { name = "Carol"; age = 28; admin = false }
-(* = "Carol" *)
+let _ = role { name = "Bob";   age = 25; admin = true }  (* = "Bob (admin)" *)
+let _ = role { name = "Carol"; age = 28; admin = false }  (* = "Carol" *)
 ```
 
 `name = n` says "match the `name` field, and call it `n`
@@ -262,10 +258,8 @@ type user = { name : string; age : int; admin : bool }
 let role { name = n; admin } =
   if admin then n ^ " (admin)" else n
 
-let _ = role { name = "Bob";   age = 25; admin = true }
-(* = "Bob (admin)" *)
-let _ = role { name = "Carol"; age = 28; admin = false }
-(* = "Carol" *)
+let _ = role { name = "Bob";   age = 25; admin = true }  (* = "Bob (admin)" *)
+let _ = role { name = "Carol"; age = 28; admin = false }  (* = "Carol" *)
 ```
 
 - `{ name = n; admin }` renames `name` to local `n`.
@@ -356,8 +350,7 @@ let describe = function
   | Key c          -> Printf.sprintf "key: %c" c
   | Quit           -> "quit"
 
-let _ = describe (Click { x = 100; y = 200 })
-(* = "click at (100, 200)" *)
+let _ = describe (Click { x = 100; y = 200 })  (* = "click at (100, 200)" *)
 let _ = describe (Key 'q')   (* = "key: q" *)
 let _ = describe Quit        (* = "quit" *)
 ```
@@ -393,8 +386,7 @@ let describe = function
   | Key c          -> Printf.sprintf "key: %c" c
   | Quit           -> "quit"
 
-let _ = describe (Click { x = 100; y = 200 })
-(* = "click at (100, 200)" *)
+let _ = describe (Click { x = 100; y = 200 })  (* = "click at (100, 200)" *)
 let _ = describe (Key 'q')   (* = "key: q" *)
 let _ = describe Quit        (* = "quit" *)
 ```

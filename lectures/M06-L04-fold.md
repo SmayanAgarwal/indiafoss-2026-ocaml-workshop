@@ -207,10 +207,8 @@ let rec fold_left f acc = function
   | [] -> acc
   | x :: rest -> fold_left f (f acc x) rest
 
-let _ = fold_left (+) 0 [1; 2; 3; 4]
+let _ = fold_left (+) 0 [1; 2; 3; 4]  (* = 10 *)
 ```
-
-`int = 10`.
 
 - Type: `('acc -> 'a -> 'acc) -> 'acc -> 'a list -> 'acc`.
 - The function combines the running accumulator with the next
@@ -406,10 +404,8 @@ let _ = map_via_fold (fun n -> n * n) [1; 2; 3]
 let map_via_fold f xs =
   List.fold_right (fun x acc -> f x :: acc) xs []
 
-let _ = map_via_fold (fun n -> n * n) [1; 2; 3]
+let _ = map_via_fold (fun n -> n * n) [1; 2; 3]  (* = [1; 4; 9] *)
 ```
-
-`[1; 4; 9]`.
 
 - Accumulator starts as `[]`.
 - For each element (right-to-left) we cons `f x` onto it.
@@ -454,10 +450,8 @@ let filter_via_fold p xs =
     (fun x acc -> if p x then x :: acc else acc)
     xs []
 
-let _ = filter_via_fold (fun n -> n > 2) [1; 2; 3; 4]
+let _ = filter_via_fold (fun n -> n > 2) [1; 2; 3; 4]  (* = [3; 4] *)
 ```
-
-`[3; 4]`.
 
 - The combining function decides whether to include each element.
 - `fold` is more general than `map` or `filter`.
@@ -511,10 +505,8 @@ let rec fold_tree f acc = function
       fold_tree f acc r
 
 let _ = fold_tree (+) 0
-          (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
+          (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))  (* = 6 *)
 ```
-
-`int = 6`.
 
 - An in-order tree fold.
 - Accumulator visits left subtree, then root, then right subtree.
@@ -686,11 +678,9 @@ let length xs = List.fold_left (fun n _ -> n + 1) 0 xs
 
 let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
 
-let _ = length [10; 20; 30; 40]
-let _ = rev [1; 2; 3; 4]
+let _ = length [10; 20; 30; 40]  (* = 4 *)
+let _ = rev [1; 2; 3; 4]         (* = [4; 3; 2; 1] *)
 ```
-
-`4`, `[4; 3; 2; 1]`.
 
 - `length`: ignore each element, bump the counter.
 - `rev`: prepend each element to the accumulator.

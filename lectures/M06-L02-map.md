@@ -101,10 +101,8 @@ let rec map f = function
   | [] -> []
   | h :: t -> f h :: map f t
 
-let _ = map (fun x -> x * x) [1; 2; 3; 4]
+let _ = map (fun x -> x * x) [1; 2; 3; 4]  (* = [1; 4; 9; 16] *)
 ```
-
-`int list = [1; 4; 9; 16]`.
 
 - `f : 'a -> 'b`.
 - Input is `'a list`, output is `'b list`.
@@ -467,11 +465,9 @@ let _ = Option.map (fun x -> x + 1) None
 - The idea generalises to anything that "contains" elements:
 
 ```ocaml
-let _ = Option.map (fun x -> x + 1) (Some 5)
-let _ = Option.map (fun x -> x + 1) None
+let _ = Option.map (fun x -> x + 1) (Some 5)  (* = Some 6 *)
+let _ = Option.map (fun x -> x + 1) None      (* = None *)
 ```
-
-`Some 6`, `None`.
 
 - `Option.map` applies the function inside `Some`.
 - It passes `None` through unchanged.
@@ -514,9 +510,8 @@ let rec map_tree f = function
 
 let _ = map_tree (fun x -> x * 10)
                  (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
+(* result: Node (Node (Leaf, 10, Leaf), 20, Node (Leaf, 30, Leaf)) *)
 ```
-
-`Node (Node (Leaf, 10, Leaf), 20, Node (Leaf, 30, Leaf))`.
 
 - Same tree shape; every value multiplied by 10.
 - Any "container of elements" type can have its own `map`.
@@ -539,13 +534,12 @@ let people = [
   { name = "Grace";  age = 85 };
 ]
 
-let names = List.map (fun p -> p.name) people
+let names = List.map (fun p -> p.name) people  (* = ["Ada"; "Linus"; "Grace"] *)
+
 let descriptions =
   List.map (fun p -> p.name ^ " is " ^ string_of_int p.age) people
+(* descriptions = ["Ada is 36"; "Linus is 54"; "Grace is 85"] *)
 ```
-
-`names` is `["Ada"; "Linus"; "Grace"]`. `descriptions` is
-`["Ada is 36"; "Linus is 54"; "Grace is 85"]`.
 
 The first `map` is *projection*: pull a field out of every record.
 This is so common that some libraries (Jane Street's `Core`, for
