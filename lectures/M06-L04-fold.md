@@ -406,17 +406,17 @@ The list `[1; 2; 3; 4; 5]`:
 :::
 :::col 55%
 
-After `fold_left (+) 0 xs`:
+After `fold_left f z xs`:
 
-<img src="assets/m06/figures/sum_fold.svg" alt="fold_left tree" style="max-width: 100%; height: auto;">
+<img src="assets/m06/figures/fold_left.svg" alt="fold_left tree" style="max-width: 100%; height: auto;">
 
 :::
 :::
 
 - Mirror of `fold_right`'s tree: *left-leaning* this time.
-- Each `+` nests into the **first** argument.
-- Same shape applies to any `f` and accumulator: replace `+` with
-  `f`, replace `0` with `acc`.
+- Each `f` nests into the **first** argument.
+- Deepest node holds `z` (the initial accumulator) and `1` (the
+  first list element); fold_left starts there and walks up-right.
 
 :::
 
