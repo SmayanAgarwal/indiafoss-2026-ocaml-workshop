@@ -394,7 +394,7 @@ For `fold_left (+) 0 [1; 2; 3]`:
 
 :::slide
 
-## `fold_left` as a tree
+## `fold_left` walks the list in reverse
 
 :::cols
 :::col 45%
@@ -406,17 +406,23 @@ The list `[1; 2; 3; 4; 5]`:
 :::
 :::col 55%
 
-After `fold_left f z xs`:
+After `fold_left (+) 0 xs`:
 
-<img src="assets/m06/figures/fold_left.svg" alt="fold_left tree" style="max-width: 100%; height: auto;">
+<img src="assets/m06/figures/sum_fold.svg" alt="fold_left sum tree" style="max-width: 100%; height: auto;">
 
 :::
 :::
 
-- Mirror of `fold_right`'s tree: *left-leaning* this time.
-- Each `f` nests into the **first** argument.
-- Deepest node holds `z` (the initial accumulator) and `1` (the
-  first list element); fold_left starts there and walks up-right.
+- Not a mirror of `fold_right`'s tree: `fold_left` genuinely
+  walks the list in **reverse order**.
+- Elements appear top-to-bottom as `5, 4, 3, 2, 1, 0`: the *last*
+  list element is at the outermost `f`, the accumulator at the
+  deepest right.
+- For `(+)` (associative + commutative) this produces the same
+  answer as `fold_right`; the picture works as a stylised
+  visualisation of either fold's effect on a sum.
+- Tail-recursive (next slide): each `+` finishes before the next
+  call starts.
 
 :::
 
