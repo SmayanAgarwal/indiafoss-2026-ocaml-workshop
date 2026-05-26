@@ -203,9 +203,9 @@ documenting work.
 ## Examples
 
 ```ocaml
-let _ = List.map (fun x -> x * 2) [1; 2; 3]
-let _ = List.map string_of_int [1; 2; 3]
-let _ = List.map String.length ["hello"; "world"; "!"]
+let _ = List.map (fun x -> x * 2) [1; 2; 3]              (* = [2; 4; 6] *)
+let _ = List.map string_of_int [1; 2; 3]                 (* = ["1"; "2"; "3"] *)
+let _ = List.map String.length ["hello"; "world"; "!"]   (* = [5; 5; 1] *)
 ```
 
 :::slide
@@ -213,12 +213,10 @@ let _ = List.map String.length ["hello"; "world"; "!"]
 ## `map` in the standard library
 
 ```ocaml
-let _ = List.map (fun x -> x * 2) [1; 2; 3]
-let _ = List.map string_of_int [1; 2; 3]
-let _ = List.map String.length ["hello"; "world"; "!"]
+let _ = List.map (fun x -> x * 2) [1; 2; 3]              (* = [2; 4; 6] *)
+let _ = List.map string_of_int [1; 2; 3]                 (* = ["1"; "2"; "3"] *)
+let _ = List.map String.length ["hello"; "world"; "!"]   (* = [5; 5; 1] *)
 ```
-
-`[2; 4; 6]`, `["1"; "2"; "3"]`, `[5; 5; 1]`.
 
 Each call transforms element-by-element with the given function.
 
@@ -237,8 +235,8 @@ from Lecture 1 with `map` gives some of the most compact OCaml in
 the standard library:
 
 ```ocaml
-let _ = List.map ((+) 10) [1; 2; 3]
-let _ = List.map (( * ) 2) [1; 2; 3]
+let _ = List.map ((+) 10) [1; 2; 3]   (* = [11; 12; 13] *)
+let _ = List.map (( * ) 2) [1; 2; 3]  (* = [2; 4; 6] *)
 ```
 
 :::slide
@@ -246,11 +244,9 @@ let _ = List.map (( * ) 2) [1; 2; 3]
 ## Partial application + map
 
 ```ocaml
-let _ = List.map ((+) 10) [1; 2; 3]
-let _ = List.map (( * ) 2) [1; 2; 3]
+let _ = List.map ((+) 10) [1; 2; 3]   (* = [11; 12; 13] *)
+let _ = List.map (( * ) 2) [1; 2; 3]  (* = [2; 4; 6] *)
 ```
-
-`[11; 12; 13]` and `[2; 4; 6]`.
 
 - `(+) 10` is the function "add 10".
 - `( * ) 2` is "multiply by 2".
@@ -348,10 +344,8 @@ let map f xs =
   in
   go [] xs
 
-let _ = map (fun x -> x * x) [1; 2; 3; 4]
+let _ = map (fun x -> x * x) [1; 2; 3; 4]   (* = [1; 4; 9; 16] *)
 ```
-
-`[1; 4; 9; 16]`.
 
 - Accumulate in reverse, then reverse at the end.
 - Two passes through the list, constant stack.
@@ -393,6 +387,48 @@ let map f xs =
 Two passes through the list (the fold-style traversal, then the
 reverse), but each pass is linear and tail-recursive. Total: still
 `O(n)` time, `O(1)` stack.
+
+Where does `List.rev` come from? It is itself a small
+tail-recursive function with the same accumulator-and-cons shape
+as our tail-recursive `map`:
+
+```ocaml
+let rev xs =
+  let rec go acc = function
+    | [] -> acc
+    | x :: rest -> go (x :: acc) rest
+  in
+  go [] xs
+
+let _ = rev [1; 2; 3]  (* = [3; 2; 1] *)
+```
+
+No magic: walk the list left to right, cons each element onto
+`acc` (so each element moves to the front of the accumulator),
+return `acc` at the end. The same tail-recursion pattern we just
+applied to `map`.
+
+:::slide
+
+## `rev` is not magic
+
+```ocaml
+let rev xs =
+  let rec go acc = function
+    | [] -> acc
+    | x :: rest -> go (x :: acc) rest
+  in
+  go [] xs
+
+let _ = rev [1; 2; 3]  (* = [3; 2; 1] *)
+```
+
+- Same accumulator-and-cons pattern as tail-recursive `map`.
+- Cons onto `acc`: each element moves to the front.
+- Walking left to right, accumulating right to left, reverses.
+- `List.rev` is just this, in the standard library.
+
+:::
 
 The standard library makes a deliberate choice here: `List.map` is
 the naive *non-tail-recursive* version, because for typical inputs
@@ -612,12 +648,10 @@ let rec zip_with f xs ys =
   | [], _ | _, [] -> []
   | x :: xr, y :: yr -> f x y :: zip_with f xr yr
 
-let _ = zip_with (+) [1; 2; 3] [10; 20; 30]
-let _ = zip_with (fun a b -> a ^ b) ["he"; "wo"] ["llo"; "rld"]
-let _ = zip_with (+) [1; 2; 3] [10; 20]
+let _ = zip_with (+) [1; 2; 3] [10; 20; 30]                       (* = [11; 22; 33] *)
+let _ = zip_with (fun a b -> a ^ b) ["he"; "wo"] ["llo"; "rld"]   (* = ["hello"; "world"] *)
+let _ = zip_with (+) [1; 2; 3] [10; 20]                           (* = [11; 22] *)
 ```
-
-`[11; 22; 33]`, `["hello"; "world"]`, `[11; 22]`.
 
 - `[], _ | _, []` is an or-pattern catching either list empty.
 - When either runs out, we stop.
