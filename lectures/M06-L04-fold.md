@@ -67,8 +67,8 @@ let rec all_true = function
   | [] -> true
   | h :: t -> h && all_true t
 
-let _ = sum [1; 2; 3]
-let _ = all_true [true; true; false]
+let _ = sum [1; 2; 3]                       (* = 6 *)
+let _ = all_true [true; true; false]        (* = false *)
 ```
 
 Same shape, two differences:
@@ -93,7 +93,7 @@ let all_true = reduce (&&) true
 
 :::slide
 
-## From sum and all_true to fold
+## Two functions, the same shape
 
 ```ocaml
 let rec sum = function
@@ -105,11 +105,15 @@ let rec all_true = function
   | h :: t -> h && all_true t
 ```
 
-- Same shape.
-- Base case differs: `0` vs `true`.
-- Combining step differs: `+` vs `&&`.
+- Same recursion skeleton; two things differ.
+- Base case: `0` for `sum`, `true` for `all_true`.
+- Combining step: `+` for `sum`, `&&` for `all_true`.
 
-Factor both out:
+:::
+
+:::slide
+
+## Factor both out: `reduce`
 
 ```ocaml
 let rec reduce f init = function
@@ -121,7 +125,8 @@ let all_true = reduce (&&) true
 ```
 
 - One generic function captures the shape.
-- Two parameters: the combining function, the initial value.
+- Two parameters: the combining function `f`, the initial value `init`.
+- `sum` and `all_true` collapse to one-liners on top of `reduce`.
 
 :::
 
@@ -136,8 +141,8 @@ let rec fold_right f xs acc =
   | [] -> acc
   | h :: t -> f h (fold_right f t acc)
 
-let _ = fold_right (+) [1; 2; 3] 0
-let _ = fold_right (^) ["a"; "b"; "c"] ""
+let _ = fold_right (+) [1; 2; 3] 0          (* = 6 *)
+let _ = fold_right (^) ["a"; "b"; "c"] ""   (* = "abc" *)
 ```
 
 That is the actual signature of `List.fold_right`. Read the type:
@@ -195,7 +200,7 @@ let rec fold_left f acc = function
   | [] -> acc
   | x :: rest -> fold_left f (f acc x) rest
 
-let _ = fold_left (+) 0 [1; 2; 3; 4]
+let _ = fold_left (+) 0 [1; 2; 3; 4]        (* = 10 *)
 ```
 
 :::slide
@@ -393,7 +398,7 @@ For `map`:
 let map_via_fold f xs =
   List.fold_right (fun x acc -> f x :: acc) xs []
 
-let _ = map_via_fold (fun n -> n * n) [1; 2; 3]
+let _ = map_via_fold (fun n -> n * n) [1; 2; 3]  (* = [1; 4; 9] *)
 ```
 
 :::slide
@@ -416,7 +421,7 @@ Tail-recursive variant with `fold_left + rev`:
 let map_via_fold_left f xs =
   List.rev (List.fold_left (fun acc x -> f x :: acc) [] xs)
 
-let _ = map_via_fold_left (fun n -> n * n) [1; 2; 3]
+let _ = map_via_fold_left (fun n -> n * n) [1; 2; 3]  (* = [1; 4; 9] *)
 ```
 
 Same result. Two passes (fold then rev), but tail-recursive.
@@ -437,7 +442,7 @@ let filter_via_fold p xs =
     (fun x acc -> if p x then x :: acc else acc)
     xs []
 
-let _ = filter_via_fold (fun n -> n > 2) [1; 2; 3; 4]
+let _ = filter_via_fold (fun n -> n > 2) [1; 2; 3; 4]  (* = [3; 4] *)
 ```
 
 :::slide
@@ -487,7 +492,7 @@ let rec fold_tree f acc = function
       fold_tree f acc r
 
 let _ = fold_tree (+) 0
-          (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
+          (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))  (* = 6 *)
 ```
 
 :::slide
@@ -550,11 +555,9 @@ reader has to decode the accumulator threading. The rule of thumb:
 let sum_squares_a xs = xs |> List.map (fun x -> x * x) |> List.fold_left (+) 0
 let sum_squares_b xs = List.fold_left (fun acc x -> acc + x * x) 0 xs
 
-let _ = sum_squares_a [1; 2; 3]
-let _ = sum_squares_b [1; 2; 3]
+let _ = sum_squares_a [1; 2; 3]  (* = 14 *)
+let _ = sum_squares_b [1; 2; 3]  (* = 14 *)
 ```
-
-Both give `14`.
 
 - First: pipeline (map, then sum).
 - Second: one fold.
@@ -579,10 +582,10 @@ then are surprised when `fold_left` produces a *reversed* result
 where they wanted the original order.
 
 ```ocaml
-let _ = List.fold_left (fun acc x -> x :: acc) [] [1; 2; 3]
+let _ = List.fold_left (fun acc x -> x :: acc) [] [1; 2; 3]  (* = [3; 2; 1] *)
 ```
 
-What does this return? It returns `[3; 2; 1]`, not `[1; 2; 3]`.
+It returns `[3; 2; 1]`, not `[1; 2; 3]`.
 
 Why? `fold_left` walks left to right. At each step, we cons the
 current element onto the accumulator. After the first element, `acc
