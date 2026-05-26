@@ -196,8 +196,8 @@ CS3100. Inline-result-comment sweep applied across M06 lectures.
 | M06-L03 | `filter`: keep what passes the predicate | 14 | 21 | 29 |
 | M06-L04 | `fold`: reduce a list to a single value | 22 | 33 | 46 |
 | M06-L05 | Function composition and pipelines | 13 | 20 | 28 |
-| M06-L06 | Tutorial: fold across data structures | 14 | 21 | 29 |
-| **M06 total** | | **92** | **139** | **193** |
+| M06-L06 | Tutorial: fold across data structures | 16 | 24 | 34 |
+| **M06 total** | | **94** | **142** | **198** |
 | | | | **(2.3 h)** | **(3.2 h)** |
 
 M06-L04 overruns the NPTEL 30-min ceiling at 22 slides / 33 min
@@ -428,9 +428,9 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1809 min (30.2 hours) across
+- **Final video**: 1812 min (30.2 hours) across
   81 lectures and 12 modules.
-- **Estimated recording time**: 2533 min (42.2 hours)
+- **Estimated recording time**: 2538 min (42.3 hours)
   at the 1.4x multiplier.
 
 The 30.1 hours of final video meets NPTEL's ~30 hr target
