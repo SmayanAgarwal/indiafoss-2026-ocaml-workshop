@@ -531,6 +531,9 @@ let rec fold_rose f acc (Rose (v, children)) =
 
 ## Problem 7b: walking a threaded discussion
 
+:::cols
+:::col 80%
+
 ```ocaml skip
 let thread =
   Rose ("Post",
@@ -546,6 +549,18 @@ let _ = fold_rose (fun acc s -> acc @ [s]) [] thread
 - Same fold engine; only the combining function and accumulator
   change to match the question being asked.
 
+:::
+:::col 20%
+
+```text
++ Post
+  + A
+    + A.1
+  + B
+```
+
+:::
+:::
 :::
 
 ## A wider example: word frequencies
@@ -618,6 +633,26 @@ let word_counts text =
   prepend the bumped one.
 - `O(n^2)` because `List.assoc` is linear; for production use
   `Map` or `Hashtbl` ([Module 7](M07-L08-functors.html)).
+
+:::
+
+:::slide
+
+## `word_counts`: a worked example
+
+```ocaml
+let _ = word_counts
+  "the quick brown fox jumps over the lazy dog the fox"
+(* = [("fox", 2); ("dog", 1); ("lazy", 1); ("over", 1);
+      ("jumps", 1); ("brown", 1); ("quick", 1); ("the", 3)] *)
+```
+
+- Eight distinct words; "the" appears three times, "fox" twice.
+- Ordering is "most-recently-touched first" (each step prepends).
+- Same code on a 10 MB text file: still works, but `O(n^2)` in
+  distinct words starts to bite.
+- M07's `Map` / `Hashtbl` will turn this into an `O(n)` one-liner
+  with the same overall shape.
 
 :::
 
