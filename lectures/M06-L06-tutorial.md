@@ -48,7 +48,10 @@ the end of this lecture, if I asked you to write a new list-flavoured
 function on the spot, you should reach for `map`, `filter`, or
 `fold` first.
 
-We will work through eight problems, increasing in subtlety.
+We will work through seven problems: four rebuild small `List`
+functions on top of `fold`, and three lift `fold` to other
+data structures (binary tree pre/in/post/level order, and rose
+trees).
 
 :::slide
 
@@ -61,48 +64,13 @@ We will work through eight problems, increasing in subtlety.
 - Pick a `List` function from the standard library; rebuild it from the toolkit.
 - Not that you should re-derive these in real code; the point is to *see*
   how few primitives the rest follows from.
-- Eight problems, increasing in subtlety.
+- Seven problems: four `List`-fold rebuilds, then three lifts of
+  `fold` to other data structures (binary tree pre/in/post/level
+  order, rose trees).
 
 :::
 
-## Problem 1: `length`
-
-Given a list, return how many elements it has.
-
-```ocaml
-let length xs = List.fold_left (fun n _ -> n + 1) 0 xs
-
-let _ = length [10; 20; 30; 40]
-```
-
-:::slide
-
-## Problem 1: `length`
-
-```ocaml
-let length xs = List.fold_left (fun n _ -> n + 1) 0 xs
-
-let _ = length [10; 20; 30; 40]  (* = 4 *)
-```
-
-- Ignore the element; bump the counter.
-- Tail-recursive, constant stack.
-
-:::
-
-The fold's accumulator is the running count, starting at `0`. The
-combining function ignores the element (we wrote `_` to make that
-explicit) and adds one to the accumulator. Tail-recursive, constant
-stack.
-
-Notice we did not write `match xs with [] -> 0 | _ :: t -> 1 +
-length t`. The hand-written recursion works fine, but it is *not*
-[tail-recursive](M03-L04-tail-recursion.html) and would overflow the
-stack on very long lists. The fold version is automatically
-tail-recursive. This is one of the small wins of using the
-higher-order toolkit: you get the safe recursion shape for free.
-
-## Problem 2: `sum` and `product`
+## Problem 1: `sum` and `product`
 
 ```ocaml
 let sum xs = List.fold_left (+) 0 xs
@@ -112,7 +80,7 @@ let _ = sum [1; 2; 3; 4; 5]
 
 :::slide
 
-## Problem 2: `sum`
+## Problem 1: `sum` and `product`
 
 ```ocaml
 let sum xs = List.fold_left (+) 0 xs
@@ -147,131 +115,7 @@ returns `1`. Picking the identity makes those answers consistent
 with the mathematical convention that an empty sum is zero and an
 empty product is one.)
 
-## Problem 3: `rev`
-
-Reverse a list.
-
-```ocaml
-let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
-
-let _ = rev [1; 2; 3; 4]
-```
-
-:::slide
-
-## Problem 3: `rev`
-
-```ocaml
-let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
-
-let _ = rev [1; 2; 3; 4]  (* = [4; 3; 2; 1] *)
-```
-
-- Prepend each element to the accumulator.
-- Left-to-right traversal + prepending: first element ends up *deepest*.
-- Result is reversed.
-
-:::
-
-The trick: walk the list left to right, but cons each element onto
-the *front* of the accumulator. The first element processed (`1`)
-ends up the deepest cons cell; the last (`4`) is on top. Reversed.
-
-This is the standard library's `List.rev`. The combining function is
-`fun acc x -> x :: acc`. If you want the original order back, use
-`List.fold_right (fun x acc -> x :: acc) xs []`, which walks
-right-to-left and rebuilds the list in order. (That is the identity
-fold we discussed in [Lecture 4](M06-L04-fold.html#what-foldright-computes):
-replace `::` with `::` and `[]` with `[]`.)
-
-## Problem 4: `map` (via `fold_right`)
-
-Rebuild `map` itself.
-
-```ocaml
-let map f xs =
-  List.fold_right (fun x acc -> f x :: acc) xs []
-
-let _ = map (fun n -> n * n) [1; 2; 3; 4]
-```
-
-:::slide
-
-## Problem 4: `map` (via fold_right)
-
-```ocaml
-let map f xs =
-  List.fold_right (fun x acc -> f x :: acc) xs []
-
-let _ = map (fun n -> n * n) [1; 2; 3; 4]  (* = [1; 4; 9; 16] *)
-```
-
-
-- `fold_right` walks right-to-left.
-- Cons-order matches the original order.
-- Combining function: take `x`, apply `f`, cons onto the running list.
-
-Same with `fold_left + rev`:
-
-```ocaml
-let map_tail f xs =
-  List.rev (List.fold_left (fun acc x -> f x :: acc) [] xs)
-
-let _ = map_tail (fun n -> n * n) [1; 2; 3; 4]
-```
-
-Two passes, but tail-recursive.
-
-:::
-
-The `fold_right` version walks right-to-left, so consing onto the
-accumulator naturally preserves order. It is not tail-recursive,
-which is fine for small lists and matches the standard library's
-`List.map` behaviour. The `fold_left + rev` version is
-tail-recursive but makes two passes.
-
-It is worth pausing here: we have just rebuilt [`map`](M06-L02-map.html),
-one of the three pillars of this module, from `fold_right`. This is
-a small but real piece of evidence for the claim that `fold` is the
-most general of the three: anything `map` does, `fold` can do too.
-
-## Problem 5: `filter` (via `fold_right`)
-
-```ocaml
-let filter p xs =
-  List.fold_right
-    (fun x acc -> if p x then x :: acc else acc)
-    xs []
-
-let _ = filter (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5; 6]
-```
-
-:::slide
-
-## Problem 5: `filter` (via fold_right)
-
-```ocaml
-let filter p xs =
-  List.fold_right
-    (fun x acc -> if p x then x :: acc else acc)
-    xs []
-
-let _ = filter (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5; 6]  (* = [2; 4; 6] *)
-```
-
-
-- For each element, decide whether to include it.
-- Combining function picks either `x :: acc` or `acc`.
-
-:::
-
-The combining function chooses, per element, whether to include `x`
-in the accumulator or to drop it. We have now rebuilt the second
-pillar from `fold`. We could keep going (concat, take, drop,
-zip, ...). Almost every list-shaped function in the standard library
-is some specialised fold.
-
-## Problem 6: `concat`
+## Problem 2: `concat`
 
 Flatten a list of lists into a single list. (Also called `flatten`
 in some libraries.)
@@ -285,7 +129,7 @@ let _ = concat [[1; 2]; [3; 4; 5]; [6]]
 
 :::slide
 
-## Problem 6: `concat`
+## Problem 2: `concat`
 
 Flatten a list of lists into a single list.
 
@@ -317,7 +161,7 @@ and ends up at the front of the result.
 The standard library's `List.concat` is similar but optimised for
 the common case.
 
-## Problem 7: `for_all` and `exists`
+## Problem 3: `for_all` and `exists`
 
 Two list predicates.
 
@@ -333,7 +177,7 @@ let _ = exists (fun n -> n < 0) [1; -2; 3]
 
 :::slide
 
-## Problem 7: `for_all` and `exists`
+## Problem 3: `for_all` and `exists`
 
 ```ocaml
 let for_all p xs = List.fold_left (fun acc x -> acc && p x) true xs
@@ -371,7 +215,7 @@ arrives early, the standard library is faster. Another reason to
 prefer the library version over the home-rolled fold one in real
 code.
 
-## Problem 8: `count`
+## Problem 4: `count`
 
 Count how many elements satisfy a predicate.
 
@@ -384,7 +228,7 @@ let _ = count (fun n -> n > 0) [-1; 5; -3; 8; 0; 2]
 
 :::slide
 
-## Problem 8: `count`
+## Problem 4: `count`
 
 How many elements satisfy a predicate?
 
@@ -409,6 +253,259 @@ two-step version is arguably clearer; the fold version makes one
 pass and never allocates the intermediate list. For short lists this
 does not matter; for long ones the fold version saves both time and
 garbage.
+
+## Problem 5: tree folds in three orderings
+
+Everything so far has been a fold on a `list`. The fold pattern
+generalises directly to any recursive data type. A binary tree:
+
+```ocaml
+type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+```
+
+Three natural traversal orderings, all the same recursion with
+`f acc v` permuted:
+
+```ocaml
+let rec fold_inorder f acc = function
+  | Leaf -> acc
+  | Node (l, v, r) ->
+      let acc = fold_inorder f acc l in
+      let acc = f acc v in
+      fold_inorder f acc r
+
+let rec fold_preorder f acc = function
+  | Leaf -> acc
+  | Node (l, v, r) ->
+      let acc = f acc v in
+      let acc = fold_preorder f acc l in
+      fold_preorder f acc r
+
+let rec fold_postorder f acc = function
+  | Leaf -> acc
+  | Node (l, v, r) ->
+      let acc = fold_postorder f acc l in
+      let acc = fold_postorder f acc r in
+      f acc v
+```
+
+The only thing that changes is *where* the visit `f acc v` sits
+relative to the two recursive calls. In-order: between the
+children. Pre-order: before. Post-order: after.
+
+:::slide
+
+## Problem 5: tree folds in three orderings
+
+```ocaml
+type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+
+let rec fold_inorder f acc = function
+  | Leaf -> acc
+  | Node (l, v, r) ->
+      let acc = fold_inorder f acc l in
+      let acc = f acc v in
+      fold_inorder f acc r
+
+let rec fold_preorder f acc = function
+  | Leaf -> acc
+  | Node (l, v, r) ->
+      let acc = f acc v in
+      let acc = fold_preorder f acc l in
+      fold_preorder f acc r
+
+let rec fold_postorder f acc = function
+  | Leaf -> acc
+  | Node (l, v, r) ->
+      let acc = fold_postorder f acc l in
+      let acc = fold_postorder f acc r in
+      f acc v
+```
+
+- Same recursion; the `f acc v` line moves.
+- In-order: visit left, root, right.
+- Pre-order: root first.
+- Post-order: root last.
+
+:::
+
+To see the difference, try them on a small binary search tree:
+
+```ocaml
+let t =
+  Node (
+    Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)),
+    4,
+    Node (Node (Leaf, 5, Leaf), 6, Node (Leaf, 7, Leaf)))
+
+let collect = fun acc x -> acc @ [x]
+
+let _ = fold_inorder   collect [] t  (* = [1; 2; 3; 4; 5; 6; 7] *)
+let _ = fold_preorder  collect [] t  (* = [4; 2; 1; 3; 6; 5; 7] *)
+let _ = fold_postorder collect [] t  (* = [1; 3; 2; 5; 7; 6; 4] *)
+```
+
+In-order on a BST returns elements in sorted order: that is the
+defining property of a BST. Pre-order lists every node before its
+children, which mirrors how the tree is built. Post-order lists
+every node after its children, which is what you want when each
+node's value depends on its subtrees being processed first (think
+"evaluate the leaves before the internal nodes").
+
+:::slide
+
+## Three orderings on one tree
+
+The tree:
+
+```text
+       4
+      / \
+     2   6
+    / \ / \
+   1  3 5  7
+```
+
+```ocaml
+let _ = fold_inorder   collect [] t  (* = [1; 2; 3; 4; 5; 6; 7] *)
+let _ = fold_preorder  collect [] t  (* = [4; 2; 1; 3; 6; 5; 7] *)
+let _ = fold_postorder collect [] t  (* = [1; 3; 2; 5; 7; 6; 4] *)
+```
+
+- In-order on a BST: sorted order (`1..7`).
+- Pre-order: root before children (build / clone the tree).
+- Post-order: children before root (evaluate subtrees first).
+
+:::
+
+## Problem 6: level-order with a queue
+
+Pre/in/post are easy because they follow the tree's own recursive
+shape. *Level-order* (or *breadth-first*) traversal is different:
+it visits all nodes at depth 0, then all at depth 1, then 2, and
+so on. The recursive shape of the tree does not give you that order
+for free, because each recursive call dives straight to a child
+before visiting the sibling.
+
+The standard trick is an explicit *queue* of pending nodes:
+
+```ocaml
+let levelorder_fold f acc tree =
+  let rec go acc = function
+    | [] -> acc
+    | Leaf :: rest -> go acc rest
+    | Node (l, v, r) :: rest ->
+        go (f acc v) (rest @ [l; r])
+  in
+  go acc [tree]
+
+let _ = levelorder_fold collect [] t  (* = [4; 2; 6; 1; 3; 5; 7] *)
+```
+
+The inner function `go` takes a list-as-queue. At each step, take
+the head; if it's a `Leaf`, drop it and continue; if it's a `Node`,
+visit `v` and append the two children to the *back* of the queue
+with `@ [l; r]`. Appending to the back is what makes the traversal
+breadth-first: a node's children are queued behind all the nodes
+already pending at the current depth, so the current level finishes
+before the next one starts.
+
+:::slide
+
+## Problem 6: level-order with a queue
+
+```ocaml
+let levelorder_fold f acc tree =
+  let rec go acc = function
+    | [] -> acc
+    | Leaf :: rest -> go acc rest
+    | Node (l, v, r) :: rest ->
+        go (f acc v) (rest @ [l; r])
+  in
+  go acc [tree]
+
+let _ = levelorder_fold collect [] t  (* = [4; 2; 6; 1; 3; 5; 7] *)
+```
+
+- *Not* a fold on the tree's own recursive shape.
+- Uses a list-as-queue of pending subtrees.
+- Children appended to the *back*: BFS, level by level.
+- `rest @ [l; r]` is `O(n)`; a real implementation uses a proper
+  `Queue` (Module 7).
+
+:::
+
+## Problem 7: fold over rose trees
+
+A *rose tree* is an n-ary tree: each node carries a value and a
+*list* of children, instead of exactly two:
+
+```ocaml
+type 'a rose = Rose of 'a * 'a rose list
+```
+
+A fold over a rose tree combines tree recursion with list recursion:
+visit this node's value, then `List.fold_left` over the children,
+recursively folding each one:
+
+```ocaml
+let rec fold_rose f acc (Rose (v, children)) =
+  let acc = f acc v in
+  List.fold_left (fold_rose f) acc children
+```
+
+The body has two folds nested in each other: an outer "fold this
+node" (pre-order on the rose tree) and an inner `List.fold_left`
+across the children's results. This is the pattern that scales fold
+to almost any algebraic data type: one fold per recursive position.
+
+A small example: a filesystem-like hierarchy.
+
+```ocaml
+let fs =
+  Rose ("/",
+    [ Rose ("docs",
+        [ Rose ("a.txt", []);
+          Rose ("b.txt", []) ]);
+      Rose ("src",
+        [ Rose ("main.ml", []);
+          Rose ("util.ml", []) ]);
+      Rose ("README.md", []) ])
+
+let _ = fold_rose (fun acc s -> acc @ [s]) [] fs
+  (* = ["/"; "docs"; "a.txt"; "b.txt"; "src"; "main.ml"; "util.ml"; "README.md"] *)
+```
+
+That's a pre-order walk of the filesystem hierarchy: each node
+visited before its descendants. For "give me every path in the
+tree", that's all you need.
+
+:::slide
+
+## Problem 7: fold over rose trees
+
+```ocaml skip
+type 'a rose = Rose of 'a * 'a rose list
+
+let rec fold_rose f acc (Rose (v, children)) =
+  let acc = f acc v in
+  List.fold_left (fold_rose f) acc children
+```
+
+- Rose tree: each node has a *list* of children, not exactly two.
+- One fold per recursive position: tree recursion *plus*
+  `List.fold_left` across the children.
+- Example: a filesystem walked pre-order:
+
+```ocaml skip
+let _ = fold_rose (fun acc s -> acc @ [s]) [] fs
+(* = ["/"; "docs"; "a.txt"; ...; "README.md"] *)
+```
+
+- This pattern scales fold to almost any algebraic data type:
+  one fold per recursive position.
+
+:::
 
 ## A wider example: word frequencies
 
@@ -453,6 +550,35 @@ implementation is `O(n^2)` in the number of distinct words (each
 uses `Map` or `Hashtbl`, which we will meet in
 [Module 7](M07-L08-functors.html). For now, the point is that the
 *shape* of the computation is captured cleanly.
+
+:::slide
+
+## A wider example: word frequencies
+
+```ocaml
+let word_counts text =
+  text
+  |> String.lowercase_ascii
+  |> String.split_on_char ' '
+  |> List.filter (fun s -> s <> "")
+  |> List.fold_left (fun counts w ->
+       let n = match List.assoc_opt w counts with
+         | Some n -> n
+         | None -> 0
+       in
+       (w, n + 1) :: List.remove_assoc w counts
+     ) []
+```
+
+- A `map`-like (`lowercase_ascii`), a `filter`, and a `fold_left`
+  chained with `|>`.
+- Accumulator: an association list `(word, count)`.
+- For each word: look up the running count, drop the old entry,
+  prepend the bumped one.
+- `O(n^2)` because `List.assoc` is linear; for production use
+  `Map` or `Hashtbl` ([Module 7](M07-L08-functors.html)).
+
+:::
 
 ## A quick check
 
