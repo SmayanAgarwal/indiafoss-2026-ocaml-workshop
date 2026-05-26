@@ -5,7 +5,7 @@ week: 6
 duration_target_min: 20
 concepts: [higher-order functions, functions as arguments, callbacks, function composition (preview)]
 keywords: [OCaml, higher-order functions, callbacks, functions as values]
-activity_question: "Write [twice : ('a -> 'a) -> 'a -> 'a] that applies a function to its argument twice. Test with [twice (fun x -> x + 3) 10]."
+activity_question: "Write [flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c] that swaps the argument order of a two-argument function. Test with [flip (-) 3 10] and [flip List.cons [1; 2; 3] 0]."
 think_about_this: "A higher-order function takes a *function* as a parameter. Why is this more flexible than what you could do with overloading or templates in C++/Java?"
 reading:
   - title: "Cornell CS3110, Higher-order functions"
@@ -635,9 +635,13 @@ recursive case: apply `f` once, then apply `n - 1` more times.
 
 ## Activity
 
-Write `twice : ('a -> 'a) -> 'a -> 'a` that applies a function
-twice. Test with `twice (fun x -> x + 3) 10`.
-<!-- KC: Activity should never be repeat of the code that we have already shown. Add it to feedback memory. -->
+Write `flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c` that swaps the
+argument order of a two-argument function. Test with:
+
+```ocaml skip
+let _ = flip (-) 3 10
+let _ = flip List.cons [1; 2; 3] 0
+```
 
 :::
 
@@ -646,23 +650,28 @@ twice. Test with `twice (fun x -> x + 3) 10`.
 ## Activity solution
 
 ```ocaml
-let twice f x = f (f x)
+let flip f x y = f y x
 
-let _ = twice (fun x -> x + 3) 10      (* = 16 *)
-let _ = twice (fun s -> s ^ "!") "wow" (* = "wow!!" *)
-let _ = twice (List.cons 0) [1; 2; 3]  (* = [0; 0; 1; 2; 3] *)
+let _ = flip (-) 3 10               (* = 7 *)
+let _ = flip List.cons [1; 2; 3] 0  (* = [0; 1; 2; 3] *)
 ```
 
-- Three different types of `'a` (`int`, `string`, `int list`).
-- Same `twice` works for all of them.
-- The signature `('a -> 'a) -> 'a -> 'a` says exactly this.
+- `flip` is a tiny **combinator**: function in, function out.
+- Higher-order on both ends.
+- Polymorphic on three type variables (`'a`, `'b`, `'c`).
+- Useful when a stdlib function has its arguments "in the wrong
+  order" for partial application.
 
 :::
 
-The three calls instantiate `'a` at three different types: `int`,
-`string`, `int list`. The same `twice` works for all of them. The
-type signature `('a -> 'a) -> 'a -> 'a` records this: any `'a`, as
-long as the function maps `'a` to `'a`, can be repeated.
+`flip` is a tiny but characteristic higher-order combinator: input
+is a function, output is a function, and no concrete value of a
+named type passes through that the user has to think about. The
+three type variables `'a`, `'b`, `'c` are doing real work: the
+input function maps `'a -> 'b -> 'c`, and the output function maps
+`'b -> 'a -> 'c`. We will meet more combinators in
+[Lecture 5](M06-L05-pipelines.html), where `|>` and `@@` play the
+same shape-changing role.
 
 ## What's next
 
