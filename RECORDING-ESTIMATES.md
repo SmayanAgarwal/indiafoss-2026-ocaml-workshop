@@ -179,25 +179,31 @@ will likely be addressed in their polish pass.
 
 ### M06: Higher-order programming (6 lectures)
 
-Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M06 drafts. M06 is not yet polished; the slide counts reflect the
-current draft state. Estimate uses slide_count x 1.5 min.
+Re-estimated 2026-05-26 after the M06 polish pass that addressed
+KC's author comments and the audit's must-fix items: M06-L01
+function-composition slide + activity replaced with `flip` (fresh
+combinator); M06-L02 `rev` is not magic slide; M06-L03 `mem` is
+not magic + sort/sweep alternative for `unique`; M06-L04 split
+the sum/all_true slide, added `fold_right` definition +
+step-by-step + cons-cell slides, added side-by-side tree
+visualisations for `fold_right` and `fold_left` lifted from
+CS3100. Inline-result-comment sweep applied across M06 lectures.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M06-L01 | Functions as values, revisited | 13 | 20 | 28 |
-| M06-L02 | `map`: transform every element | 14 | 21 | 29 |
-| M06-L03 | `filter`: keep what passes the predicate | 12 | 18 | 25 |
-| M06-L04 | `fold`: reduce a list to a single value | 14 | 21 | 29 |
+| M06-L01 | Functions as values, revisited | 14 | 21 | 29 |
+| M06-L02 | `map`: transform every element | 15 | 23 | 32 |
+| M06-L03 | `filter`: keep what passes the predicate | 14 | 21 | 29 |
+| M06-L04 | `fold`: reduce a list to a single value | 20 | 30 | 42 |
 | M06-L05 | Function composition and pipelines | 13 | 20 | 28 |
 | M06-L06 | Tutorial: rebuild parts of `List` | 13 | 20 | 28 |
-| **M06 total** | | **79** | **120** | **167** |
-| | | | **(2.0 h)** | **(2.8 h)** |
+| **M06 total** | | **89** | **135** | **188** |
+| | | | **(2.2 h)** | **(3.1 h)** |
 
-M06-L03 (12 slides / 18 min) sits below the NPTEL 20-min floor.
-M06-L01, L05 and L06 (13 slides / 20 min) sit right at the
-floor. The whole module currently runs short for higher-order
-content; the polish pass will likely grow it.
+M06-L04 lands right at the NPTEL 30-min ceiling now; if delivery
+overshoots, the natural cut is between the fold_left and
+fold_right halves. M06-L05 and L06 sit at the 20-min floor and
+will likely grow during their own polish passes.
 
 ### M07: Side effects and modular programming (9 lectures)
 
@@ -401,7 +407,6 @@ state; expect movement during each module's polish pass):**
 | Lecture | Slides |
 |---|---:|
 | M08-L08 GADTs use cases | 11 |
-| M06-L03 Filter | 12 |
 | M07-L03 Exceptions | 12 |
 | M07-L05 Memoization | 12 |
 | M12-L05 MirageOS = Library OS + Virtualisation + OCaml | 12 |
@@ -410,7 +415,9 @@ state; expect movement during each module's polish pass):**
 previously-thin entries L01 and L04 (now L05), were lifted out
 of this list by the 2026-05-25 M10 and M11 expansions. M12-L01
 through L04 were lifted out by the 2026-05-25 M12 expansion;
-only M12-L05 remains thin, pending KC's separate rewrite.)
+only M12-L05 remains thin, pending KC's separate rewrite.
+M06-L03 was lifted out by the 2026-05-26 M06 polish, which also
+expanded M06-L01/L02/L04.)
 
 After the 2026-05-25 sweep, all per-module tables above use
 slide_count x 1.5 from the current drafts; these unpolished rows
@@ -419,12 +426,12 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1790 min (29.8 hours) across
+- **Final video**: 1805 min (30.1 hours) across
   81 lectures and 12 modules.
-- **Estimated recording time**: 2505 min (41.7 hours)
+- **Estimated recording time**: 2526 min (42.1 hours)
   at the 1.4x multiplier.
 
-The 29.8 hours of final video covers NPTEL's ~30 hr target
+The 30.1 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
 min for effect-handler concurrency), the M10 expansion (+1
 lecture, +36 video min for resource safety; M10 grew from 5 to
@@ -464,7 +471,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **41.7 hours of recording / 4.3 hours per day = ~9.7 studio days.**
+- **42.1 hours of recording / 4.3 hours per day = ~9.8 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -476,14 +483,14 @@ sessions:
 | M03 Functions | 2.8 | 0.7 |
 | M04 Data types | 3.4 | 0.8 |
 | M05 Pattern matching | 3.6 | 0.8 |
-| M06 Higher-order programming | 2.8 | 0.7 |
+| M06 Higher-order programming | 3.1 | 0.7 |
 | M07 Side effects and modular programming | 4.4 | 1.0 |
 | M08 Monads and GADTs | 5.2 | 1.2 |
 | M09 Concurrency and Testing | 4.1 | 1.0 |
 | M10 Memory safety and security | 3.1 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 3.7 | 0.9 |
 | M12 Unikernels (MirageOS) | 2.8 | 0.7 |
-| **Total** | **41.7** | **9.7** |
+| **Total** | **42.1** | **9.8** |
 
 ## Caveats
 
