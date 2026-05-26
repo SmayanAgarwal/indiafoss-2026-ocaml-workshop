@@ -5,7 +5,7 @@ week: 6
 duration_target_min: 20
 concepts: [higher-order functions, functions as arguments, callbacks, function composition (preview)]
 keywords: [OCaml, higher-order functions, callbacks, functions as values]
-activity_question: "Write [flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c] that swaps the argument order of a two-argument function. Test with [flip (-) 3 10] and [flip List.cons [1; 2; 3] 0]."
+activity_question: "Write [flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c] that swaps the argument order of a two-argument function. Test with [flip (-) 3 10] and [flip (fun x xs -> x :: xs) [1; 2; 3] 0]."
 think_about_this: "A higher-order function takes a *function* as a parameter. Why is this more flexible than what you could do with overloading or templates in C++/Java?"
 reading:
   - title: "Cornell CS3110, Higher-order functions"
@@ -640,7 +640,7 @@ argument order of a two-argument function. Test with:
 
 ```ocaml skip
 let _ = flip (-) 3 10
-let _ = flip List.cons [1; 2; 3] 0
+let _ = flip (fun x xs -> x :: xs) [1; 2; 3] 0
 ```
 
 :::
@@ -653,7 +653,7 @@ let _ = flip List.cons [1; 2; 3] 0
 let flip f x y = f y x
 
 let _ = flip (-) 3 10               (* = 7 *)
-let _ = flip List.cons [1; 2; 3] 0  (* = [0; 1; 2; 3] *)
+let _ = flip (fun x xs -> x :: xs) [1; 2; 3] 0  (* = [0; 1; 2; 3] *)
 ```
 
 - `flip` is a tiny **combinator**: function in, function out.
