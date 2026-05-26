@@ -155,6 +155,26 @@ val fold_right : ('a -> 'acc -> 'acc) -> 'a list -> 'acc -> 'acc
 The function takes a list of `'a`, an initial accumulator of type
 `'acc`, and returns the final accumulator.
 
+:::slide
+
+## `fold_right` definition
+
+```ocaml
+let rec fold_right f xs acc =
+  match xs with
+  | [] -> acc
+  | h :: t -> f h (fold_right f t acc)
+
+let _ = fold_right (+) [1; 2; 3] 0          (* = 6 *)
+let _ = fold_right (^) ["a"; "b"; "c"] ""   (* = "abc" *)
+```
+
+- Type: `('a -> 'acc -> 'acc) -> 'a list -> 'acc -> 'acc`.
+- `f` takes an *element first*, then the accumulator.
+- The accumulator goes on the right; that's the "right" in the name.
+
+:::
+
 ## What `fold_right` computes
 
 The name "fold right" comes from how the operator gets associated.
@@ -187,6 +207,65 @@ Pick `(fun x acc -> 1 + acc)` and `0`: you get the length. Pick
 `(fun x acc -> f x :: acc)` and `[]` for some function `f`: you get
 `map`. Pick `(fun x acc -> if p x then x :: acc else acc)` and `[]`:
 you get `filter`. Folds are very general.
+
+:::slide
+
+## What `fold_right` does, step by step
+
+`fold_right f [x1; x2; x3] acc` evaluates to:
+
+```
+f x1 (f x2 (f x3 acc))
+```
+
+- Rightmost element combined first with `acc`.
+- Then leftward, one element at a time.
+- Parentheses associate to the right (hence "fold_right").
+- Recursion walks left-to-right to *reach* `[]`; the work
+  happens on the way back, rightmost first.
+
+For `fold_right (+) [1; 2; 3] 0`:
+
+```
+1 + (2 + (3 + 0))
+= 1 + (2 + 3)
+= 1 + 5
+= 6
+```
+
+:::
+
+:::slide
+
+## `fold_right` replaces every cons cell
+
+A list is a chain of cons cells terminated by `[]`:
+
+```
+[x1; x2; x3; x4]  ===  x1 :: x2 :: x3 :: x4 :: []
+```
+
+`fold_right f xs init` replaces:
+
+- every `::` with `f`
+- the terminal `[]` with `init`
+
+Folding right with `(+)` and `0`:
+
+```
+x1 + x2 + x3 + x4 + 0
+```
+
+That's the whole engine. Pick `f` and `init`, get an operation:
+
+- `(+)` and `0` -> sum.
+- `(^)` and `""` -> concatenation.
+- `(::)` and `[]` -> the list itself (identity).
+- `(fun _ acc -> 1 + acc)` and `0` -> length.
+- `(fun x acc -> f x :: acc)` and `[]` -> `map`.
+- `(fun x acc -> if p x then x :: acc else acc)` and `[]` -> `filter`.
+
+:::
 
 ## `fold_left`: the other direction
 
