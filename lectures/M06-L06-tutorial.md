@@ -508,7 +508,7 @@ top-to-bottom on a page.
 
 :::slide
 
-## Problem 7: fold over rose trees
+## Problem 7a: fold over rose trees
 
 ```ocaml skip
 type 'a rose = Rose of 'a * 'a rose list
@@ -521,16 +521,30 @@ let rec fold_rose f acc (Rose (v, children)) =
 - Rose tree: each node has a *list* of children, not exactly two.
 - One fold per recursive position: tree recursion *plus*
   `List.fold_left` across the children.
-- Example: a threaded discussion walked pre-order:
+- The body is two folds nested: pre-order over the rose tree,
+  list-fold across each node's children.
+- This pattern scales fold to almost any algebraic data type.
+
+:::
+
+:::slide
+
+## Problem 7b: walking a threaded discussion
 
 ```ocaml skip
-let _ = fold_rose (fun acc s -> acc @ [s]) [] thread  (* = ["Original post"; "Reply A"; ...; "Reply C"] *)
+let thread =
+  Rose ("Post",
+    [ Rose ("A", [Rose ("A.1", [])]);
+      Rose ("B", []) ])
+
+let _ = fold_rose (fun acc s -> acc @ [s]) [] thread
+(* = ["Post"; "A"; "A.1"; "B"] *)
 ```
 
-- Each comment is listed before its replies: that's how forums
-  render threads top-to-bottom.
-- This pattern scales fold to almost any algebraic data type:
-  one fold per recursive position.
+- Pre-order: each comment is listed before its replies.
+- That's how forums render threads top-to-bottom.
+- Same fold engine; only the combining function and accumulator
+  change to match the question being asked.
 
 :::
 
