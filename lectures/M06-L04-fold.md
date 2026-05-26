@@ -5,7 +5,7 @@ week: 6
 duration_target_min: 25
 concepts: [fold, fold_left, fold_right, reduction, accumulator, generalization]
 keywords: [OCaml, fold, fold_left, fold_right, reduce, accumulator]
-activity_question: "Express [List.length xs] using [List.fold_left]. Express [List.rev xs] using [List.fold_left]. Why does [List.fold_left (fun a x -> x :: a) [] xs] produce the reverse and not the original?"
+activity_question: "Express two functions using only [List.fold_left]: [count_evens : int list -> int] counts the even integers in the input list; [max_of_default : int list -> int -> int] returns the maximum element of the list, or the default if the list is empty."
 think_about_this: "[fold_left] is tail-recursive and goes left-to-right; [fold_right] is not tail-recursive and goes right-to-left. When is each one the natural fit?"
 reading:
   - title: "Cornell CS3110, Fold"
@@ -543,7 +543,7 @@ let _ = map_via_fold (fun n -> n * n) [1; 2; 3]  (* = [1; 4; 9] *)
 
 :::slide
 
-## `map` in terms of `fold`
+## `map` in terms of `fold_right`
 
 ```ocaml
 let map_via_fold f xs =
@@ -554,8 +554,15 @@ let _ = map_via_fold (fun n -> n * n) [1; 2; 3]  (* = [1; 4; 9] *)
 
 - Accumulator starts as `[]`.
 - For each element (right-to-left) we cons `f x` onto it.
+- The output order matches the input order: the rightmost cons
+  happens first, so the leftmost element ends up at the front.
+- One pass, but not tail-recursive (`fold_right` isn't).
 
-Tail-recursive variant with `fold_left + rev`:
+:::
+
+:::slide
+
+## Tail-recursive variant: `fold_left` + `rev`
 
 ```ocaml
 let map_via_fold_left f xs =
@@ -564,7 +571,11 @@ let map_via_fold_left f xs =
 let _ = map_via_fold_left (fun n -> n * n) [1; 2; 3]  (* = [1; 4; 9] *)
 ```
 
-Same result. Two passes (fold then rev), but tail-recursive.
+- `fold_left` walks left-to-right and cons-prepends each result,
+  so the accumulator ends up *reversed*.
+- A final `List.rev` puts it back in order.
+- Two passes, but each is tail-recursive: constant stack.
+- Same trick as the tail-recursive `map` from [Lecture 2](M06-L02-map.html).
 
 :::
 
@@ -691,7 +702,7 @@ reader has to decode the accumulator threading. The rule of thumb:
 - Or when you need both summary and transformation in one pass.
 
 ```ocaml
-(* Both produce the same answer; prefer the first *)
+(* Both produce the same answer *)
 let sum_squares_a xs = xs |> List.map (fun x -> x * x) |> List.fold_left (+) 0
 let sum_squares_b xs = List.fold_left (fun acc x -> acc + x * x) 0 xs
 
@@ -742,6 +753,31 @@ let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
 is a standard one-line definition of `rev`. If you want the original
 order, either fold right (`List.fold_right (fun x acc -> x :: acc)
 xs []`, which gets `[1; 2; 3]`) or `fold_left` then `List.rev`.
+
+:::slide
+
+## Subtlety: `fold_left` and order
+
+```ocaml
+let _ = List.fold_left (fun acc x -> x :: acc) [] [1; 2; 3]
+  (* = [3; 2; 1], not [1; 2; 3] *)
+```
+
+Trace step by step:
+
+- start: `acc = []`
+- after `1`: `acc = [1]` (prepended)
+- after `2`: `acc = [2; 1]`
+- after `3`: `acc = [3; 2; 1]`
+
+- First element ends up *deepest*, so the result is reversed.
+- This is exactly the stdlib `List.rev`:
+  ```ocaml
+  let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
+  ```
+- To keep original order: use `fold_right`, or `fold_left` + `List.rev`.
+
+:::
 
 ## A quick check
 
@@ -807,8 +843,12 @@ counter. Tail-recursive, constant stack.
 
 ## Activity
 
-Express `List.length xs` and `List.rev xs` using only
-`List.fold_left`.
+Express two functions using only `List.fold_left`:
+
+- `count_evens : int list -> int` returns the number of even
+  integers in the list.
+- `max_of_default : int list -> int -> int` returns the maximum
+  element of the list, or the default if the list is empty.
 
 :::
 
@@ -817,19 +857,20 @@ Express `List.length xs` and `List.rev xs` using only
 ## Activity solution
 
 ```ocaml
-let length xs = List.fold_left (fun n _ -> n + 1) 0 xs
+let count_evens xs =
+  List.fold_left (fun n x -> if x mod 2 = 0 then n + 1 else n) 0 xs
 
-let rev xs = List.fold_left (fun acc x -> x :: acc) [] xs
+let max_of_default xs d = List.fold_left max d xs
 
-let _ = length [10; 20; 30; 40]  (* = 4 *)
-let _ = rev [1; 2; 3; 4]         (* = [4; 3; 2; 1] *)
+let _ = count_evens [1; 2; 3; 4; 5; 6]   (* = 3 *)
+let _ = max_of_default [3; 7; 1; 5] 0    (* = 7 *)
+let _ = max_of_default [] 0              (* = 0 *)
 ```
 
-- `length`: ignore each element, bump the counter.
-- `rev`: prepend each element to the accumulator.
-- Prepending left-to-right puts the first element *deepest*: reversed.
-- Try `List.fold_right (fun x acc -> x :: acc) xs []`: you get the
-  *original* order, because `fold_right` walks right-to-left.
+- `count_evens`: conditional counter; only bumps `n` when `x mod 2 = 0`.
+- `max_of_default`: pass the stdlib `max` straight in; default as
+  starting accumulator means the empty case is handled for free.
+- Two different shapes, same `fold_left` machinery.
 
 :::
 
