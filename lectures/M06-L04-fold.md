@@ -237,6 +237,33 @@ For `fold_right (+) [1; 2; 3] 0`:
 
 :::slide
 
+## `fold_right` as a tree
+
+:::cols
+:::col 45%
+
+The list `[1; 2; 3; 4; 5]`:
+
+<img src="assets/m06/figures/list_shape.svg" alt="list shape" style="max-width: 100%; height: auto;">
+
+:::
+:::col 55%
+
+After `fold_right f xs z`:
+
+<img src="assets/m06/figures/fold_right.svg" alt="fold_right tree" style="max-width: 100%; height: auto;">
+
+:::
+:::
+
+- Every `::` becomes a call to `f`.
+- The terminal `[]` becomes `z` (the initial accumulator).
+- *Right-leaning* tree: each `f` nests into the second argument.
+
+:::
+
+:::slide
+
 ## `fold_right` replaces every cons cell
 
 A list is a chain of cons cells terminated by `[]`:
@@ -362,6 +389,34 @@ For `fold_left (+) 0 [1; 2; 3]`:
 = 3 + 3
 = 6
 ```
+
+:::
+
+:::slide
+
+## `fold_left` as a tree
+
+:::cols
+:::col 45%
+
+The list `[1; 2; 3; 4; 5]`:
+
+<img src="assets/m06/figures/list_shape.svg" alt="list shape" style="max-width: 100%; height: auto;">
+
+:::
+:::col 55%
+
+After `fold_left (+) 0 xs`:
+
+<img src="assets/m06/figures/sum_fold.svg" alt="fold_left tree" style="max-width: 100%; height: auto;">
+
+:::
+:::
+
+- Mirror of `fold_right`'s tree: *left-leaning* this time.
+- Each `+` nests into the **first** argument.
+- Same shape applies to any `f` and accumulator: replace `+` with
+  `f`, replace `0` with `acc`.
 
 :::
 
