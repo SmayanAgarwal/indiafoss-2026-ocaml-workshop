@@ -555,8 +555,6 @@ let is_red = function
 prefer an or-pattern that names every other constructor:
 
 ```ocaml
-type traffic_light = Red | Yellow | Green
-
 let is_red = function
   | Red -> true
   | Yellow | Green -> false

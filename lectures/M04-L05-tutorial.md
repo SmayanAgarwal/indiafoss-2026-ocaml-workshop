@@ -140,10 +140,6 @@ recursion is what lets us build arbitrarily nested arithmetic.
 A few example trees:
 
 ```ocaml
-type expr =
-  | Int of int
-  | Add of expr * expr
-
 let e1 = Int 5
 let e2 = Add (Int 5, Int 3)
 let e3 = Add (Add (Int 1, Int 2), Int 4)
@@ -167,10 +163,6 @@ type expr =
 - `Add`: carries **two** `expr` sub-trees. Recursive.
 
 ```ocaml
-type expr =
-  | Int of int
-  | Add of expr * expr
-
 let e1 = Int 5                                (* 5         *)
 let e2 = Add (Int 5, Int 3)                   (* 5 + 3     *)
 let e3 = Add (Add (Int 1, Int 2), Int 4)      (* (1+2)+4   *)
@@ -194,12 +186,6 @@ type expr =
 Now we can build `(5 + 3) * 2`:
 
 ```ocaml
-type expr =
-  | Int of int
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-
 let e_a = Mul (Add (Int 5, Int 3), Int 2)
 ```
 
@@ -220,12 +206,6 @@ type expr =
 ```
 
 ```ocaml
-type expr =
-  | Int of int
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-
 (* (5 + 3) * 2 *)
 let e_a = Mul (Add (Int 5, Int 3), Int 2)
 ```
@@ -305,14 +285,6 @@ type expr =
 - `Let_in (name, bound_expr, body)`: the three-piece `let ... in`.
 
 ```ocaml
-type expr =
-  | Int of int
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Var of string
-  | Let_in of string * expr * expr
-
 (* let x = 5 in x + 3 *)
 let e_let =
   Let_in ("x", Int 5, Add (Var "x", Int 3))
@@ -373,18 +345,6 @@ is false. That matches the three slots in OCaml's
 The AST for `if x < 0 then 0 else x`:
 
 ```ocaml
-type expr =
-  | Int of int
-  | Bool of bool
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Lt  of expr * expr
-  | Eq  of expr * expr
-  | If  of expr * expr * expr
-  | Var of string
-  | Let_in of string * expr * expr
-
 let e_clamp =
   If (Lt (Var "x", Int 0),
       Int 0,
@@ -455,7 +415,7 @@ We chose **one constructor per operator** above: `Add`, `Sub`,
 constructor** that carries an operator tag plus two sub-expressions.
 The two designs:
 
-```text
+```ocaml
 (* Per-operator. *)
 type expr =
   | Int of int
@@ -464,10 +424,9 @@ type expr =
   | Mul of expr * expr
   | Lt  of expr * expr
   | Eq  of expr * expr
-  | ...
 ```
 
-```text
+```ocaml
 (* Single Binop, with an operator tag. *)
 type op =
   | Plus | Minus | Times | Less | Equal
@@ -475,7 +434,6 @@ type op =
 type expr =
   | Int of int
   | Binop of op * expr * expr
-  | ...
 ```
 
 Trade-offs:
@@ -504,25 +462,29 @@ read at first glance.
 
 Two ways to represent binary operators:
 
-```text
-| Add of expr * expr
-| Sub of expr * expr
-| Mul of expr * expr
-| ...
+```ocaml
+(* Per-operator. *)
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Lt  of expr * expr
+  | Eq  of expr * expr
 ```
 
-vs
+```ocaml
+(* Binop with an operator tag. *)
+type op = Plus | Minus | Times | Less | Equal
 
-```text
-type op = Plus | Minus | Times | ...
-| Binop of op * expr * expr
+type expr =
+  | Int of int
+  | Binop of op * expr * expr
 ```
 
 - Per-op: more explicit, less compact.
 - `Binop`: groups regular shapes, scales better to many operators.
-
-Real compilers use `Binop`-style. For a tiny tree, per-op reads
-clearer.
+- Real compilers use `Binop`-style. For a tiny tree, per-op reads clearer.
 
 :::
 
@@ -588,15 +550,6 @@ type expr =
 ```
 
 ```ocaml
-type ty = T_int | T_bool
-
-type expr =
-  | Int of int
-  | Bool of bool
-  | Add of expr * expr
-  | Var of string
-  | Let_in of string * ty option * expr * expr
-
 (* let x = 5 in x + 3 *)
 let e_u = Let_in ("x", None,        Int 5, Add (Var "x", Int 3))
 

@@ -86,8 +86,6 @@ another `intlist` (the tail). The interesting bit is that the type
 declaration describe lists of any length:
 
 ```ocaml
-type intlist = INil | ICons of int * intlist
-
 let ints = ICons (1, ICons (2, ICons (3, INil)))
 ```
 

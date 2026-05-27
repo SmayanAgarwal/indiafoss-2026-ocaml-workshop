@@ -220,8 +220,6 @@ The body uses `p.x`, `q.x`, etc. The same function, written with
 destructured parameters:
 
 ```ocaml
-type point = { x : float; y : float }
-
 let distance { x = x1; y = y1 } { x = x2; y = y2 } =
   let dx = x2 -. x1 in
   let dy = y2 -. y1 in
