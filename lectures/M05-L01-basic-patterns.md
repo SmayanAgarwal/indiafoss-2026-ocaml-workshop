@@ -324,8 +324,7 @@ use a name that starts with `_` when you want to *document* what
 the ignored piece is, but you still do not intend to use it.
 
 ```ocaml
-let first_only = function
-  | (x, _) -> x
+let first_only (x, _) = x
 
 let _ = first_only (10, 20)
 ```
@@ -390,7 +389,8 @@ were written by mistake. Most of the time the warning is right.
 The wildcard is also the standard way to write a default clause:
 
 ```ocaml
-let direction_label = function
+let direction_label s =
+  match s with
   | "n" -> "north"
   | "s" -> "south"
   | "e" -> "east"
@@ -406,7 +406,8 @@ let _ = direction_label "x"
 ## Catch-all wildcard
 
 ```ocaml
-let direction_label = function
+let direction_label s =
+  match s with
   | "n" -> "north"
   | "s" -> "south"
   | "e" -> "east"
