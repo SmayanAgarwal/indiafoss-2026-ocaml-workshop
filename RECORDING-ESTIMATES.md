@@ -162,11 +162,11 @@ the current draft state. Estimate uses slide_count x 1.5 min.
 |---|---|---:|---:|---:|
 | M05-L01 | Basic patterns: literals, variables, wildcards | 20 | 30 | 42 |
 | M05-L02 | Pattern matching on lists and trees | 16 | 24 | 34 |
-| M05-L03 | Nested patterns, records, inline records, or-patterns | 21 | 32 | 45 |
+| M05-L03 | Nested patterns, records, inline records, or-patterns | 22 | 33 | 46 |
 | M05-L04 | Guards: when-clauses on patterns | 11 | 17 | 24 |
 | M05-L05 | Exhaustiveness checking | 13 | 20 | 28 |
 | M05-L06 | Tutorial: an interpreter for the M04-L05 AST | 20 | 30 | 42 |
-| **M05 total** | | **101** | **153** | **215** |
+| **M05 total** | | **102** | **154** | **216** |
 | | | | **(2.6 h)** | **(3.6 h)** |
 
 M05-L01 sits right at the NPTEL 30-min ceiling at 30 video min
@@ -428,9 +428,9 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1815 min (30.3 hours) across
+- **Final video**: 1816 min (30.3 hours) across
   81 lectures and 12 modules.
-- **Estimated recording time**: 2542 min (42.4 hours)
+- **Estimated recording time**: 2543 min (42.4 hours)
   at the 1.4x multiplier.
 
 The 30.1 hours of final video meets NPTEL's ~30 hr target
