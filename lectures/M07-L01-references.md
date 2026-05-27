@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 22
 concepts: [mutation, ref, !, :=, side effects, when to use mutation]
 keywords: [OCaml, ref, mutation, side effects, !, :=]
-activity_question: "Write a function [make_counter : unit -> (unit -> int)] that returns a closure giving the next integer each time it's called: [1; 2; 3; ...]."
+activity_question: "Write [make_running_total : unit -> (int -> int)] that returns a closure: each call adds its argument to a running total and returns the new total. Two calls to [make_running_total ()] must produce two independent accumulators."
 think_about_this: "OCaml is functional-first but supports mutation via [ref]. When you reach for mutation, what property are you giving up? When does the trade pay off?"
 reading:
   - title: "Cornell CS3110, References"
@@ -73,6 +73,36 @@ when reaching for them is worth what you give up.
 - Threading the state through every call by hand is noisier than it needs to be.
 - OCaml's stance (unlike Haskell): mutation **available**, not the default.
 - Simplest opt-in: the **mutable reference cell**, or `ref`.
+
+:::
+
+Mutation is one of several kinds of *side effect* a program can
+have. A side effect is anything an expression does besides return a
+value: changing the value stored in some cell, printing to the
+screen, raising an exception, looping forever, sending a packet
+over the network. This module covers the first three. We focus on
+**state** (mutable cells, mutable fields, arrays) this lecture and
+the [next](M07-L02-arrays-and-mutation.html); we cover
+[**exceptions**](M07-L03-exceptions.html) in lecture 3. **I/O** has
+been with us implicitly since `print_endline` in
+[Module 1](M01-L02-why-fp.html); **non-termination** is whatever
+recursion you write that does not stop. The general lesson is the
+same for all four: they let you do things pure functions cannot,
+but they cost you equational reasoning.
+
+:::slide
+
+## Side effects: a map
+
+A *side effect* is anything an expression does besides return a value.
+
+- **State**: mutable cells, mutable record fields, arrays. (This lecture + L2.)
+- **Exceptions**: control-flow escapes. ([L3](M07-L03-exceptions.html).)
+- **I/O**: `print_endline`, file and network access.
+- **Non-termination**: a loop that never returns.
+
+Each lets you do things pure functions cannot, and each costs you
+equational reasoning. We start with **state**.
 
 :::
 
@@ -323,74 +353,13 @@ that share some private mutable state. Smalltalk and JavaScript
 make the connection explicit; in OCaml, the building blocks are
 exposed and you put them together as needed.
 
-## A ref is a record with one mutable field
+## Sequencing side effects with `;`
 
-Once you see what a `ref` does, the implementation is not
-mysterious. The standard library defines `'a ref` as:
-
-```text
-type 'a ref = { mutable contents : 'a }
-```
-
-It is a one-field record with that field marked `mutable`. The
-operators `!` and `:=` are just shorthand for accessing and
-updating that field:
-
-- `!r` is `r.contents`.
-- `r := x` is `r.contents <- x`.
-
-The `<-` operator is the assignment operator for mutable record
-fields. We will see it again in
-[the next lecture](M07-L02-arrays-and-mutation.html#mutable-record-fields)
-when we look at mutable records in their own right.
-
-:::slide
-
-## A `ref` is just a record with one mutable field
-
-The type `'a ref` is literally:
-
-```text
-type 'a ref = { mutable contents : 'a }
-```
-
-The operators `!` and `:=` are just shorthand:
-
-- `!r` is `r.contents`.
-- `r := x` is `r.contents <- x`.
-- `ref` is **not a magic builtin**: a record with one mutable field.
-
-:::
-
-:::slide
-
-## Use a `mutable` field directly when it reads better
-
-```ocaml
-type counter = { mutable n : int }
-
-let c = { n = 0 }
-let () = c.n <- c.n + 1
-let () = c.n <- c.n + 1
-let _ = c.n  (* = 2 *)
-```
-
-The `<-` is the assignment operator for mutable record
-fields.
-
-:::
-
-For named mutable state, the record form is often more readable:
-`c.n <- c.n + 1` reads like an imperative assignment. The `ref`
-form, with `!` and `:=`, is more concise when you have a single
-cell. Both compile to the same thing.
-
-## Sequencing side effects with semicolon
-
-Several side-effecting actions in a row are sequenced with `;`,
-the *statement* semicolon (which is a different token from `;;`,
-the toplevel terminator that you only need in `utop` and `ocaml`
-sessions).
+We met `;` in [M01-L04](M01-L04-hello-world.html) as the way to
+sequence two unit-typed expressions: `e1; e2` evaluates `e1`
+(which must be `unit`), then `e2`, and returns `e2`'s value. With
+refs, `;` becomes the everyday tool for threading several updates
+in a row:
 
 ```ocaml
 let r = ref 0
@@ -401,49 +370,37 @@ let () =
   r := 3
 ```
 
-The expression `e1 ; e2` evaluates `e1`, throws its result away,
-then evaluates `e2` and returns *its* result. There is no syntactic
-limit on the chain: `e1 ; e2 ; e3 ; e4` evaluates each in order and
-returns the last.
+There is no syntactic limit on the chain: `e1; e2; e3; e4`
+evaluates each in order and returns the last. As before, every
+expression except the last must produce `unit`, or the compiler
+warns that you are throwing a value away; wrap the offender in
+`ignore` if the discard is intentional.
 
-:::slide
-
-## Sequencing side effects
-
-Several side-effecting actions in a row are sequenced with `;`
-(the *statement* semicolon, distinct from `;;`):
-
-```ocaml
-let r = ref 0
-
-let () =
-  r := 1;
-  r := 2;
-  r := 3
-```
-
-- Each `;` says "do this, then that".
-- The left-hand side of each `;` must have type `unit` (the value
-  `()`).
-- A non-unit expression in sequence (`r := 1; 5; r := 2`) triggers
-  a warning: the value `5` is being thrown away.
-- Wrap it in `let _ = 5` or `ignore 5` to silence.
-
-:::
-
-For this to be useful, every expression in the chain except the
-last must produce `unit`. If you put something like `5` in the
-middle of a sequence, the compiler warns that the value is being
-discarded; the program runs, but the warning is right that you
-probably meant something else. To silence the warning when the
-discard is intentional, wrap the expression in `ignore`:
-`ignore 5` evaluates to `()` and explicitly throws away whatever
-`5` was.
-
-The `begin ... end` and `(...)` brackets group a sequence into
-one expression, which we sometimes need when a sequence appears
-in the branch of an `if`. We saw this in
+The `begin ... end` and `(...)` brackets group a sequence into one
+expression, which we sometimes need when a sequence appears in the
+branch of an `if`. We saw this in
 [M03-L02](M03-L02-recursion.html) when writing `count_down`.
+
+:::slide
+
+## Sequencing with `;` (refs in a row)
+
+```ocaml
+let r = ref 0
+
+let () =
+  r := 1;
+  r := 2;
+  r := 3
+```
+
+- `;` sequences side effects (introduced in
+  [M01-L04](M01-L04-hello-world.html)).
+- Left of each `;` must be `unit`.
+- A non-unit expression in sequence triggers a warning; wrap in
+  `ignore` to silence.
+
+:::
 
 ## incr and decr
 
@@ -541,6 +498,265 @@ functional setting, the question does not arise because there is
 nothing to share. With mutation, every API has to decide what its
 caller is allowed to do with the values it returns.
 
+## Structural and physical equality
+
+Aliasing immediately raises a question: given two refs, how do you
+ask whether they are *the same cell* versus *cells that happen to
+hold equal contents*? The `=` operator we have been using is
+**structural** equality: it walks the two values comparing them
+piece by piece. The companion operator `==` is **physical**
+equality: it asks whether the two operands are the exact same
+heap-allocated object.
+
+A worked example that exercises both axes (aliasing of refs *and*
+sharing of list contents) at once:
+
+```ocaml
+let l1 = [1; 2; 3]
+let l2 = l1            (* alias: same list *)
+let l3 = [1; 2; 3]     (* fresh allocation, equal contents *)
+let r1 = ref l1
+let r2 = r1            (* alias: same ref cell *)
+let r3 = ref l3        (* fresh ref cell *)
+```
+
+The heap layout that results:
+
+<figure class="diagram">
+  <img src="/assets/m07/figures/equality-heap.svg"
+       alt="r1 and r2 both point to a ref cell that holds the list [1;2;3]; l1 and l2 also point at that same list. r3 points to a separate ref cell that holds a different list [1;2;3]; l3 also points at that second list."
+       style="max-height: 360px;">
+</figure>
+
+With this picture in mind:
+
+- `l1 = l2` and `l1 = l3` are both *true*: structural equality
+  walks the contents, and all three lists are `[1; 2; 3]`.
+- `l1 == l2` is *true* (same allocation) but `l1 == l3` is *false*
+  (two separate allocations with equal contents).
+- `r1 = r2` and `r1 = r3` are both *true*: structural equality on
+  refs compares contents, and both cells hold an equal list.
+- `r1 == r2` is *true* (aliased to the same cell) but `r1 == r3`
+  is *false* (two different cells).
+
+The structural check `=` says "the contents match." The physical
+check `==` says "they are the *same* cell." Aliasing is exactly
+the property `==` detects.
+
+A useful rule of thumb: `==` is rarely what you want. Most code
+asks "do these values represent the same thing?", which is
+structural equality (`=`). Reach for `==` when you genuinely need
+to know "are these two names for the *same* mutable cell?", which
+happens in aliasing-aware code (caches keyed by identity, cycle
+detection, breaking circular print). For everything else, use `=`.
+
+:::slide
+
+## `=` is structural; `==` is physical
+
+:::cols
+
+:::col 55%
+
+```ocaml
+let l1 = [1; 2; 3]
+let l2 = l1
+let l3 = [1; 2; 3]
+let r1 = ref l1
+let r2 = r1
+let r3 = ref l3
+```
+
+:::
+
+:::col 45%
+
+<img src="/assets/m07/figures/equality-heap.svg"
+     alt="r1 and r2 share a ref cell that holds l1 (= l2 = [1;2;3]); r3 has its own ref cell holding l3 (a separate [1;2;3]).">
+
+:::
+
+:::
+
+- `l1 = l2 = l3` (structural); `l1 == l2` but `l1 != l3`.
+- `r1 = r2 = r3` (structural); `r1 == r2` but `r1 != r3`.
+- `==` detects aliasing; `=` ignores it.
+
+:::
+
+:::notes
+
+In-browser caveat: js_of_ocaml represents OCaml strings and floats
+as JavaScript primitives, so two fresh strings with the same
+characters (or two fresh floats with the same value) compare
+*equal* under `==` in the browser even though they would compare
+unequal under the bytecode or native runtime. Boxed values (refs,
+lists, tuples, records, `Some _` payloads) behave identically. The
+examples above all use refs and lists, so they give the same
+answer in `x-ocaml` cells as on the command line.
+
+:::
+
+:::quiz mcq id=M07-L01-q4
+Given:
+
+```ocaml skip
+let a = [| 1; 2; 3 |]
+let b = [| 1; 2; 3 |]
+let c = a
+```
+
+which of the following are true?
+
+- [x] `a = b` and `a = c`
+- [ ] `a == b` and `a == c`
+- [ ] `a = b` but not `a = c`
+- [ ] none of them
+
+**Why:** structural equality `=` ignores identity, so `a = b` and
+`a = c` are both true (all three arrays have contents `1; 2; 3`).
+Physical equality `==` requires the *same* allocation: `a == c` is
+true because `let c = a` shares the array, but `a == b` is false
+because `[| 1; 2; 3 |]` was evaluated twice and produced two
+distinct arrays.
+:::
+
+## Value restriction: a subtle interaction with polymorphism
+
+Mutation and [polymorphism](M06-L01-functions-revisited.html) do
+not quite get on. Consider:
+
+```ocaml
+let r = ref []
+```
+
+The toplevel reports `'_weak1 list ref`, not `'a list ref`. The
+underscore in `'_weak1` marks this as a *weakly* polymorphic type:
+`r` may be used at *one* element type, not many, and OCaml will
+infer which one from the first use.
+
+```ocaml
+let r = ref []
+let () = r := [1]
+let _ = !r          (* now r : int list ref *)
+```
+
+After `r := [1]`, the type of `r` is locked to `int list ref`. A
+subsequent attempt to push a string in would be rejected at
+compile time. This rule is called the **value restriction**, and
+it exists to plug a hole in type safety.
+
+The hole, if there were no value restriction: a single cell could
+be used at two different types at once, and the type system would
+let you read out an `int` as a `string`.
+
+```ocaml skip
+(* hypothetical: this would compile if there were no
+   value restriction, and crash at runtime *)
+let r : 'a list ref = ref [] in
+let r_int : int list ref = r in
+let r_str : string list ref = r in
+r_int := [1];
+print_endline (List.hd !r_str)
+```
+
+`r_int` and `r_str` are aliases for the same cell. Writing an `int
+list` through one alias and reading a `string list` through the
+other would print arbitrary bytes as a string, or segfault. The
+value restriction is the type system's way of refusing to compile
+the program in the first place: by demoting `'a` to `'_weak1` when
+a polymorphic type is created by something other than a value, it
+forces every use of `r` to agree on one element type.
+
+:::slide
+
+## Value restriction
+
+```ocaml
+let r = ref []
+```
+
+- `r : '_weak1 list ref` (note the underscore).
+- *Weakly* polymorphic: usable at **one** element type, not many.
+- First use of `r` fixes the type for good.
+
+:::
+
+:::slide
+
+## Why the restriction exists
+
+Without it, this would compile:
+
+```ocaml skip
+let r : 'a list ref = ref [] in
+let r_int : int list ref = r in
+let r_str : string list ref = r in
+r_int := [1];
+print_endline (List.hd !r_str)   (* read int as string! *)
+```
+
+- `r_int` and `r_str` would be aliases for the *same* cell.
+- Writing an `int` and reading a `string` would crash or print
+  arbitrary bytes.
+- Value restriction is the type system's refusal to compile
+  this program at all.
+
+:::
+
+The restriction can occasionally bite when it does not need to. A
+common case is a partial application that *would* be safely
+polymorphic, but the syntactic check that implements the rule does
+not see that. For example:
+
+```ocaml
+let map_id = List.map (fun x -> x)
+(* val map_id : '_weak1 list -> '_weak1 list = <fun> *)
+```
+
+`map_id` is morally `fun xs -> List.map (fun x -> x) xs`, which
+*would* be safely polymorphic. But the RHS of the `let` is a
+function *application* (`List.map applied_to_one_arg`), not a
+syntactic function *value*, so the restriction kicks in and `'a`
+collapses to `'_weak1`.
+
+The standard workaround is to add an explicit parameter, restoring
+the right-hand side to the form of a function value:
+
+```ocaml
+let map_id xs = List.map (fun x -> x) xs
+(* val map_id : 'a list -> 'a list = <fun> *)
+```
+
+Now the RHS *is* a function value (`let f x = e` desugars to
+`let f = fun x -> e`), and `map_id` gets its full polymorphism
+back. Lifting an argument out like this is called *eta-expansion*.
+We will not need it again in this course; it is enough to recognise
+`'_weak1` and know what it means.
+
+:::slide
+
+## Eta-expansion: when the restriction bites
+
+```ocaml
+(* might infer a weak type *)
+let map_id = List.map (fun x -> x)
+(* val map_id : '_weak1 list -> '_weak1 list = <fun> *)
+
+(* fully polymorphic via eta-expansion *)
+let map_id xs = List.map (fun x -> x) xs
+(* val map_id : 'a list -> 'a list = <fun> *)
+```
+
+- The syntactic check refuses to generalise `map_id` in the first
+  form because the RHS is a function *application*, not a function
+  *value*.
+- Adding an explicit `xs` parameter makes the RHS a function value.
+- Lifting an argument out is called *eta-expansion*.
+- Recognise `'_weak1` in toplevel output and reach for this fix.
+
+:::
+
 ## Where you put `let ref` matters
 
 A small bug whose shape recurs constantly in larger code.
@@ -599,31 +815,41 @@ decides whether your state survives between calls.
 
 ## Activity
 
-Write `make_counter : unit -> (unit -> int)` that returns a closure
-yielding the next integer on each call: first call returns `1`,
-second `2`, third `3`, and so on.
+Write `make_running_total : unit -> (int -> int)` that returns a
+closure. Each call to the closure adds its argument to a running
+total and returns the new total. Two calls to
+`make_running_total ()` must produce two independent
+accumulators.
+
+```text
+let add = make_running_total ()
+add 5    (* = 5  *)
+add 3    (* = 8  *)
+add 10   (* = 18 *)
+```
 
 :::
 
 :::quiz code id=M07-L01-q1
-Write `make_counter : unit -> (unit -> int)` that returns a closure
-yielding the next integer on each call.
+Write `make_running_total : unit -> (int -> int)` so that each
+call adds its argument to a running total and returns the new
+total.
 
 ```ocaml
-let make_counter () =
+let make_running_total () =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  let next = make_counter () in
-  check (next () = 1) "first call";
-  check (next () = 2) "second call";
-  check (next () = 3) "third call";
-  let other = make_counter () in
-  check (other () = 1) "fresh counter starts at 1";
-  check (next () = 4) "original counter independent";
+  let add = make_running_total () in
+  check (add 5  = 5)  "first add";
+  check (add 3  = 8)  "second add";
+  check (add 10 = 18) "third add";
+  let other = make_running_total () in
+  check (other 1 = 1) "fresh total starts at 0";
+  check (add 0  = 18) "original total unaffected";
   print_endline "all tests passed"
 ```
 :::
@@ -633,9 +859,9 @@ let () =
 Reference solution:
 
 ```ocaml
-let make_counter () =
-  let n = ref 0 in
-  fun () -> incr n; !n
+let make_running_total () =
+  let total = ref 0 in
+  fun x -> total := !total + x; !total
 ```
 
 :::
@@ -647,18 +873,20 @@ let make_counter () =
 ## Activity solution
 
 ```ocaml
-let make_counter () =
-  let n = ref 0 in
-  fun () -> incr n; !n
+let make_running_total () =
+  let total = ref 0 in
+  fun x -> total := !total + x; !total
 
-let next = make_counter ()
-let _ = next ()  (* = 1 *)
-let _ = next ()  (* = 2 *)
-let _ = next ()  (* = 3 *)
+let add = make_running_total ()
+let _ = add 5    (* = 5  *)
+let _ = add 3    (* = 8  *)
+let _ = add 10   (* = 18 *)
 ```
 
-- The closure captures `n`; each call increments and reads.
-- `incr n` is shorthand for `n := !n + 1`; `decr` is the other direction.
+- The closure captures `total`; each call updates it and reads
+  the new value.
+- Same shape as `dispense` earlier, but the closure now takes an
+  input and uses it.
 
 :::
 
@@ -666,35 +894,34 @@ let _ = next ()  (* = 3 *)
 
 :::slide
 
-## Two counters have independent state
+## Two accumulators have independent state
 
 ```ocaml
-let make_counter () =
-  let n = ref 0 in
-  fun () -> incr n; !n
-
-let a = make_counter ()
-let b = make_counter ()
-let _ = a (), a (), a (), b (), b ()
+let a = make_running_total ()
+let b = make_running_total ()
+let _ = a 1, a 2, a 3, b 10, b 20
 ```
 
-`(1, 2, 3, 1, 2)`. Each call to `make_counter ()` allocates a fresh
-`n` captured by a fresh closure; `a` and `b` don't share state.
+`(1, 3, 6, 10, 30)`. Each call to `make_running_total ()`
+allocates a fresh `total` captured by a fresh closure; `a` and `b`
+don't share state.
 
 :::
 
-Each call to `make_counter ()` is a fresh allocation of `n`,
-captured by a fresh closure. The two counters `a` and `b` are
-*independent*: `a`'s `n` and `b`'s `n` are different cells. This
-is the same [closure machinery from Module 3](M03-L01-functions-as-values.html),
+Each call to `make_running_total ()` is a fresh allocation of
+`total`, captured by a fresh closure. The two accumulators `a` and
+`b` are *independent*: `a`'s `total` and `b`'s `total` are
+different cells. This is the same
+[closure machinery from Module 3](M03-L01-functions-as-values.html),
 with the captured value happening to be a mutable cell rather than
 an integer.
 
 ## What's next
 
 The [next lecture](M07-L02-arrays-and-mutation.html) extends the
-mutation toolkit: mutable record fields (briefly) and *arrays*,
-the fixed-size random-access mutable sequence.
+mutation toolkit: mutable record fields (the general form `ref`
+is the one-field special case of) and *arrays*, the fixed-size
+random-access mutable sequence.
 [Lecture 3](M07-L03-exceptions.html) covers exceptions, the other
 major form of "side effect" in OCaml. Together these three (refs,
 arrays, exceptions) give you the imperative subset of the
@@ -715,9 +942,9 @@ representation, and writes generic data structures via functors.
 
 Lecture 2: **mutable records and arrays**.
 
-- Beyond the one-cell `ref`, OCaml has mutable fields on records
-  (as we've seen).
-- It also has fixed-size mutable arrays.
+- General mutable record fields; `ref` is the one-field special
+  case.
+- Fixed-size mutable arrays.
 - Both are for code that genuinely needs in-place updates.
 
 :::

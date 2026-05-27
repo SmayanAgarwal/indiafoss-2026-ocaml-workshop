@@ -30,14 +30,13 @@ Beyond the single-cell [`ref`](M07-L01-references.html), OCaml has
 two more mutable building blocks: *records with mutable fields*
 and *fixed-size arrays*. The
 [previous lecture](M07-L01-references.html) introduced `ref` and
-saw briefly that a `ref` is
-[just a one-field record](M07-L01-references.html#a-ref-is-a-record-with-one-mutable-field)
-with the field marked `mutable`. This lecture goes further. We pick
-up the mutable record story, then spend most of our time on arrays:
-when they are the right tool, how to allocate and access them, how
-they compare with [the lists](M04-L04-recursive-types.html) we have
-been using all course, and the loop syntax that lives alongside
-them.
+the equational-reasoning tradeoff that comes with mutation. This
+lecture introduces general mutable record fields; once we have
+those, we will see that `ref` is just the one-field special case.
+Then we spend most of our time on arrays: when they are the right
+tool, how to allocate and access them, how they compare with
+[the lists](M04-L04-recursive-types.html) we have been using all
+course, and the loop syntax that lives alongside them.
 
 The decision of when in-place mutation pays for the equational
 reasoning you give up runs through both halves of the lecture.
@@ -142,6 +141,227 @@ type buffer = {
 - The type declaration documents what's allowed to change.
 
 :::
+
+## A `ref` is just a record with one mutable field
+
+Now that you have seen mutable record fields, the implementation
+of `ref` is no longer mysterious. The standard library defines
+`'a ref` as a one-field record with that field marked `mutable`:
+
+```text
+type 'a ref = { mutable contents : 'a }
+```
+
+The operators `!` and `:=` are just shorthand for accessing and
+updating that field:
+
+- `!r` is `r.contents`.
+- `r := x` is `r.contents <- x`.
+
+So `ref` is not a magic builtin: it is exactly a record with one
+mutable field, and the mutable-field machinery you just saw is
+what `ref` uses under the hood.
+
+For named mutable state, the record form is often more readable:
+`c.n <- c.n + 1` reads like an imperative assignment. The `ref`
+form, with `!` and `:=`, is more concise when you have a single
+cell. Both compile to the same thing.
+
+:::slide
+
+## A `ref` is just a record with one mutable field
+
+`'a ref` is literally:
+
+```text
+type 'a ref = { mutable contents : 'a }
+```
+
+- `!r` is `r.contents`.
+- `r := x` is `r.contents <- x`.
+- `ref` is **not a magic builtin**: a record with one mutable
+  field.
+- Named record: `c.n <- ...` reads like assignment.
+- `ref`: `!` and `:=` are more concise for a single cell.
+
+:::
+
+## A worked example: a doubly-linked list
+
+Mutable record fields earn their keep when a single update has to
+be visible through several pointers. The canonical example is a
+*doubly-linked list*: each node points to its successor *and* its
+predecessor, so insertion and deletion at the middle of the list
+takes O(1) once you have a handle on the node.
+
+The shape:
+
+```ocaml
+type 'a node = {
+  value : 'a;
+  mutable next : 'a node option;
+  mutable prev : 'a node option;
+}
+
+type 'a dllist = 'a node option ref
+```
+
+Two design choices worth noticing. The `next` and `prev` fields
+are [`option`](M04-L04-recursive-types.html#the-option-type) so a
+node at either end can record "no neighbour." A list is a `ref` of
+the head node (also `option`, since the list might be empty); the
+`ref` lets the head pointer itself change when we prepend a new
+element. The `node` type combines both kinds of mutation we have
+seen: mutable fields *inside* the node, and a `ref` for the
+overall handle.
+
+:::slide
+
+## A doubly-linked list
+
+Each node points to its successor *and* its predecessor:
+
+```ocaml
+type 'a node = {
+  value : 'a;
+  mutable next : 'a node option;
+  mutable prev : 'a node option;
+}
+
+type 'a dllist = 'a node option ref
+```
+
+- `next` and `prev` are `option`: a node at either end records "no
+  neighbour".
+- The list is a `ref` of the head: the head pointer itself can
+  change when we prepend.
+- Combines mutable fields **inside** the node with a `ref` for the
+  handle.
+
+:::
+
+The empty list is a fresh `ref` of `None`. `insert_first` adds a
+new node at the front; because the list is doubly linked, the new
+node has to be hooked up *and* the old head (if there was one)
+has to learn that it has a new predecessor.
+
+```ocaml
+let create () : 'a dllist = ref None
+
+let insert_first (t : 'a dllist) v =
+  let n = { value = v; prev = None; next = !t } in
+  (match !t with
+   | Some old_head -> old_head.prev <- Some n
+   | None -> ());
+  t := Some n;
+  n
+```
+
+The function mutates *two* places: `old_head.prev` (a mutable
+field on the existing first node) and `t` itself (the ref holding
+the head pointer). Both updates are needed; missing either leaves
+the list in an inconsistent state.
+
+Walking the list is a normal recursion over the `option` chain,
+producing side effects on each value:
+
+```ocaml
+let iter (t : 'a dllist) f =
+  let rec walk = function
+    | None -> ()
+    | Some node -> f node.value; walk node.next
+  in
+  walk !t
+```
+
+:::slide
+
+## `create` and `insert_first`
+
+```ocaml
+let create () : 'a dllist = ref None
+
+let insert_first (t : 'a dllist) v =
+  let n = { value = v; prev = None; next = !t } in
+  (match !t with
+   | Some old_head -> old_head.prev <- Some n
+   | None -> ());
+  t := Some n;
+  n
+```
+
+- `insert_first` mutates *two* places: the old head's `prev`, and
+  the list's head ref.
+- Miss either and the list is inconsistent.
+
+:::
+
+:::slide
+
+## `iter` over the chain
+
+```ocaml
+let iter (t : 'a dllist) f =
+  let rec walk = function
+    | None -> ()
+    | Some node -> f node.value; walk node.next
+  in
+  walk !t
+```
+
+- Plain recursion over the `option` chain.
+- `f node.value` is the per-element effect.
+- A `prev`-walking iterator is the symmetric mirror.
+
+:::
+
+A short demo, inserting 3 then 2 then 1 (so the list reads 1, 2, 3
+head-to-tail):
+
+```ocaml
+let l = create ()
+let _ = insert_first l 3
+let _ = insert_first l 2
+let _ = insert_first l 1
+let () = iter l (fun x -> print_int x; print_string " ")
+let () = print_newline ()
+```
+
+The toplevel prints `1 2 3`. The same data lives in the chain of
+nodes; `iter` walks it forwards, and we could equally well walk it
+backwards by following `prev` from the last node.
+
+:::slide
+
+## Demo
+
+```ocaml
+let l = create ()
+let _ = insert_first l 3
+let _ = insert_first l 2
+let _ = insert_first l 1
+let () = iter l (fun x -> print_int x; print_string " ")
+let () = print_newline ()
+```
+
+Prints `1 2 3`.
+
+- `insert_first` prepends, so the three inserts give head-to-tail
+  order `1, 2, 3`.
+- Each node's `prev` would let us walk backwards from the tail.
+- Removing a node updates its neighbours' `next`/`prev` in O(1):
+  the payoff for the bookkeeping.
+
+:::
+
+This is the smallest example that puts together everything we have
+seen: a [recursive type](M04-L04-recursive-types.html), a record
+with mutable fields, an [option](M04-L04-recursive-types.html#the-option-type)
+to mark the ends of the chain, and a [`ref`](M07-L01-references.html)
+to let the handle change. It is also a good place to feel why
+mutation is the right tool here: every linked-list operation that
+preserves links must update them in place, and threading new lists
+through every call would be both painful and miss the point.
 
 ## Arrays
 
@@ -426,8 +646,6 @@ fixed-size table, incrementing the counter.
 
 ## A typical use: counting
 
-Count how many times each character appears in a string:
-
 ```ocaml
 let count_chars s =
   let counts = Array.make 256 0 in
@@ -436,19 +654,14 @@ let count_chars s =
     s;
   counts
 
-let _ =
-  let c = count_chars "hello" in
-  (c.(Char.code 'l'), c.(Char.code 'o'))
+let c = count_chars "hello"
+let _ = c.(Char.code 'l')  (* = 2 *)
+let _ = c.(Char.code 'o')  (* = 1 *)
 ```
 
-`(2, 1)`. Two 'l's, one 'o'.
-
-- An array is the right shape here: **indexed by character code,
-  mutated in place** during the scan.
-- This is what an imperative loop in C looks like, translated to
-  OCaml.
-- We use mutation because the natural shape of the algorithm is
-  "step through the input, update this counter table".
+- Array **indexed by character code**, mutated in place.
+- Same shape as an imperative loop in C.
+- Mutation is right here: walk the input, update the counter table.
 
 :::
 
@@ -653,6 +866,56 @@ the structure to be modified.
 If you want an immutable reverse instead, the right path is
 usually `Array.of_list (List.rev (Array.to_list a))`, or simpler,
 keep the data as a list in the first place.
+
+## Closing: default to immutable
+
+The mutation toolkit (refs, mutable fields, arrays) is in the
+language because some algorithms genuinely want it: random-access
+table updates, doubly-linked structures, in-place reverses, callbacks
+that push state into the world. But everything we have built so far,
+all the way through [Module 6](M06-L01-functions-revisited.html), did
+without it. There is a reason to keep that as the default.
+
+Immutable data has three concrete payoffs. First, you do not have
+to think about [aliasing](M07-L01-references.html#aliasing-two-names-for-one-cell):
+two names for the same value behave identically whether they share
+a heap object or not, because the heap object cannot change.
+Second, the implementation is free to share structure cheaply: a
+new list `x :: xs` shares all of `xs` with the original, no copy
+needed. Third, immutable data is a perfect fit for *concurrency*:
+two threads (or two domains, or two distant cores) can read the
+same value at once without locks, because there is nothing to
+race over. We will return to that point in
+[Module 10](M10-L01-data-race-freedom.html).
+
+The recommendation, then, is the same one OCaml itself follows:
+use immutable data structures by default, and reach for mutation
+when performance, expressivity, or interop genuinely requires it.
+The skill is recognising which of those three things is actually
+asking, versus which of them just feels like the imperative habit
+from another language.
+
+:::slide
+
+## Default to immutable; mutate when it pays
+
+What you give up when you mutate:
+
+- [Equational reasoning](M01-L02-why-fp.html#equational-reasoning)
+  on code that touches the cell.
+- "Safe to alias" guarantees: every caller now matters.
+- Lock-free concurrent reads: two readers may race.
+
+What you get:
+
+- O(1) random-access updates (arrays, hash tables).
+- Doubly-linked / cyclic / shared mutable structures.
+- Interop with callback-style code.
+
+Rule of thumb: **immutable until profiled or pinned by the
+algorithm**.
+
+:::
 
 ## What's next
 

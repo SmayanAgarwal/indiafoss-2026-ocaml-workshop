@@ -209,16 +209,22 @@ grow during their own polish passes.
 
 ### M07: Side effects and modular programming (9 lectures)
 
-Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M07 drafts. M07 is not yet polished; the slide counts reflect the
-current draft state (including the M07-L04 streams-and-laziness
-and M07-L05 memoization lectures added on 2026-05-23). Estimate
-uses slide_count x 1.5 min.
+Re-estimated 2026-05-27 after the M07-L01 / M07-L02 side-effects
+audit against CS3100 lec12. M07-L01 added the `=` vs `==` slide
+with the CS3100 heap diagram, kept the value-restriction trio,
+and moved the "ref is a record with one mutable field" reveal
+(chapter section + 2 slides) out into M07-L02 where mutable
+record fields are properly introduced. M07-L02 picked that up,
+plus the doubly-linked list worked example and a
+default-to-immutable closing slide. Previous re-estimate on
+2026-05-25 included the M07-L04 streams-and-laziness and M07-L05
+memoization lectures added on 2026-05-23. Estimate uses
+slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M07-L01 | Mutable references | 15 | 23 | 32 |
-| M07-L02 | Mutable records and arrays | 14 | 21 | 29 |
+| M07-L01 | Mutable references | 18 | 27 | 38 |
+| M07-L02 | Mutable records and arrays | 20 | 30 | 42 |
 | M07-L03 | Exceptions | 12 | 18 | 25 |
 | M07-L04 | Streams and laziness | 13 | 20 | 28 |
 | M07-L05 | Memoization | 12 | 18 | 25 |
@@ -226,12 +232,15 @@ uses slide_count x 1.5 min.
 | M07-L07 | Module signatures | 16 | 24 | 34 |
 | M07-L08 | Functors | 13 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 23 | 32 |
-| **M07 total** | | **125** | **190** | **265** |
-| | | | **(3.2 h)** | **(4.4 h)** |
+| **M07 total** | | **134** | **203** | **284** |
+| | | | **(3.4 h)** | **(4.7 h)** |
 
-M07-L03 and M07-L05 (12 slides / 18 min) sit below the NPTEL
-20-min floor. M07-L04 and M07-L08 (13 slides / 20 min) sit right
-at the floor.
+M07-L02 (20 slides / 30 min) now sits right at the NPTEL 30-min
+ceiling after picking up the ref-as-record reveal; natural cut
+if delivery runs long is the default-to-immutable closing slide.
+M07-L01 (18 slides / 27 min) is just under the ceiling. M07-L03
+and M07-L05 (12 slides / 18 min) sit below the NPTEL 20-min floor.
+M07-L04 and M07-L08 (13 slides / 20 min) sit right at the floor.
 
 ### M08: Monads and GADTs (10 lectures)
 
@@ -428,12 +437,12 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1816 min (30.3 hours) across
+- **Final video**: 1831 min (30.5 hours) across
   81 lectures and 12 modules.
-- **Estimated recording time**: 2543 min (42.4 hours)
+- **Estimated recording time**: 2565 min (42.8 hours)
   at the 1.4x multiplier.
 
-The 30.1 hours of final video meets NPTEL's ~30 hr target
+The 30.5 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
 min for effect-handler concurrency), the M10 expansion (+1
 lecture, +36 video min for resource safety; M10 grew from 5 to
@@ -473,7 +482,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **42.2 hours of recording / 4.3 hours per day = ~9.8 studio days.**
+- **42.8 hours of recording / 4.3 hours per day = ~9.9 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -486,13 +495,13 @@ sessions:
 | M04 Data types | 3.4 | 0.8 |
 | M05 Pattern matching | 3.6 | 0.8 |
 | M06 Higher-order programming | 3.2 | 0.7 |
-| M07 Side effects and modular programming | 4.4 | 1.0 |
+| M07 Side effects and modular programming | 4.8 | 1.1 |
 | M08 Monads and GADTs | 5.2 | 1.2 |
 | M09 Concurrency and Testing | 4.1 | 1.0 |
 | M10 Memory safety and security | 3.1 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 3.7 | 0.9 |
 | M12 Unikernels (MirageOS) | 2.8 | 0.7 |
-| **Total** | **42.2** | **9.8** |
+| **Total** | **42.8** | **9.9** |
 
 ## Caveats
 
