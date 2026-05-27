@@ -481,6 +481,8 @@ each step is one line.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -507,6 +509,8 @@ let _ = pipeline "-3"
 
 - `Some 10`, `None`, `None`.
 - Three steps, three `bind`s, no nested `match`.
+
+:::
 
 :::
 

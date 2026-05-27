@@ -455,6 +455,8 @@ Int_lit 1, Int_lit 2)`. Note the compile error.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -476,6 +478,8 @@ let _ = eval (If (Bool_lit false, Bool_lit true, Bool_lit false))
 
 `5`, `false`. The `If` constructor's type forces the branches to
 match each other and the condition to be `bool expr`.
+
+:::
 
 :::
 

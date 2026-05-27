@@ -589,6 +589,8 @@ let lookup_missing () = M.find_opt "dave" ages
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -612,6 +614,8 @@ let _ = M.find_opt "dave" ages
   `None` for missing.
 - `M.find` raises `Not_found` instead.
 - Same convention as Module 7 Lecture 3.
+
+:::
 
 :::
 

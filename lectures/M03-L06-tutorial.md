@@ -432,6 +432,8 @@ Try this before reading the solution. The shape mirrors
 the last digit (`n mod 10`) and adds it to the digit sum of the
 rest (`n / 10`).
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -447,6 +449,8 @@ let _ = sum_digits 12345
 - Base case `n = 0`: empty number, digit sum `0`.
 - Recursive case: last digit + digit sum of the rest.
 - `int = 15`. Same shape as `count_digits`; different per-step.
+
+:::
 
 :::
 

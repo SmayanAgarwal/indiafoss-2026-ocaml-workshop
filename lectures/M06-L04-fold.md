@@ -852,6 +852,8 @@ Express two functions using only `List.fold_left`:
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -871,6 +873,8 @@ let _ = max_of_default [] 0              (* = 0 *)
 - `max_of_default`: pass the stdlib `max` straight in; default as
   starting accumulator means the empty case is handled for free.
 - Two different shapes, same `fold_left` machinery.
+
+:::
 
 :::
 

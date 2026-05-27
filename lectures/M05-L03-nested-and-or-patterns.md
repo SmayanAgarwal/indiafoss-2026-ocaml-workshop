@@ -1090,6 +1090,8 @@ type shape = Circle of float | Rectangle of float * float
 
 Try it before reading the solution.
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -1112,6 +1114,8 @@ let _ = is_unit_shape (Circle 2.0)             (* = false *)
 - Each alternative is a constructor with a nested literal payload.
 - Neither alternative binds a variable, so the same-bindings rule
   holds trivially.
+
+:::
 
 :::
 

@@ -481,6 +481,8 @@ match parse_int s with
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -506,6 +508,8 @@ let _ = pipeline "200"
 
 - Three steps, three `let*`s.
 - Same logic as the nested `match`, but flat.
+
+:::
 
 :::
 

@@ -659,6 +659,8 @@ end
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -683,6 +685,8 @@ let _ = Counter.next ()
 
 `1`, `2`, `1`. Try `let _ = !Counter.n` and the compiler refuses with
 `Unbound value Counter.n`. The signature has hidden it.
+
+:::
 
 :::
 

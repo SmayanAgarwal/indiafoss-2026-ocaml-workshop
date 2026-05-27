@@ -434,6 +434,8 @@ returns informative error messages. Use `let*`.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution: the helpers
@@ -450,6 +452,10 @@ let int_or_err prefix s =
 `int_or_err` produces a labelled `Error` if parsing fails.
 
 :::
+
+:::
+
+:::solution
 
 :::slide
 
@@ -472,6 +478,8 @@ let parse_pair_r s =
 ```
 
 Two `let*`s short-circuit on first parse failure.
+
+:::
 
 :::
 

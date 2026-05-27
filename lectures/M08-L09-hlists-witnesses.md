@@ -458,6 +458,8 @@ need a witness list for this one.)
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -482,6 +484,8 @@ let _ = length_hlist HNil
 - The function ignores the *value* of each element; it only counts
   how many there are.
 - No witness list needed because counting is value-agnostic.
+
+:::
 
 :::
 

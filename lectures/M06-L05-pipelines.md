@@ -576,6 +576,8 @@ Write "square then increment by 1" two ways:
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -597,6 +599,8 @@ Same answer.
 - `f1` is direct: take `x`, square it, add 1.
 - `f2` composes `inc` with `square`: first `square`, then `inc`.
 - Both forms have their place; pick whichever reads better in context.
+
+:::
 
 :::
 

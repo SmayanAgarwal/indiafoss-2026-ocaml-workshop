@@ -640,6 +640,8 @@ let make_counter () =
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -657,6 +659,8 @@ let _ = next ()  (* = 3 *)
 
 - The closure captures `n`; each call increments and reads.
 - `incr n` is shorthand for `n := !n + 1`; `decr` is the other direction.
+
+:::
 
 :::
 

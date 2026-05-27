@@ -600,6 +600,8 @@ let reverse_in_place a =
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -624,6 +626,8 @@ let _ = a
 - Returns `unit`; effect is to mutate `a`.
 - **Two-pointer reverse:** swap `a.(i)` and `a.(n-1-i)`, halfway.
 - `for ... to ... do ... done`: OCaml's imperative loop.
+
+:::
 
 :::
 

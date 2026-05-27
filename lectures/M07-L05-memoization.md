@@ -648,6 +648,8 @@ let fib_memo = memo_rec fib_open
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -663,6 +665,8 @@ let fib_memo = memo_rec fib_open
 - `memo_rec` wraps it: every `self`-call goes through the cache.
 - `fib_memo 30` is O(n) work, not exponential.
 - Compare timing against `let rec fib n = ...`: night and day.
+
+:::
 
 :::
 

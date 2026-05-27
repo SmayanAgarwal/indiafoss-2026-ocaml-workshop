@@ -558,6 +558,8 @@ which checks if an element is in a list.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -580,6 +582,8 @@ let _ = unique ["a"; "b"; "a"; "c"; "b"]      (* = ["a"; "b"; "c"] *)
 - Include each element only if not already seen.
 - `List.mem` is `O(n)` per call: overall `O(n^2)`.
 - Fine for short lists; use a `Set` ([Module 7](M07-L08-functors.html)) for big lists.
+
+:::
 
 :::
 

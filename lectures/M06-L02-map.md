@@ -632,6 +632,8 @@ when the shorter list runs out.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -650,6 +652,8 @@ let _ = zip_with (+) [1; 2; 3] [10; 20]                           (* = [11; 22] 
 - `[], _ | _, []` is an or-pattern catching either list empty.
 - When either runs out, we stop.
 - Third call: extra element of the longer list is dropped.
+
+:::
 
 :::
 

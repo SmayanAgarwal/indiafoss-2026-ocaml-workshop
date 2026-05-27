@@ -463,6 +463,8 @@ Before reading on, do the rewrite yourself. The shape is the
 signature, inner helper with an extra `acc` parameter, base case
 returns `acc`.
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -480,6 +482,8 @@ let power x n =
 - Inner `go` carries an accumulator; `x` stays the same each call.
 - Starting accumulator: `1` (what `power x 0` returned).
 - Recursive case: fold `* x` into `acc` *before* recursing.
+
+:::
 
 :::
 

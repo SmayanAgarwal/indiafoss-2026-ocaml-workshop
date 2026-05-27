@@ -420,6 +420,8 @@ subtracting 1 from `n` shifts the residue by 1, so
 1)`, `mod3_eq_2 n = mod3_eq_1 (n - 1)`. Three functions, three
 bases, three tail calls in a cycle.
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -443,6 +445,8 @@ let _ = mod3_eq_2 11  (* true: 11 mod 3 = 2 *)
 - Three bodies, all in scope inside all bodies.
 - Recursive calls hand off in a cycle: 0 to 2, 2 to 1, 1 to 0.
 - All three calls are in tail position; TCO works across all of them.
+
+:::
 
 :::
 

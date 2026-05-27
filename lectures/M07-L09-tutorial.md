@@ -576,6 +576,8 @@ let queue_length = Queue.length
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution: the signature
@@ -594,6 +596,10 @@ end
 One new `val`: `length : 'a t -> int`.
 
 :::
+
+:::
+
+:::solution
 
 :::slide
 
@@ -618,6 +624,8 @@ let _ = Queue.length q
 ```
 
 `int = 3`.
+
+:::
 
 :::
 

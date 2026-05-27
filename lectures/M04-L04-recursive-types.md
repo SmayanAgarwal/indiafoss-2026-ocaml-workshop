@@ -978,6 +978,8 @@ type expr =
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -995,6 +997,8 @@ let e = Sub (Sub (Num 7, Num 3), Num 2)
 - One new constructor, same recursive payload shape.
 - The value nests `Sub` inside `Sub`: `(7 - 3) - 2`.
 - Walking and evaluating this comes in M05.
+
+:::
 
 :::
 

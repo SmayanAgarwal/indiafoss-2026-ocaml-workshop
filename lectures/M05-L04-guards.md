@@ -574,6 +574,8 @@ Write `sign : int -> string` returning `"negative"`, `"zero"`, or
 
 Try it before reading on.
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -591,6 +593,8 @@ let _ = sign 0     (* = "zero" *)
 
 - Two guarded clauses, one unguarded wildcard.
 - The wildcard *must* be present; otherwise warning 8.
+
+:::
 
 :::
 

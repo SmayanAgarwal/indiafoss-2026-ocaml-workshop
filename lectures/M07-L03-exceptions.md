@@ -591,6 +591,8 @@ let find_first_opt p xs =
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -615,6 +617,8 @@ let _ = find_first_opt (fun n -> n > 100) [1; 2; 3]
 - Standard pattern when you want to expose both APIs.
 - The stdlib's `List.find` and `List.find_opt` are exactly this
   pair.
+
+:::
 
 :::
 

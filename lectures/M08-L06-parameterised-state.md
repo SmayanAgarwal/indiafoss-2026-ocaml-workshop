@@ -385,6 +385,8 @@ pushes 10 and adds (top is now 16).
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution: setup and mul
@@ -414,6 +416,10 @@ let mul : (int * (int * 's), int * 's, unit) pstate =
 
 :::
 
+:::
+
+:::solution
+
 :::slide
 
 ## Activity solution: a longer program
@@ -438,6 +444,8 @@ let _ = run prog ()
 - After `add`: stack `(16, ())`.
 
 The chain of state types lines up every step.
+
+:::
 
 :::
 

@@ -594,6 +594,8 @@ let squares_from n = map (fun x -> x * x) (from n)
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -609,6 +611,8 @@ let _ = take 6 (squares_from 0)
 - `from n`: stream of `n, n+1, n+2, ...`.
 - `squares_from n`: derived from `from n` via `map`.
 - All work happens on `take`; construction is constant time.
+
+:::
 
 :::
 

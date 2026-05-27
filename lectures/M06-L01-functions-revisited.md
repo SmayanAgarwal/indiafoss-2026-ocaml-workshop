@@ -646,6 +646,8 @@ let _ = flip (fun x xs -> x :: xs) [1; 2; 3] 0
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -662,6 +664,8 @@ let _ = flip (fun x xs -> x :: xs) [1; 2; 3] 0  (* = [0; 1; 2; 3] *)
 - Polymorphic on three type variables (`'a`, `'b`, `'c`).
 - Useful when a stdlib function has its arguments "in the wrong
   order" for partial application.
+
+:::
 
 :::
 

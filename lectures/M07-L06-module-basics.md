@@ -573,6 +573,8 @@ end
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -600,6 +602,8 @@ let _ = Stack.pop ()
 ```
 
 `Some 3`, `Some 3`, `Some 2`.
+
+:::
 
 :::
 

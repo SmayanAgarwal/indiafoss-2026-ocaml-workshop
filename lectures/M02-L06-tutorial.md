@@ -448,6 +448,8 @@ let () =
 ```
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -472,6 +474,8 @@ What changed:
 - Type: `int -> int` to `float -> float`.
 
 **Structure is identical.** OCaml made you spell out the type choice.
+
+:::
 
 :::
 

@@ -501,6 +501,8 @@ type-checked and returned a sensible number, well done. If you got
 a type error, the most likely cause is using `/` (integer
 division) instead of `/.` (float division), or `*` instead of `*.`.
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -518,6 +520,8 @@ let _ = bmi 70.0 1.75
   precision noise.
 * Inferred type: `float -> float -> float`. Two floats in, one
   float out.
+
+:::
 
 :::
 

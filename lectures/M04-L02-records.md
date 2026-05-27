@@ -620,6 +620,8 @@ that returns the title.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -641,6 +643,10 @@ let _ = book_title real_world_ocaml
 
 :::
 
+:::
+
+:::solution
+
 :::slide
 
 ## Activity solution: destructure in the parameter
@@ -654,6 +660,8 @@ let book_title { title; _ } = title
 
 - `_` ignores the other fields.
 - Without the `_`, OCaml warns the pattern is incomplete.
+
+:::
 
 :::
 

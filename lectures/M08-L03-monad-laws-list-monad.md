@@ -544,6 +544,8 @@ malformed step gives `None`.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution: setup
@@ -569,6 +571,10 @@ Three little parsers, one per piece. Each returns `Some _` on a
 valid piece and `None` otherwise.
 
 :::
+
+:::
+
+:::solution
 
 :::slide
 
@@ -602,6 +608,10 @@ we accept it here as a parse), `None` (bad unit), `None`
 
 :::
 
+:::
+
+:::solution
+
 :::slide
 
 ## Activity solution in action
@@ -616,6 +626,8 @@ Three `let*`s, three failure modes covered, no nested matches.
 
 - This is the option monad working: explicit failure, linear code,
   the wiring stays out of sight.
+
+:::
 
 :::
 

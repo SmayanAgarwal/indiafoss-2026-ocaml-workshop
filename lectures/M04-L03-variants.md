@@ -490,6 +490,8 @@ constructor.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -510,6 +512,8 @@ let l4 = Off
 - Three constructors with no payload; one carries `int`.
 - Each value has type `light`.
 - *How* to use a `light` (dispatching on the state) is M05's job.
+
+:::
 
 :::
 

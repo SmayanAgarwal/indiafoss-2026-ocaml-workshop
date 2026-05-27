@@ -372,6 +372,8 @@ pretty-prints the value of the given type.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -398,6 +400,8 @@ let _ = convert String_t "hello"
 - The compiler refines `a` per case.
 - Without GADTs you would write two functions (one per type) or
   hand-code dispatch on an `option`.
+
+:::
 
 :::
 

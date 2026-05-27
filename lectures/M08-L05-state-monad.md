@@ -456,6 +456,8 @@ it three times and inspect the final state.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution: setup
@@ -473,6 +475,10 @@ let run m initial = m initial
 The seven definitions: the type, monad operations, and primitives.
 
 :::
+
+:::
+
+:::solution
 
 :::slide
 
@@ -495,6 +501,8 @@ let _ = run program 0
 
 `(["v_0"; "v_1"; "v_2"], 3)`. Counter threaded through `let*`,
 no `ref` in sight.
+
+:::
 
 :::
 
