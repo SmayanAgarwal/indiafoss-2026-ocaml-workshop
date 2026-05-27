@@ -889,26 +889,47 @@ the whole list is `xs`."
 
 ## Or-patterns with `as`
 
-You can also use `as` with or-patterns to name the whole
-matched value across alternatives:
+The most compelling use of `as` is with or-patterns. An
+or-pattern (`p1 | p2 | ...`) cannot bind a variable in each
+disjunct individually, because OCaml requires the variables of
+the alternatives to agree. So if you want a name for *whichever
+alternative happened to match*, `as` is the only way to do it.
 
 ```ocaml
-type event =
-  | Click
-  | Tap
-  | Drag
-  | Scroll
+let classify = function
+  | (0 | 1 | 2)     as small -> Printf.sprintf "small: %d"  small
+  | (10 | 20 | 30)  as round -> Printf.sprintf "round: %d"  round
+  | n                        -> Printf.sprintf "other: %d"  n
 
-let _ =
-  match Click with
-  | (Click | Tap) as touch -> "touchlike: " ^ (match touch with Click -> "click" | Tap -> "tap" | _ -> assert false)
-  | other -> "other"
+let _ = classify 1    (* = "small: 1" *)
+let _ = classify 20   (* = "round: 20" *)
+let _ = classify 7    (* = "other: 7" *)
 ```
 
-This is a bit awkward in practice; we are showing it only to
-note that `as` binds whichever alternative matched. In most
-real code you do not need this; an or-pattern with the same
-binding name in each alternative is enough.
+`as small` binds whichever of `0`, `1`, `2` matched; `as round`
+likewise. Without the `as`, you would have to split the or-pattern
+back into three separate clauses just to name the value.
+
+:::slide
+
+## Or-patterns with `as`
+
+```ocaml
+let classify = function
+  | (0 | 1 | 2)     as small -> Printf.sprintf "small: %d"  small
+  | (10 | 20 | 30)  as round -> Printf.sprintf "round: %d"  round
+  | n                        -> Printf.sprintf "other: %d"  n
+
+let _ = classify 1    (* = "small: 1" *)
+let _ = classify 20   (* = "round: 20" *)
+let _ = classify 7    (* = "other: 7" *)
+```
+
+- Or-pattern alternatives cannot bind a name on their own.
+- `as` gives the matched value a single name across the disjuncts.
+- Without it: three separate clauses just to name the value.
+
+:::
 
 ## Putting it together: a small parser shape
 
