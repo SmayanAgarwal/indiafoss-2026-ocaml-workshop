@@ -746,6 +746,8 @@ element of a list, or `None` if empty. Use `List.fold_left`.
 
 :::
 
+:::solution
+
 :::slide
 
 ## Activity solution
@@ -768,6 +770,8 @@ let _ = maximum ([] : int list)      (* = None *)
 - For each element: if `None`, take this element; otherwise keep the larger.
 - `([] : int list)` annotation is needed: `[]` alone is polymorphic
   and OCaml needs to pick a type.
+
+:::
 
 :::
 
