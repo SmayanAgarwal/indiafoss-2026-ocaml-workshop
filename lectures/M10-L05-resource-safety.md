@@ -5,7 +5,7 @@ week: 10
 duration_target_min: 21
 concepts: [resource safety, file descriptor, socket, In_channel, with_open_text, Fun.protect, finalisers, leak, double-close, use-after-close]
 keywords: [OCaml, resource safety, file descriptor, socket, In_channel, with_open_text, Out_channel, Fun.protect, finaliser, GC, RAII, linearity, uniqueness, OxCaml]
-activity_question: "Write a `with_open_file : string -> (in_channel -> 'a) -> 'a` that opens a file, runs the callback, and guarantees the file is closed even if the callback raises. Use `Fun.protect`. What still goes wrong if the callback *returns* the channel?"
+activity_question: "Write `save_and_restore_ref : 'a ref -> (unit -> 'b) -> 'b` that captures the current value of `r`, runs `f ()`, and *always* restores `r` to its original value before returning, even if `f` raises. Use `Fun.protect`. Why is this the same shape as `with_open_file`?"
 think_about_this: "The garbage collector reclaims memory when it becomes unreachable. A leaked file descriptor is also a piece of state held by an unreachable handle: why does the GC not just close it for you?"
 reading:
   - title: "OCaml manual, In_channel and Out_channel"
@@ -220,8 +220,10 @@ result. Either way, the cleanup runs exactly once.
 
 The pattern is the *idiom* that `with_open_text`,
 `Out_channel.with_open_text`, `Mutex.protect`, and many
-ecosystem libraries are written from. It is also the pattern
-this lecture's activity asks you to recreate by hand.
+ecosystem libraries are written from. The activity at the end of
+this lecture asks you to apply the same `Fun.protect` shape to a
+non-I/O resource (a `ref`'s current value), to make sure you have
+internalised the *shape*, not just the I/O wrapper.
 
 :::slide
 
@@ -439,50 +441,50 @@ OCaml channels *do* install finalisers as a safety net. The
 
 ## Activity
 
-The classroom exercise is to write the
-`with_open_file` combinator from scratch, using `Fun.protect`.
-The signature is:
+The classroom exercise is to apply the `Fun.protect` shape to a
+*non-I/O* resource. The "resource" here is the current value of
+a `ref`: code inside the callback may mutate the ref, and on
+exit (normal or exceptional) we want it restored to what it was
+before the call. The signature is:
 
 ```text
-val with_open_file : string -> (in_channel -> 'a) -> 'a
+val save_and_restore_ref : 'a ref -> (unit -> 'b) -> 'b
 ```
 
-Open the file, pass the channel to the callback, and ensure the
-channel is closed whether the callback returns normally or
-raises. Use `Fun.protect` for the guarantee.
+Capture the current contents of `r`, run `f ()`, and *always*
+restore `r := saved` before returning, even if `f` raises. Use
+`Fun.protect`.
 
 :::quiz code id=M10-L05-q1
-Implement `with_open_file : string -> (in_channel -> 'a) -> 'a`
-that opens the file at `path`, calls `f` with the resulting
-input channel, and *always* closes the channel before returning
-(even if `f` raises). Use `Fun.protect`.
+Implement `save_and_restore_ref : 'a ref -> (unit -> 'b) -> 'b`
+that snapshots `r`, calls `f ()`, and unconditionally restores
+the snapshot to `r` before returning (whether `f` returned
+normally or raised). Use `Fun.protect`.
 
 ```ocaml
-let with_open_file path f =
+let save_and_restore_ref r f =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let () =
-  (* Use /dev/null so the test does not depend on any
-     particular file in the working directory. *)
+  let counter = ref 0 in
+  (* Normal return: counter mutated inside, restored on exit. *)
   let result =
-    with_open_file "/dev/null" (fun ic ->
-      let _ = In_channel.input_line ic in
+    save_and_restore_ref counter (fun () ->
+      counter := 100;
+      assert (!counter = 100);
       42)
   in
   assert (result = 42);
-  (* Verify cleanup runs on exception. *)
-  let cleaned = ref false in
+  assert (!counter = 0);
+  (* Exception inside the callback: counter still restored. *)
   (try
-     with_open_file "/dev/null" (fun _ic ->
-       (* Mark cleanup via a different channel: install a
-          finally that flips the ref. The real cleanup of the
-          file descriptor still runs through Fun.protect. *)
-       cleaned := true;
+     save_and_restore_ref counter (fun () ->
+       counter := 999;
        failwith "boom")
    with Failure _ -> ());
-  assert !cleaned;
+  assert (!counter = 0);
   print_endline "all tests passed"
 ```
 :::
@@ -490,49 +492,46 @@ let () =
 A reference solution.
 
 ```ocaml
-let with_open_file path f =
-  let ic = open_in path in
+let save_and_restore_ref r f =
+  let saved = !r in
   Fun.protect
-    ~finally:(fun () -> close_in_noerr ic)
-    (fun () -> f ic)
+    ~finally:(fun () -> r := saved)
+    (fun () -> f ())
 
+let counter = ref 0
 let _ =
-  with_open_file "/dev/null" (fun _ic -> 42)
-    (* = 42 *)
+  save_and_restore_ref counter (fun () ->
+    counter := 100;
+    !counter)              (* = 100 *)
+let _ = !counter           (* = 0 (restored) *)
 ```
 
-Notice what the implementation gives you for free. The cleanup
-is registered before the user's callback runs; if `open_in`
-itself raises, no cleanup is needed (no channel exists yet); if
-`f` raises, the cleanup fires and the exception propagates; if
-`f` returns, the cleanup fires and the return value propagates.
-The combinator does not need to know whether `f` raises or
-returns; `Fun.protect` handles both cases uniformly.
-
-This is the entire discipline that closes the leak / double-close
-/ use-after-close bug class for the easy lifetime shape. The
-shape is the gift; the rest of the chapter is the cases where
-that shape does not fit.
+Notice what the shape gives you for free. The snapshot is taken
+*before* `Fun.protect` registers cleanup; if `f` raises, the
+finally fires and `r` is restored; if `f` returns, the finally
+fires and `r` is restored. The combinator does not need to know
+whether `f` raises or returns. *No path through the body forgets
+to restore.* This is the same shape as `with_open_file`: snapshot
+some resource, do work that may raise, undo on the way out.
 
 :::slide
 
 ## Activity discussion
 
 ```ocaml skip
-let with_open_file path f =
-  let ic = open_in path in
+let save_and_restore_ref r f =
+  let saved = !r in
   Fun.protect
-    ~finally:(fun () -> close_in_noerr ic)
-    (fun () -> f ic)
+    ~finally:(fun () -> r := saved)
+    (fun () -> f ())
 ```
 
-- `Fun.protect` runs `finally` on both normal return and
-  exception.
-- `open_in` runs *before* `Fun.protect`, so a failed open does
-  not need cleanup.
-- `close_in_noerr` swallows any close-time error (no exception
-  from cleanup).
-- *No path through the body forgets to close.*
+- Snapshot taken *before* `Fun.protect` registers cleanup.
+- `finally` fires on both normal return and exception: `r` is
+  always restored.
+- Same shape as `with_open_file`: snapshot, work, undo.
+- The resource is the ref's value, not a file handle: the shape
+  generalises beyond I/O.
 
 :::
 

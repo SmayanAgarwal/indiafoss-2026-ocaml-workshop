@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 22
 concepts: [memoization, caching, hash tables, tying the recursive knot, dynamic programming, purity]
 keywords: [OCaml, memoization, Hashtbl, fib, edit distance, dynamic programming, purity]
-activity_question: "Write Fibonacci in open-recursion form: [fib_open : (int -> int) -> int -> int]. Then build [fib_memo = memo_rec fib_open]. Confirm the memoized version computes [fib_memo 30] essentially instantly, with the lecture's [memo] and [memo_rec] in scope."
+activity_question: "Write the binomial coefficient in open-recursion form: [binom_open : (int * int -> int) -> int * int -> int] using the identity C(n,k) = C(n-1,k-1) + C(n-1,k). Then build [binom_memo = memo_rec binom_open]. Confirm [binom_memo (30, 15) = 155117520] runs instantly even though the naive version would explode."
 think_about_this: "Memoization trades memory for time and only works when the function is *pure*: same input, same output, no side effects. What goes wrong if you memoize a function that reads a file? A function that updates a counter? A function that returns the current time?"
 reading:
   - title: "Cornell CS3110, Memoization"
@@ -590,18 +590,21 @@ as a parameter) and use `memo_rec` to tie the knot.
 
 ## Activity
 
-Use `memo_rec` to build a fast Fibonacci.
+Use `memo_rec` to build a fast binomial-coefficient function.
 
-1. Write `fib_open self n` in open-recursion form.
-2. Define `fib_memo = memo_rec fib_open`.
-3. Use `time_it` to compare `fib_memo 35` against the naive
-   recursive `fib 35`. Confirm the memoized version is
-   dramatically faster.
+1. Write `binom_open self (n, k)` in open-recursion form, using
+   the identity `C(n, k) = C(n-1, k-1) + C(n-1, k)` with base
+   cases `C(n, 0) = 1` and `C(n, n) = 1`.
+2. Define `binom_memo = memo_rec binom_open`.
+3. Check that `binom_memo (30, 15) = 155117520` returns instantly
+   (the naive recursion would explore O(2^n) calls).
 
 :::
 
 :::quiz code id=M07-L05-q3
-Fill in the open-recursion Fibonacci and the memoized version.
+Fill in the open-recursion binomial and the memoized version.
+Keep the argument as a tuple `(n, k)` so the hashtable can key on
+the pair.
 
 ```ocaml
 let memo f =
@@ -617,20 +620,20 @@ let memo_rec f_open =
   self_ref := f_memo;
   f_memo
 
-let fib_open self n =
+let binom_open self (n, k) =
   failwith "not implemented"
 
-let fib_memo = memo_rec fib_open
+let binom_memo = memo_rec binom_open
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (fib_memo 0 = 1) "fib 0";
-  check (fib_memo 1 = 1) "fib 1";
-  check (fib_memo 10 = 89) "fib 10";
-  check (fib_memo 20 = 10946) "fib 20";
-  check (fib_memo 30 = 1346269) "fib 30";
+  check (binom_memo (5, 0) = 1) "C(5, 0)";
+  check (binom_memo (5, 5) = 1) "C(5, 5)";
+  check (binom_memo (5, 2) = 10) "C(5, 2)";
+  check (binom_memo (10, 5) = 252) "C(10, 5)";
+  check (binom_memo (30, 15) = 155117520) "C(30, 15) instantly";
   print_endline "all tests passed"
 ```
 :::
@@ -640,11 +643,16 @@ let () =
 Reference solution:
 
 ```ocaml
-let fib_open self n =
-  if n < 2 then 1 else self (n - 1) + self (n - 2)
+let binom_open self (n, k) =
+  if k = 0 || k = n then 1
+  else self (n - 1, k - 1) + self (n - 1, k)
 
-let fib_memo = memo_rec fib_open
+let binom_memo = memo_rec binom_open
 ```
+
+The naive recurrence has overlapping subproblems: `C(n-1, k-1)`
+and `C(n-1, k)` both recurse into `C(n-2, k-1)`. `memo_rec`
+collapses the duplicates to one call per `(n, k)` pair.
 
 :::
 
@@ -655,16 +663,19 @@ let fib_memo = memo_rec fib_open
 ## Activity solution
 
 ```ocaml
-let fib_open self n =
-  if n < 2 then 1 else self (n - 1) + self (n - 2)
+let binom_open self (n, k) =
+  if k = 0 || k = n then 1
+  else self (n - 1, k - 1) + self (n - 1, k)
 
-let fib_memo = memo_rec fib_open
+let binom_memo = memo_rec binom_open
+
+let _ = binom_memo (30, 15)  (* = 155117520, instant *)
 ```
 
-- `fib_open` takes its recursive call as a parameter `self`.
-- `memo_rec` wraps it: every `self`-call goes through the cache.
-- `fib_memo 30` is O(n) work, not exponential.
-- Compare timing against `let rec fib n = ...`: night and day.
+- Base cases `k = 0` and `k = n` close the recursion.
+- The two `self` calls overlap: `C(n-1, k-1)` and `C(n-1, k)`
+  share `C(n-2, k-1)`.
+- `memo_rec` collapses the overlap to one call per `(n, k)`.
 
 :::
 

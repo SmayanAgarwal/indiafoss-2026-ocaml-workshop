@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 22
 concepts: [recursive values, infinite data, thunks, streams, lazy values, lazy streams, sieve of Eratosthenes, lazy Fibonacci]
 keywords: [OCaml, stream, thunk, lazy, Lazy.force, lazy_t, sieve, Fibonacci]
-activity_question: "Write [from n], the infinite stream [n, n+1, n+2, ...] using the thunk-based stream type. Then write [squares_from n], the stream of squares of those numbers. Check that [take 6 (squares_from 0) = [0; 1; 4; 9; 16; 25]]."
+activity_question: "Write [take_while : ('a -> bool) -> 'a stream -> 'a list] that returns the longest prefix of [s] whose elements satisfy [p]. Verify with [take_while (fun x -> x < 5) (from 0) = [0; 1; 2; 3; 4]]."
 think_about_this: "A thunk and a [lazy] value both delay evaluation. What is the one thing [lazy] gives you that a plain [unit -> 'a] does not? When would that one thing matter, and when would it not?"
 reading:
   - title: "Cornell CS3110, Lazy evaluation"
@@ -546,39 +546,40 @@ cache; calling it twice runs the body twice.
 
 ## Activity
 
-Write `from n`, the infinite stream `n, n+1, n+2, ...`
-(thunk-based, not lazy). Then write `squares_from n`, the
-stream of square numbers starting from `n*n`. Verify with
-`take 6 (squares_from 0) = [0; 1; 4; 9; 16; 25]`.
+Write `take_while : ('a -> bool) -> 'a stream -> 'a list` that
+returns the longest prefix of `s` whose elements satisfy `p`.
+The result is a *list*, not a stream: it terminates as soon as
+`p` returns `false`. Verify with `take_while (fun x -> x < 5)
+(from 0) = [0; 1; 2; 3; 4]`.
 
 :::
 
 :::quiz code id=M07-L04-q3
-Write a function `from n` that returns the infinite stream
-`n, n+1, n+2, ...`, then a function `squares_from n` that
-returns the squares of that stream.
+Write `take_while : ('a -> bool) -> 'a stream -> 'a list`. It
+walks the stream and collects elements until the predicate
+returns `false` (or forever, if it never does — so callers must
+make sure it does).
 
 ```ocaml
 type 'a stream = Cons of 'a * (unit -> 'a stream)
 let hd (Cons (x, _)) = x
 let tl (Cons (_, t)) = t ()
-let rec take n s =
-  if n = 0 then [] else hd s :: take (n - 1) (tl s)
-let rec map f s = Cons (f (hd s), fun () -> map f (tl s))
+let rec from n = Cons (n, fun () -> from (n + 1))
 
-let rec from n =
-  failwith "not implemented"
-
-let squares_from n =
+let rec take_while p s =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (take 5 (from 0) = [0; 1; 2; 3; 4]) "nats prefix";
-  check (take 4 (from 10) = [10; 11; 12; 13]) "from 10";
-  check (take 6 (squares_from 0) = [0; 1; 4; 9; 16; 25]) "squares";
+  check (take_while (fun x -> x < 5) (from 0) = [0; 1; 2; 3; 4])
+    "first five naturals";
+  check (take_while (fun x -> x < 0) (from 10) = [])
+    "predicate fails at the head";
+  check (take_while (fun x -> x mod 7 <> 0) (from 1)
+         = [1; 2; 3; 4; 5; 6])
+    "stops at first multiple of 7";
   print_endline "all tests passed"
 ```
 :::
@@ -588,9 +589,15 @@ let () =
 Reference solution:
 
 ```ocaml
-let rec from n = Cons (n, fun () -> from (n + 1))
-let squares_from n = map (fun x -> x * x) (from n)
+let rec take_while p s =
+  if p (hd s) then hd s :: take_while p (tl s)
+  else []
 ```
+
+The recursion mirrors the structure of `take`: forces the head,
+forces the tail thunk only when the predicate keeps holding. The
+caller must guarantee `p` eventually returns `false` on an
+infinite stream, otherwise `take_while` runs forever.
 
 :::
 
@@ -601,16 +608,18 @@ let squares_from n = map (fun x -> x * x) (from n)
 ## Activity solution
 
 ```ocaml
-let rec from n = Cons (n, fun () -> from (n + 1))
-let squares_from n = map (fun x -> x * x) (from n)
+let rec take_while p s =
+  if p (hd s) then hd s :: take_while p (tl s)
+  else []
 
-let _ = take 5 (from 0)
-let _ = take 6 (squares_from 0)
+let _ = take_while (fun x -> x < 5)  (from 0)   (* = [0;1;2;3;4] *)
+let _ = take_while (fun x -> x < 0)  (from 10)  (* = []          *)
 ```
 
-- `from n`: stream of `n, n+1, n+2, ...`.
-- `squares_from n`: derived from `from n` via `map`.
-- All work happens on `take`; construction is constant time.
+- Forces the head, then the tail (only if the predicate still
+  holds): laziness preserved.
+- Terminates on an infinite stream **only** if `p` eventually
+  fails; caller's job to guarantee that.
 
 :::
 

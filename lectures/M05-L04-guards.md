@@ -5,7 +5,7 @@ week: 5
 duration_target_min: 20
 concepts: [when-guards, conditional pattern matching, exhaustiveness with guards]
 keywords: [OCaml, pattern matching, when, guard, conditional pattern]
-activity_question: "Write [sign : int -> string] returning \"negative\", \"zero\", or \"positive\". Use a single match with when-clauses (no if/else)."
+activity_question: "Write [triangle_kind : int * int * int -> string] that classifies a triangle by its sides as \"equilateral\" (all three sides equal), \"isosceles\" (exactly two equal), or \"scalene\" (all different). Use a tuple pattern and guards that compare the bound names."
 think_about_this: "Guards turn pattern matching into pattern+predicate matching. What does the compiler's exhaustiveness checker conservatively assume about a clause guarded by [when]? Why must it?"
 reading:
   - title: "Cornell CS3110, Pattern matching guards"
@@ -55,9 +55,11 @@ and revisit the trade-off in [Lecture 5](M05-L05-exhaustiveness.html#exhaustiven
 - A guard matches on a *computation*: positive `int`, long string.
 - Syntax: `| pat when <bool-expr> -> rhs`.
 - The clause fires only if the pattern matches *and* the guard is true.
-- The restriction is deliberate: pure patterns are what the
-  compiler can check for exhaustiveness.
-- Cost: guarded clauses suppress that check; we revisit in L4.
+- Patterns are restricted to *shape* (not arbitrary computation):
+  that is what makes exhaustiveness decidable.
+- Cost: the checker treats `when EXPR` opaquely, so guarded
+  clauses opt out of the exhaustiveness check. We come back to
+  this later in the lecture.
 
 :::
 
@@ -424,22 +426,56 @@ anything else, prefer the pattern.
 A guard is just an expression, and an expression can have side
 effects. Resist the urge.
 
-```text
-let f = function
-  | _ when (Printf.printf "checking\n"; true) -> "matched"
-  | _ -> "no match"
+```ocaml
+let sign = function
+  | n when (Printf.printf "checking n > 0\n"; n > 0) -> "positive"
+  | n when (Printf.printf "checking n < 0\n"; n < 0) -> "negative"
+  | _ -> "zero"
+
+let _ = sign 0
 ```
 
-Technically valid. Practically: if the guard prints, the print
-happens *every time the guard is evaluated*, which depends on
-how the compiler orders the clauses. Worse, the same value may
-be re-matched against multiple clauses in some patterns, and
-the guard fires once per attempt. Debugging this is a small
-nightmare.
+The toplevel prints `checking n > 0`, then `checking n < 0`,
+*then* returns `"zero"`. For input `0` the matcher tries the
+first clause's guard, finds it false, tries the second clause's
+guard, finds it false, and only then takes the wildcard. Two
+guard evaluations for a single call.
+
+If the guards had been pure boolean tests, that re-evaluation
+would be invisible. With prints in them, the order and count of
+calls become an observable mess that depends on the value, the
+clause ordering, and the compiler's matrix decomposition.
+Debugging is a small nightmare.
 
 The discipline: guards should be *pure*, i.e., return a `bool`
 without observable side effects. If you need a side effect,
 sequence it before the `match` or inside the right-hand side.
+
+:::slide
+
+## Guards and side effects
+
+```ocaml
+let sign = function
+  | n when (Printf.printf "n > 0?\n"; n > 0) -> "positive"
+  | n when (Printf.printf "n < 0?\n"; n < 0) -> "negative"
+  | _ -> "zero"
+
+let _ = sign 0
+```
+
+Prints `n > 0?`, then `n < 0?`, then returns `"zero"`. Two guard
+evaluations for one call.
+
+- Guards are arbitrary `bool` expressions; side effects are
+  **allowed**, just rarely a good idea.
+- Each guard fires as the matcher tries that clause; one call can
+  evaluate several guards.
+- Keep guards **pure**: return a `bool`, no observable effects.
+- If you need a side effect, do it before the `match` or in the
+  right-hand side.
+
+:::
 
 ## Compound guards and short-circuiting
 
@@ -513,30 +549,38 @@ facts. The fix is an unguarded `| _ -> ...` to close the match.
 A code task:
 
 :::quiz code id=M05-L04-q1
-Write `sign : int -> string` returning `"negative"`, `"zero"`, or
-`"positive"`. Use a single `function` with `when`-guards; no
-`if`/`else`. Make sure the match is exhaustive (no warning 8).
+Write `triangle_kind : int * int * int -> string` that classifies
+a triangle by its sides:
+
+- `"equilateral"` when all three are equal,
+- `"isosceles"` when *exactly* two are equal,
+- `"scalene"` when all three differ.
+
+Use a tuple pattern with `when`-guards that compare the bound
+names. Make sure the match is exhaustive (no warning 8).
 
 ```ocaml
-let sign n =
+let triangle_kind sides =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (sign 5 = "positive") "positive";
-  check (sign (-3) = "negative") "negative";
-  check (sign 0 = "zero") "zero";
-  check (sign max_int = "positive") "max_int";
-  check (sign min_int = "negative") "min_int";
+  check (triangle_kind (3, 3, 3) = "equilateral") "equilateral";
+  check (triangle_kind (5, 5, 8) = "isosceles") "isosceles-12";
+  check (triangle_kind (5, 3, 5) = "isosceles") "isosceles-13";
+  check (triangle_kind (4, 5, 5) = "isosceles") "isosceles-23";
+  check (triangle_kind (3, 4, 5) = "scalene") "scalene";
   print_endline "all tests passed"
 ```
 :::
 
 :::solution
 
-The shape: two guarded clauses followed by a wildcard for zero.
+The shape: tuple pattern binds three names, guards compare the
+bindings. Equilateral first (most specific), then isosceles, then
+scalene as the wildcard catch-all.
 
 :::
 
@@ -566,9 +610,15 @@ bindings.
 
 ## Activity
 
-Write `sign : int -> string` returning `"negative"`, `"zero"`, or
-`"positive"`. Use a single `match` with `when`-clauses; no `if`/
-`else`.
+Write `triangle_kind : int * int * int -> string` that classifies
+a triangle by its sides:
+
+- `"equilateral"` when all three are equal,
+- `"isosceles"` when *exactly* two are equal,
+- `"scalene"` when all three differ.
+
+Use a tuple pattern with `when`-guards comparing the bound names;
+no `if`/`else`.
 
 :::
 
@@ -581,27 +631,32 @@ Try it before reading on.
 ## Activity solution
 
 ```ocaml
-let sign = function
-  | n when n > 0 -> "positive"
-  | n when n < 0 -> "negative"
-  | _ -> "zero"
+let triangle_kind = function
+  | (a, b, c) when a = b && b = c -> "equilateral"
+  | (a, b, c) when a = b || b = c || a = c -> "isosceles"
+  | _ -> "scalene"
 
-let _ = sign 7     (* = "positive" *)
-let _ = sign (-3)  (* = "negative" *)
-let _ = sign 0     (* = "zero" *)
+let _ = triangle_kind (3, 3, 3)  (* = "equilateral" *)
+let _ = triangle_kind (5, 5, 8)  (* = "isosceles"  *)
+let _ = triangle_kind (3, 4, 5)  (* = "scalene"    *)
 ```
 
-- Two guarded clauses, one unguarded wildcard.
-- The wildcard *must* be present; otherwise warning 8.
+- Tuple pattern binds three names; guards compare the bindings.
+- Equilateral first (most specific); the second clause then
+  catches "any two equal" (with all-three-equal already ruled
+  out, that is *exactly* two); wildcard catches the rest.
 
 :::
 
 :::
 
-The two guarded clauses handle positive and negative inputs. The
-wildcard handles "anything not caught by a guard," which is
-zero. Without the wildcard, the compiler warns that zero is
-unmatched, and a `sign 0` call would crash with `Match_failure`
+The first guard catches the all-three-equal case. The second
+catches "any pair equal," which the previous clause having
+already ruled out the equilateral case makes into "exactly two
+equal." The wildcard catches everything else, i.e., all three
+different. Without the wildcard, the compiler warns that triples
+like `(1, 2, 3)` are unmatched, and the call would crash with
+`Match_failure`
 at runtime.
 
 ## What's next

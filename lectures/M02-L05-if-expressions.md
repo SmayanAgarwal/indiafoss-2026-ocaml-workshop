@@ -484,29 +484,33 @@ which compares `string` to `int`: type error.
 A code challenge:
 
 :::quiz code id=M02-L05-q2
-Define `sign : int -> int` that returns 1 for positive inputs, -1
-for negative inputs, and 0 for zero.
+Define `max3 : int -> int -> int -> int` that returns the
+largest of three integers. Use only nested `if`/`else`; do not
+call any library function.
 
 ```ocaml
-let sign x =
+let max3 a b c =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (sign 5    =  1) "sign 5";
-  check (sign (-3) = -1) "sign -3";
-  check (sign 0    =  0) "sign 0";
-  check (sign 100  =  1) "sign 100";
+  check (max3 1 2 3 = 3) "ascending";
+  check (max3 3 2 1 = 3) "descending";
+  check (max3 5 9 4 = 9) "middle largest";
+  check (max3 7 7 7 = 7) "all equal";
+  check (max3 (-1) (-5) (-3) = -1) "all negative";
   print_endline "all tests passed"
 ```
 :::
 
 :::solution
 
-The reference implementation is `if x > 0 then 1 else if x < 0
-then -1 else 0`. Three branches, two thresholds.
+One shape: pick the larger of `a` and `b` first, then compare
+that against `c`. `if a > b then (if a > c then a else c) else (if
+b > c then b else c)`. The whole expression is an `int` because
+every branch is an `int`.
 
 :::
 

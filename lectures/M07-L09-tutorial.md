@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 28
 concepts: [worked module, abstract type, functor, two-stack queue]
 keywords: [OCaml, queue, two-stack, functor, tutorial, module]
-activity_question: "Add an [is_empty : 'a t -> bool] function to the queue. Update the signature. What does the compiler require?"
+activity_question: "Add a [length : 'a t -> int] operation to the queue. Update both the signature and the struct. What does the compiler require, and what happens if you forget to add [length] to the signature?"
 think_about_this: "We built a queue using two stacks (lists). [enqueue] is O(1), [dequeue] is amortized O(1). Why does the two-list trick give amortized O(1) rather than worst-case O(1)?"
 reading:
   - title: "Cornell CS3110, A functional queue"

@@ -163,15 +163,15 @@ the current draft state. Estimate uses slide_count x 1.5 min.
 | M05-L01 | Basic patterns: literals, variables, wildcards | 20 | 30 | 42 |
 | M05-L02 | Pattern matching on lists and trees | 16 | 24 | 34 |
 | M05-L03 | Nested patterns, records, inline records, or-patterns | 22 | 33 | 46 |
-| M05-L04 | Guards: when-clauses on patterns | 11 | 17 | 24 |
+| M05-L04 | Guards: when-clauses on patterns | 12 | 18 | 25 |
 | M05-L05 | Exhaustiveness checking | 13 | 20 | 28 |
 | M05-L06 | Tutorial: an interpreter for the M04-L05 AST | 20 | 30 | 42 |
-| **M05 total** | | **102** | **154** | **216** |
+| **M05 total** | | **103** | **155** | **217** |
 | | | | **(2.6 h)** | **(3.6 h)** |
 
 M05-L01 sits right at the NPTEL 30-min ceiling at 30 video min
-and is the longest in M05. M05-L04 (10 slides / 15 min) and
-M05-L05 (11 slides / 17 min) both sit below the 20-min floor.
+and is the longest in M05. M05-L04 (12 slides / 18 min) and
+M05-L05 (13 slides / 20 min) both sit at or below the 20-min floor.
 M05-L02 lands cleanly in the 20-30 min band at 24 min; the L07
 rewrite holds at 21 min. The thin-lecture imbalance shifted
 from L01-vs-others to the guards/exhaustiveness pair, which
