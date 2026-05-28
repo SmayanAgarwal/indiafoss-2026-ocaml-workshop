@@ -79,7 +79,7 @@ inline records inside variants, and or-patterns.
 [Lecture 5](M05-L05-exhaustiveness.html) is about exhaustiveness,
 the most load-bearing static check in the language.
 [Lecture 6](M05-L06-tutorial.html) is the tutorial: an
-interpreter for the [M04-L05 AST](M04-L05-tutorial.html).
+interpreter for the [OCaml AST](M04-L05-tutorial.html).
 
 :::slide
 
@@ -90,7 +90,7 @@ interpreter for the [M04-L05 AST](M04-L05-tutorial.html).
 - **L3** ([nested and or-patterns](M05-L03-nested-and-or-patterns.html)): patterns inside patterns; records, inline records, the diagonal idiom; or-patterns.
 - **L4** ([guards](M05-L04-guards.html)): `when`-guards on cases.
 - **L5** ([exhaustiveness](M05-L05-exhaustiveness.html)): the most load-bearing static check in the language.
-- **L6** ([tutorial](M05-L06-tutorial.html)): an interpreter for the M04-L05 AST.
+- **L6** ([tutorial](M05-L06-tutorial.html)): an interpreter for the OCaml AST.
 
 :::
 

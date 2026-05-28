@@ -736,7 +736,7 @@ yours. Without exhaustiveness, you would do both, badly.
 
 We have now covered the static analysis. [Lecture 6](M05-L06-tutorial.html)
 is the module tutorial: a small interpreter for the
-[M04-L05 AST](M04-L05-tutorial.html). It exercises every pattern
+[OCaml AST](M04-L05-tutorial.html). It exercises every pattern
 form from this module, plus the exhaustiveness check we just
 covered, on a single recursive ADT.
 
@@ -744,7 +744,7 @@ covered, on a single recursive ADT.
 
 ## What's next
 
-- Lecture 6: **the tutorial** — an interpreter for the M04-L05 AST.
+- Lecture 6: **the tutorial**, an interpreter for the OCaml AST.
 - Every pattern form from this module, on a single recursive ADT.
 - Exhaustiveness does real work: forgetting a constructor in
   the interpreter is a compile-time warning, not a runtime crash.

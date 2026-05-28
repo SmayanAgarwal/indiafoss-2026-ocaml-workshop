@@ -598,8 +598,8 @@ trees apart.
 :::
 
 You have now seen the same construction toolkit applied to two
-domains - an AST for OCaml (M04-L05) and a small file system (this
-tutorial). The shapes are very different; the ingredients are the
+domains: an [AST for OCaml](M04-L05-tutorial.html) and a small
+file system (this tutorial). The shapes are very different; the ingredients are the
 same. That is the through-line for Module 4: variants + records +
 recursion is enough to describe almost any data you will encounter.
 [Module 5](M05-L01-basic-patterns.html) gives you the matching

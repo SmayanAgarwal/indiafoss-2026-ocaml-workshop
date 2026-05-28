@@ -1,5 +1,5 @@
 ---
-title: "Tutorial: an interpreter for the M04-L05 AST"
+title: "Tutorial: an interpreter for the OCaml AST"
 lecture_no: 6
 week: 5
 duration_target_min: 28
@@ -12,20 +12,20 @@ reading:
     url: https://cs3110.github.io/textbook/chapters/data/pattern_matching.html
 ---
 
-# Tutorial: an interpreter for the M04-L05 AST
+# Tutorial: an interpreter for the OCaml AST
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: an interpreter for the M04-L05 AST</h2>
+<h2 class="title-slide-lecture">Tutorial: an interpreter for the OCaml AST</h2>
 <p class="title-slide-label">Module 5 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-In the [M04-L05 tutorial](M04-L05-tutorial.html) you *built* an
+In the [AST tutorial](M04-L05-tutorial.html) you *built* an
 algebraic data type for a tiny subset of OCaml: integer and
 boolean literals, addition, variables, and `let ... in`. We
 constructed example trees but never walked them. This lecture
@@ -38,7 +38,7 @@ seen in Module 5, from
 [or-patterns](M05-L03-nested-and-or-patterns.html) to
 [exhaustiveness](M05-L05-exhaustiveness.html).
 
-We will extend the M04-L05 AST with *one* new constructor,
+We will extend the OCaml AST with *one* new constructor,
 `If`, so that the existing `Bool` constructor has somewhere to
 flow. Everything else stays as it was. The interpreter uses
 nothing beyond the language features introduced in Modules 1
@@ -49,7 +49,7 @@ higher-order functions, no exceptions, no modules.
 
 ## This tutorial
 
-- Reuse the [M04-L05 AST](M04-L05-tutorial.html): `Int`, `Bool`,
+- Reuse the [OCaml AST](M04-L05-tutorial.html): `Int`, `Bool`,
   `Add`, `Var`, `Let_in`.
 - Add **one** new constructor: `If` (so `Bool` earns its keep).
 - Three walkers, each a pattern match on the same type:
@@ -63,11 +63,11 @@ higher-order functions, no exceptions, no modules.
 
 ## The type, extended with `If`
 
-The M04-L05 final form, with `If (cond, then, else)` added so
-that `Bool` actually does something. The annotation on `Let_in`
-is `ty option` to keep the M04-L05 *make-illegal-states-
-unrepresentable* choice: programs either supplied a type or did
-not.
+The OCaml AST's final form from the previous tutorial, with
+`If (cond, then, else)` added so that `Bool` actually does
+something. The annotation on `Let_in` is `ty option` to preserve
+the *make-illegal-states-unrepresentable* choice from the AST
+tutorial: programs either supplied a type or did not.
 
 ```ocaml
 type ty =
@@ -107,9 +107,9 @@ type expr =
 
 - Six constructors: three leaves (`Int`, `Bool`, `Var`), three
   recursive (`Add`, `If`, `Let_in`).
-- `If` is the one new constructor beyond M04-L05.
+- `If` is the one new constructor beyond the AST tutorial.
 - `ty option` keeps "type annotation present or absent" as a
-  type-level distinction, same choice as M04-L05.
+  type-level distinction, same choice as the AST tutorial.
 
 :::
 
@@ -907,7 +907,7 @@ write an interpreter.
 ## Sources
 
 The AST in this lecture is the one we built in the
-[M04-L05 tutorial](M04-L05-tutorial.html), extended with a
+[AST tutorial](M04-L05-tutorial.html), extended with a
 single `If` constructor. The interpreter, its environment
 representation, and the worked walkers (`pretty`, `depth`,
 `eval`) are original to this course. The "refactoring with the
