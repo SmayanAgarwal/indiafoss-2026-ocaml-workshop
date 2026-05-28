@@ -70,67 +70,157 @@ right shape and when an `option` or `result` is.
   stack until something catches it.
 - Cheap at the call site; the cost is that failure is invisible
   to the type.
-- Plan: built-ins, `raise` and `try ... with`, defining your own,
-  when to choose exceptions vs `option` / `result`.
+- Plan: what an exception is, `raise` and `try ... with`,
+  defining your own, the built-in stdlib exceptions, when to
+  choose exceptions vs `option` / `result`.
 
 :::
 
-## Built-in exceptions
+## What is an exception?
 
-OCaml's standard library predefines a handful of common
-exceptions. Here is a tour, with examples of where each one comes
-up.
+An *exception* in OCaml is a kind of value, much like a
+[variant constructor](M04-L03-variants.html). It has its own
+type, `exn`. You declare a new exception with the `exception`
+keyword, using exactly the syntax of a variant constructor:
 
 ```ocaml
-let _ = try List.hd [] with Failure _ -> 0
+exception Negative_input
+exception Bad_index of int
+exception Parse_error of string * int   (* message + offset *)
 ```
 
-The toplevel reports `int = 0`. `List.hd` (head of a list) raises
-the exception `Failure "hd"` when called on an empty list; the
-`try ... with` form catches that exception and substitutes `0` as
-the result.
+`Negative_input` is a nullary exception constructor, like `None`
+in `option`. `Bad_index 7` is a payload-carrying value, like
+`Some 7`. The standard library predefines a handful of these
+(`Failure`, `Not_found`, `Division_by_zero`, ...); you can
+declare your own.
 
-Some standard exceptions you will meet:
+What distinguishes an exception value from any other value is
+what you *do* with it. The language offers two primitives:
 
-- `Failure of string` is raised by `failwith "..."`. It signals
-  "the function was called in a way the documentation forbids."
-- `Invalid_argument of string` is raised by `invalid_arg "..."`.
-  Used for outright invalid inputs: `String.get s i` with `i` out
-  of range, for instance.
-- `Not_found` is raised by lookup functions when the key is
-  absent. `List.assoc`, `Hashtbl.find`, and many others raise it.
-- `Division_by_zero` is raised by `/` and `mod` on integer zero.
-- `End_of_file` is raised by reading-from-channel functions when
-  they hit the end of input.
+- **`raise EXN_VAL`** signals that the exception just happened.
+  Evaluation of the surrounding expression stops; the exception
+  propagates *up* the call stack until something catches it. If
+  nothing catches it, the program halts and prints the
+  exception's name (and payload) to standard error.
+- **`try EXPR with PATTERN -> HANDLER`** runs `EXPR`. If `EXPR`
+  returns a value, that value is the result of the whole
+  `try`-expression. If `EXPR` raises an exception that matches
+  `PATTERN`, `HANDLER` is evaluated instead and *its* result is
+  the result of the whole `try`. The `with` clauses are pattern
+  matches against exception values.
 
-There are a handful more; the [OCaml stdlib documentation](https://v2.ocaml.org/api/Stdlib.html)
-lists them under "Predefined exceptions."
+The next two sections work through each primitive in turn.
 
 :::slide
 
-## Built-in exceptions
+## What is an exception?
+
+- A value of type `exn`, declared like a variant:
 
 ```ocaml
-let _ = try List.hd [] with Failure _ -> 0
+exception Negative_input
+exception Bad_index of int
 ```
 
-`int = 0`. `List.hd` raises `Failure "hd"`; `try ... with` catches.
-
-Common standard-library exceptions:
-
-- `Failure of string`: from `failwith "..."`.
-- `Invalid_argument of string`: from `invalid_arg "..."`.
-- `Not_found`: lookups when the key is absent.
-- `Division_by_zero`: `/` and `mod` on `0`.
-- `End_of_file`: reading past the end.
+- Two primitives:
+  - **`raise EXN_VAL`**: interrupts evaluation; propagates up
+    the call stack.
+  - **`try EXPR with PATTERN -> HANDLER`**: runs `EXPR`; if it
+    raises an exception matching `PATTERN`, runs `HANDLER`
+    instead.
+- An uncaught exception halts the program.
 
 :::
 
 ## Raising exceptions
 
-To raise an exception, use the `raise` function. Two convenience
-wrappers `failwith` and `invalid_arg` are common enough to know
-by name.
+To raise an exception, apply the primitive `raise` to an
+exception value:
+
+```ocaml
+exception Negative_input
+
+let rec factorial n =
+  if n < 0 then raise Negative_input
+  else if n = 0 then 1
+  else n * factorial (n - 1)
+
+let _ = factorial 5
+```
+
+`int = 120`. The `raise Negative_input` arm never returns; control
+jumps out of `factorial` and up the call stack until something
+catches the exception (we will get to catching in the next
+section). If nothing does, the program halts and prints the
+exception.
+
+### The odd type of `raise`
+
+The standard library gives `raise` the type:
+
+```text
+val raise : exn -> 'a
+```
+
+This is an unusual signature. Most OCaml functions have a
+*specific* result type: `int_of_string : string -> int`,
+`List.length : 'a list -> int`. `raise`'s result type is `'a`, a
+type variable unconstrained by its argument. Read the signature
+literally: it claims to take an `exn` and produce a value of
+*any* type the caller asks for.
+
+The reason this is sound is that `raise` *never actually returns
+a value*. It transfers control to the nearest handler. The
+result type can be anything because no result will ever flow
+back through it. The type checker uses that latitude exactly
+once: at the call site. Wherever the `raise` sits in a program,
+the surrounding context expects *some* type `T`, and `'a` is
+unified with `T`. That is what lets `raise Negative_input` sit
+on one branch of `if n < 0 then ... else ...` opposite an `int`
+branch: the `int` constrains `'a` to `int`, and the types match.
+Without this polymorphism, the language would need a separate
+`raise_int`, `raise_string`, `raise_bool`, and so on.
+
+Two convenience wrappers in the standard library are common
+enough to recognise:
+
+- `failwith s` is exactly `raise (Failure s)`.
+- `invalid_arg s` is exactly `raise (Invalid_argument s)`.
+
+These are not new primitives, just shorthand for `raise` applied
+to one of the two stdlib-predefined exception constructors. We
+will see them in later examples now that you know what they
+desugar to.
+
+:::slide
+
+## Raising an exception
+
+```ocaml
+exception Negative_input
+
+let rec factorial n =
+  if n < 0 then raise Negative_input
+  else if n = 0 then 1
+  else n * factorial (n - 1)
+
+let _ = factorial 5    (* = 120 *)
+```
+
+- `raise EXN_VAL` interrupts evaluation; propagates up the stack.
+- `raise : exn -> 'a` -- result type is polymorphic, so a `raise`
+  can sit opposite any other-typed branch.
+- `failwith s` is `raise (Failure s)`; `invalid_arg s` is
+  `raise (Invalid_argument s)`. Shorthand, not magic.
+
+:::
+
+## Using the wrappers in practice
+
+Now that the primitive is in view, the `failwith` shorthand is
+worth using when the failure is a plain string message and you
+don't want to declare a fresh exception type:
 
 ```ocaml
 let head = function
@@ -140,17 +230,15 @@ let head = function
 let _ = head [1; 2; 3]
 ```
 
-`int = 1`. `failwith s` is shorthand for `raise (Failure s)`;
-`invalid_arg s` is shorthand for `raise (Invalid_argument s)`. The
-expanded forms make the construction explicit: an exception value
-is a constructor applied to its payload, the same way `Some 3` is
-a `Some` constructor applied to a `3`. The only thing that
-distinguishes an exception value from any other value is what you
-*do* with it: you `raise` it.
+`int = 1`. `failwith "head of empty list"` expands to
+`raise (Failure "head of empty list")`. The expanded form makes
+the construction explicit: an exception value is a constructor
+applied to its payload, exactly like `Some 3` is `Some` applied
+to `3`.
 
 :::slide
 
-## Raising
+## `failwith` is `raise (Failure ...)` in disguise
 
 ```ocaml
 let head = function
@@ -169,21 +257,54 @@ let _ = head [1; 2; 3]
 
 :::
 
-A subtle but important fact about the type of `raise`. The function
-has type `exn -> 'a`. The result type is *polymorphic*: a `raise`
-expression can stand in for any type the surrounding context wants.
-This is consistent: a raise does not return a value, so there is no
-constraint on what type it would have produced. The `match` branch
-`| [] -> failwith "..."` lives next to `| x :: _ -> x`, which has
-type `'a` (the element type). The `failwith` side must have the
-same type as the other branch, which is `'a`. Because `raise` is
-polymorphic, the types match without any coercion.
+## Catching exceptions: `try ... with`
 
-## Catching exceptions: try and with
+`try ... with` is an *expression*, like
+[`if`](M02-L05-if-expressions.html) and
+[`match`](M05-L01-basic-patterns.html). It produces a value, and
+that value can be used wherever a value of its type is expected.
+The general shape is:
 
-A `try ... with` expression looks like a
-[`match`](M05-L01-basic-patterns.html), except it matches on the
-*exception* a body raises rather than on a value the body produces.
+```text
+try
+  EXPR
+with
+| PATTERN_1 -> HANDLER_1
+| PATTERN_2 -> HANDLER_2
+| ...
+| PATTERN_N -> HANDLER_N
+```
+
+Evaluation order:
+
+1.  Evaluate `EXPR`. If it returns a value, that value is the
+    result of the whole `try`. The handlers are not visited.
+2.  If `EXPR` raises an exception, the exception value is
+    matched against `PATTERN_1`, `PATTERN_2`, ... in order. The
+    first matching clause's `HANDLER_i` is evaluated and its
+    result is the result of the whole `try`.
+3.  If no `PATTERN_i` matches, the exception keeps propagating
+    up the call stack. The `try` does not consume it.
+
+The `with` clauses are real
+[patterns](M05-L01-basic-patterns.html): they match on the
+exception constructor, can bind the payload, and can use
+[or-patterns](M05-L03-nested-and-or-patterns.html#or-patterns)
+and the wildcard `_`.
+
+### The type rule
+
+Because `try ... with` is one expression, OCaml needs to give
+*the whole thing* a single type. The rule is what you would
+expect by analogy with `if` and `match`:
+
+- `EXPR` has some type `T`.
+- Every `HANDLER_i` must also have type `T`.
+
+Then the whole `try` expression has type `T`. If any handler
+returns a different type, the compiler rejects the whole `try`.
+
+### A first example
 
 ```ocaml
 let safe_head xs =
@@ -194,159 +315,239 @@ let _ = safe_head [1; 2; 3]
 let _ = safe_head []
 ```
 
-`Some 1` for the non-empty list, `None` for the empty list. The
-shape:
+`Some 1` for the non-empty list, `None` for the empty list.
+`List.hd` raises `Failure "hd"` on the empty list; the `with`
+clause catches `Failure _` (the wildcard `_` ignores the
+message) and produces `None`. Both `Some (List.hd xs)` and
+`None` have type `int option`, so the whole `try` has type
+`int option`.
 
-- The expression after `try` is evaluated normally.
-- If it produces a value, the `try` produces that same value.
-- If it raises an exception, the exception is matched against the
-  `with` clauses. The matching clause's right-hand side becomes
-  the result.
-- Both must have the *same type*: `try` is an expression, so its
-  type is one thing.
+### Multiple exception patterns
 
-:::slide
-
-## Catching
-
-```ocaml
-let safe_head xs =
-  try Some (List.hd xs)
-  with Failure _ -> None
-
-let _ = safe_head [1; 2; 3]
-let _ = safe_head []
-```
-
-`Some 1`, `None`.
-
-- `try ... with` runs the body.
-- If an exception is raised, the matching clause's right-hand side
-  becomes the result.
-- The `with` part uses **pattern matching**: clauses match
-  exception constructors.
-- You can catch specific exceptions:
-
-```ocaml
-let safe_divide a b =
-  try Some (a / b)
-  with Division_by_zero -> None
-
-let _ = safe_divide 10 0
-let _ = safe_divide 10 3
-```
-
-`None`, `Some 3`.
-
-:::
-
-The patterns on the right of `with` are real
-[*patterns*](M05-L01-basic-patterns.html): they can match on the
-constructor, bind the payload, and even include
-[nested patterns](M05-L03-nested-and-or-patterns.html). The
-wildcard `_` matches any payload. You can have multiple clauses,
-each catching a different exception:
+The `with` clause can list several patterns separated by `|`,
+one per exception you want to handle:
 
 ```ocaml
 let safely f x =
   try Ok (f x)
   with
-  | Failure msg -> Error ("failure: " ^ msg)
+  | Failure msg          -> Error ("failure: " ^ msg)
   | Invalid_argument msg -> Error ("invalid: " ^ msg)
-  | Division_by_zero -> Error "div by zero"
+  | Division_by_zero     -> Error "div by zero"
 
 let _ = safely (fun n -> 100 / n) 4
 let _ = safely (fun n -> 100 / n) 0
 ```
 
-`Ok 25` for `n = 4`, `Error "div by zero"` for `n = 0`. If the
-exception raised does not match any of the clauses, it continues
-propagating up the call stack; the `try` does not "consume" it.
+`Ok 25` for `n = 4`, `Error "div by zero"` for `n = 0`. Each
+clause has the same type as `Ok (f x)`, namely
+`(int, string) result`, so the whole `try` is well-typed at that
+type. Exceptions not listed (e.g., `Stack_overflow`) keep
+propagating up; the `try` does not silently swallow them.
 
-You can include a wildcard pattern `| _ -> ...` to catch any
-exception, but this is *almost always a mistake*. It will swallow
-exceptions you did not anticipate, hiding bugs that would
+A wildcard `| _ -> ...` at the end would catch *every* exception,
+but this is almost always a mistake: it hides bugs that would
 otherwise surface as a crash. Catch specific exceptions; let
 unexpected ones propagate.
 
-## Defining your own exception
-
-Custom exceptions are declared with the `exception` keyword, much
-like a [variant constructor](M04-L03-variants.html).
-
-```ocaml
-exception Negative_input
-
-let factorial n =
-  if n < 0 then raise Negative_input
-  else
-    let rec go acc n =
-      if n = 0 then acc else go (acc * n) (n - 1)
-    in
-    go 1 n
-
-let _ =
-  try factorial 5 with Negative_input -> -1
-
-let _ =
-  try factorial (-1) with Negative_input -> -1
-```
-
-`120` for `factorial 5`; `-1` for `factorial (-1)`, because the
-exception was raised and caught.
-
-An exception can also carry a payload, just like a
-[variant constructor with arguments](M04-L03-variants.html). The
-declaration uses `of`:
-
-```ocaml
-exception Parse_error of string * int  (* message, line *)
-```
-
-To raise: `raise (Parse_error ("unexpected token", 42))`. To
-catch: `| Parse_error (msg, line) -> ...`. The payload can be any
-type or tuple of types.
-
 :::slide
 
-## Defining your own exception
+## Catching: `try ... with`
 
-```ocaml
-exception Negative_input
-
-let factorial n =
-  if n < 0 then raise Negative_input
-  else
-    let rec go acc n =
-      if n = 0 then acc else go (acc * n) (n - 1)
-    in
-    go 1 n
-
-let _ =
-  try factorial 5 with Negative_input -> -1
-
-let _ =
-  try factorial (-1) with Negative_input -> -1
+```text
+try
+  EXPR
+with
+| PATTERN_1 -> HANDLER_1
+| ...
+| PATTERN_N -> HANDLER_N
 ```
 
-`120`, `-1`.
-
-- Custom exceptions can carry a **payload**:
-  `exception Parse_error of string * int`, raised as
-  `raise (Parse_error ("unexpected token", 42))`.
+- `try ... with` is an **expression**: it produces a value.
+- Run `EXPR`. If it returns, that's the result. If it raises an
+  exception, match against the patterns and run the matching
+  handler.
+- Unmatched exceptions keep propagating; the `try` does **not**
+  swallow them.
+- Type rule: `EXPR` and every `HANDLER_i` must all have the
+  *same* type; the `try` has that type.
 
 :::
 
-Under the hood, exceptions are an *extensible variant*: they all
-share a single type called `exn`, and every `exception` declaration
-adds a new constructor to that type. This is unusual: most
-[OCaml variants](M04-L03-variants.html) are closed (the set of
-constructors is fixed at the declaration). The `exn` type is the
-one exception, because libraries throughout a program need to be
-able to add their own exception constructors. We will not need the
-deeper machinery of extensible variants; the practical takeaway is
-that you can declare new exception types anywhere and they all flow
-through the same `try ... with` mechanism.
+:::slide
+
+## A first example: catching `Failure`
+
+```ocaml
+let safe_head xs =
+  try Some (List.hd xs)
+  with Failure _ -> None
+
+let _ = safe_head [1; 2; 3]   (* = Some 1 *)
+let _ = safe_head []          (* = None *)
+```
+
+- `List.hd []` raises `Failure "hd"`; the handler catches and
+  returns `None`.
+- Both `Some (...)` and `None` are `int option`, so the `try` is
+  `int option`.
+
+:::
+
+:::slide
+
+## Multiple exception patterns
+
+```ocaml
+let safely f x =
+  try Ok (f x)
+  with
+  | Failure msg          -> Error ("failure: " ^ msg)
+  | Invalid_argument msg -> Error ("invalid: " ^ msg)
+  | Division_by_zero     -> Error "div by zero"
+
+let _ = safely (fun n -> 100 / n) 4    (* = Ok 25 *)
+let _ = safely (fun n -> 100 / n) 0    (* = Error "div by zero" *)
+```
+
+- `|` separates clauses, just like a `match`.
+- Every clause has type `(int, string) result`; so does
+  `Ok (f x)`; so does the whole `try`.
+- Exceptions not listed keep propagating. Don't write a
+  catch-all `_ -> ...`; you will swallow bugs.
+
+:::
+
+## Built-in exceptions
+
+The standard library predefines a handful of exception
+constructors that show up routinely in OCaml code. Now that you
+know `raise` and `try ... with`, here is the tour:
+
+- `Failure of string` is raised by `failwith "..."`. It signals
+  "the function was called in a way the documentation forbids."
+- `Invalid_argument of string` is raised by `invalid_arg "..."`.
+  Used for outright invalid inputs: `String.get s i` with `i`
+  out of range, for instance.
+- `Not_found` is raised by lookup functions when the key is
+  absent. `List.assoc`, `Hashtbl.find`, and many others raise it.
+- `Division_by_zero` is raised by `/` and `mod` on integer zero.
+- `End_of_file` is raised by reading-from-channel functions when
+  they hit the end of input.
+
+There are a handful more; the
+[OCaml stdlib documentation](https://v2.ocaml.org/api/Stdlib.html)
+lists them under "Predefined exceptions." In practice the five
+above account for the vast majority of try ... with clauses you
+will see in idiomatic code.
+
+:::slide
+
+## Built-in exceptions
+
+Common stdlib exceptions you will catch:
+
+- `Failure of string`: from `failwith "..."`.
+- `Invalid_argument of string`: from `invalid_arg "..."`.
+- `Not_found`: lookups when the key is absent.
+- `Division_by_zero`: `/` and `mod` on `0`.
+- `End_of_file`: reading past the end of input.
+
+```ocaml
+let _ = try List.hd [] with Failure _ -> 0
+   (* = 0; List.hd [] raises Failure "hd", handler catches *)
+```
+
+:::
+
+## Custom exceptions with a payload
+
+We have already seen a nullary custom exception
+(`exception Negative_input`) in the Raising section. Custom
+exceptions can also *carry a payload*, declared with the `of`
+keyword the same way as a
+[variant constructor with arguments](M04-L03-variants.html):
+
+```ocaml
+exception Parse_error of string * int  (* message, line number *)
+
+let parse_int_field s =
+  try int_of_string s
+  with Failure _ ->
+    raise (Parse_error ("not an int: " ^ s, 7))
+
+let _ =
+  try parse_int_field "42"
+  with Parse_error (msg, line) ->
+    Printf.printf "line %d: %s\n" line msg;
+    0
+
+let _ =
+  try parse_int_field "oops"
+  with Parse_error (msg, line) ->
+    Printf.printf "line %d: %s\n" line msg;
+    0
+```
+
+The first call returns `42` and prints nothing. The second
+re-raises a `Parse_error` (with a message and line number), the
+handler catches and binds the payload, prints "line 7: not an
+int: oops", and returns `0`. The handler pattern
+`Parse_error (msg, line)` binds the constructor's payload
+exactly as a variant pattern would.
+
+### Extensible variants: a brief aside
+
+Under the hood, all exception constructors share a single
+type, `exn`. Every `exception` declaration adds a new
+constructor to *that* type. This is unusual: most
+[OCaml variants](M04-L03-variants.html) are *closed* (the set
+of constructors is fixed at the declaration). `exn` is one of
+the few *extensible* variants in the language, because
+libraries throughout a program need to add their own exception
+constructors. We will not need the deeper machinery of
+extensible variants; the practical takeaway is that you can
+declare new exception types anywhere and they all flow through
+the same `raise` / `try ... with` plumbing.
+
+:::slide
+
+## Custom exceptions with a payload
+
+```ocaml
+exception Parse_error of string * int
+
+let parse_int_field s =
+  try int_of_string s
+  with Failure _ ->
+    raise (Parse_error ("not an int: " ^ s, 7))
+
+let _ =
+  try parse_int_field "oops"
+  with Parse_error (msg, line) ->
+    Printf.printf "line %d: %s\n" line msg;
+    0
+```
+
+- `exception NAME of TYPE`: declare with a payload.
+- `raise (NAME payload)`: build the constructor and raise it.
+- `| NAME pat -> ...`: catch and bind the payload, like a
+  variant pattern.
+
+:::
+
+:::slide
+
+## Aside: exceptions are extensible variants
+
+- All exception constructors share one type: `exn`.
+- Every `exception NAME of ...` declaration *adds* a constructor
+  to `exn`. Unusual: most OCaml variants are *closed*.
+- That is what lets libraries throughout a program declare new
+  exceptions and have them all flow through the same `try ...
+  with`.
+
+:::
 
 ## Exception vs option vs result
 
@@ -411,42 +612,6 @@ but the social convention is clear: new code uses `_opt`.
 
 The naming `_opt` suffix is the OCaml convention; expect to see
 it everywhere.
-
-## try is an expression
-
-A reminder: like every other control construct in OCaml, `try`
-produces a value.
-
-```ocaml
-let _ =
-  try List.hd [10; 20; 30]
-  with Failure _ -> 0
-```
-
-`int = 10`. The body returns `10`, no exception is raised, the
-`try` produces `10`. Had the body raised, the handler would have
-returned `0`. Either way, the expression's type is `int`, and the
-result can be used wherever an `int` is wanted.
-
-:::slide
-
-## `try` is an expression
-
-```ocaml
-let _ =
-  try List.hd [10; 20; 30]
-  with Failure _ -> 0
-```
-
-`int = 10`.
-
-- The `try` expression has a value: either the body's result (if
-  no exception was raised), or the value of the matching handler.
-- Both have to have the *same type*.
-- Here: `List.hd` returns `int`, the handler returns `int`, the
-  `try` has type `int`.
-
-:::
 
 ## When not to use exceptions
 

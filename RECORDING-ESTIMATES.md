@@ -227,15 +227,15 @@ M07-L04 streams and M07-L05 memoization lectures added on
 |---|---|---:|---:|---:|
 | M07-L01 | Mutable references | 22 | 33 | 46 |
 | M07-L02 | Mutable records and arrays | 22 | 33 | 46 |
-| M07-L03 | Exceptions | 12 | 18 | 25 |
+| M07-L03 | Exceptions | 16 | 24 | 34 |
 | M07-L04 | Streams and laziness | 13 | 20 | 28 |
 | M07-L05 | Memoization | 12 | 18 | 25 |
 | M07-L06 | Module basics | 15 | 23 | 32 |
 | M07-L07 | Module signatures | 16 | 24 | 34 |
 | M07-L08 | Functors | 13 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 23 | 32 |
-| **M07 total** | | **140** | **212** | **296** |
-| | | | **(3.5 h)** | **(4.9 h)** |
+| **M07 total** | | **144** | **218** | **305** |
+| | | | **(3.6 h)** | **(5.1 h)** |
 
 M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
 the NPTEL 30-min ceiling. Natural cuts if delivery runs long:
@@ -243,8 +243,11 @@ L01's ticket-dispenser broken/hoisted pair (one slide could
 carry both in less detail), or the eta-expansion slide (most
 skippable of the value-restriction trio); L02's `while`-loop
 slide (only added to make the syntax box honest) or the
-default-to-immutable closing slide. M07-L03 and M07-L05 (12
-slides / 18 min) sit below the NPTEL 20-min floor.
+default-to-immutable closing slide. M07-L03 was restructured on
+2026-05-28 to introduce `raise` and `try ... with` *before* the
+built-in-exceptions tour (the old order showed `try` in an
+example before explaining it); slide count went 12 -> 16. M07-L05
+(12 slides / 18 min) sits below the NPTEL 20-min floor.
 M07-L04 and M07-L08 (13 slides / 20 min) sit right at the floor.
 
 ### M08: Monads and GADTs (10 lectures)
