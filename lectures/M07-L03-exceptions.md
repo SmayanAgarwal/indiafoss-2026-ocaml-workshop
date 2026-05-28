@@ -499,10 +499,34 @@ know `raise` and `try ... with`, here is the tour:
 - `Division_by_zero` is raised by `/` and `mod` on integer zero.
 - `End_of_file` is raised by reading-from-channel functions when
   they hit the end of input.
+- `Assert_failure of (string * int * int)` is raised by the
+  built-in `assert` keyword when its condition is false. The
+  payload is `(file, line, column)` of the failing assertion,
+  filled in automatically by the compiler.
 
-There are a handful more; the
+The last one needs a closer look because `assert` is a syntactic
+form, not a function:
+
+```ocaml
+let halve x =
+  assert (x mod 2 = 0);
+  x / 2
+
+let _ = halve 10
+```
+
+`int = 5`. If the precondition holds, `assert` returns `()` and
+evaluation continues. If it fails, `assert` raises
+`Assert_failure (file, line, column)` pointing at the failing
+line. The special form `assert false` is an idiom: it always
+raises and has the polymorphic type `'a`, so you can use it
+anywhere to mark a code path as unreachable. Use this when the
+type system can't see that a case is impossible (a partial
+`match` you have manually checked, for instance).
+
+There are a handful more stdlib exceptions; the
 [OCaml stdlib documentation](https://v2.ocaml.org/api/Stdlib.html)
-lists them under "Predefined exceptions." In practice the five
+lists them under "Predefined exceptions." In practice the six
 above account for the vast majority of try ... with clauses you
 will see in idiomatic code.
 
@@ -517,11 +541,32 @@ Common stdlib exceptions you will catch:
 - `Not_found`: lookups when the key is absent.
 - `Division_by_zero`: `/` and `mod` on `0`.
 - `End_of_file`: reading past the end of input.
+- `Assert_failure (file, line, col)`: from the `assert` keyword.
 
 ```ocaml
 let _ = try List.hd [] with Failure _ -> 0
    (* = 0; List.hd [] raises Failure "hd", handler catches *)
 ```
+
+:::
+
+:::slide
+
+## `assert`: precondition + "can't happen"
+
+```ocaml
+let halve x =
+  assert (x mod 2 = 0);
+  x / 2
+
+let _ = halve 10        (* = 5 *)
+```
+
+- `assert COND`: if `COND` is true, returns `()`; if false,
+  raises `Assert_failure (file, line, col)`.
+- `assert false` always raises; its type is polymorphic (`'a`),
+  so use it to mark unreachable code the type system can't see
+  is impossible.
 
 :::
 
@@ -613,28 +658,51 @@ let _ =
   with`.
 
 :::
-<!-- KC: make it executable in a cell -->
 
 ## Exception vs option vs result
 
-The three shapes for "this might fail," compared.
+The three shapes for "this might fail," shown on the same tiny
+lookup over an association list:
+
+```ocaml
+let table = [("a", 10); ("b", 20); ("c", 30)]
+
+let find_x key = List.assoc key table
+let find_x_opt key = List.assoc_opt key table
+let find_x_result key =
+  match List.assoc_opt key table with
+  | Some v -> Ok v
+  | None   -> Error ("no such key: " ^ key)
+```
+
+The toplevel reports:
 
 ```text
-val find_x : string -> int                    (* may raise *)
-val find_x_opt : string -> int option         (* None on failure *)
-val find_x_result : string -> (int, string) result   (* Error msg *)
+val find_x        : string -> int                          = <fun>
+val find_x_opt    : string -> int option                   = <fun>
+val find_x_result : string -> (int, string) result         = <fun>
+```
+
+Same lookup, three signatures. A few calls to feel the
+difference at the call site:
+
+```ocaml
+let _ = find_x "b"          (* = 20 *)
+let _ = find_x_opt "b"      (* = Some 20 *)
+let _ = find_x_opt "z"      (* = None *)
+let _ = find_x_result "z"   (* = Error "no such key: z" *)
 ```
 
 **Raise.** Cheapest at the call site: the caller writes
-`let x = find_x "key"` and uses `x` directly. The cost is that the
-*type* says nothing about failure. A reader of the type cannot
-tell whether the function might raise. The compiler will not warn
-a caller that forgot to handle the failure.
+`let x = find_x "key"` and uses `x` directly. The cost is that
+the *type* says nothing about failure. A reader of the type
+cannot tell whether the function might raise. The compiler will
+not warn a caller that forgot to handle the failure.
 
 **Option.** The failure is in the type. The caller is forced to
-pattern-match on `Some` and `None`. The cost is two things: every
-call site is slightly more code, and the failure carries no
-information (`None` is just "no value here," with no reason).
+pattern-match on `Some` and `None`. The cost is two things:
+every call site is slightly more code, and the failure carries
+no information (`None` is just "no value here," with no reason).
 
 **Result.** The same as option, but the failure side has a
 payload: an error message, an error code, a structured error
@@ -645,20 +713,25 @@ on what went wrong.
 
 ## Exception vs `option` vs `result`
 
-Three shapes for "this might fail":
+```ocaml
+let table = [("a", 10); ("b", 20); ("c", 30)]
 
-```text
-val find_x : string -> int                    (* may raise *)
-val find_x_opt : string -> int option         (* None on failure *)
-val find_x_result : string -> (int, string) result   (* Error msg *)
+let find_x key = List.assoc key table
+let find_x_opt key = List.assoc_opt key table
+let find_x_result key =
+  match List.assoc_opt key table with
+  | Some v -> Ok v
+  | None   -> Error ("no such key: " ^ key)
 ```
 
-- **Raise**: cheap at call site; failure not in the type.
-- **Option**: failure in the type; no reason carried.
-- **Result**: failure in the type, with a payload.
-- **Stdlib**: each function in *both* shapes (`List.find` raises,
-  `List.find_opt` returns).
-- **Default**: prefer `_opt`.
+- **Raise** (`find_x : string -> int`): cheap at the call site;
+  failure invisible in the type.
+- **Option** (`find_x_opt : string -> int option`): failure in
+  the type; no reason carried.
+- **Result** (`find_x_result : string -> (int, string) result`):
+  failure in the type, with a payload.
+- Stdlib offers both raising and `_opt` forms; prefer `_opt` in
+  new code.
 
 :::
 
@@ -692,7 +765,6 @@ wrong call.
 
 - Predictable "missing value" cases: use `option`.
 - "This won't happen" assertions: use `assert false`, or redesign.
-<!-- KC: `assert` is also something that you should explain when you explain built-in exceptions. -->
 - Deep nesting where the escape path is hard to follow.
 
 **Good fit:**

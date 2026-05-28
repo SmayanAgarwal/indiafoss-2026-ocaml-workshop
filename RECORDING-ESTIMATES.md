@@ -227,15 +227,15 @@ M07-L04 streams and M07-L05 memoization lectures added on
 |---|---|---:|---:|---:|
 | M07-L01 | Mutable references | 22 | 33 | 46 |
 | M07-L02 | Mutable records and arrays | 22 | 33 | 46 |
-| M07-L03 | Exceptions | 17 | 26 | 36 |
+| M07-L03 | Exceptions | 18 | 27 | 38 |
 | M07-L04 | Streams and laziness | 13 | 20 | 28 |
 | M07-L05 | Memoization | 12 | 18 | 25 |
 | M07-L06 | Module basics | 15 | 23 | 32 |
 | M07-L07 | Module signatures | 16 | 24 | 34 |
 | M07-L08 | Functors | 13 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 23 | 32 |
-| **M07 total** | | **145** | **220** | **307** |
-| | | | **(3.7 h)** | **(5.1 h)** |
+| **M07 total** | | **146** | **221** | **309** |
+| | | | **(3.7 h)** | **(5.2 h)** |
 
 M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
 the NPTEL 30-min ceiling. Natural cuts if delivery runs long:
@@ -250,7 +250,10 @@ example before explaining it); slide count went 12 -> 16. Same
 day's polish pass merged the standalone wrappers section back
 into Raising and de-duped the When-not-to-use slide (no slide
 delta), then added a nested-`try ... with` example and slide
-to bring the count to 17. M07-L05
+to bring the count to 17, then added an `assert` /
+`Assert_failure` slide and rewrote the exception/option/result
+comparison around a runnable `List.assoc` lookup example to bring
+the count to 18. M07-L05
 (12 slides / 18 min) sits below the NPTEL 20-min floor.
 M07-L04 and M07-L08 (13 slides / 20 min) sit right at the floor.
 
