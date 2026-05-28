@@ -61,6 +61,19 @@ with your question (or surface in chat).
 
 ## Toolchain quick reference
 
+- **Pre-recording sanity check**: `bash tools/run-tests.sh`.
+  Runs (1) activity-fresh-code audit, (2) KC-comment sweep
+  (`KC?:` and `KC!:` are blockers; plain `KC:` warns), (3)
+  `dune runtest` for the mdx code blocks, (4) full site
+  rebuild, (5) playwright end-to-end. Use this before
+  recording any lecture; treat any non-zero exit as a "do not
+  record" signal.
+- Activity audit on its own: `python3 tools/audit-activities.py`
+  (also called by `run-tests.sh`). Flags lectures whose
+  `:::quiz code` asks for a function the chapter already
+  walked through, the M07-L01 `make_counter`==`dispense` /
+  M05-L04 `sign`==`sign` failure mode. Allowlist in the script
+  for deliberate same-pattern-different-ADT extensions.
 - Build site: `bash tools/build-site.sh` (set `COPY_ASSETS=1`
   to also refresh `_site/assets/`).
 - Local server for browser checks: a Python http.server on
