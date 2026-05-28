@@ -328,14 +328,34 @@ let () = iter l (fun x -> print_int x; print_string " ")
 let () = print_newline ()
 ```
 
-The toplevel prints `1 2 3`. The same data lives in the chain of
-nodes; `iter` walks it forwards from the head handle. We do not
-keep a *tail* handle in `dllist`, so to walk backwards from the
-tail we would first have to walk forward to find the tail and
-then step `prev`. The reason we still bother with `prev` is that
-once we have a node in hand (returned by a search, or the
+The `iter` line prints `1 2 3`. The same data lives in the chain
+of nodes; `iter` walks it forwards from the head handle. We do
+not keep a *tail* handle in `dllist`, so to walk backwards from
+the tail we would first have to walk forward to find the tail
+and then step `prev`. The reason we still bother with `prev` is
+that once we have a node in hand (returned by a search, or the
 current cursor of an iteration) we can splice it out or step
 sideways in O(1).
+
+Each `insert_first` line also prints the resulting node. Look at
+the output for `insert_first l 2`:
+
+```text
+- : int node =
+{value = 2; next = Some {value = 3; next = None;
+                         prev = Some <cycle>}; prev = None}
+```
+
+The `<cycle>` is the toplevel's way of saying "this points back
+somewhere we have already printed." Node 2's `next` is node 3,
+and node 3's `prev` is node 2: a cycle in the value graph. The
+pretty-printer follows the `next` link into node 3, then meets
+the `prev` link back to node 2, and rather than infinitely
+recursing it writes `<cycle>` and stops. Cyclic values are
+exactly the kind of thing that immutable construction cannot
+produce (the values do not exist yet to refer to each other);
+the mutable fields are what let us tie the knot, and `<cycle>`
+is the visible signature of a tied knot in the toplevel.
 
 :::slide
 
