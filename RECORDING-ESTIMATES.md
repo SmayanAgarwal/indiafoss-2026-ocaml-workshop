@@ -246,7 +246,10 @@ slide (only added to make the syntax box honest) or the
 default-to-immutable closing slide. M07-L03 was restructured on
 2026-05-28 to introduce `raise` and `try ... with` *before* the
 built-in-exceptions tour (the old order showed `try` in an
-example before explaining it); slide count went 12 -> 16. M07-L05
+example before explaining it); slide count went 12 -> 16. Same
+day's polish pass merged the standalone wrappers section back
+into Raising and de-duped the When-not-to-use slide (no slide
+delta). M07-L05
 (12 slides / 18 min) sits below the NPTEL 20-min floor.
 M07-L04 and M07-L08 (13 slides / 20 min) sit right at the floor.
 

@@ -149,10 +149,10 @@ let rec factorial n =
 let _ = factorial 5
 ```
 
-`int = 120`. The `raise Negative_input` arm never returns; control
-jumps out of `factorial` and up the call stack until something
-catches the exception (we will get to catching in the next
-section). If nothing does, the program halts and prints the
+`int = 120`. The `raise Negative_input` branch never returns;
+control jumps out of `factorial` and up the call stack until
+something catches the exception (we will get to catching in the
+next section). If nothing does, the program halts and prints the
 exception.
 
 ### The odd type of `raise`
@@ -182,16 +182,32 @@ branch: the `int` constrains `'a` to `int`, and the types match.
 Without this polymorphism, the language would need a separate
 `raise_int`, `raise_string`, `raise_bool`, and so on.
 
-Two convenience wrappers in the standard library are common
-enough to recognise:
+### Two convenience wrappers: `failwith` and `invalid_arg`
+
+The standard library defines two convenience wrappers for the
+most common case, where the exception you want to raise is just
+"something went wrong, here's a message":
 
 - `failwith s` is exactly `raise (Failure s)`.
 - `invalid_arg s` is exactly `raise (Invalid_argument s)`.
 
 These are not new primitives, just shorthand for `raise` applied
-to one of the two stdlib-predefined exception constructors. We
-will see them in later examples now that you know what they
-desugar to.
+to one of the two stdlib-predefined exception constructors. So a
+function that fails on the empty list can be written:
+
+```ocaml
+let head = function
+  | [] -> failwith "head of empty list"
+  | x :: _ -> x
+
+let _ = head [1; 2; 3]
+```
+
+`int = 1`. The `failwith` arm expands to
+`raise (Failure "head of empty list")`. The expanded form makes
+the construction explicit: an exception value is a constructor
+applied to its payload, exactly like `Some 3` is `Some` applied
+to `3`.
 
 :::slide
 
@@ -211,49 +227,26 @@ let _ = factorial 5    (* = 120 *)
 - `raise EXN_VAL` interrupts evaluation; propagates up the stack.
 - `raise : exn -> 'a` -- result type is polymorphic, so a `raise`
   can sit opposite any other-typed branch.
-- `failwith s` is `raise (Failure s)`; `invalid_arg s` is
-  `raise (Invalid_argument s)`. Shorthand, not magic.
 
 :::
 
-## Using the wrappers in practice
-
-Now that the primitive is in view, the `failwith` shorthand is
-worth using when the failure is a plain string message and you
-don't want to declare a fresh exception type:
-
-```ocaml
-let head = function
-  | [] -> failwith "head of empty list"
-  | x :: _ -> x
-
-let _ = head [1; 2; 3]
-```
-
-`int = 1`. `failwith "head of empty list"` expands to
-`raise (Failure "head of empty list")`. The expanded form makes
-the construction explicit: an exception value is a constructor
-applied to its payload, exactly like `Some 3` is `Some` applied
-to `3`.
-
 :::slide
 
-## `failwith` is `raise (Failure ...)` in disguise
+## `failwith` and `invalid_arg`: shorthand, not magic
 
 ```ocaml
 let head = function
   | [] -> failwith "head of empty list"
   | x :: _ -> x
 
-let _ = head [1; 2; 3]
+let _ = head [1; 2; 3]    (* = 1 *)
 ```
 
-`int = 1`.
-
-- `failwith s` is short for `raise (Failure s)`.
+- `failwith s` is `raise (Failure s)`.
 - `invalid_arg s` is `raise (Invalid_argument s)`.
-- These are **convenience wrappers**.
-- You can also `raise some_exception` directly.
+- Use the wrappers when the failure is a plain string message;
+  declare a custom `exception` (like `Negative_input` above) when
+  callers will want to *catch* it specifically.
 
 :::
 
@@ -624,18 +617,14 @@ wrong call.
 
 **Avoid for:**
 
-- Control flow you'd handle anyway: prefer `option`.
+- Predictable "missing value" cases: use `option`.
 - "This won't happen" assertions: use `assert false`, or redesign.
 - Deep nesting where the escape path is hard to follow.
 
 **Good fit:**
 
-- Rare failures (parse failed, file not found) where error
-  handling would pollute every step.
-
-**Bad fit:**
-
-- Predictable "missing value" cases: `option` is clearer.
+- *Unexpected, rare* failures (parse failed, file not found)
+  where error-handling code would otherwise pollute every step.
 
 :::
 
