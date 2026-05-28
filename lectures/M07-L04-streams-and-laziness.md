@@ -156,6 +156,9 @@ let tl (Cons (_, xs)) = xs ()
 
 let rec zero_ones =
   Cons (0, fun () -> Cons (1, fun () -> zero_ones))
+
+let _ = hd zero_ones        (* = 0 *)
+let _ = hd (tl zero_ones)   (* = 1 *)
 ```
 
 - Head: an `'a` value.
@@ -222,6 +225,10 @@ let rec take n s =
 
 let rec drop n s =
   if n = 0 then s else drop (n - 1) (tl s)
+
+let _ = take 10 zero_ones
+   (* = [0; 1; 0; 1; 0; 1; 0; 1; 0; 1] *)
+let _ = hd (drop 3 zero_ones)    (* = 1 *)
 ```
 
 - `take n s`: first `n` elements as a list.
@@ -278,6 +285,11 @@ let rec filter p s =
 
 let rec zip f s1 s2 =
   Cons (f (hd s1) (hd s2), fun () -> zip f (tl s1) (tl s2))
+
+let rec from n = Cons (n, fun () -> from (n + 1))
+let _ = take 5 (map (fun x -> x * x) (from 1))    (* = [1; 4; 9; 16; 25] *)
+let _ = take 5 (filter (fun x -> x mod 3 = 0) (from 1))  (* = [3;6;9;12;15] *)
+let _ = take 5 (zip (+) (from 1) (from 100))      (* = [101;103;105;107;109] *)
 ```
 
 - Same shape as list versions; the tail is wrapped in a thunk.
@@ -341,9 +353,9 @@ let rec sieve s =
 
 let primes = sieve (from 2)
 let _ = take 10 primes
+   (* = [2; 3; 5; 7; 11; 13; 17; 19; 23; 29] *)
 ```
 
-- `[2; 3; 5; 7; 11; 13; 17; 19; 23; 29]`.
 - Head is the next prime; filter its multiples; recurse.
 - Stream lets the recursive case stay open-ended.
 
@@ -398,9 +410,17 @@ not run again.
 ## `Lazy.t`: memoized delay
 
 ```ocaml
+(* thunk: runs every time it is forced *)
+let count = ref 0
+let t () = incr count; "hello"
+let _ = t ()           (* count := 1 *)
+let _ = t ()           (* count := 2: body ran again *)
+let _ = !count         (* = 2 *)
+
+(* lazy: runs once, caches *)
 let v = lazy (print_endline "running"; 10 + 20)
-let _ = Lazy.force v   (* prints "running"; returns 30 *)
-let _ = Lazy.force v   (* prints nothing; returns 30 *)
+let _ = Lazy.force v   (* prints "running"; = 30 *)
+let _ = Lazy.force v   (* prints nothing;   = 30 (cached) *)
 ```
 
 - `lazy e` delays `e`. Type: `'a Lazy.t`.
@@ -450,16 +470,27 @@ let rec lzip f s1 s2 =
 
 ## Lazy streams
 
-```text
+```ocaml
 type 'a lstream = LCons of 'a * 'a lstream Lazy.t
 
 let lhd (LCons (x, _)) = x
 let ltl (LCons (_, t)) = Lazy.force t
+
+let rec ltake n s =
+  if n = 0 then [] else lhd s :: ltake (n - 1) (ltl s)
+
+let rec lzip f s1 s2 =
+  LCons (f (lhd s1) (lhd s2),
+         lazy (lzip f (ltl s1) (ltl s2)))
+
+let rec lfrom n = LCons (n, lazy (lfrom (n + 1)))
+let _ = ltake 5 (lfrom 0)   (* = [0; 1; 2; 3; 4] *)
 ```
 
 - Tail is `Lazy.t`, not `unit -> ...`.
 - Each tail is computed at most once.
-- The structure remembers, so repeated traversal is free.
+- `ltake` / `lzip` are the lazy versions of `take` / `zip` from
+  earlier.
 
 :::
 
@@ -498,15 +529,15 @@ computed once and reused; `take 30 fibs` is linear.
 
 ## Fibonacci as a stream
 
-```text
+```ocaml
 let rec fibs =
   LCons (1, lazy (
     LCons (1, lazy (lzip (+) fibs (ltl fibs)))))
 
 let _ = ltake 10 fibs
+   (* = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55] *)
 ```
 
-- `[1; 1; 2; 3; 5; 8; 13; 21; 34; 55]`.
 - Self-referential: `fibs` and `ltl fibs` inside `lazy`.
 - Each node computed **once**; reused on every traversal.
 - Thunked version would be exponential; lazy version is linear.
