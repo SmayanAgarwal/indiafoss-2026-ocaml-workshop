@@ -63,12 +63,12 @@ right shape and when an `option` or `result` is.
 
 - Some functions have no answer: `List.hd []`, `1 / 0`,
   `int_of_string "hello"`.
-- *Typed* approach (Module 4): wrap failure in `option` or
+  - *Typed* approach (Module 4): wrap failure in `option` or
   `result`.
-- *This lecture*: the other approach, *exceptions*.
+  - *This lecture*: the other approach, *exceptions*.
 - An exception interrupts evaluation and propagates up the call
   stack until something catches it.
-- Cheap at the call site; the cost is that failure is invisible
+  - Cheap at the call site; the cost is that failure is invisible
   to the type.
 - Plan: what an exception is, `raise` and `try ... with`,
   defining your own, the built-in stdlib exceptions, when to
@@ -225,8 +225,9 @@ let _ = factorial 5    (* = 120 *)
 ```
 
 - `raise EXN_VAL` interrupts evaluation; propagates up the stack.
-- `raise : exn -> 'a` -- result type is polymorphic, so a `raise`
-  can sit opposite any other-typed branch.
+- `raise : exn -> 'a`
+  - result type is polymorphic!
+  - `raise` can sit opposite any other-typed branch.
 
 :::
 
@@ -343,6 +344,50 @@ but this is almost always a mistake: it hides bugs that would
 otherwise surface as a crash. Catch specific exceptions; let
 unexpected ones propagate.
 
+### Nested `try ... with`
+
+A `try` is just an expression, so you can nest one inside the
+body of another. The general rule is unchanged: when an exception
+is raised, it is matched against the *nearest enclosing* `try`'s
+patterns first; only if that `try` does not match does the
+exception keep propagating outward.
+
+```ocaml
+let parse_and_divide sa sb =
+  try
+    let a = try int_of_string sa with Failure _ -> 0 in
+    let b = int_of_string sb in
+    a / b
+  with
+  | Failure _ -> -1
+  | Division_by_zero -> -2
+
+let _ = parse_and_divide "10" "2"
+let _ = parse_and_divide "oops" "2"
+let _ = parse_and_divide "10" "oops"
+let _ = parse_and_divide "10" "0"
+```
+
+- `parse_and_divide "10" "2"` returns `5`: both parses succeed,
+  `10 / 2 = 5`.
+- `parse_and_divide "oops" "2"` returns `0`: parsing `sa` raises
+  `Failure "int_of_string"`, the *inner* `try` is the nearest
+  enclosing one, it matches `Failure _` and substitutes `0` for
+  `a`. The outer `try` never gets a chance.
+- `parse_and_divide "10" "oops"` returns `-1`: parsing `sa`
+  succeeds, so the inner `try` finishes normally. Parsing `sb`
+  raises `Failure`, but now the inner `try` is no longer on the
+  call stack. The exception propagates to the outer `try`, which
+  matches `Failure _` and returns `-1`.
+- `parse_and_divide "10" "0"` returns `-2`: both parses succeed,
+  but `10 / 0` raises `Division_by_zero`. The inner `try` is
+  long gone; the outer catches and returns `-2`.
+
+The mental model is the same as with `try` and an unmatched
+clause: an exception walks *up* the call stack, visiting each
+`try` it meets in turn, taking the first matching clause it
+finds. Nesting just makes the "nearest" relationship explicit.
+
 :::slide
 
 ## Catching: `try ... with`
@@ -408,6 +453,33 @@ let _ = safely (fun n -> 100 / n) 0    (* = Error "div by zero" *)
   `Ok (f x)`; so does the whole `try`.
 - Exceptions not listed keep propagating. Don't write a
   catch-all `_ -> ...`; you will swallow bugs.
+
+:::
+
+:::slide
+
+## Nested `try ... with`: nearest enclosing wins
+
+```ocaml
+let parse_and_divide sa sb =
+  try
+    let a = try int_of_string sa with Failure _ -> 0 in
+    let b = int_of_string sb in
+    a / b
+  with
+  | Failure _ -> -1
+  | Division_by_zero -> -2
+
+let _ = parse_and_divide "10"   "2"       (* =  5 *)
+let _ = parse_and_divide "oops" "2"       (* =  0: inner caught   *)
+let _ = parse_and_divide "10"   "oops"    (* = -1: outer caught   *)
+let _ = parse_and_divide "10"   "0"       (* = -2: outer caught   *)
+```
+
+- A raised exception walks up the call stack, taking the
+  *first matching* `try` it meets.
+- The inner `try` only sees what is raised inside its body; once
+  it finishes, later exceptions bypass it.
 
 :::
 
@@ -541,6 +613,7 @@ let _ =
   with`.
 
 :::
+<!-- KC: make it executable in a cell -->
 
 ## Exception vs option vs result
 
@@ -619,6 +692,7 @@ wrong call.
 
 - Predictable "missing value" cases: use `option`.
 - "This won't happen" assertions: use `assert false`, or redesign.
+<!-- KC: `assert` is also something that you should explain when you explain built-in exceptions. -->
 - Deep nesting where the escape path is hard to follow.
 
 **Good fit:**
