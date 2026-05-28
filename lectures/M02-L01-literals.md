@@ -722,6 +722,54 @@ in C, and the compiler is good about not doing redundant work.
 You do not need to micro-optimise by comparing string lengths
 first.
 
+## A quick check
+
+:::quiz mcq id=M02-L01-q2
+What does this evaluate to?
+
+```ocaml skip
+let _ = 1 + 2.0
+```
+
+- [ ] `float = 3.0` (with an implicit cast)
+- [ ] `int = 3` (the `2.0` is truncated)
+- [x] Type error: `+` expects `int` on both sides; `2.0` is a `float`.
+- [ ] Type error: `1` should have been `1.0`.
+
+**Why:** OCaml never inserts implicit conversions between `int`
+and `float`. The operator `+` takes two `int`s and returns an
+`int`; the second operand `2.0` is a `float`, so the compiler
+rejects the expression with "this expression has type float but
+an expression was expected of type int." Both the int-side and
+the float-side framings are wrong: there is no preferred side, the
+language simply refuses the call and asks you to insert a
+`float_of_int` (or `int_of_float`) where you intended.
+:::
+
+:::quiz mcq id=M02-L01-q3
+What does this evaluate to?
+
+```ocaml
+let _ = (-7) / 2
+```
+
+- [ ] `int = -4` (floor division)
+- [x] `int = -3` (truncation toward zero)
+- [ ] `float = -3.5`
+- [ ] `exception Division_by_zero`
+
+**Why:** OCaml's integer division `/` *truncates toward zero*,
+not toward negative infinity. `(-7) / 2 = -3` (and `(-7) mod 2 =
+-1`). Python 3 and many other languages floor instead, giving
+`-4`; the convention is flipped relative to those languages. The
+result is an `int` because both operands are `int` and OCaml does
+not implicitly promote to `float`.
+:::
+
+(No code quiz here: function definitions arrive in
+[Module 3](M03-L01-functions-as-values.html). The Activity
+below stays at the "predict the type and value" level.)
+
 ## Activity
 
 :::slide

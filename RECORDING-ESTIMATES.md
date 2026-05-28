@@ -30,11 +30,11 @@ current draft state. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M01-L01 | Course introduction: what you'll learn, how it's run | 13 | 1 | 0 | 1 | 0 | 20 | 28 |
-| M01-L02 | Why functional programming? | 19 | 2 | 0 | 2 | 0 | 29 | 41 |
-| M01-L03 | A tour of OCaml: values, types, and the toplevel | 17 | 2 | 1 | 2 | 1 | 26 | 36 |
-| M01-L04 | Your first OCaml program: hello, world (and beyond) | 14 | 2 | 1 | 2 | 1 | 21 | 29 |
-| M01-L05 | Tutorial: temperature conversions and small expressions | 13 | 1 | 1 | 1 | 1 | 20 | 28 |
+| M01-L01 | Course introduction: what you'll learn, how it's run | 13 | 1 | 0 | 20 | 28 |
+| M01-L02 | Why functional programming? | 19 | 2 | 0 | 29 | 41 |
+| M01-L03 | A tour of OCaml: values, types, and the toplevel | 17 | 2 | 1 | 26 | 36 |
+| M01-L04 | Your first OCaml program: hello, world (and beyond) | 14 | 2 | 1 | 21 | 29 |
+| M01-L05 | Tutorial: temperature conversions and small expressions | 13 | 1 | 1 | 20 | 28 |
 | **M01 total** | | **76** | **8** | **3** | **116** | **162** |
 | | | | | | **(1.9 h)** | **(2.7 h)** |
 
@@ -53,13 +53,13 @@ ratio (average 1.49).
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M02-L01 | Literals: integers, floats, booleans, strings | 20 | 0 | 0 | 0 | 0 | 30 | 42 |
-| M02-L02 | `let` bindings and shadowing | 16 | 1 | 1 | 1 | 1 | 24 | 34 |
-| M02-L03 | Static vs dynamic semantics, and type inference | 15 | 1 | 0 | 1 | 0 | 23 | 32 |
-| M02-L04 | Operators, precedence, and common pitfalls | 13 | 1 | 1 | 1 | 1 | 20 | 28 |
-| M02-L05 | `if`/`then`/`else` as an expression | 14 | 2 | 1 | 2 | 1 | 21 | 29 |
-| M02-L06 | Tutorial: small expressions, end to end | 11 | 0 | 2 | 0 | 2 | 17 | 24 |
-| **M02 total** | | **89** | **5** | **5** | **135** | **189** |
+| M02-L01 | Literals: integers, floats, booleans, strings | 20 | 2 | 0 | 30 | 42 |
+| M02-L02 | `let` bindings and shadowing | 16 | 1 | 1 | 24 | 34 |
+| M02-L03 | Static vs dynamic semantics, and type inference | 15 | 1 | 0 | 23 | 32 |
+| M02-L04 | Operators, precedence, and common pitfalls | 13 | 1 | 1 | 20 | 28 |
+| M02-L05 | `if`/`then`/`else` as an expression | 14 | 2 | 1 | 21 | 29 |
+| M02-L06 | Tutorial: small expressions, end to end | 11 | 0 | 2 | 17 | 24 |
+| **M02 total** | | **89** | **7** | **5** | **135** | **189** |
 | | | | | | **(2.2 h)** | **(3.1 h)** |
 
 M02-L01 sits at the 30 min NPTEL upper bound (the Expressions /
@@ -79,13 +79,13 @@ M03-L06 list-free with fast_power and is_prime).
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M03-L01 | Functions as values, and anonymous functions | 18 | 2 | 1 | 2 | 1 | 27 | 38 |
-| M03-L02 | Recursion | 15 | 1 | 1 | 1 | 1 | 23 | 32 |
-| M03-L03 | Currying and partial application | 14 | 2 | 1 | 2 | 1 | 21 | 29 |
-| M03-L04 | Tail recursion and accumulators | 12 | 1 | 1 | 1 | 1 | 18 | 25 |
-| M03-L05 | Local functions and mutual recursion | 10 | 0 | 0 | 0 | 0 | 15 | 21 |
-| M03-L06 | Tutorial: Fibonacci, GCD, power, digits | 11 | 0 | 1 | 0 | 1 | 17 | 24 |
-| **M03 total** | | **80** | **6** | **5** | **121** | **169** |
+| M03-L01 | Functions as values, and anonymous functions | 18 | 2 | 1 | 27 | 38 |
+| M03-L02 | Recursion | 15 | 1 | 1 | 23 | 32 |
+| M03-L03 | Currying and partial application | 14 | 2 | 1 | 21 | 29 |
+| M03-L04 | Tail recursion and accumulators | 12 | 1 | 1 | 18 | 25 |
+| M03-L05 | Local functions and mutual recursion | 10 | 2 | 1 | 15 | 21 |
+| M03-L06 | Tutorial: Fibonacci, GCD, power, digits | 11 | 0 | 1 | 17 | 24 |
+| **M03 total** | | **80** | **8** | **6** | **121** | **169** |
 | | | | | | **(2.0 h)** | **(2.8 h)** |
 
 M03-L05 and M03-L06 drop just below the NPTEL 20 min lower
@@ -118,12 +118,12 @@ has six lectures. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M04-L01 | Tuples | 17 | 2 | 1 | 2 | 1 | 26 | 36 |
-| M04-L02 | Records | 17 | 1 | 1 | 1 | 1 | 26 | 36 |
-| M04-L03 | Variants (sum types) | 9 | 1 | 1 | 1 | 1 | 14 | 20 |
-| M04-L04 | Recursive types, polymorphism, option / result | 24 | 1 | 0 | 1 | 0 | 36 | 50 |
-| M04-L05 | Tutorial: a tiny AST for OCaml | 16 | 1 | 0 | 1 | 0 | 24 | 34 |
-| M04-L06 | Tutorial: a tiny file system | 14 | 1 | 0 | 1 | 0 | 21 | 30 |
+| M04-L01 | Tuples | 17 | 2 | 1 | 26 | 36 |
+| M04-L02 | Records | 17 | 1 | 1 | 26 | 36 |
+| M04-L03 | Variants (sum types) | 9 | 1 | 1 | 14 | 20 |
+| M04-L04 | Recursive types, polymorphism, option / result | 24 | 1 | 0 | 36 | 50 |
+| M04-L05 | Tutorial: a tiny AST for OCaml | 16 | 1 | 0 | 24 | 34 |
+| M04-L06 | Tutorial: a tiny file system | 14 | 1 | 0 | 21 | 30 |
 | **M04 total** | | **97** | **7** | **3** | **147** | **206** |
 | | | | | | **(2.5 h)** | **(3.4 h)** |
 
@@ -160,12 +160,12 @@ the current draft state. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M05-L01 | Basic patterns: literals, variables, wildcards | 20 | 2 | 1 | 2 | 1 | 30 | 42 |
-| M05-L02 | Pattern matching on lists and trees | 16 | 2 | 1 | 2 | 1 | 24 | 34 |
-| M05-L03 | Nested patterns, records, inline records, or-patterns | 22 | 2 | 1 | 2 | 1 | 33 | 46 |
-| M05-L04 | Guards: when-clauses on patterns | 12 | 2 | 1 | 2 | 1 | 18 | 25 |
-| M05-L05 | Exhaustiveness checking | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M05-L06 | Tutorial: an interpreter for the M04-L05 AST | 20 | 2 | 1 | 2 | 1 | 30 | 42 |
+| M05-L01 | Basic patterns: literals, variables, wildcards | 20 | 2 | 1 | 30 | 42 |
+| M05-L02 | Pattern matching on lists and trees | 16 | 2 | 1 | 24 | 34 |
+| M05-L03 | Nested patterns, records, inline records, or-patterns | 22 | 2 | 1 | 33 | 46 |
+| M05-L04 | Guards: when-clauses on patterns | 12 | 2 | 1 | 18 | 25 |
+| M05-L05 | Exhaustiveness checking | 13 | 2 | 1 | 20 | 28 |
+| M05-L06 | Tutorial: an interpreter for the M04-L05 AST | 20 | 2 | 1 | 30 | 42 |
 | **M05 total** | | **103** | **12** | **6** | **155** | **217** |
 | | | | | | **(2.6 h)** | **(3.6 h)** |
 
@@ -191,12 +191,12 @@ CS3100. Inline-result-comment sweep applied across M06 lectures.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M06-L01 | Functions as values, revisited | 14 | 2 | 1 | 2 | 1 | 21 | 29 |
-| M06-L02 | `map`: transform every element | 15 | 2 | 1 | 2 | 1 | 23 | 32 |
-| M06-L03 | `filter`: keep what passes the predicate | 14 | 2 | 1 | 2 | 1 | 21 | 29 |
-| M06-L04 | `fold`: reduce a list to a single value | 22 | 2 | 1 | 2 | 1 | 33 | 46 |
-| M06-L05 | Function composition and pipelines | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M06-L06 | Tutorial: fold across data structures | 18 | 2 | 1 | 2 | 1 | 27 | 38 |
+| M06-L01 | Functions as values, revisited | 14 | 2 | 1 | 21 | 29 |
+| M06-L02 | `map`: transform every element | 15 | 2 | 1 | 23 | 32 |
+| M06-L03 | `filter`: keep what passes the predicate | 14 | 2 | 1 | 21 | 29 |
+| M06-L04 | `fold`: reduce a list to a single value | 22 | 2 | 1 | 33 | 46 |
+| M06-L05 | Function composition and pipelines | 13 | 2 | 1 | 20 | 28 |
+| M06-L06 | Tutorial: fold across data structures | 18 | 2 | 1 | 27 | 38 |
 | **M06 total** | | **96** | **12** | **6** | **145** | **202** |
 | | | | | | **(2.3 h)** | **(3.2 h)** |
 
@@ -225,15 +225,15 @@ M07-L04 streams and M07-L05 memoization lectures added on
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M07-L01 | Mutable references | 22 | 3 | 1 | 3 | 1 | 33 | 46 |
-| M07-L02 | Mutable records and arrays | 22 | 2 | 1 | 2 | 1 | 33 | 46 |
-| M07-L03 | Exceptions | 18 | 2 | 1 | 2 | 1 | 27 | 38 |
-| M07-L04 | Streams and laziness | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M07-L05 | Memoization | 12 | 2 | 1 | 2 | 1 | 18 | 25 |
-| M07-L06 | Module basics | 15 | 2 | 1 | 2 | 1 | 23 | 32 |
-| M07-L07 | Module signatures | 16 | 2 | 1 | 2 | 1 | 24 | 34 |
-| M07-L08 | Functors | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 2 | 1 | 23 | 32 |
+| M07-L01 | Mutable references | 22 | 3 | 1 | 33 | 46 |
+| M07-L02 | Mutable records and arrays | 22 | 2 | 1 | 33 | 46 |
+| M07-L03 | Exceptions | 18 | 2 | 1 | 27 | 38 |
+| M07-L04 | Streams and laziness | 13 | 2 | 1 | 20 | 28 |
+| M07-L05 | Memoization | 12 | 2 | 1 | 18 | 25 |
+| M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
+| M07-L07 | Module signatures | 16 | 2 | 1 | 24 | 34 |
+| M07-L08 | Functors | 13 | 2 | 1 | 20 | 28 |
+| M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
 | **M07 total** | | **146** | **19** | **9** | **221** | **309** |
 | | | | | | **(3.7 h)** | **(5.2 h)** |
 
@@ -267,16 +267,16 @@ uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M08-L01 | Sequencing computations: motivation for monads | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M08-L02 | The option monad and `let*` sugar | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M08-L03 | Monad laws and the list monad | 19 | 2 | 1 | 2 | 1 | 29 | 40 |
-| M08-L04 | The result monad: errors with information | 16 | 2 | 1 | 2 | 1 | 24 | 34 |
-| M08-L05 | The state monad | 16 | 2 | 1 | 2 | 1 | 24 | 34 |
-| M08-L06 | Parameterised state and a typed stack machine | 14 | 2 | 1 | 2 | 1 | 21 | 29 |
-| M08-L07 | GADTs: variants with type-level information | 14 | 2 | 1 | 2 | 1 | 21 | 29 |
-| M08-L08 | GADTs: use cases beyond toy interpreters | 11 | 2 | 1 | 2 | 1 | 17 | 24 |
-| M08-L09 | GADTs: hlists and witnesses | 15 | 2 | 1 | 2 | 1 | 23 | 32 |
-| M08-L10 | Tutorial: a tiny well-typed evaluator | 16 | 2 | 1 | 2 | 1 | 24 | 34 |
+| M08-L01 | Sequencing computations: motivation for monads | 13 | 2 | 1 | 20 | 28 |
+| M08-L02 | The option monad and `let*` sugar | 13 | 2 | 1 | 20 | 28 |
+| M08-L03 | Monad laws and the list monad | 19 | 2 | 1 | 29 | 40 |
+| M08-L04 | The result monad: errors with information | 16 | 2 | 1 | 24 | 34 |
+| M08-L05 | The state monad | 16 | 2 | 1 | 24 | 34 |
+| M08-L06 | Parameterised state and a typed stack machine | 14 | 2 | 1 | 21 | 29 |
+| M08-L07 | GADTs: variants with type-level information | 14 | 2 | 1 | 21 | 29 |
+| M08-L08 | GADTs: use cases beyond toy interpreters | 11 | 2 | 1 | 17 | 24 |
+| M08-L09 | GADTs: hlists and witnesses | 15 | 2 | 1 | 23 | 32 |
+| M08-L10 | Tutorial: a tiny well-typed evaluator | 16 | 2 | 1 | 24 | 34 |
 | **M08 total** | | **147** | **20** | **10** | **221** | **309** |
 | | | | | | **(3.7 h)** | **(5.2 h)** |
 
@@ -299,14 +299,14 @@ slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M09-L01 | Why test a type-safe (and concurrent) program? | 13 | 3 | 0 | 3 | 0 | 20 | 28 |
-| M09-L02 | Unit testing in OCaml with OUnit2 | 15 | 2 | 1 | 2 | 1 | 23 | 32 |
-| M09-L03 | Property-based testing with QCheck: basics and shrinking | 17 | 2 | 1 | 2 | 1 | 26 | 36 |
-| M09-L04 | Custom generators and stateful property tests | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M09-L05 | Model-based testing | 16 | 2 | 1 | 2 | 1 | 24 | 34 |
-| M09-L06 | Effect handlers for concurrency | 15 | 2 | 1 | 2 | 1 | 23 | 32 |
-| M09-L07 | Fibers and lightweight concurrency | 13 | 2 | 1 | 2 | 1 | 20 | 28 |
-| M09-L08 | Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs | 14 | 1 | 1 | 1 | 1 | 21 | 30 |
+| M09-L01 | Why test a type-safe (and concurrent) program? | 13 | 3 | 0 | 20 | 28 |
+| M09-L02 | Unit testing in OCaml with OUnit2 | 15 | 2 | 1 | 23 | 32 |
+| M09-L03 | Property-based testing with QCheck: basics and shrinking | 17 | 2 | 1 | 26 | 36 |
+| M09-L04 | Custom generators and stateful property tests | 13 | 2 | 1 | 20 | 28 |
+| M09-L05 | Model-based testing | 16 | 2 | 1 | 24 | 34 |
+| M09-L06 | Effect handlers for concurrency | 15 | 2 | 1 | 23 | 32 |
+| M09-L07 | Fibers and lightweight concurrency | 13 | 2 | 1 | 20 | 28 |
+| M09-L08 | Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs | 14 | 1 | 1 | 21 | 30 |
 | **M09 total** | | **116** | **16** | **7** | **174** | **244** |
 | | | | | | **(2.9 h)** | **(4.1 h)** |
 
@@ -330,12 +330,12 @@ Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M10-L01 | Undefined behaviour and the C memory-safety zoo | 13 | 2 | 0 | 2 | 0 | 20 | 28 |
-| M10-L02 | Memory bugs as security incidents | 17 | 2 | 0 | 2 | 0 | 26 | 36 |
-| M10-L03 | How OCaml rules them out by construction | 15 | 2 | 1 | 2 | 1 | 23 | 32 |
-| M10-L04 | Where OCaml itself has UB | 15 | 2 | 0 | 2 | 0 | 23 | 32 |
-| M10-L05 | Resource safety: file descriptors, sockets, and buffers | 15 | 0 | 1 | 0 | 1 | 23 | 32 |
-| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 0 | 1 | 0 | 1 | 21 | 30 |
+| M10-L01 | Undefined behaviour and the C memory-safety zoo | 13 | 2 | 0 | 20 | 28 |
+| M10-L02 | Memory bugs as security incidents | 17 | 2 | 0 | 26 | 36 |
+| M10-L03 | How OCaml rules them out by construction | 15 | 2 | 1 | 23 | 32 |
+| M10-L04 | Where OCaml itself has UB | 15 | 2 | 0 | 23 | 32 |
+| M10-L05 | Resource safety: file descriptors, sockets, and buffers | 15 | 0 | 1 | 23 | 32 |
+| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 0 | 1 | 21 | 30 |
 | **M10 total** | | **89** | **8** | **3** | **134** | **187** |
 | | | | | | **(2.2 h)** | **(3.1 h)** |
 
@@ -361,13 +361,13 @@ Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M11-L01 | Modes as the type-level continuation of safety | 14 | 2 | 0 | 2 | 0 | 21 | 29 |
-| M11-L02 | Locality: safe stack allocation | 13 | 2 | 0 | 2 | 0 | 20 | 28 |
-| M11-L03 | Portability: data-race freedom across domains | 15 | 2 | 0 | 2 | 0 | 23 | 32 |
-| M11-L04 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 2 | 0 | 24 | 34 |
-| M11-L05 | Linearity: use exactly once | 13 | 2 | 0 | 2 | 0 | 20 | 28 |
-| M11-L06 | Contention: synchronisation at compile time | 17 | 2 | 0 | 2 | 0 | 26 | 36 |
-| M11-L07 | Tutorial: a resource-management API | 15 | 0 | 1 | 0 | 1 | 23 | 32 |
+| M11-L01 | Modes as the type-level continuation of safety | 14 | 2 | 0 | 21 | 29 |
+| M11-L02 | Locality: safe stack allocation | 13 | 2 | 0 | 20 | 28 |
+| M11-L03 | Portability: data-race freedom across domains | 15 | 2 | 0 | 23 | 32 |
+| M11-L04 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
+| M11-L05 | Linearity: use exactly once | 13 | 2 | 0 | 20 | 28 |
+| M11-L06 | Contention: synchronisation at compile time | 17 | 2 | 0 | 26 | 36 |
+| M11-L07 | Tutorial: a resource-management API | 15 | 0 | 1 | 23 | 32 |
 | **M11 total** | | **103** | **12** | **1** | **157** | **219** |
 | | | | | | **(2.6 h)** | **(3.7 h)** |
 
@@ -396,12 +396,12 @@ HTTP unikernel end to end. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M12-L01 | Why do we need an OS? | 13 | 2 | 0 | 2 | 0 | 20 | 28 |
-| M12-L02 | Ingredient 1: Library OS | 14 | 2 | 0 | 2 | 0 | 21 | 29 |
-| M12-L03 | Ingredient 2: Virtualisation | 14 | 2 | 0 | 2 | 0 | 21 | 29 |
-| M12-L04 | Ingredient 3: OCaml for systems | 15 | 2 | 0 | 2 | 0 | 23 | 32 |
-| M12-L05 | MirageOS = Library OS + Virtualisation + OCaml | 12 | 2 | 0 | 2 | 0 | 18 | 25 |
-| M12-L06 | Bob the Bin Man: a worked unikernel example | 13 | 2 | 0 | 2 | 0 | 20 | 28 |
+| M12-L01 | Why do we need an OS? | 13 | 2 | 0 | 20 | 28 |
+| M12-L02 | Ingredient 1: Library OS | 14 | 2 | 0 | 21 | 29 |
+| M12-L03 | Ingredient 2: Virtualisation | 14 | 2 | 0 | 21 | 29 |
+| M12-L04 | Ingredient 3: OCaml for systems | 15 | 2 | 0 | 23 | 32 |
+| M12-L05 | MirageOS = Library OS + Virtualisation + OCaml | 12 | 2 | 0 | 18 | 25 |
+| M12-L06 | Bob the Bin Man: a worked unikernel example | 13 | 2 | 0 | 20 | 28 |
 | **M12 total** | | **81** | **12** | **0** | **122** | **171** |
 | | | | | | **(2.0 h)** | **(2.8 h)** |
 

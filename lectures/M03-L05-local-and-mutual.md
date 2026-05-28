@@ -393,6 +393,103 @@ let collatz n =
   step n
 ```
 
+## A quick check
+
+:::quiz mcq id=M03-L05-q2
+What happens when the toplevel reaches the last line?
+
+```ocaml skip
+let outer x =
+  let inner y = y + 1 in
+  inner x
+
+let _ = outer 4
+let _ = inner 5
+```
+
+- [ ] Both lines return `5`.
+- [ ] `outer 4` returns `5`; `inner 5` returns `6`.
+- [x] `outer 4` returns `5`; the last line fails with `Unbound value inner`.
+- [ ] Both lines fail with a type error.
+
+**Why:** `inner` is introduced by a `let ... in` *inside*
+`outer`'s body, so it is in scope only inside that body. Outside
+`outer`, the name `inner` has never been bound, and the compiler
+rejects the reference. Hiding a helper inside a top-level
+function is exactly the point of the local-helper pattern.
+:::
+
+:::quiz mcq id=M03-L05-q3
+The compiler rejects this code. Where, and why?
+
+```ocaml skip
+let rec is_even n =
+  if n = 0 then true  else is_odd  (n - 1)
+let rec is_odd n =
+  if n = 0 then false else is_even (n - 1)
+```
+
+- [ ] At `is_odd`'s definition: the body refers to `is_even`, which has type `int -> bool`; the recursive case is fine.
+- [x] At `is_even`'s definition: the body refers to `is_odd`, which is not yet in scope.
+- [ ] At the call site: `is_even` and `is_odd` have different types.
+- [ ] The code is accepted; both functions work.
+
+**Why:** `let rec` brings *only the name being defined* into
+scope inside its own body. When the compiler processes the first
+`let rec is_even`, `is_odd` has not yet been introduced, so the
+recursive case fails with `Unbound value is_odd`. The fix is one
+combined `let rec ... and ...` so both names are introduced
+together and in scope inside both bodies.
+:::
+
+A code task:
+
+:::quiz code id=M03-L05-q1
+Write `bit_count : int -> int` that returns the number of `1`s
+in the binary representation of a non-negative integer. Use a
+**local** tail-recursive helper inside `bit_count`; the helper
+must not be visible at the top level.
+
+```ocaml
+let bit_count n =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (bit_count 0   = 0) "zero";
+  check (bit_count 1   = 1) "one";
+  check (bit_count 2   = 1) "two (binary 10)";
+  check (bit_count 3   = 2) "three (binary 11)";
+  check (bit_count 7   = 3) "seven (binary 111)";
+  check (bit_count 10  = 2) "ten (binary 1010)";
+  check (bit_count 255 = 8) "255 (binary 11111111)";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+`n mod 2` is the lowest bit; `n / 2` drops it. A local
+tail-recursive helper threads the running count:
+
+```ocaml
+let bit_count n =
+  let rec go acc n =
+    if n = 0 then acc
+    else go (acc + (n mod 2)) (n / 2)
+  in
+  go 0 n
+```
+
+`go` is the standard local-helper-with-accumulator shape we saw
+in [Tail recursion](M03-L04-tail-recursion.html). Hiding it
+inside `bit_count` keeps the accumulator out of the top-level
+namespace.
+
+:::
+
 ## Activity: mod-3 by three-way mutual recursion
 
 :::slide
