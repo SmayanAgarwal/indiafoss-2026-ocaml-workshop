@@ -311,7 +311,8 @@ let iter (t : 'a dllist) f =
 
 - Plain recursion over the `option` chain.
 - `f node.value` is the per-element effect.
-- A `prev`-walking iterator is the symmetric mirror.
+- Backward iteration would need a tail handle in `dllist`; we
+  kept the type minimal, so `iter` only walks `next`.
 
 :::
 
@@ -328,8 +329,13 @@ let () = print_newline ()
 ```
 
 The toplevel prints `1 2 3`. The same data lives in the chain of
-nodes; `iter` walks it forwards, and we could equally well walk it
-backwards by following `prev` from the last node.
+nodes; `iter` walks it forwards from the head handle. We do not
+keep a *tail* handle in `dllist`, so to walk backwards from the
+tail we would first have to walk forward to find the tail and
+then step `prev`. The reason we still bother with `prev` is that
+once we have a node in hand (returned by a search, or the
+current cursor of an iteration) we can splice it out or step
+sideways in O(1).
 
 :::slide
 
@@ -348,9 +354,11 @@ Prints `1 2 3`.
 
 - `insert_first` prepends, so the three inserts give head-to-tail
   order `1, 2, 3`.
-- Each node's `prev` would let us walk backwards from the tail.
-- Removing a node updates its neighbours' `next`/`prev` in O(1):
-  the payoff for the bookkeeping.
+- `dllist` only stores the *head*: no tail handle, no backward
+  iteration from the end without first walking forward.
+- The point of `prev` is local: once we have a node in hand, we
+  can step backward or splice it out (update its neighbours'
+  `next`/`prev`) in O(1).
 
 :::
 
