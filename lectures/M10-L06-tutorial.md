@@ -587,6 +587,59 @@ The safety is the floor, not a feature.
 
 :::
 
+## A quick check
+
+:::quiz mcq id=M10-L06-q2
+What was the immediate technical cause of the Heartbleed bug?
+
+- [ ] The TLS protocol design itself was broken.
+- [ ] An attacker had to break the encryption first.
+- [x] The server trusted the *attacker-supplied* `payload`
+      length field without checking that the actual record on
+      the wire was that large. `memcpy` then copied
+      `payload`-many bytes from the buffer, reading past the
+      end into adjacent server memory.
+- [ ] OpenSSL was using outdated cryptographic primitives.
+
+**Why:** Heartbleed is a *missing length check*. The 16-bit
+`payload` field is attacker-controlled. The handler allocated a
+response buffer of size `payload + headers + padding` and
+`memcpy`d that many bytes from the request buffer, but did not
+verify that the request actually contained that many bytes.
+Sending `payload = 65535` with a one-byte request caused the
+server to copy ~64 KB of whatever was next in memory: keys,
+tokens, log buffers. The cryptography was fine; the *bounds
+check* was missing.
+:::
+
+:::quiz mcq id=M10-L06-q3
+Why does the OCaml version of the handler not have the
+Heartbleed bug, even though the OCaml code also does not write
+an explicit length check?
+
+- [ ] The OCaml compiler statically proves at compile time
+      that `payload_len` fits inside `record`.
+- [ ] OCaml's GC reclaims out-of-bounds reads before they
+      reach the attacker.
+- [x] `Bytes.sub` has a bounds check baked into the *API
+      contract*: if the range is invalid, it raises
+      `Invalid_argument` before any out-of-bounds byte is
+      read. There is no unchecked variant in the safe
+      fragment.
+- [ ] OCaml's `Bytes` are immutable, so an out-of-bounds read
+      cannot exfiltrate data.
+
+**Why:** the safety property is *runtime*, not static. The
+OCaml side cannot prove the attacker's `payload_len` is in
+range, but `Bytes.sub` checks at call time and raises
+`Invalid_argument` if not. The check is in the function's
+contract; there is no opt-out. The exception propagates up,
+the connection gets closed, no server memory leaks. The
+"applied consistently across the whole stdlib" sentence from
+the big-picture slide is doing the work here: every `Bytes`
+access goes through this same discipline.
+:::
+
 ## Exercise
 
 The closing exercise is the OCaml-flavoured discipline Heartbleed

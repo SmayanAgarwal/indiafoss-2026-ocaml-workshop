@@ -566,6 +566,63 @@ Five-axis API; the compiler enforces every piece.
 
 :::
 
+## A quick check
+
+:::quiz mcq id=M11-L07-q2
+Which mode does each guarantee in the `Handle` API correspond
+to?
+
+| Guarantee                         | Mode |
+|-----------------------------------|------|
+| Close exactly once                | ?    |
+| No use after close                | ?    |
+| Handle cannot escape its scope    | ?    |
+
+- [ ] all three are `local`
+- [ ] all three are `portable`
+- [x] "close exactly once" and "no use after close" are
+      *linearity* (`@ once`); "no escape" is *locality*
+      (`@ local`).
+- [ ] "close exactly once" is `unique`; "no use after close"
+      is `portable`; "no escape" is `once`.
+
+**Why:** linearity (`@ once`) is about the *future*: how many
+more times the value will be used. A `t @ once` may be used at
+most one more time, which forces "close exactly once" and "no
+use after close": the second `close` or any `read` after
+`close` is a second use, and the compiler rejects it. Locality
+(`@ local`) is about the *region*: a `t @ local` cannot escape
+the current scope, so it cannot be stored in a global `ref` or
+returned from the enclosing function.
+:::
+
+:::quiz mcq id=M11-L07-q3
+Why does each operation other than `close` *return a fresh
+handle* (`-> ... * t @ once @ local`) rather than just consuming
+the handle and returning the result?
+
+- [ ] To copy the handle so two threads can use it
+      concurrently.
+- [ ] To allow the GC to free the old handle sooner.
+- [x] Linearity means the input handle is *consumed* by the
+      call; returning a fresh handle gives the caller something
+      to thread into the next operation. Without the fresh
+      handle, the caller could not call `read`, `write`, or
+      `close` again.
+- [ ] To let the implementation change the file descriptor
+      number underneath.
+
+**Why:** the `@ once` annotation says the input is consumed: it
+cannot be used again. To express a *protocol* (open, then
+read/write some number of times, then close), each step must
+hand back a fresh, still-`@ once @ local` handle. The chain of
+returned handles is the ownership thread the type system
+follows. `close` is the only operation that does not return a
+fresh handle, because nothing should happen after it; ending
+the chain there is exactly how "close terminates the protocol"
+becomes a compile-time fact.
+:::
+
 ## Design exercise: a `malloc`-style buffer
 
 Now your turn. Design the OxCaml signature for a buffer API with

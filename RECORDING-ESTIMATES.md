@@ -30,12 +30,12 @@ current draft state. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M01-L01 | Course introduction: what you'll learn, how it's run | 13 | 1 | 0 | 20 | 28 |
+| M01-L01 | Course introduction: what you'll learn, how it's run | 13 | 3 | 0 | 20 | 28 |
 | M01-L02 | Why functional programming? | 19 | 2 | 0 | 29 | 41 |
 | M01-L03 | A tour of OCaml: values, types, and the toplevel | 17 | 2 | 1 | 26 | 36 |
 | M01-L04 | Your first OCaml program: hello, world (and beyond) | 14 | 2 | 1 | 21 | 29 |
 | M01-L05 | Tutorial: temperature conversions and small expressions | 13 | 1 | 1 | 20 | 28 |
-| **M01 total** | | **76** | **8** | **3** | **116** | **162** |
+| **M01 total** | | **76** | **10** | **3** | **116** | **162** |
 | | | | | | **(1.9 h)** | **(2.7 h)** |
 
 M01-L01 and M01-L05 sit right at the NPTEL 20-min floor (13
@@ -55,11 +55,11 @@ ratio (average 1.49).
 |---|---|---:|---:|---:|---:|---:|
 | M02-L01 | Literals: integers, floats, booleans, strings | 20 | 2 | 0 | 30 | 42 |
 | M02-L02 | `let` bindings and shadowing | 16 | 1 | 1 | 24 | 34 |
-| M02-L03 | Static vs dynamic semantics, and type inference | 15 | 1 | 0 | 23 | 32 |
+| M02-L03 | Static vs dynamic semantics, and type inference | 15 | 3 | 0 | 23 | 32 |
 | M02-L04 | Operators, precedence, and common pitfalls | 13 | 1 | 1 | 20 | 28 |
 | M02-L05 | `if`/`then`/`else` as an expression | 14 | 2 | 1 | 21 | 29 |
 | M02-L06 | Tutorial: small expressions, end to end | 11 | 0 | 2 | 17 | 24 |
-| **M02 total** | | **89** | **7** | **5** | **135** | **189** |
+| **M02 total** | | **89** | **9** | **5** | **135** | **189** |
 | | | | | | **(2.2 h)** | **(3.1 h)** |
 
 M02-L01 sits at the 30 min NPTEL upper bound (the Expressions /
@@ -84,8 +84,8 @@ M03-L06 list-free with fast_power and is_prime).
 | M03-L03 | Currying and partial application | 14 | 2 | 1 | 21 | 29 |
 | M03-L04 | Tail recursion and accumulators | 12 | 1 | 1 | 18 | 25 |
 | M03-L05 | Local functions and mutual recursion | 10 | 2 | 1 | 15 | 21 |
-| M03-L06 | Tutorial: Fibonacci, GCD, power, digits | 11 | 0 | 1 | 17 | 24 |
-| **M03 total** | | **80** | **8** | **6** | **121** | **169** |
+| M03-L06 | Tutorial: Fibonacci, GCD, power, digits | 11 | 2 | 1 | 17 | 24 |
+| **M03 total** | | **80** | **10** | **6** | **121** | **169** |
 | | | | | | **(2.0 h)** | **(2.8 h)** |
 
 M03-L05 and M03-L06 drop just below the NPTEL 20 min lower
@@ -121,10 +121,10 @@ has six lectures. Estimate uses slide_count x 1.5 min.
 | M04-L01 | Tuples | 17 | 2 | 1 | 26 | 36 |
 | M04-L02 | Records | 17 | 1 | 1 | 26 | 36 |
 | M04-L03 | Variants (sum types) | 9 | 1 | 1 | 14 | 20 |
-| M04-L04 | Recursive types, polymorphism, option / result | 24 | 1 | 0 | 36 | 50 |
-| M04-L05 | Tutorial: a tiny AST for OCaml | 16 | 1 | 0 | 24 | 34 |
-| M04-L06 | Tutorial: a tiny file system | 14 | 1 | 0 | 21 | 30 |
-| **M04 total** | | **97** | **7** | **3** | **147** | **206** |
+| M04-L04 | Recursive types, polymorphism, option / result | 24 | 2 | 1 | 36 | 50 |
+| M04-L05 | Tutorial: a tiny AST for OCaml | 16 | 3 | 0 | 24 | 34 |
+| M04-L06 | Tutorial: a tiny file system | 14 | 3 | 0 | 21 | 30 |
+| **M04 total** | | **97** | **12** | **4** | **147** | **206** |
 | | | | | | **(2.5 h)** | **(3.4 h)** |
 
 M04-L04 is the longest lecture in the course at 36 video min; it
@@ -334,9 +334,9 @@ Estimate uses slide_count x 1.5 min.
 | M10-L02 | Memory bugs as security incidents | 17 | 2 | 0 | 26 | 36 |
 | M10-L03 | How OCaml rules them out by construction | 15 | 2 | 1 | 23 | 32 |
 | M10-L04 | Where OCaml itself has UB | 15 | 2 | 0 | 23 | 32 |
-| M10-L05 | Resource safety: file descriptors, sockets, and buffers | 15 | 0 | 1 | 23 | 32 |
-| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 0 | 1 | 21 | 30 |
-| **M10 total** | | **89** | **8** | **3** | **134** | **187** |
+| M10-L05 | Resource safety: file descriptors, sockets, and buffers | 15 | 2 | 1 | 23 | 32 |
+| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 2 | 1 | 21 | 30 |
+| **M10 total** | | **89** | **12** | **3** | **134** | **187** |
 | | | | | | **(2.2 h)** | **(3.1 h)** |
 
 All M10 lectures now land in the 20-30 min NPTEL band; the
@@ -367,8 +367,8 @@ Estimate uses slide_count x 1.5 min.
 | M11-L04 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
 | M11-L05 | Linearity: use exactly once | 13 | 2 | 0 | 20 | 28 |
 | M11-L06 | Contention: synchronisation at compile time | 17 | 2 | 0 | 26 | 36 |
-| M11-L07 | Tutorial: a resource-management API | 15 | 0 | 1 | 23 | 32 |
-| **M11 total** | | **103** | **12** | **1** | **157** | **219** |
+| M11-L07 | Tutorial: a resource-management API | 15 | 2 | 1 | 23 | 32 |
+| **M11 total** | | **103** | **14** | **1** | **157** | **219** |
 | | | | | | **(2.6 h)** | **(3.7 h)** |
 
 All M11 lectures now land in the 20-30 min NPTEL band; the

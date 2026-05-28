@@ -596,6 +596,53 @@ implementation. We will see this in detail later.
 
 For ordinary local helpers, leave annotations off. They clutter.
 
+## A quick check
+
+:::quiz mcq id=M02-L03-q2
+Which of the following best describes the difference between a
+*static* error and a *dynamic* error?
+
+- [ ] Static errors happen at runtime; dynamic errors happen at
+      compile time.
+- [x] Static errors are caught by the compiler before the
+      program runs; dynamic errors only show up while the
+      program is running.
+- [ ] Static errors are warnings; dynamic errors are fatal.
+- [ ] Static and dynamic errors are two names for the same
+      thing.
+
+**Why:** "static" means *at compile time*, before the program
+runs. The OCaml compiler rejects programs whose types don't
+line up; you never get to run them. "Dynamic" means *at run
+time*: even a well-typed program can still raise an exception
+(e.g. division by zero), but that surfaces only once execution
+reaches the bad expression. Languages differ in where they put
+that line; OCaml puts a lot on the static side.
+:::
+
+:::quiz mcq id=M02-L03-q3
+The toplevel reports
+
+```text
+val g : float -> int -> float = <fun>
+```
+
+for some function `g`. Which call type-checks?
+
+- [ ] `g 1 2`
+- [ ] `g 1.0 2.0`
+- [x] `g 1.0 2`
+- [ ] `g 2 1.0`
+
+**Why:** the inferred signature says `g` takes a `float` first
+and an `int` second, and returns a `float`. So the first
+argument must be a `float` literal (`1.0`) and the second must
+be an `int` literal (`2`). OCaml does not implicitly convert
+between `int` and `float`; the literal `1` is `int`, the
+literal `1.0` is `float`, and the compiler does not silently
+coerce one to the other.
+:::
+
 ## Activity
 
 :::slide

@@ -652,6 +652,47 @@ have to clear it from a cold start. Doing weekly assignments also
 teaches the material; the final exam tests that you learned.
 :::
 
+:::quiz mcq id=M01-L01-q2
+How is the course split across the 12 modules?
+
+- [ ] 12 modules on functional programming
+- [ ] 6 modules on FP, 6 on secure systems
+- [x] 8 modules on functional programming, then 4 on secure
+      systems (testing, memory safety, OxCaml modes, MirageOS)
+- [ ] 4 modules on FP, then 8 on language theory
+
+**Why:** Modules 1-8 are functional programming proper
+(expressions, functions, data types, pattern matching,
+higher-order functions, side effects, modules, monadic
+abstractions). Modules 9-12 turn the type-safety story toward
+secure systems: testing (OUnit2, QCheck) for what types miss,
+memory safety as a security story, OxCaml's mode system, and
+MirageOS unikernels. The two halves are connected: the safety
+claims in weeks 9-12 only make sense once you know what the
+types in weeks 1-8 actually guarantee.
+:::
+
+:::quiz mcq id=M01-L01-q3
+What does it mean that the OCaml toplevel "runs in your browser"
+on the lecture pages?
+
+- [ ] The page sends your code to a remote server, which runs it
+      and returns the output.
+- [x] The OCaml runtime is loaded into the browser; your code
+      runs locally and never leaves your machine.
+- [ ] You need to install OCaml first; the page just shows the
+      source code.
+- [ ] Only the instructor can edit and run the cells.
+
+**Why:** every lecture's Run button starts an OCaml toplevel
+that has been compiled to JavaScript and loaded into the page.
+Code you type into a cell executes in your browser tab, so
+there is no server to talk to, nothing to install, and your
+edits stay on your device (saved in the browser's local
+storage). The first run takes a few seconds while the runtime
+loads; subsequent runs are fast.
+:::
+
 ## What's next
 
 Next video: [**why functional programming?**](M01-L02-why-fp.html)

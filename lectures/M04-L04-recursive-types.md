@@ -956,6 +956,64 @@ not. The recursive nesting (`Mul` of `Add` of `Num`s) is exactly
 what makes this a *recursive* variant.
 :::
 
+:::quiz mcq id=M04-L04-q3
+What type does the toplevel report for `None`?
+
+- [ ] `unit`
+- [ ] `None`
+- [x] `'a option`
+- [ ] `int option`
+
+**Why:** `None` carries no payload, so its element type is
+unconstrained at the point of definition. The toplevel reports
+`'a option` (a polymorphic type variable), exactly like `[]`
+reports `'a list`. The element type gets fixed once the value
+is *used* in a context that demands a particular type (e.g.
+assigning it to a `marks : int option` field forces the `'a`
+to be `int`).
+:::
+
+:::quiz code id=M04-L04-q4
+Write `safe_sqrt : float -> float option` that returns
+`Some (sqrt x)` for non-negative `x`, and `None` when `x` is
+negative. This is a *construction-only* exercise: build an
+`option` value with `if`/`then`/`else`; you don't need pattern
+matching yet (that's M05).
+
+```ocaml
+let safe_sqrt x =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (safe_sqrt 4.0   = Some 2.0) "4";
+  check (safe_sqrt 0.0   = Some 0.0) "0";
+  check (safe_sqrt 9.0   = Some 3.0) "9";
+  check (safe_sqrt (-1.0) = None)    "negative";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+Reference solution:
+
+```ocaml
+let safe_sqrt x =
+  if x < 0.0 then None else Some (sqrt x)
+```
+
+`sqrt` (from the standard library) has type `float -> float`,
+but it returns `nan` (not-a-number) on a negative input rather
+than signalling an error. Wrapping it as `float option` is
+*honest*: the type tells the caller that negatives are not
+handled, and OCaml will force them to look at the `None` case
+when they consume the result (we'll see how in M05).
+
+:::
+
 ## Activity
 
 :::slide

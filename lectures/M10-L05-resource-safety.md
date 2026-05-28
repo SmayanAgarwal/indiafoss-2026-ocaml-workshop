@@ -439,6 +439,62 @@ OCaml channels *do* install finalisers as a safety net. The
 
 :::
 
+## A quick check
+
+:::quiz mcq id=M10-L05-q2
+Given the signature
+
+```text
+val protect : finally:(unit -> unit) -> (unit -> 'a) -> 'a
+```
+
+what is guaranteed about `finally`?
+
+- [ ] It runs only when the work thunk returns normally.
+- [ ] It runs only when the work thunk raises.
+- [x] It runs exactly once: on normal return *and* when the
+      work thunk raises (after which the exception is
+      re-raised).
+- [ ] It runs zero times if the work thunk never returns
+      (e.g. an infinite loop).
+
+**Why:** that "exactly once, on either exit" guarantee is the
+whole point of `Fun.protect`. On a normal return, `protect`
+runs `finally` and returns the work's result. On an exception,
+`protect` runs `finally` and then re-raises the original
+exception. The user does not have to write a `try ... with` to
+get the cleanup; the combinator wires it in. (The "never
+returns" case is genuine: if the work runs forever, no exit
+happens, so no cleanup happens; but that is a different bug.)
+:::
+
+:::quiz mcq id=M10-L05-q3
+Why does the lecture argue that OCaml's GC + finalisers are
+*not* the primary defence for file-descriptor leaks, even
+though `In_channel` does install a finaliser?
+
+- [ ] Finalisers are a recent addition and most code has not
+      been updated yet.
+- [x] The GC runs on *memory* pressure, not *resource*
+      pressure: a program leaking many file descriptors but
+      few bytes will hit "too many open files" before the GC
+      fires; finalisers also run in unspecified order and
+      cannot meaningfully report cleanup errors.
+- [ ] Finalisers are unsafe and the OCaml runtime disables
+      them by default.
+- [ ] Finalisers only work on values that escape the function
+      they were allocated in.
+
+**Why:** the three reasons the lecture gives are (1) finalisers
+are *not prompt*: GC is triggered by memory pressure, but file
+descriptors are a separate limited resource; (2) finalisers run
+in *unspecified order*, so cleanups with an ordering
+constraint can run wrong; (3) finalisers cannot fail
+meaningfully (a failing `close` cannot report to anyone). They
+are a safety net, not the discipline; the discipline is the
+combinator (`with_open_text`, `Fun.protect`).
+:::
+
 ## Activity
 
 The classroom exercise is to apply the `Fun.protect` shape to a

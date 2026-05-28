@@ -599,6 +599,65 @@ is [Module 5](M05-L01-basic-patterns.html).
 
 :::
 
+## A quick check
+
+:::quiz mcq id=M04-L05-q2
+Given this AST type, which value represents `(5 - 3) * 2`?
+
+```text
+type expr =
+  | Int of int
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+```
+
+- [ ] `Mul (Sub (5, 3), 2)`
+- [x] `Mul (Sub (Int 5, Int 3), Int 2)`
+- [ ] `Sub (Mul (Int 5, Int 3), Int 2)`
+- [ ] `Mul (Int 5, Sub (Int 3, Int 2))`
+
+**Why:** every leaf has to be wrapped in `Int`, because the
+payloads of `Sub` and `Mul` are `expr * expr`, not `int * int`.
+The outer operator is the *last* one applied; here that is the
+`*`, so the root is `Mul`. The left child is `Sub (Int 5, Int
+3)` (the parenthesised part), and the right child is `Int 2`.
+The third option puts the `Sub` at the root, which would
+represent `(5 * 3) - 2`.
+:::
+
+:::quiz mcq id=M04-L05-q3
+Why does the AST encode the source `let x = 5 in x + 3` as
+
+```text
+Let_in ("x", Int 5, Add (Var "x", Int 3))
+```
+
+rather than as
+
+```text
+Let_in (Var "x", Int 5, Add (Var "x", Int 3))
+```
+
+?
+
+- [ ] Both work; the choice is purely stylistic.
+- [x] `Let_in`'s first slot is the *bound name* (a `string`),
+      not a referenced variable. `Var "x"` would be type-wrong
+      because that slot expects `string`, not `expr`.
+- [ ] `Var` is only allowed inside `Add`, never inside
+      `Let_in`.
+- [ ] The first slot of `Let_in` is the *value*, not the name.
+
+**Why:** the `Let_in` constructor has payload `string * expr *
+expr`: the name being bound (a plain string from the source),
+the expression whose value is bound to it, and the body. The
+*body* may mention the name via `Var "x"` because there `x` is
+being *read*; in the first slot the name is being *introduced*,
+so it is just a string. Putting `Var "x"` in the first slot
+would be a type error.
+:::
+
 ## Activity: extending the type
 
 :::slide

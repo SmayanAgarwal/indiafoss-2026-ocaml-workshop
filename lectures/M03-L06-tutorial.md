@@ -408,6 +408,48 @@ Note that `count_digits 0` returns `1`, which matches the convention
 that the integer `0` has one digit (the digit `0`). If you wanted a
 different convention you would adjust the base case.
 
+## A quick check
+
+:::quiz mcq id=M03-L06-q2
+The toplevel reports the type of `gcd` from this lecture as:
+
+- [ ] `int -> int`
+- [x] `int -> int -> int`
+- [ ] `int -> int -> bool`
+- [ ] `int -> int * int -> int`
+
+**Why:** `gcd a b` takes two integers, uses `=` and `mod` and
+recurses on the same shape, and returns the first argument when
+the second is zero. So both parameters and the return are `int`.
+Written curried, the type is `int -> int -> int` (read as `int
+-> (int -> int)`).
+:::
+
+:::quiz mcq id=M03-L06-q3
+What does `fast_power 2 10` evaluate to?
+
+```ocaml
+let rec fast_power x n =
+  if n = 0 then 1
+  else if n mod 2 = 0 then
+    let half = fast_power x (n / 2) in
+    half * half
+  else x * fast_power x (n - 1)
+```
+
+- [ ] `20`
+- [ ] `100`
+- [x] `1024`
+- [ ] `2048`
+
+**Why:** `fast_power 2 10` computes `2^10`. The recursion
+halves the exponent on each even step: `2^10 = (2^5)^2`, `2^5
+= 2 * 2^4`, `2^4 = (2^2)^2`, `2^2 = (2^1)^2`, `2^1 = 2 * 2^0
+= 2`. Folding back up: `2^2 = 4`, `2^4 = 16`, `2^5 = 32`, `2^10
+= 32 * 32 = 1024`. About `2 * log2(10)` recursive calls, not
+ten.
+:::
+
 ## Activity: sum of digits
 
 :::slide

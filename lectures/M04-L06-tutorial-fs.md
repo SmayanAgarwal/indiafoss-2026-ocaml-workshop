@@ -501,6 +501,53 @@ Module 5: **pattern matching** to walk these trees (`du`, `find`,
 
 :::
 
+## A quick check
+
+:::quiz mcq id=M04-L06-q2
+The `entry` type's `Dir` variant has `contents : entry list`.
+Why does that one field make the type *recursive*?
+
+- [ ] Because `Dir` is a variant constructor.
+- [x] Because the field's type, `entry list`, refers back to
+      the type `entry` being defined; a directory can contain
+      other directories, which can contain more directories,
+      and so on.
+- [ ] Because `list` is itself a recursive type.
+- [ ] Because `File` and `Dir` are mutually recursive.
+
+**Why:** the recursive self-reference is `entry list`. That
+single occurrence of `entry` inside its own definition is what
+lets `Dir` hold sub-`Dir`s, which can hold further sub-`Dir`s.
+Without that reference the tree could only be one level deep:
+a directory of files. `File` and `Dir` are not "mutually
+recursive" in the OCaml sense; they are the two cases of one
+recursive type.
+:::
+
+:::quiz mcq id=M04-L06-q3
+Why use `owner : string option` instead of `owner : string`
+(using `""` to mean "no owner")?
+
+- [ ] `string option` saves memory.
+- [ ] The two are equivalent; the choice is purely stylistic.
+- [x] `string option` makes "no owner" *visible in the type*:
+      every reader has to handle the `None` case explicitly.
+      With `owner : string`, the empty string is a legal value
+      that the type system cannot distinguish from a real
+      owner name.
+- [ ] `string option` is required by OCaml whenever a field
+      may be missing.
+
+**Why:** this is the "make illegal states unrepresentable"
+slogan from M04-L04. With `owner : string`, the absence of an
+owner is encoded as a sentinel (the empty string), and the
+compiler cannot tell that sentinel apart from a genuine owner
+named `""`; you would rely on every reader remembering to
+check. With `owner : string option`, the two cases are
+separate constructors (`None` vs `Some _`), and the type
+system forces every consumer to handle both.
+:::
+
 ## Activity: a new kind of entry
 
 :::slide
