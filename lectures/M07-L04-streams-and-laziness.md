@@ -274,27 +274,59 @@ when you know matching elements occur regularly.
 
 :::slide
 
-## Higher-order: `map`, `filter`, `zip`
+## `map`: transform every element
 
 ```ocaml
+let rec from n = Cons (n, fun () -> from (n + 1))
+
 let rec map f s = Cons (f (hd s), fun () -> map f (tl s))
 
+let _ = take 5 (map (fun x -> x * x) (from 1))
+   (* = [1; 4; 9; 16; 25] *)
+```
+
+- One `Cons` cell built per forced step; the tail is a fresh
+  thunk that maps the next step.
+- Recursion is *demand-driven*: nothing happens until `take`
+  forces.
+
+:::
+
+:::slide
+
+## `filter`: keep elements satisfying a predicate
+
+```ocaml
 let rec filter p s =
   if p (hd s) then Cons (hd s, fun () -> filter p (tl s))
   else filter p (tl s)
 
+let _ = take 5 (filter (fun x -> x mod 3 = 0) (from 1))
+   (* = [3; 6; 9; 12; 15] *)
+```
+
+- If the head fails the predicate, `filter` keeps walking
+  *without* producing a cons.
+- Dangerous case: no element ever satisfies `p` -> `filter`
+  diverges, since the stream has no end to stop at.
+
+:::
+
+:::slide
+
+## `zip`: pair up two streams under a function
+
+```ocaml
 let rec zip f s1 s2 =
   Cons (f (hd s1) (hd s2), fun () -> zip f (tl s1) (tl s2))
 
-let rec from n = Cons (n, fun () -> from (n + 1))
-let _ = take 5 (map (fun x -> x * x) (from 1))    (* = [1; 4; 9; 16; 25] *)
-let _ = take 5 (filter (fun x -> x mod 3 = 0) (from 1))  (* = [3;6;9;12;15] *)
-let _ = take 5 (zip (+) (from 1) (from 100))      (* = [101;103;105;107;109] *)
+let _ = take 5 (zip (+) (from 1) (from 100))
+   (* = [101; 103; 105; 107; 109] *)
 ```
 
-- Same shape as list versions; the tail is wrapped in a thunk.
-- Recursion is *demand-driven*: one cons at a time.
-- `filter` on a stream with no matches diverges (no end to stop at).
+- Walks both streams in lockstep, combining each pair with `f`.
+- Same shape as list `zip` from M06; only the tail wrapping
+  changes.
 
 :::
 
@@ -344,8 +376,6 @@ of `p` removed)."
 ## Primes: sieve of Eratosthenes
 
 ```ocaml
-let rec from n = Cons (n, fun () -> from (n + 1))
-
 let rec sieve s =
   let p = hd s in
   Cons (p, fun () ->
