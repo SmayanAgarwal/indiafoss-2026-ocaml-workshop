@@ -49,10 +49,10 @@ and the compiler can inline and reorder freely.
 
 :::
 
-But mutation is, sometimes, the right tool. A statistics routine
-walks a stream of numbers and updates a running sum. A web server
-counts how many requests it has handled. A memoization table caches
-results across calls. None of these are *impossible* to express
+But mutation is, sometimes, the right tool. A web server counts
+how many requests it has handled across calls. A memoization
+table caches results across calls. A long-lived event loop keeps
+a connection pool that wakes up, shrinks, and grows. None of these are *impossible* to express
 without mutation, but threading the state through every call by
 hand makes the code longer and noisier than it needs to be. OCaml,
 unlike a purely-functional language such as [Haskell](https://www.haskell.org/),
@@ -67,9 +67,9 @@ when reaching for them is worth what you give up.
 
 ## When mutation is the right tool
 
-- A statistics routine: running sum across a stream.
-- A web server: request counter.
-- A memoization table: cache results across calls.
+- A web server: request counter across requests.
+- A memoization table: cached results across calls.
+- A long-lived event loop: connection pool that grows and shrinks.
 - Threading the state through every call by hand is noisier than it needs to be.
 - OCaml's stance (unlike Haskell): mutation **available**, not the default.
 - Simplest opt-in: the **mutable reference cell**, or `ref`.
@@ -250,7 +250,8 @@ defensible.
 
 - **Imperative-flavoured loops:** counters, accumulators.
 - **Caches:** memoization tables across calls.
-- **Recursive references:** rare but possible.
+- **Shared mutable structure:** graphs, doubly-linked lists,
+  AST backpatching during compilation.
 - **Mutation interop:** callbacks, GUI state.
 - Most everyday OCaml uses no `ref`s; reach only when the
   alternative is awkward.
@@ -270,14 +271,14 @@ is itself mutable; you reach for it directly without wrapping in a
 `ref`. A small inline cache, on the other hand, is often a `ref` of
 an [option](M04-L04-recursive-types.html#the-option-type) or a list.
 
-**Recursive references.** Building a cyclic structure (a graph
-with cycles, a doubly-linked list, a function that needs to refer
-to a not-yet-defined function) often uses a `ref` as the
-backpatch point. The technique is sometimes called *tying the
-knot*: create a placeholder ref, build the structure that uses
-the ref, then update the ref to point at the real value. We will
-not need this in the course, but it is part of what `ref` makes
-possible.
+**Shared mutable structure.** Building a structure where several
+pointers see the same updates: a graph with cycles, a
+doubly-linked list, an AST node whose forward reference is filled
+in *after* the surrounding tree is built (this last is called
+*backpatching* in compiler pipelines). Each of these needs a
+`ref` as the shared cell or as the backpatch point. We will not
+write one of these in this course, but they are part of what
+`ref` makes possible.
 
 **Interop.** Code that talks to GUI toolkits, network callbacks,
 or any C library expects to push state into the world rather than
@@ -498,18 +499,76 @@ functional setting, the question does not arise because there is
 nothing to share. With mutation, every API has to decide what its
 caller is allowed to do with the values it returns.
 
+:::slide
+
+## Aliasing: two names for one cell
+
+```ocaml
+let x = ref 42
+let y = x          (* alias: same cell *)
+let () = x := 99
+let _ = !x         (* = 99 *)
+let _ = !y         (* = 99, mutation visible through y *)
+```
+
+- `let y = x` shares the cell; both names point at the same
+  place in memory.
+- Mutating through one name is visible through the other.
+- For two *independent* cells with the same initial value,
+  allocate fresh: `let y = ref 42`.
+
+:::
+
 ## Structural and physical equality
 
 Aliasing immediately raises a question: given two refs, how do you
 ask whether they are *the same cell* versus *cells that happen to
-hold equal contents*? The `=` operator we have been using is
+hold equal contents*? OCaml has two operators for this. `=` is
 **structural** equality: it walks the two values comparing them
-piece by piece. The companion operator `==` is **physical**
-equality: it asks whether the two operands are the exact same
-heap-allocated object.
+piece by piece. `==` is **physical** equality: it asks whether the
+two operands are the exact same heap-allocated object.
 
-A worked example that exercises both axes (aliasing of refs *and*
-sharing of list contents) at once:
+The rule on refs is:
+
+- `r1 = r2` (structural) iff `!r1 = !r2`. Two refs are
+  structurally equal exactly when their contents are.
+- `r1 == r2` (physical) iff `r1` and `r2` name the same cell,
+  i.e., the two are aliases.
+
+So `ref 5 = ref 5` is *true* even though the two `ref 5`s are
+separate allocations, but `ref 5 == ref 5` is *false*.
+
+```ocaml
+let a = ref 5
+let b = ref 5      (* fresh allocation, same contents *)
+let c = a          (* alias: same cell *)
+let _ = a =  b     (* = true:  contents match *)
+let _ = a == b     (* = false: different cells *)
+let _ = a == c     (* = true:  same cell *)
+```
+
+:::slide
+
+## `=` walks into the cell; `==` checks identity
+
+```ocaml
+let a = ref 5
+let b = ref 5      (* fresh allocation *)
+let c = a          (* alias *)
+let _ = a =  b     (* = true  *)
+let _ = a == b     (* = false *)
+let _ = a == c     (* = true  *)
+```
+
+- `r1 = r2` (structural) iff `!r1 = !r2`.
+- `r1 == r2` (physical) iff they name the same cell.
+- Two `ref 5`s compare *structurally equal* but are *not*
+  aliases.
+
+:::
+
+A richer worked example that exercises both axes (aliasing of
+refs *and* sharing of list contents) at once:
 
 ```ocaml
 let l1 = [1; 2; 3]
@@ -809,6 +868,47 @@ every call; a `let` outside, captured by closure, runs once. With
 immutable bindings the distinction rarely matters; with `ref` it
 decides whether your state survives between calls.
 
+:::slide
+
+## Where you put `let ref` matters: a ticket dispenser
+
+```ocaml
+let dispense_broken () =
+  let n = ref 0 in        (* fresh cell every call *)
+  incr n;
+  !n
+
+let _ = dispense_broken ()
+let _ = dispense_broken ()
+let _ = dispense_broken ()
+```
+
+Expected `1; 2; 3`. Actual: `1; 1; 1`.
+
+:::
+
+:::slide
+
+## Hoist the `let ref` out: closure captures one cell
+
+```ocaml
+let dispense =
+  let n = ref 0 in        (* allocated once, at definition *)
+  fun () -> incr n; !n
+
+let _ = dispense ()
+let _ = dispense ()
+let _ = dispense ()       (* = 1, 2, 3 *)
+```
+
+- `let` *inside* the body runs on every call: fresh cell.
+- `let` *outside*, captured by closure: one cell, lives across
+  calls.
+- The distinction is invisible for immutable bindings, decisive
+  for `ref`.
+
+:::
+
 ## Activity
 
 :::slide
@@ -886,7 +986,7 @@ let _ = add 10   (* = 18 *)
 - The closure captures `total`; each call updates it and reads
   the new value.
 - Same shape as `dispense` earlier, but the closure now takes an
-  input and uses it.
+  input each call and folds it into the cell.
 
 :::
 

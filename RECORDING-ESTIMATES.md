@@ -209,21 +209,24 @@ grow during their own polish passes.
 
 ### M07: Side effects and modular programming (9 lectures)
 
-Re-estimated 2026-05-27 after the M07-L01 / M07-L02 side-effects
-audit against CS3100 lec12. M07-L01 added the `=` vs `==` slide
-with the CS3100 heap diagram, kept the value-restriction trio,
-and moved the "ref is a record with one mutable field" reveal
-(chapter section + 2 slides) out into M07-L02 where mutable
-record fields are properly introduced. M07-L02 picked that up,
-plus the doubly-linked list worked example and a
-default-to-immutable closing slide. Previous re-estimate on
-2026-05-25 included the M07-L04 streams-and-laziness and M07-L05
-memoization lectures added on 2026-05-23. Estimate uses
+Re-estimated 2026-05-28 after KC review of M07-L01 added two
+aliasing/equality slides (one for `let y = x` aliasing and one
+stating `=`/`==` on refs *before* the CS3100 list-and-ref slide)
+and two more for the ticket-dispenser example (broken vs hoisted
+`let ref`). Previously, on 2026-05-27, the L01/L02 audit against
+CS3100 lec12 had added the CS3100 heap diagram, kept the
+value-restriction trio, and moved the "ref is a record with one
+mutable field" reveal (chapter section + 2 slides) out into
+M07-L02 where mutable record fields are properly introduced.
+M07-L02 picked that up, plus the doubly-linked list worked
+example and a default-to-immutable closing slide. Earlier
+re-estimate on 2026-05-25 included the M07-L04 streams and
+M07-L05 memoization lectures added on 2026-05-23. Estimate uses
 slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|
-| M07-L01 | Mutable references | 18 | 27 | 38 |
+| M07-L01 | Mutable references | 22 | 33 | 46 |
 | M07-L02 | Mutable records and arrays | 20 | 30 | 42 |
 | M07-L03 | Exceptions | 12 | 18 | 25 |
 | M07-L04 | Streams and laziness | 13 | 20 | 28 |
@@ -232,14 +235,17 @@ slide_count x 1.5 min.
 | M07-L07 | Module signatures | 16 | 24 | 34 |
 | M07-L08 | Functors | 13 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 23 | 32 |
-| **M07 total** | | **134** | **203** | **284** |
-| | | | **(3.4 h)** | **(4.7 h)** |
+| **M07 total** | | **138** | **209** | **292** |
+| | | | **(3.5 h)** | **(4.9 h)** |
 
-M07-L02 (20 slides / 30 min) now sits right at the NPTEL 30-min
-ceiling after picking up the ref-as-record reveal; natural cut
-if delivery runs long is the default-to-immutable closing slide.
-M07-L01 (18 slides / 27 min) is just under the ceiling. M07-L03
-and M07-L05 (12 slides / 18 min) sit below the NPTEL 20-min floor.
+M07-L01 (22 slides / 33 min) now sits just above the NPTEL 30-min
+ceiling; natural cut if delivery runs long is the two-slide
+ticket-dispenser broken/hoisted pair (one slide could carry both
+in less detail), or one of the value-restriction trio (the
+eta-expansion slide is most-skippable). M07-L02 (20 slides /
+30 min) sits at the ceiling after picking up the ref-as-record
+reveal. M07-L03 and M07-L05 (12 slides / 18 min) sit below the
+NPTEL 20-min floor.
 M07-L04 and M07-L08 (13 slides / 20 min) sit right at the floor.
 
 ### M08: Monads and GADTs (10 lectures)
