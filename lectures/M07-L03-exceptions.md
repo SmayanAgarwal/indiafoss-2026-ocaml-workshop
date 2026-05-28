@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 22
 concepts: [raise, try-with, exception declarations, when to throw vs return option]
 keywords: [OCaml, exception, raise, try, with, Failure, Not_found]
-activity_question: "Write [find_first : ('a -> bool) -> 'a list -> 'a] that returns the first element matching the predicate, raising [Not_found] if none does. Then write a wrapper [find_first_opt] returning [None] instead."
+activity_question: "Write [find_first : ('a -> bool) -> 'a list -> 'a] that returns the first element matching the predicate, raising [Not_found] if none does. Then write [find_first_opt] *using* [find_first] as a wrapper, returning [None] instead of raising."
 think_about_this: "Exceptions are not tracked in OCaml's type system. A function with type [int -> int] might raise anyway. What does this cost the reader? When is [result] / [option] a better fit?"
 reading:
   - title: "Cornell CS3110, Exceptions"
@@ -878,13 +878,15 @@ does not match (different exception); the body never finishes.
 
 Write `find_first : ('a -> bool) -> 'a list -> 'a` that returns
 the first element matching the predicate, raising `Not_found` if
-none does. Then write `find_first_opt` returning `None` instead.
+none does. Then write `find_first_opt` *using* `find_first` as a
+wrapper, returning `None` instead of raising.
 
 :::
 
 :::quiz code id=M07-L03-q1
-Write `find_first` raising `Not_found`, then wrap it to give
-`find_first_opt`.
+Write `find_first` raising `Not_found`, then write
+`find_first_opt` as a wrapper that *calls* `find_first` and
+catches `Not_found`.
 
 ```ocaml
 let rec find_first p xs =
