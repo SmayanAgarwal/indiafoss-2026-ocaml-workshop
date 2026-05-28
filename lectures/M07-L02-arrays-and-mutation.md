@@ -583,7 +583,7 @@ use the loop syntax we are about to see.
 
 :::slide
 
-## Iterating arrays
+## Iterating arrays: `Array.iter`
 
 ```ocaml
 let a = [|10; 20; 30|]
@@ -594,20 +594,24 @@ let () = Array.iter (fun x -> print_endline (string_of_int x)) a
 Prints 10, 20, 30 on separate lines.
 
 - `Array.iter` is the **side-effecting walk**.
-- The function returns unit.
+- The callback returns `unit`; the whole call returns `unit`.
 
-For a pure transformation:
+:::
+
+:::slide
+
+## Pure transformation: `Array.map`
 
 ```ocaml
+let a = [|10; 20; 30|]
 let b = Array.map (fun x -> x * 2) a
-let _ = b
+let _ = b   (* = [|20; 40; 60|] *)
+let _ = a   (* = [|10; 20; 30|]: untouched *)
 ```
-
-`int array = [|20; 40; 60|]`.
 
 - `Array.map` returns a *new* array; the input is untouched.
 - Other useful functions: `Array.fold_left`, `Array.length`,
-  `Array.to_list`, etc.
+  `Array.to_list`, ...
 
 :::
 
@@ -894,6 +898,68 @@ the structure to be modified.
 If you want an immutable reverse instead, the right path is
 usually `Array.of_list (List.rev (Array.to_list a))`, or simpler,
 keep the data as a list in the first place.
+
+## When the count isn't known: `while`
+
+`for` is the right loop when you know the count of iterations in
+advance, as in `reverse_in_place` above. `while` is the loop you
+reach for when the iteration stops on a *runtime condition*: the
+index where a search succeeds, the iteration where a fixpoint is
+reached, the point in an input stream where the structure
+changes. A small worked example, linear search:
+
+```ocaml
+let find_index p a =
+  let n = Array.length a in
+  let i = ref 0 in
+  while !i < n && not (p a.(!i)) do
+    incr i
+  done;
+  if !i < n then Some !i else None
+
+let _ = find_index (fun x -> x < 0) [|1; 3; -5; 7|]
+let _ = find_index (fun x -> x < 0) [|1; 3;  5; 7|]
+```
+
+The first call returns `Some 2` (the index of `-5`); the second
+returns `None`. Two things to notice. First, the loop variable
+`i` is a `ref`, because the body needs to mutate it. (OCaml's
+`for` gives you a fresh immutable binding each iteration; `while`
+is where refs and loops fit together.) Second, the loop condition
+uses `&&` for short-circuit: when `!i = n`, the second clause
+`not (p a.(!i))` is *not evaluated*, so we never index past the
+end of the array. Stop conditions like that are exactly what
+`while` is for.
+
+The same shape works for any "until found / until stable / until
+out of input" pattern: a few refs for the state the loop is
+threading, a `while` whose condition is the negation of the
+termination criterion, and a final read of the refs to extract
+the result.
+
+:::slide
+
+## `while`: when you stop on a condition, not a count
+
+```ocaml
+let find_index p a =
+  let n = Array.length a in
+  let i = ref 0 in
+  while !i < n && not (p a.(!i)) do
+    incr i
+  done;
+  if !i < n then Some !i else None
+
+let _ = find_index (fun x -> x < 0) [|1; 3; -5; 7|]
+   (* = Some 2 *)
+```
+
+- Loop variable is a **`ref`**: the body increments it.
+- Condition uses `&&` short-circuit so we never index past the
+  end.
+- `for` when the count is known; `while` when it is not.
+
+:::
 
 ## Closing: default to immutable
 
