@@ -608,17 +608,41 @@ exactly as a variant pattern would.
 
 ### Extensible variants: a brief aside
 
-Under the hood, all exception constructors share a single
-type, `exn`. Every `exception` declaration adds a new
-constructor to *that* type. This is unusual: most
-[OCaml variants](M04-L03-variants.html) are *closed* (the set
-of constructors is fixed at the declaration). `exn` is one of
-the few *extensible* variants in the language, because
-libraries throughout a program need to add their own exception
-constructors. We will not need the deeper machinery of
-extensible variants; the practical takeaway is that you can
-declare new exception types anywhere and they all flow through
-the same `raise` / `try ... with` plumbing.
+Under the hood, all exception constructors share a single type,
+`exn`. Every `exception` declaration adds a new constructor to
+*that* type. This is unusual: most
+[OCaml variants](M04-L03-variants.html) are *closed* (the set of
+constructors is fixed at the declaration). `exn` is one of the
+few *extensible* variants in the language, because libraries
+throughout a program need to add their own exception
+constructors.
+
+The desugaring is visible if you ask for it. `exception NAME of
+...` is exactly `type exn += NAME of ...`:
+
+```ocaml
+(* the sugar we have been using *)
+exception My_error of string
+
+(* the desugared form: extend an existing extensible variant *)
+type exn += My_other_error of string
+
+(* both flow through raise / try ... with identically *)
+let _ =
+  try raise (My_error "via the sugar")
+  with My_error s -> s
+
+let _ =
+  try raise (My_other_error "via type exn +=")
+  with My_other_error s -> s
+```
+
+Both calls return their string. The `+=` form makes the
+extension explicit; the `exception` keyword is the
+exception-flavoured shorthand. We will not need to write `type
+exn +=` ourselves in this course, but seeing it once explains
+the bullet "exceptions are extensible variants" in concrete
+terms.
 
 :::slide
 
@@ -650,12 +674,21 @@ let _ =
 
 ## Aside: exceptions are extensible variants
 
+```ocaml
+(* sugar *)
+exception My_error of string
+
+(* desugared: extend the open exn type *)
+type exn += My_other_error of string
+
+let _ = try raise (My_error "a")       with My_error s -> s
+let _ = try raise (My_other_error "b") with My_other_error s -> s
+```
+
 - All exception constructors share one type: `exn`.
-- Every `exception NAME of ...` declaration *adds* a constructor
-  to `exn`. Unusual: most OCaml variants are *closed*.
-- That is what lets libraries throughout a program declare new
-  exceptions and have them all flow through the same `try ...
-  with`.
+- `exception NAME` is shorthand for `type exn += NAME`.
+- Unusual: most OCaml variants are *closed*; `exn` is the
+  textbook *open* (extensible) variant.
 
 :::
 
