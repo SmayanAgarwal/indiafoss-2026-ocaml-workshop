@@ -146,10 +146,13 @@ function value, displayed as `<fun>`; it has not been called yet.
 
 :::slide
 
-## Streams: type definition
+## Streams: type definition + accessors
 
 ```ocaml
 type 'a stream = Cons of 'a * (unit -> 'a stream)
+
+let hd (Cons (x, _)) = x
+let tl (Cons (_, xs)) = xs ()
 
 let rec zero_ones =
   Cons (0, fun () -> Cons (1, fun () -> zero_ones))
@@ -157,8 +160,8 @@ let rec zero_ones =
 
 - Head: an `'a` value.
 - Tail: a **thunk** `unit -> 'a stream`. Not evaluated yet.
+- `hd` returns the head; `tl` *forces* the thunk.
 - No `Nil`: streams are infinite.
-- Forcing the thunk produces the next node.
 
 :::
 
