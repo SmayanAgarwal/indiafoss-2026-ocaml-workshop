@@ -366,6 +366,13 @@ never leave your machine) and the output appears below the cell.
 The first run takes a few seconds while the OCaml runtime loads
 into your browser; subsequent runs are fast.
 
+The toplevel embedded in these pages is **OCaml 5.4.0**, the
+current stable release at the time of writing. If you decide to
+install OCaml locally and follow along on the command line, use
+[`opam`](https://opam.ocaml.org) (the OCaml package manager) to
+create a `5.4.0` switch; everything in the lectures is checked
+against that version.
+
 You can edit the code. Try changing `"NPTEL"` to your own name and
 clicking Run again. If you make a syntax mistake, you will see the
 compiler error inline; fix it and run again.
@@ -378,6 +385,7 @@ compiler error inline; fix it and run again.
 - Click **Run**; output appears inline.
 - Edit any cell, Run again.
 - Nothing to install.
+- Toplevel is **OCaml 5.4.0**; matches a local `opam` 5.4.0 switch.
 
 ```ocaml
 let greeting who = "hello, " ^ who
