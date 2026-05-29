@@ -516,7 +516,7 @@ let _ = time_it (fun () -> fib_memo 35)
 - First `fib_memo 30`: O(n), each subproblem computed once.
 - Repeat `fib_memo 30`: instant (already cached).
 - `fib_memo 35`: only the new nodes; rest reused from `30`.
-- Naive: exponential. Memoized: linear after the first call.
+- **Naive**: exponential. **Memoized**: linear after the first call.
 
 :::
 
@@ -541,6 +541,30 @@ $$
 where `s'` and `t'` are `s` and `t` with their last characters
 dropped, and `c` is `0` if the last characters of `s` and `t`
 agree (no substitution) or `1` otherwise.
+
+:::slide
+
+## Edit distance: the problem
+
+The **edit distance** (Levenshtein distance) between two strings
+is the fewest single-character **inserts, deletes, or
+substitutions** that turn one into the other.
+
+The recurrence, dropping the last character of each string
+(`s'`, `t'`):
+
+- `d(s, "") = |s|`, `d("", t) = |t|` (one string empty: delete
+  or insert the rest).
+- otherwise the best of three:
+  - `d(s', t) + 1` (delete `s`'s last char),
+  - `d(s, t') + 1` (insert `t`'s last char),
+  - `d(s', t') + c` (`c = 0` if the last chars match, else `1`).
+
+`d("kitten", "sitting") = 3`. The **three-way** branch is what
+makes the naive recursion exponential, and what memoization
+collapses.
+
+:::
 
 A direct translation:
 
