@@ -596,7 +596,7 @@ end
 
 :::slide
 
-## Activity solution
+## Activity solution: the module
 
 ```ocaml
 module Stack = struct
@@ -611,7 +611,18 @@ module Stack = struct
     | [] -> None
     | x :: _ -> Some x
 end
+```
 
+- Private state `s`, a `ref` of a list, lives inside the module.
+- `push` / `pop` / `peek` all mutate or read the same cell.
+
+:::
+
+:::slide
+
+## Activity solution: using it
+
+```ocaml
 let () = Stack.push 1
 let () = Stack.push 2
 let () = Stack.push 3
@@ -620,8 +631,10 @@ let _ = Stack.pop ()     (* = Some 3 *)
 let _ = Stack.pop ()     (* = Some 2 *)
 ```
 
+- Push 1, 2, 3; `peek` reads the top (`Some 3`) without removing.
+- `pop` returns and removes: `Some 3`, then `Some 2`.
+
 :::
-<!-- KC: split the slide -->
 
 :::
 
