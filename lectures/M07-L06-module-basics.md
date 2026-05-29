@@ -68,7 +68,7 @@ parameterized by other modules.
   exceptions, sub-modules) referred to as a unit.
 - The standard library is a tree of modules (`List`, `String`,
   `Array`, `Option`, `Map`, ...).
-- This lecture: the syntax. Signatures, functors, and the
+- **This lecture**: the syntax. Signatures, functors, and the
   tutorial come next.
 
 :::
@@ -298,11 +298,9 @@ limiting the scope.
   syntax) lets you use module-specific forms briefly:
 
 ```ocaml
-let _ = List.[1; 2; 3]
-let _ = String.length "x" + String.length "yy"
+let _ = List.[1; 2; 3]                            (* = [1; 2; 3] *)
+let _ = String.length "x" + String.length "yy"    (* = 3 *)
 ```
-
-`[1; 2; 3]`, `3`.
 
 - The first is unnecessary here (lists are top-level) but shows
   the syntax.
@@ -395,11 +393,16 @@ module Geometry = struct
 end
 
 let p = Geometry.Point.make 3.0 4.0
-let _ = p.Geometry.Point.x
+let _ = p.x
 ```
 
-`float = 3.0`. The dot notation extends to any depth:
-`Geometry.Point.t`, `Geometry.Point.make`, and so on.
+`float = 3.0`. The dot notation extends to any depth for
+*module* paths: `Geometry.Point.t`, `Geometry.Point.make`, and so
+on. The field access on the last line is just `p.x`, not
+`p.Geometry.Point.x`: OCaml already knows `p : Geometry.Point.t`,
+so it resolves the label `x` from that type (type-directed
+disambiguation). You need the path to *reach* the module's
+values, not to read a field off a value whose type is known.
 
 :::slide
 
@@ -418,30 +421,46 @@ module Geometry = struct
 end
 
 let p = Geometry.Point.make 3.0 4.0
-let _ = p.Geometry.Point.x
+let _ = p.x
 ```
 
 `float = 3.0`. Sub-modules organize a tree of related concepts;
-access goes through the full path.
+module access goes through the full path, but the field read is
+just `p.x` (the type of `p` fixes which record `x` belongs to).
 
 :::
 
 :::slide
 
-## In real projects, the file system gives you the tree
+## In real projects, each file is a module
 
-- Each `.ml` file is one module.
-- A `geometry/` directory with `point.ml` and `vector.ml` inside is
-  the project-scale form of the nesting above.
-- Inline nesting is mostly for small single-file demos.
+- Each `.ml` file is *one* module: `point.ml` defines a module
+  `Point` (the filename, capitalised).
+- These are **top-level** modules. A `geometry/` directory does
+  *not*, on its own, give you `Geometry.Point`: the core language
+  has no notion of directories.
+- Nesting like `Geometry.Point` comes from either explicit
+  `module Point = struct ... end` (as above) or a build system
+  wrapping a library under a namespace.
 
 :::
 
-In a real project, you would have a `geometry/` directory with a
-`point.ml` and a `vector.ml` inside it. The file system gives you
-the tree for free, and the modules in the source code look
-flatter as a result. Inline nesting is mostly for small
-single-file demos like the one above.
+In a real project, each `.ml` file is automatically a module
+named after the file: `point.ml` defines `Point`, `vector.ml`
+defines `Vector`. These are *top-level* modules, so you write
+`Point.t` and `Vector.t`, not `Geometry.Point.t`. The core OCaml
+module system knows nothing about directories: putting the files
+in a `geometry/` directory does *not* by itself create a
+`Geometry` module wrapping them.
+
+Getting a `Geometry.Point` namespace at project scale is the job
+of the build system. Dune, for instance, can *wrap* a library so
+its files become submodules of a single module named after the
+library (a library `geometry` exposes `Geometry.Point`,
+`Geometry.Vector`). That is a build-time convenience layered on
+top of the language, not part of the module system itself. The
+inline `module Point = struct ... end` nesting above is how you
+build the tree *within* a single file.
 
 ## Modules are not first-class
 
@@ -596,14 +615,13 @@ end
 let () = Stack.push 1
 let () = Stack.push 2
 let () = Stack.push 3
-let _ = Stack.peek ()
-let _ = Stack.pop ()
-let _ = Stack.pop ()
+let _ = Stack.peek ()    (* = Some 3 *)
+let _ = Stack.pop ()     (* = Some 3 *)
+let _ = Stack.pop ()     (* = Some 2 *)
 ```
 
-`Some 3`, `Some 3`, `Some 2`.
-
 :::
+<!-- KC: split the slide -->
 
 :::
 
