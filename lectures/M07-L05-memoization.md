@@ -55,8 +55,9 @@ lecture and the previous one together: memoization only works for
 - Lift it from streams to a general technique:
   - A `memo` combinator that wraps any function with a cache.
   - A `memo_rec` variant that handles *recursive* functions.
-- Worked examples: naive O(2^n) Fibonacci becomes linear;
-  naive edit distance becomes polynomial.
+- Worked examples
+  - naive O(2^n) Fibonacci becomes linear.
+  - naive edit distance becomes polynomial.
 - The catch: memoization only works for *pure* functions.
 
 :::
@@ -216,6 +217,66 @@ let _ = time_it (fun () -> memo_id 10)   (* fast: still cached *)
 - Repeat call with same key: cache hit, returns instantly.
 - New key (`20`): another miss.
 - Cache persists across calls (it lives in the closure).
+
+:::
+
+## Where plain `memo` actually pays off
+
+Is plain `memo` (without the recursive machinery we build next)
+useful on its own? Yes. Memoizing a *one-off* call is pointless:
+you pay the work once either way. But `memo` earns its keep
+whenever an *expensive pure function is called repeatedly with
+arguments that repeat*: the same lookup inside a loop, the same
+sub-expression evaluated many times, the same key queried over
+and over. The cache turns "once per call" into "once per
+*distinct* argument."
+
+Suppose we answer a batch of queries, and the batch has
+duplicates. We compare mapping the raw `slow_id` against mapping
+a *freshly memoized* copy (`memo slow_id`, evaluated once by
+`List.map` so the whole batch shares one cache):
+
+```ocaml
+let queries = [10; 20; 10; 20; 10; 20; 10; 20]
+
+(* without memo: 8 slow runs *)
+let _ = time_it (fun () -> List.map slow_id queries)
+
+(* with a fresh memo: 2 slow runs (for 10 and 20), 6 cache hits *)
+let _ = time_it (fun () -> List.map (memo slow_id) queries)
+```
+
+The plain version runs the slow body once per list element,
+eight times. The memoized version runs it only for the two
+*distinct* keys; the other six lookups are free. The speedup is
+the ratio of total calls to distinct arguments, which grows as
+the duplication grows. That is the everyday reason to reach for
+`memo`.
+
+(We write `memo slow_id` *inside* the `List.map` so each run
+gets its own fresh cache; reusing the earlier `memo_id`, whose
+cache already holds `10` and `20`, would make the comparison
+read as zero slow runs.)
+
+:::slide
+
+## Where plain `memo` pays off: repeated arguments
+
+```ocaml
+let queries = [10; 20; 10; 20; 10; 20; 10; 20]
+
+let _ = time_it (fun () -> List.map slow_id queries)
+   (* 8 slow runs *)
+let _ = time_it (fun () -> List.map (memo slow_id) queries)
+   (* 2 slow runs + 6 cache hits *)
+```
+
+- Memoizing a *one-off* call is pointless; you pay once either way.
+- The win: an expensive pure function called **repeatedly** with
+  **repeating** arguments.
+- `memo` turns "once per call" into "once per *distinct*
+  argument".
+- Speedup ratio = total calls / distinct arguments.
 
 :::
 

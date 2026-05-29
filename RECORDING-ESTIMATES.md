@@ -242,13 +242,13 @@ M07-L04 streams and M07-L05 memoization lectures added on
 | M07-L02 | Mutable records and arrays | 22 | 2 | 1 | 33 | 46 |
 | M07-L03 | Exceptions | 18 | 2 | 1 | 27 | 38 |
 | M07-L04 | Streams and laziness | 19 | 2 | 1 | 29 | 40 |
-| M07-L05 | Memoization | 14 | 2 | 1 | 21 | 29 |
+| M07-L05 | Memoization | 15 | 2 | 1 | 23 | 32 |
 | M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
 | M07-L07 | Module signatures | 16 | 2 | 1 | 24 | 34 |
 | M07-L08 | Functors | 13 | 2 | 1 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
-| **M07 total** | | **154** | **19** | **9** | **233** | **325** |
-| | | | | | **(3.9 h)** | **(5.4 h)** |
+| **M07 total** | | **155** | **19** | **9** | **234** | **328** |
+| | | | | | **(3.9 h)** | **(5.5 h)** |
 
 M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
 the NPTEL 30-min ceiling. Natural cuts if delivery runs long:
@@ -278,11 +278,16 @@ by the lazy-stream fix (linear), mirroring CS3100 lec14; and a
 `time_it` timing slide was added that races thunk `fibs` against
 lazy `lfibs` (the two race cells are `ocaml skip` so they run
 on a Run click, not on page load or in `dune runtest`).
-M07-L05 grew to 14 slides on 2026-05-29 (from 12): `time_it`
+M07-L05 grew to 15 slides on 2026-05-29 (from 12): `time_it`
 switched to `Unix.gettimeofday` reporting ms; the slow-function
 demo uses `fib 37` (a clearly slow ~100 ms jsoo run) instead of a
-busy-loop; and the slow-function and first-attempt-fails slides
-were each split in two (setup vs demo / attempt vs why).
+busy-loop; the slow-function and first-attempt-fails slides were
+each split in two (setup vs demo / attempt vs why); and a
+"where plain `memo` pays off" slide was added showing
+`List.map (memo slow_id)` over a duplicate-heavy query list
+(browser-verified ~880 ms unmemoized vs ~220 ms memoized, a true
+8-slow vs 2-slow contrast since the inline `memo slow_id` gets a
+fresh cache).
 
 ### M08: Monads and GADTs (10 lectures)
 
