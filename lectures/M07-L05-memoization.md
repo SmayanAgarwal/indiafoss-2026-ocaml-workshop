@@ -550,19 +550,20 @@ The **edit distance** (Levenshtein distance) between two strings
 is the fewest single-character **inserts, deletes, or
 substitutions** that turn one into the other.
 
-The recurrence, dropping the last character of each string
-(`s'`, `t'`):
+$$
+d(s, t) =
+\begin{cases}
+|t| & |s| = 0 \\
+|s| & |t| = 0 \\
+\min \{ d(s', t)+1,\ d(s, t')+1,\ d(s', t') + c \} & \text{otherwise}
+\end{cases}
+$$
 
-- `d(s, "") = |s|`, `d("", t) = |t|` (one string empty: delete
-  or insert the rest).
-- otherwise the best of three:
-  - `d(s', t) + 1` (delete `s`'s last char),
-  - `d(s, t') + 1` (insert `t`'s last char),
-  - `d(s', t') + c` (`c = 0` if the last chars match, else `1`).
-
-`d("kitten", "sitting") = 3`. The **three-way** branch is what
-makes the naive recursion exponential, and what memoization
-collapses.
+- `s'`, `t'`: `s`, `t` with the last character dropped.
+- `c = 0` if the last chars match, else `1`.
+- `d("kitten", "sitting") = 3`. The **three-way** branch is what
+  makes the naive recursion exponential, and what memoization
+  collapses.
 
 :::
 
