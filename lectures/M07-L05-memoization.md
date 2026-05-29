@@ -415,7 +415,8 @@ call to `f` first checks the cache. We build it in three steps:
 
 ```ocaml
 let memo_rec f_open =
-  let self_ref = ref (fun _ -> assert false) in
+  let dummy _ = assert false in        (* never actually called *)
+  let self_ref = ref dummy in
   let f_memo = memo (fun x -> f_open !self_ref x) in
   self_ref := f_memo;
   f_memo
@@ -425,8 +426,9 @@ let memo_rec f_open =
 
 Reading it carefully:
 
-- `self_ref` starts pointing at a placeholder that will crash if
-  called. By the time anything calls it, we will have updated it.
+- `dummy` is a placeholder that crashes if called; `self_ref`
+  starts pointing at it. By the time anything actually calls
+  through the ref, we will have replaced it (step 3).
 - `f_memo` is `memo` applied to a function that takes `x`, looks
   up the current value of `self_ref`, and calls `f_open` with
   that as the recursive function. The `!self_ref` dereference
@@ -447,13 +449,14 @@ through it).
 
 ```ocaml
 let memo_rec f_open =
-  let self_ref = ref (fun _ -> assert false) in
+  let dummy _ = assert false in        (* never actually called *)
+  let self_ref = ref dummy in
   let f_memo = memo (fun x -> f_open !self_ref x) in
   self_ref := f_memo;
   f_memo
 ```
 
-- Step 1: ref holds a placeholder.
+- Step 1: ref holds `dummy`, a placeholder.
 - Step 2: build `f_memo` so each call reads ref, then calls
   `f_open` with it as the recursive function.
 - Step 3: write `f_memo` into the ref. The knot is tied.
@@ -742,7 +745,8 @@ let memo f =
     | None -> let y = f x in Hashtbl.add cache x y; y
 
 let memo_rec f_open =
-  let self_ref = ref (fun _ -> assert false) in
+  let dummy _ = assert false in
+  let self_ref = ref dummy in
   let f_memo = memo (fun x -> f_open !self_ref x) in
   self_ref := f_memo;
   f_memo
