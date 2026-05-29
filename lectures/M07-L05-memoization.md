@@ -339,9 +339,11 @@ let _ = time_it (fun () -> memo_fib_outer 34)   (* slow again! *)
 ## Why the obvious attempt fails
 
 ```ocaml
-let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
-(*                                   ^^^        ^^^            *)
-(*           these call the ORIGINAL fib, not memo_fib_outer  *)
+let rec fib n =
+  if n < 2 then 1
+  else fib (n - 1) + fib (n - 2)
+(* the two recursive calls above name the ORIGINAL fib, *)
+(* not memo_fib_outer                                   *)
 ```
 
 - `memo` only caches the *outer* call.
