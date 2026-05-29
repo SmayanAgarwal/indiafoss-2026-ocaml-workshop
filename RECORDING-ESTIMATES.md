@@ -249,7 +249,7 @@ M07-L04 streams and M07-L05 memoization lectures added on
 | M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
 | **M07 total** | | **158** | **19** | **9** | **240** | **334** |
 | | | | | | **(3.9 h)** | **(5.5 h)** |
-| M07-L10 | Practice: mutability, modules, and streams (not recorded) | 0 | 0 | 8 | 0 | 0 |
+| M07-L10 | Practice: mutability, modules, and streams (not recorded) | 0 | 0 | 19 | 0 | 0 |
 
 M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
 the NPTEL 30-min ceiling. Natural cuts if delivery runs long:
@@ -289,13 +289,14 @@ each split in two (setup vs demo / attempt vs why); and a
 (browser-verified ~880 ms unmemoized vs ~220 ms memoized, a true
 8-slow vs 2-slow contrast since the inline `memo slow_id` gets a
 fresh cache). M07-L10 (added 2026-05-29) is a Practice chapter:
-a slide-free, video-free in-browser worksheet of eight problems
-across the three module threads (mutability, modules/functors,
-streams), with collapsible reference solutions, so it adds
-nothing to the recording total. Part 2 (modules/functors:
-`Showable`, the `MakeNode` doubly-linked-list-node functor, a
-functional heap) is drawn from CS3100's mutability-and-modules
-and monads assignments; Parts 1 and 3 are original.
+a slide-free, video-free in-browser worksheet of nineteen
+problems across the three module threads (7 mutability,
+6 modules/functors, 6 streams), with collapsible reference
+solutions, so it adds nothing to the recording total. Part 2
+(modules/functors: `Showable`, the `MakeNode` / `MakeList`
+doubly-linked list, `MakeSet`/`MakeDict`, a functional heap) is
+drawn from CS3100's mutability-and-modules and monads assignments
+plus the `Set.Make`/`Map.Make` shape; Parts 1 and 3 are original.
 
 ### M08: Monads and GADTs (10 lectures)
 
