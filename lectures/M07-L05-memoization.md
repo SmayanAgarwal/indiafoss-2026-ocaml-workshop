@@ -559,7 +559,7 @@ d(s, t) =
 \end{cases}
 $$
 
-- `s'`, `t'`: `s`, `t` with the last character dropped.
+- `s'` and `t'` are `s` and `t` with the last character dropped.
 - `c = 0` if the last chars match, else `1`.
 - `d("kitten", "sitting") = 3`. The **three-way** branch is what
   makes the naive recursion exponential, and what memoization
@@ -639,6 +639,23 @@ let edit_dist_memo = memo_rec edit_dist_open
 - `memo_rec` makes each `(s, t)` pair compute at most once.
 - Naive: exponential in `|s| + |t|`. Memoized: O(|s| * |t|).
 - This is dynamic programming, top-down.
+
+:::
+
+:::slide
+
+## Edit distance: timing the payoff
+
+```ocaml
+let _ = time_it (fun () -> edit_dist_memo ("kitten", "sitting"))
+let _ = time_it (fun () -> edit_dist_memo ("kitten 4.08", "sitting 4.08"))
+```
+
+- Both return in a few ms (each `(s', t')` pair computed once).
+- The *naive* `edit_dist` on the longer pair would run
+  effectively forever: three-way branching, no cache.
+- Memoized = the DP table, filled top-down on demand.
+- Click **Run** to see both finish instantly.
 
 :::
 

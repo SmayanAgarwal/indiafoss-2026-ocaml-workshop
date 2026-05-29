@@ -242,12 +242,12 @@ M07-L04 streams and M07-L05 memoization lectures added on
 | M07-L02 | Mutable records and arrays | 22 | 2 | 1 | 33 | 46 |
 | M07-L03 | Exceptions | 18 | 2 | 1 | 27 | 38 |
 | M07-L04 | Streams and laziness | 19 | 2 | 1 | 29 | 40 |
-| M07-L05 | Memoization | 17 | 2 | 1 | 26 | 36 |
+| M07-L05 | Memoization | 18 | 2 | 1 | 27 | 38 |
 | M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
 | M07-L07 | Module signatures | 16 | 2 | 1 | 24 | 34 |
 | M07-L08 | Functors | 13 | 2 | 1 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
-| **M07 total** | | **157** | **19** | **9** | **238** | **332** |
+| **M07 total** | | **158** | **19** | **9** | **240** | **334** |
 | | | | | | **(3.9 h)** | **(5.5 h)** |
 
 M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
