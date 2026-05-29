@@ -177,7 +177,7 @@ rewrite holds at 21 min. The thin-lecture imbalance shifted
 from L01-vs-others to the guards/exhaustiveness pair, which
 will likely be addressed in their polish pass.
 
-### M06: Higher-order programming (6 lectures)
+### M06: Higher-order programming (6 lectures + 1 practice)
 
 Re-estimated 2026-05-26 after the M06 polish pass that addressed
 KC's author comments and the audit's must-fix items: M06-L01
@@ -188,6 +188,15 @@ the sum/all_true slide, added `fold_right` definition +
 step-by-step + cons-cell slides, added side-by-side tree
 visualisations for `fold_right` and `fold_left` lifted from
 CS3100. Inline-result-comment sweep applied across M06 lectures.
+2026-05-29: added M06-L07 Practice. Part 1 (Problems 1 to 9)
+adapted from CS3100 Assignment 1; Part 2 (Problems 10 to 15) is
+original higher-order practice (partition, flat_map, compose_all,
+run_length_encode, running_sum, sum_sq_evens) following on from
+the M06 pipelines lecture and fold tutorial; Part 3 (Problems 16
+to 17) is original AST-optimisation practice (constant_fold,
+simplify) over the arithmetic AST from the M04/M05 tutorials.
+Practice chapters carry no slides and are not recorded; they are
+in-browser worksheets only and do not count toward recording time.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
@@ -199,13 +208,17 @@ CS3100. Inline-result-comment sweep applied across M06 lectures.
 | M06-L06 | Tutorial: fold across data structures | 18 | 2 | 1 | 27 | 38 |
 | **M06 total** | | **96** | **12** | **6** | **145** | **202** |
 | | | | | | **(2.3 h)** | **(3.2 h)** |
+| M06-L07 | Practice: recursion, higher-order functions, and syntax trees (not recorded) | 0 | 0 | 17 | 0 | 0 |
 
 M06-L04 overruns the NPTEL 30-min ceiling at 22 slides / 33 min
 after the 2026-05-26 sweep (added the map_via_fold split, the
 subtlety slide, and the tree-visualisation slides). Natural cut
 if delivery runs long: between the fold_left and fold_right
 halves. M06-L05 and L06 sit at the 20-min floor and will likely
-grow during their own polish passes.
+grow during their own polish passes. M06-L07 is a Practice
+chapter: a slide-free, video-free in-browser worksheet of nine
+problems with collapsible reference solutions, so it adds nothing
+to the recording total.
 
 ### M07: Side effects and modular programming (9 lectures)
 
@@ -228,14 +241,14 @@ M07-L04 streams and M07-L05 memoization lectures added on
 | M07-L01 | Mutable references | 22 | 3 | 1 | 33 | 46 |
 | M07-L02 | Mutable records and arrays | 22 | 2 | 1 | 33 | 46 |
 | M07-L03 | Exceptions | 18 | 2 | 1 | 27 | 38 |
-| M07-L04 | Streams and laziness | 15 | 2 | 1 | 23 | 32 |
+| M07-L04 | Streams and laziness | 18 | 2 | 1 | 27 | 38 |
 | M07-L05 | Memoization | 12 | 2 | 1 | 18 | 25 |
 | M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
 | M07-L07 | Module signatures | 16 | 2 | 1 | 24 | 34 |
 | M07-L08 | Functors | 13 | 2 | 1 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
-| **M07 total** | | **148** | **19** | **9** | **224** | **313** |
-| | | | | | **(3.7 h)** | **(5.2 h)** |
+| **M07 total** | | **151** | **19** | **9** | **228** | **319** |
+| | | | | | **(3.8 h)** | **(5.3 h)** |
 
 M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
 the NPTEL 30-min ceiling. Natural cuts if delivery runs long:
@@ -256,9 +269,13 @@ comparison around a runnable `List.assoc` lookup example to bring
 the count to 18. M07-L05
 (12 slides / 18 min) sits below the NPTEL 20-min floor.
 M07-L08 (13 slides / 20 min) sits right at the floor; M07-L04
-grew to 15 slides on 2026-05-29 when the combined
-map/filter/zip slide was split per KC's "one function per
-slide" rule.
+grew to 18 slides on 2026-05-29 (from 13): the combined
+map/filter/zip slide was split into three (one function per
+slide); the `Lazy.t` slide was broken into thunk-reruns /
+`lazy`-delays / `Lazy.force`-caches, each motivated separately
+with a print-based example; and the Fibonacci section was split
+into a thunk-stream version (correct but exponential) followed
+by the lazy-stream fix (linear), mirroring CS3100 lec14.
 
 ### M08: Monads and GADTs (10 lectures)
 

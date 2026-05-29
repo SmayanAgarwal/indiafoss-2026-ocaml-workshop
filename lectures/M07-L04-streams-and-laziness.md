@@ -394,28 +394,30 @@ let _ = take 10 primes
 ## Lazy values
 
 A `unit -> 'a` thunk is the cheapest way to delay evaluation, but
-it has one cost: every time you force it, the body runs again.
-Forcing the same thunk three times computes the body three times.
+it has one cost: every time you force it, the body runs again. We
+can see this directly by putting a `print_endline` in the body
+and forcing the thunk twice:
 
 ```ocaml
-let count = ref 0
-let t () = incr count; "hello"
-let _ = t ()
-let _ = t ()
-let _ = !count
+let t () = print_endline "running thunk"; 10 + 20
+let _ = t ()    (* prints "running thunk"; = 30 *)
+let _ = t ()    (* prints "running thunk" AGAIN; = 30 *)
 ```
 
-`int = 2`. Two forces, two side effects.
+The string `running thunk` prints *twice*: the body ran on each
+force. For a pure, cheap body that is harmless; for an expensive
+computation it is wasteful, and for an effect you wanted to
+happen once it is a bug.
 
 OCaml has a built-in primitive for *memoized* delay: the `lazy`
 keyword. `lazy e` constructs a value of type `'a Lazy.t` that
 wraps the expression `e` *unevaluated*. The first time the value
-is forced (with `Lazy.force`), `e` runs; the result is cached;
-every subsequent force returns the cached value without
-re-running `e`.
+is forced (with `Lazy.force`), `e` runs and the result is
+*cached* (this caching is what "memoization" means); every
+subsequent force returns the cached value without re-running `e`.
 
 ```ocaml
-let v = lazy (print_endline "running"; 10 + 20)
+let v = lazy (print_endline "running lazy"; 10 + 20)
 ```
 
 `val v : int Lazy.t = <lazy>`. Notice nothing has printed: the
@@ -425,38 +427,64 @@ expression has not run.
 let _ = Lazy.force v
 ```
 
-This prints `running` and returns `30`. The result and a "has
-been forced" flag are stored inside the `Lazy.t`.
+This prints `running lazy` and returns `30`. The result and a
+"has been forced" flag are stored inside the `Lazy.t`.
 
 ```ocaml
 let _ = Lazy.force v
 ```
 
 This prints *nothing* and returns `30` immediately. The body did
-not run again.
+not run again: the cached value is reused. That is the whole
+difference between a thunk (recomputes) and a `lazy` value
+(memoizes).
 
 :::slide
 
-## `Lazy.t`: memoized delay
+## The thunk's one cost: it reruns every time
 
 ```ocaml
-(* thunk: runs every time it is forced *)
-let count = ref 0
-let t () = incr count; "hello"
-let _ = t ()           (* count := 1 *)
-let _ = t ()           (* count := 2: body ran again *)
-let _ = !count         (* = 2 *)
+let t () = print_endline "running thunk"; 10 + 20
 
-(* lazy: runs once, caches *)
-let v = lazy (print_endline "running"; 10 + 20)
-let _ = Lazy.force v   (* prints "running"; = 30 *)
-let _ = Lazy.force v   (* prints nothing;   = 30 (cached) *)
+let _ = t ()     (* prints "running thunk"; = 30 *)
+let _ = t ()     (* prints "running thunk" AGAIN; = 30 *)
 ```
 
-- `lazy e` delays `e`. Type: `'a Lazy.t`.
-- `Lazy.force` runs the body the **first** time, caches the result.
-- Subsequent forces return the cached value.
-- Difference from thunk: thunk runs **every** force.
+- A `unit -> 'a` thunk recomputes its body on **every** force.
+- The print fires *twice*: the work is redone each time.
+- Fine if the body is cheap and pure; wasteful otherwise.
+
+:::
+
+:::slide
+
+## `lazy`: delay, then cache
+
+```ocaml
+let v = lazy (print_endline "running lazy"; 10 + 20)
+(* val v : int Lazy.t = <lazy>   nothing printed yet *)
+```
+
+- `lazy e` wraps `e` *unevaluated*. Type: `'a Lazy.t`.
+- Constructing it runs nothing.
+
+:::
+
+:::slide
+
+## `Lazy.force`: run once, then it's cached
+
+```ocaml
+let _ = Lazy.force v   (* prints "running lazy"; = 30 *)
+let _ = Lazy.force v   (* prints NOTHING;        = 30 *)
+```
+
+- First `Lazy.force`: runs the body, **caches** the result.
+- Every later force: returns the cached value, no re-run (the
+  print fires only once).
+- Caching the result of a computation like this is called
+  **memoization**: the one thing `lazy` gives you that a plain
+  thunk does not.
 
 :::
 
@@ -524,40 +552,63 @@ let _ = ltake 5 (lfrom 0)   (* = [0; 1; 2; 3; 4] *)
 
 :::
 
-## Fibonacci as a lazy stream
+## Fibonacci as a stream
 
 A neat trick: the Fibonacci sequence
 `1, 1, 2, 3, 5, 8, 13, 21, ...` satisfies `f(n) = f(n-1) + f(n-2)`.
 If `fibs` is the sequence, then `tl fibs` is the same sequence
 shifted by one. Zipping `fibs` with `tl fibs` element-wise under
 `+` gives the sequence shifted by *two*. Prepending `1; 1` to
-that shifted sum recovers `fibs`. So:
+that shifted sum recovers `fibs`. With the *thunk*-based stream
+(`Cons` / `zip` / `tl` from earlier), this is a one-liner:
 
 ```ocaml
 let rec fibs =
-  LCons (1, lazy (
-    LCons (1, lazy (lzip (+) fibs (ltl fibs)))))
+  Cons (1, fun () ->
+    Cons (1, fun () -> zip (+) fibs (tl fibs)))
 
-let _ = ltake 10 fibs
+let _ = take 10 fibs
+   (* = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55] *)
 ```
 
-`int list = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55]`.
-
 The definition is *recursive*: `fibs` refers to itself inside its
-own body. The `lazy` wrapping is what makes this safe: the inner
-references to `fibs` and `ltl fibs` are inside delayed
+own body. The thunk wrapping is what makes this safe: the inner
+references to `fibs` and `tl fibs` are inside delayed
 expressions, so they are not forced when `fibs` is being
 constructed.
 
-Why use `Lazy.t` and not just thunks here? Performance. With
-thunks, computing `take 30 fibs` recomputes earlier elements
-exponentially many times (the zip on the right keeps re-traversing
-the same prefix). With memoized `Lazy.t`, each `fibs` node is
-computed once and reused; `take 30 fibs` is linear.
+It produces the right answer, but it is *exponentially slow*.
+Each `tl fibs` rebuilds the shifted stream from scratch, and the
+`zip` forces both `fibs` and `tl fibs` again at every step, so
+the `n`th element costs roughly `f(n)` thunk-forces, the same
+exponential blow-up as the naive recursive `fib`.
 
 :::slide
 
-## Fibonacci as a stream
+## Fibonacci as a thunk stream: correct but slow
+
+```ocaml
+let rec fibs =
+  Cons (1, fun () ->
+    Cons (1, fun () -> zip (+) fibs (tl fibs)))
+
+let _ = take 10 fibs
+   (* = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55] *)
+```
+
+- `fibs = 1, 1, (fibs + tl fibs)`: the recurrence as a stream.
+- Self-referential, but the `fun () -> ...` keeps it from looping
+  at construction time.
+- *But*: every `tl` re-forces the prefix. `take 30 fibs` is
+  exponential, same blow-up as naive `fib`.
+
+:::
+
+## Fixing the blow-up with a lazy stream
+
+Swap the thunk-based stream for the *lazy* stream (`LCons` /
+`lzip` / `ltl`). The definition is identical in shape; only the
+tail wrapping changes from `fun () -> ...` to `lazy ...`:
 
 ```ocaml
 let rec fibs =
@@ -568,9 +619,29 @@ let _ = ltake 10 fibs
    (* = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55] *)
 ```
 
-- Self-referential: `fibs` and `ltl fibs` inside `lazy`.
-- Each node computed **once**; reused on every traversal.
-- Thunked version would be exponential; lazy version is linear.
+Now each `fibs` node is forced *once* and memoized. The `lzip`
+on the right re-reads already-computed nodes instead of
+rebuilding them, so `ltake 30 fibs` is *linear*. This is the
+payoff of memoization: same code shape, exponential to linear,
+just by replacing the thunk with a `lazy`.
+
+:::slide
+
+## Fixing the blow-up: lazy stream
+
+```ocaml
+let rec fibs =
+  LCons (1, lazy (
+    LCons (1, lazy (lzip (+) fibs (ltl fibs)))))
+
+let _ = ltake 10 fibs
+   (* = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55] *)
+```
+
+- Same shape as the thunk version; tail wrapping is `lazy ...`.
+- Each node forced **once** and memoized; reused on every later
+  step.
+- `ltake 30 fibs` is now **linear**, not exponential.
 
 :::
 
