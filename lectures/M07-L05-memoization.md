@@ -365,12 +365,38 @@ let fib_open self n =
 
 `val fib_open : (int -> int) -> int -> int = <fun>`. The first
 argument is the "recursive call" function; the second is the
-input. To recover the ordinary recursive `fib`, you would have
-to pass `fib_open` something equal to `fun n -> fib_open self n`,
-which is exactly what `let rec` does automatically.
+input. `fib_open` does not call itself by name at all: where the
+closed `fib` wrote `fib (n - 1)`, the open version writes `self
+(n - 1)`. To recover the ordinary recursive `fib` you would pass
+`fib_open` a `self` equal to `fib` itself, which is exactly what
+`let rec` does automatically.
 
-The trick: we *intercept* the recursive call. If `self` is the
-memoized version, every internal call hits the cache too.
+The trick: we get to *choose* what `self` is. If `self` is the
+memoized version, every internal call hits the cache too. That
+choice is what plain `memo fib` could not make, and it is what
+`memo_rec` (next) will make for us.
+
+:::slide
+
+## Open recursion: abstract out the recursive call
+
+```ocaml
+(* closed: the body names itself *)
+let rec fib n =
+  if n < 2 then 1 else fib (n - 1) + fib (n - 2)
+
+(* open: the body calls `self`, supplied by the caller *)
+let fib_open self n =
+  if n < 2 then 1 else self (n - 1) + self (n - 2)
+```
+
+- `fib_open : (int -> int) -> int -> int`: takes its own
+  recursive call as the parameter `self`.
+- It never names `fib`; it calls whatever `self` it is handed.
+- The point: hand it a `self` that goes *through the cache*, and
+  every recursive call is memoized, not just the outer one.
+
+:::
 
 ## Tying the recursive knot
 
@@ -468,8 +494,9 @@ sub-results from the earlier call.
 
 Compare against the naive `fib`: where the naive function
 exploded at `n = 35`, the memoized one is fast even for `n` in
-the hundreds (subject to integer overflow, which kicks in
-around `fib 90` for 64-bit OCaml).
+the hundreds (subject to integer overflow: `fib` exceeds the
+native 63-bit `int` around `n = 90`, and the browser's 32-bit
+`int` much sooner, around `n = 45`).
 
 :::slide
 
