@@ -242,13 +242,13 @@ M07-L04 streams and M07-L05 memoization lectures added on
 | M07-L02 | Mutable records and arrays | 22 | 2 | 1 | 33 | 46 |
 | M07-L03 | Exceptions | 18 | 2 | 1 | 27 | 38 |
 | M07-L04 | Streams and laziness | 19 | 2 | 1 | 29 | 40 |
-| M07-L05 | Memoization | 12 | 2 | 1 | 18 | 25 |
+| M07-L05 | Memoization | 14 | 2 | 1 | 21 | 29 |
 | M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
 | M07-L07 | Module signatures | 16 | 2 | 1 | 24 | 34 |
 | M07-L08 | Functors | 13 | 2 | 1 | 20 | 28 |
 | M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
-| **M07 total** | | **152** | **19** | **9** | **230** | **321** |
-| | | | | | **(3.8 h)** | **(5.4 h)** |
+| **M07 total** | | **154** | **19** | **9** | **233** | **325** |
+| | | | | | **(3.9 h)** | **(5.4 h)** |
 
 M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
 the NPTEL 30-min ceiling. Natural cuts if delivery runs long:
@@ -266,8 +266,7 @@ delta), then added a nested-`try ... with` example and slide
 to bring the count to 17, then added an `assert` /
 `Assert_failure` slide and rewrote the exception/option/result
 comparison around a runnable `List.assoc` lookup example to bring
-the count to 18. M07-L05
-(12 slides / 18 min) sits below the NPTEL 20-min floor.
+the count to 18.
 M07-L08 (13 slides / 20 min) sits right at the floor; M07-L04
 grew to 19 slides on 2026-05-29 (from 13): the combined
 map/filter/zip slide was split into three (one function per
@@ -279,6 +278,11 @@ by the lazy-stream fix (linear), mirroring CS3100 lec14; and a
 `time_it` timing slide was added that races thunk `fibs` against
 lazy `lfibs` (the two race cells are `ocaml skip` so they run
 on a Run click, not on page load or in `dune runtest`).
+M07-L05 grew to 14 slides on 2026-05-29 (from 12): `time_it`
+switched to `Unix.gettimeofday` reporting ms; the slow-function
+demo uses `fib 37` (a clearly slow ~100 ms jsoo run) instead of a
+busy-loop; and the slow-function and first-attempt-fails slides
+were each split in two (setup vs demo / attempt vs why).
 
 ### M08: Monads and GADTs (10 lectures)
 
@@ -456,9 +460,11 @@ state; expect movement during each module's polish pass):**
 | Lecture | Slides |
 |---|---:|
 | M08-L08 GADTs use cases | 11 |
-| M07-L03 Exceptions | 12 |
-| M07-L05 Memoization | 12 |
 | M12-L05 MirageOS = Library OS + Virtualisation + OCaml | 12 |
+
+(M07-L03 and M07-L05 were lifted out of this list by the
+2026-05-29 M07 polish pass, which brought them to 18 and 14
+slides respectively.)
 
 (M10's previously-thin entries L01 and L05, and M11's
 previously-thin entries L01 and L04 (now L05), were lifted out

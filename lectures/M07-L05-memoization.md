@@ -67,18 +67,18 @@ To see speedups we need to *measure* them. A short helper:
 
 ```ocaml
 let time_it f =
-  let t0 = Sys.time () in
+  let t0 = Unix.gettimeofday () in
   let r = f () in
-  let dt = Sys.time () -. t0 in
-  Printf.printf "  time = %.3f seconds\n%!" dt;
+  let dt = (Unix.gettimeofday () -. t0) *. 1000. in
+  Printf.printf "  time = %.1f ms\n%!" dt;
   r
 ```
 
-`time_it` takes a thunk, runs it, prints the elapsed CPU time in
-seconds, and returns the result. (`Sys.time ()` is the OCaml
-standard library's portable timer; we use it instead of
-`Unix.gettimeofday` because it is available everywhere, including
-in the browser.) The `%!` in the format string flushes the
+`time_it` takes a thunk, runs it, prints the elapsed wall-clock
+time in milliseconds, and returns the result. `Unix.gettimeofday
+()` returns the current time in seconds (as a float); the
+difference between two readings, scaled by `1000.`, is the
+elapsed milliseconds. The `%!` in the format string flushes the
 output buffer so the timing line appears immediately.
 
 ## The `memo` combinator
@@ -143,30 +143,35 @@ let memo f =
 
 ## Memoizing an expensive identity
 
-A toy function that just wastes time and returns its input:
+We need a function that is *deterministic but slow*. The
+canonical slow-but-pure function is naive recursive Fibonacci,
+which recomputes overlapping subproblems exponentially many
+times:
 
 ```ocaml
-let rec spin n = if n = 0 then () else spin (n - 1)
-let expensive_id x = spin 5_000_000; x
+let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
 ```
 
-`spin 5_000_000` takes a measurable fraction of a second to run.
-`expensive_id` does that work then returns its argument unchanged.
+`fib 37` does tens of millions of additions: a clearly
+measurable fraction of a second in the browser. We use it as the
+slow body of an identity-like function that returns its argument
+after doing that work:
 
 ```ocaml
-let _ = time_it (fun () -> expensive_id 10)
-let _ = time_it (fun () -> expensive_id 10)
+let slow_id x = let _ = fib 37 in x
+
+let _ = time_it (fun () -> slow_id 10)
+let _ = time_it (fun () -> slow_id 10)
 ```
 
-Two calls with the same argument; both run the spin loop; both
-take roughly the same time. The function is *deterministic but
-slow*; it does not know it has been asked the same question
-twice.
+Two calls with the same argument; both run `fib 37`; both take
+roughly the same time. `slow_id` does not know it has been asked
+the same question twice.
 
 Now wrap it:
 
 ```ocaml
-let memo_id = memo expensive_id
+let memo_id = memo slow_id
 
 let _ = time_it (fun () -> memo_id 10)   (* slow: cache miss *)
 let _ = time_it (fun () -> memo_id 10)   (* fast: cache hit *)
@@ -174,37 +179,51 @@ let _ = time_it (fun () -> memo_id 20)   (* slow: different key *)
 let _ = time_it (fun () -> memo_id 10)   (* fast: still cached *)
 ```
 
-The first call to `memo_id 10` runs `expensive_id 10` and caches
-the result. The second call hits the cache and returns
-*instantly*. Different inputs (`10` vs `20`) each get one slow
-miss followed by free hits.
+The first call to `memo_id 10` runs `slow_id 10` (and hence
+`fib 37`) and caches the result. The second call hits the cache
+and returns *instantly*. Different inputs (`10` vs `20`) each get
+one slow miss followed by free hits.
 
 :::slide
 
-## Memoizing expensive identity
+## Memoizing a slow function: the setup
 
 ```ocaml
-let rec spin n = if n = 0 then () else spin (n - 1)
-let expensive_id x = spin 5_000_000; x
+let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
+let slow_id x = let _ = fib 37 in x
 
-let memo_id = memo expensive_id
-
-let _ = time_it (fun () -> memo_id 10)   (* slow *)
-let _ = time_it (fun () -> memo_id 10)   (* fast *)
-let _ = time_it (fun () -> memo_id 20)   (* slow *)
-let _ = time_it (fun () -> memo_id 10)   (* fast *)
+let memo_id = memo slow_id
 ```
 
-- First call per key: cache miss, runs the body.
+- `fib 37` is the slow, pure body.
+- `slow_id` returns its argument after doing that work.
+- `memo_id` is `slow_id` wrapped with a per-argument cache.
+
+:::
+
+:::slide
+
+## Memoizing a slow function: miss vs hit
+
+```ocaml
+let _ = time_it (fun () -> memo_id 10)   (* slow: miss *)
+let _ = time_it (fun () -> memo_id 10)   (* fast: hit *)
+let _ = time_it (fun () -> memo_id 20)   (* slow: new key *)
+let _ = time_it (fun () -> memo_id 10)   (* fast: still cached *)
+```
+
+- First call per key: cache miss, runs the body (`fib 37`).
 - Repeat call with same key: cache hit, returns instantly.
-- New key: another miss.
+- New key (`20`): another miss.
 - Cache persists across calls (it lives in the closure).
 
 :::
 
 ## The wrinkle with recursive functions
 
-Now the more interesting case. Naive recursive Fibonacci:
+Now the more interesting case. We used naive `fib` above as a
+black-box slow function; this time we want to memoize `fib`
+*itself*. Recall its definition:
 
 ```ocaml
 let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
@@ -236,21 +255,39 @@ non-memoized version.
 
 :::slide
 
-## Memoizing recursive `fib`: first attempt fails
+## Memoizing recursive `fib`: the obvious attempt
 
 ```ocaml
 let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
 let memo_fib_outer = memo fib
-let _ = time_it (fun () -> memo_fib_outer 35)
-let _ = time_it (fun () -> memo_fib_outer 35)
-let _ = time_it (fun () -> memo_fib_outer 34)
+
+let _ = time_it (fun () -> memo_fib_outer 35)   (* slow *)
+let _ = time_it (fun () -> memo_fib_outer 35)   (* fast *)
+let _ = time_it (fun () -> memo_fib_outer 34)   (* slow again! *)
 ```
 
 - First call: slow (full recursion).
-- Repeat **same** arg: fast (outer hit).
-- New nearby arg (`34`): slow again.
-- Why: `fib`'s body refers to `fib`, not to the memoized one.
-- Inner recursion never touches the cache.
+- Repeat the **same** arg: fast (outer hit).
+- A new nearby arg (`34`): slow *again*, even though `fib 34` was
+  computed inside `fib 35`.
+
+:::
+
+:::slide
+
+## Why the obvious attempt fails
+
+```ocaml
+let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
+(*                                   ^^^        ^^^            *)
+(*           these call the ORIGINAL fib, not memo_fib_outer  *)
+```
+
+- `memo` only caches the *outer* call.
+- `fib`'s body says `fib (n-1) + fib (n-2)`; those names are
+  bound at definition time, to the non-memoized `fib`.
+- The inner recursion never touches the cache, so the first
+  call is still exponential.
 
 :::
 
