@@ -608,20 +608,21 @@ let _ = take 10 fibs
 
 Swap the thunk-based stream for the *lazy* stream (`LCons` /
 `lzip` / `ltl`). The definition is identical in shape; only the
-tail wrapping changes from `fun () -> ...` to `lazy ...`:
+tail wrapping changes from `fun () -> ...` to `lazy ...`. We name
+it `lfibs` to keep it distinct from the thunk-based `fibs`:
 
 ```ocaml
-let rec fibs =
+let rec lfibs =
   LCons (1, lazy (
-    LCons (1, lazy (lzip (+) fibs (ltl fibs)))))
+    LCons (1, lazy (lzip (+) lfibs (ltl lfibs)))))
 
-let _ = ltake 10 fibs
+let _ = ltake 10 lfibs
    (* = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55] *)
 ```
 
-Now each `fibs` node is forced *once* and memoized. The `lzip`
+Now each `lfibs` node is forced *once* and memoized. The `lzip`
 on the right re-reads already-computed nodes instead of
-rebuilding them, so `ltake 30 fibs` is *linear*. This is the
+rebuilding them, so `ltake 30 lfibs` is *linear*. This is the
 payoff of memoization: same code shape, exponential to linear,
 just by replacing the thunk with a `lazy`.
 
@@ -630,18 +631,70 @@ just by replacing the thunk with a `lazy`.
 ## Fixing the blow-up: lazy stream
 
 ```ocaml
-let rec fibs =
+let rec lfibs =
   LCons (1, lazy (
-    LCons (1, lazy (lzip (+) fibs (ltl fibs)))))
+    LCons (1, lazy (lzip (+) lfibs (ltl lfibs)))))
 
-let _ = ltake 10 fibs
+let _ = ltake 10 lfibs
    (* = [1; 1; 2; 3; 5; 8; 13; 21; 34; 55] *)
 ```
 
 - Same shape as the thunk version; tail wrapping is `lazy ...`.
 - Each node forced **once** and memoized; reused on every later
   step.
-- `ltake 30 fibs` is now **linear**, not exponential.
+- `ltake 30 lfibs` is now **linear**, not exponential.
+
+:::
+
+## Timing the difference
+
+The exponential-vs-linear claim is easy to *see*. A tiny helper
+times a thunk and returns its result alongside the elapsed
+milliseconds:
+
+```ocaml
+let time_it f =
+  let t0 = Unix.gettimeofday () in
+  let r = f () in
+  (r, (Unix.gettimeofday () -. t0) *. 1000.)
+```
+
+Now race the two streams at a largish prefix. Both compute the
+same 30 Fibonacci numbers; only the cost differs:
+
+```ocaml skip
+(* thunk stream: recomputes the prefix exponentially *)
+let _ = time_it (fun () -> take 30 fibs)
+
+(* lazy stream: each node memoized, linear *)
+let _ = time_it (fun () -> ltake 30 lfibs)
+```
+
+The thunk version takes hundreds of milliseconds (and roughly
+doubles for each extra element); the lazy version is effectively
+instant. These two cells are not run when the page loads; click
+**Run** on each to see the gap on your own machine.
+
+:::slide
+
+## Timing it: thunk vs lazy
+
+```ocaml
+let time_it f =
+  let t0 = Unix.gettimeofday () in
+  let r = f () in
+  (r, (Unix.gettimeofday () -. t0) *. 1000.)
+```
+
+```ocaml skip
+let _ = time_it (fun () -> take 30 fibs)     (* slow: ~100s of ms *)
+let _ = time_it (fun () -> ltake 30 lfibs)   (* fast: ~0 ms *)
+```
+
+- `time_it f` returns `(result, milliseconds)`.
+- Thunk `fibs`: exponential, hundreds of ms at a 30-element prefix.
+- Lazy `lfibs`: linear, effectively instant.
+- Click **Run**: these are not run on page load.
 
 :::
 
