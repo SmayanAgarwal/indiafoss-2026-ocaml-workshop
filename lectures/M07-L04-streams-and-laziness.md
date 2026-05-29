@@ -687,8 +687,8 @@ let time_it f =
 ```
 
 ```ocaml skip
-let _ = time_it (fun () -> take 30 fibs)     (* slow: ~100s of ms *)
-let _ = time_it (fun () -> ltake 30 lfibs)   (* fast: ~0 ms *)
+let _ = time_it (fun () -> take 30 fibs)   (* slow: ~100s of ms *)
+let _ = time_it (fun () -> ltake 30 lfibs) (* fast: ~0 ms *)
 ```
 
 - `time_it f` returns `(result, milliseconds)`.
