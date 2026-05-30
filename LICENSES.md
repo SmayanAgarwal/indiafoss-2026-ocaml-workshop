@@ -23,9 +23,9 @@ written for this course; ISC.
 
 - `vendor/x-ocaml/`: art-w/x-ocaml upstream; ISC. See
   `vendor/x-ocaml/LICENSE` and the upstream repository at
-  https://github.com/art-w/x-ocaml .
+  <https://github.com/art-w/x-ocaml>.
 - `assets/reveal/`: reveal.js 5.x distribution; MIT. See
-  https://github.com/hakimel/reveal.js .
+  <https://github.com/hakimel/reveal.js>.
 
 ## Reference material consulted
 
@@ -38,20 +38,19 @@ was checked.
 ### Cornell CS3110, *OCaml Programming: Correct + Efficient + Beautiful*
 
 - Authors: Michael R. Clarkson, with contributors.
-- URL: https://cs3110.github.io/textbook/
+- URL: <https://cs3110.github.io/textbook/>
 - License: **CC BY-NC-ND 4.0** (No Derivatives).
 - Usage: reference for topic coverage, pedagogical sequence, and
   cross-checking that we are teaching the right things in the right
   order. The ND clause precludes derivative works; the audit confirms
   that the lectures are independent expression of overlapping factual
   material rather than rewrites.
-- Local copy: `_references/textbooks/cs3110/` (gitignored).
 
 ### Real World OCaml, 2nd ed.
 
 - Authors: Yaron Minsky, Anil Madhavapeddy, Jason Hickey.
-- URL: https://dev.realworldocaml.org/
-- Licenses (three, from `_references/textbooks/rwo/LICENSE.md`):
+- URL: <https://dev.realworldocaml.org/>
+- Licenses (three, from the book's LICENSE.md):
   - Site-generation code: ISC.
   - **Book prose: CC BY-NC-ND 3.0 US** (NoDerivatives, like CS3110).
   - Code examples in the book: UNLICENSE (public domain; freely
@@ -60,7 +59,6 @@ was checked.
   and industrial-quality code. No prose paraphrased; the prose ND
   clause precludes derivative reuse. Code examples freely reusable
   under UNLICENSE, but we generally use our own examples anyway.
-- Local copy: `_references/textbooks/rwo/` (gitignored).
 
 ### *OCaml from the Very Beginning*
 
@@ -71,7 +69,6 @@ was checked.
   shape of M01 and the early M02 lectures (how to introduce simple
   expressions to total beginners); the lectures are independent
   expression.
-- Local copy: `_references/textbooks/mlbook.pdf` (gitignored).
 
 ### CS3100 (KC Sivaramakrishnan, IIT Madras, 2024 to 2025)
 
@@ -79,10 +76,9 @@ was checked.
 - License: KC's own prior course material; freely reused by the
   author for this MOOC.
 - Usage: the primary drafting source. The YouTube playlist was
-  transcribed into per-lecture transcripts at `_references/_video/`
-  and used to recover KC's own spoken explanations, which became
-  the seed for the corresponding NPTEL lectures.
-- Local copy: `_references/cs3100_m25/` plus the video transcripts.
+  transcribed into per-lecture transcripts and used to recover
+  KC's own spoken explanations, which became the seed for the
+  corresponding NPTEL lectures.
 
 ### CS6868 OxCaml handout (KC Sivaramakrishnan, IIT Madras, 2026)
 
@@ -91,7 +87,6 @@ was checked.
 - Usage: source for the Modules 9 to 12 (secure-systems) redesign,
   particularly the locality / uniqueness / portability mode material
   in M10.
-- Local copy: `/Users/kc/teaching/cs6868/`.
 
 ### *Profiling Programming Language Learning*
 
@@ -101,12 +96,10 @@ was checked.
 - Usage: methodology source for the inline-quiz design (MCQ format,
   the *Why* explanations, the code-fill-in pattern). Cited as
   methodology; no prose reused.
-- Local copy: `_references/profiling_a_programming_language/`
-  (gitignored).
 
 ### Other consulted materials
 
-- The OCaml manual (https://v2.ocaml.org/manual/), used as the
+- The OCaml manual (<https://v2.ocaml.org/manual/>), used as the
   authoritative reference for language behaviour.
 - The OCaml `discuss.ocaml.org` "Industrial Users of OCaml" thread,
   used as a source for the contemporary industrial-use list in M01.
