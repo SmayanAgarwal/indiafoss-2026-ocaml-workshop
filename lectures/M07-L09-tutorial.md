@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 28
 concepts: [worked module, abstract type, functor, two-stack queue]
 keywords: [OCaml, queue, two-stack, functor, tutorial, module]
-activity_question: "Add a [length : 'a t -> int] operation to the queue. Update both the signature and the struct. What does the compiler require, and what happens if you forget to add [length] to the signature?"
+activity_question: "Add a [length : 'a t -> int] operation to the queue (update both the signature and the struct; what does the compiler require if you forget one side?). Then instantiate a queue of queues of integers ([int Queue.t Queue.t]) and show an example run."
 think_about_this: "We built a queue using two stacks (lists). [enqueue] is O(1), [dequeue] is amortized O(1). Why does the two-list trick give amortized O(1) rather than worst-case O(1)?"
 reading:
   - title: "Cornell CS3110, A functional queue"
@@ -494,19 +494,30 @@ a generic implementation parameterised by that constraint.
   `string` is a type error.
 - **Generic**: the *queue logic* is the same regardless of element
   type. We wrote it once.
-- **Composable**: a `String_queue` is one line:
+- **Composable**: a `String_queue` is one line.
+- This is how `Map.Make`, `Set.Make`, `Hashtbl.Make` work in the
+  standard library.
+- **One implementation, many specialisations.**
 
-```text
+:::
+
+:::slide
+
+## A string queue: a run
+
+```ocaml
 module String_queue = Make (struct
   type t = string
   let to_string s = s
 end)
-```
-<!-- KC: this should be an ```ocaml block? Show an example run. -->
 
-- This is how `Map.Make`, `Set.Make`, `Hashtbl.Make` work in the
-  standard library.
-- **One implementation, many specialisations.**
+let sq = String_queue.empty
+         |> String_queue.enqueue "a" |> String_queue.enqueue "b"
+let () = String_queue.print sq   (* prints: [a, b] *)
+```
+
+- Same `Make`, different element module; `String_queue.elt` is
+  `string`.
 
 :::
 
@@ -517,15 +528,19 @@ to an `int list` is. But the *implementation* of the queue
 operations is written once: the body of `Make` does not know or
 care what the element type is, except through `E.to_string`.
 
-To build a string queue you write one line:
+To build a string queue you write one line, then use it like any
+other queue:
 
-```text
+```ocaml
 module String_queue = Make (struct
   type t = string
   let to_string s = s
 end)
+
+let sq = String_queue.empty
+         |> String_queue.enqueue "a" |> String_queue.enqueue "b"
+let () = String_queue.print sq   (* prints: [a, b] *)
 ```
-<!-- KC: this should be an ```ocaml block? -->
 
 This is exactly how `Map.Make`, `Set.Make`, and `Hashtbl.Make` in
 the standard library work: one implementation, many specialised
@@ -729,6 +744,51 @@ field of the record, updated by each `enqueue` and `dequeue`. The
 signature would not change; only the implementation would. This
 is the kind of optimisation the abstract type lets you do
 silently.
+
+## Activity: a queue of queues
+
+The element type of `'a Queue.t` is unconstrained, so `'a` can be
+*any* type, including another queue. Instantiate a queue of queues
+of integers, type `int Queue.t Queue.t`, with two inner queues,
+then reach in: dequeue the first inner queue, and dequeue its
+first element.
+
+:::slide
+
+## Activity: a queue of queues
+
+- `'a Queue.t` is polymorphic, so `'a` can itself be `int Queue.t`.
+- Build an `int Queue.t Queue.t` holding two inner queues.
+- Dequeue the first inner queue, then dequeue its first element.
+
+:::
+
+:::solution
+
+:::slide
+
+## Activity solution: nesting comes for free
+
+```ocaml
+let inner1 = Queue.empty |> Queue.enqueue 1 |> Queue.enqueue 2
+let inner2 = Queue.empty |> Queue.enqueue 3
+let qoq = Queue.empty |> Queue.enqueue inner1 |> Queue.enqueue inner2
+(* qoq : int Queue.t Queue.t *)
+
+let first_elt =
+  match Queue.dequeue qoq with
+  | Some (first, _) ->
+      (match Queue.dequeue first with Some (x, _) -> Some x | None -> None)
+  | None -> None
+(* = Some 1 *)
+```
+
+- No new code: the abstract `'a t` already works for any `'a`,
+  including another queue.
+
+:::
+
+:::
 
 ## What you should be able to do now
 

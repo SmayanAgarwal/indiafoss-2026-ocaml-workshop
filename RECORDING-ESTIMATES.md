@@ -7,9 +7,8 @@
   current lecture draft. The 1.5 factor was calibrated against
   M01's per-lecture ratio (average 1.49) and confirmed across
   the M02/M03/M04 polish passes.
-- **Speaking pace**: ~160 words per minute, measured from the
-  CS3100 video transcripts at `_references/_video/01-*` and
-  `_references/_video/02-*` (51 min / 8,391 words = 164 wpm;
+- **Speaking pace**: ~160 words per minute, measured from two
+  CS3100 video transcripts (51 min / 8,391 words = 164 wpm;
   53.4 min / 8,274 words = 155 wpm).
 - **Recording-time multiplier**: **1.4×** the final video. Built
   in: occasional retakes (you have a 50+ hr CS3100 backlog so
@@ -234,7 +233,12 @@ are properly introduced. M07-L02 picked that up, plus the
 doubly-linked list worked example and a default-to-immutable
 closing slide. Earlier re-estimate on 2026-05-25 included the
 M07-L04 streams and M07-L05 memoization lectures added on
-2026-05-23. Estimate uses slide_count x 1.5 min.
+2026-05-23. On 2026-05-30, M07-L09 grew from 15 to 21 slides: an
+illustrated two-stack-queue trace, the example runs split onto
+their own slides (implementation, sealed, string-queue), a
+runnable string-queue example, and a second activity (a queue of
+queues of integers) with a worked example run. Estimate uses
+slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
@@ -246,18 +250,20 @@ M07-L04 streams and M07-L05 memoization lectures added on
 | M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
 | M07-L07 | Module signatures | 18 | 2 | 1 | 27 | 38 |
 | M07-L08 | Functors | 15 | 2 | 1 | 23 | 32 |
-| M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
-| **M07 total** | | **162** | **19** | **9** | **246** | **342** |
-| | | | | | **(3.9 h)** | **(5.5 h)** |
+| M07-L09 | Tutorial: a queue functor | 21 | 2 | 1 | 32 | 45 |
+| **M07 total** | | **168** | **19** | **9** | **254** | **355** |
+| | | | | | **(4.2 h)** | **(5.9 h)** |
 | M07-L10 | Practice: mutability, modules, and streams (not recorded) | 0 | 0 | 19 | 0 | 0 |
 
-M07-L01 and M07-L02 (22 slides / 33 min each) now sit just above
-the NPTEL 30-min ceiling. Natural cuts if delivery runs long:
-L01's ticket-dispenser broken/hoisted pair (one slide could
-carry both in less detail), or the eta-expansion slide (most
-skippable of the value-restriction trio); L02's `while`-loop
-slide (only added to make the syntax box honest) or the
-default-to-immutable closing slide. M07-L03 was restructured on
+M07-L01 and M07-L02 (22 slides / 33 min each) and M07-L09 (21
+slides / 32 min) now sit above the NPTEL 30-min ceiling. Natural
+cuts if delivery runs long: L01's ticket-dispenser broken/hoisted
+pair (one slide could carry both in less detail), or the
+eta-expansion slide (most skippable of the value-restriction
+trio); L02's `while`-loop slide (only added to make the syntax box
+honest) or the default-to-immutable closing slide; L09's run
+slides could fold back into their definition slides, or the
+string-queue run could merge with "What's notable". M07-L03 was restructured on
 2026-05-28 to introduce `raise` and `try ... with` *before* the
 built-in-exceptions tour (the old order showed `try` in an
 example before explaining it); slide count went 12 -> 16. Same
