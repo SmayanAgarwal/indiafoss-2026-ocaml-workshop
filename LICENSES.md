@@ -114,14 +114,6 @@ Each lecture closes with a *Sources* footer that lists the materials
 consulted for that specific lecture. See any lecture under
 `lectures/M*-L*.md` for the canonical format.
 
-## Permission letters
-
-Where explicit permission has been requested or received from a
-source's maintainers (e.g. CS3110), the correspondence is archived
-under `docs/permissions/`. Absence of a file means permission was not
-sought and the usage is judged independent expression under the
-audit.
-
 ## Compatibility with NPTEL's CC BY-NC-SA mandate
 
 NPTEL course content must be CC BY-NC-SA 4.0. This is compatible with:
