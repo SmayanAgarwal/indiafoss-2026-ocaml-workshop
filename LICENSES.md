@@ -6,8 +6,7 @@ see `LICENSE`. It was prepared with reference to the materials listed
 below, each retaining its own license. The course's prose, worked
 examples, and quizzes are independent expression of factual material on
 OCaml and functional programming; close paraphrase and structural
-mirroring have been audited and the results recorded in
-`LICENSING_AUDIT.md`.
+mirroring have been audited per lecture.
 
 ## Course content
 
@@ -32,8 +31,8 @@ written for this course; ISC.
 Treat the entries below as *consulted* sources. Reading and being
 informed by them is fine; close paraphrase is not. Where a license
 restricts derivative use, this is noted; where our use approaches the
-boundary, the per-lecture audit in `LICENSING_AUDIT.md` documents what
-was checked.
+boundary, an independent-expression check was made for the lecture in
+question.
 
 ### Cornell CS3110, *OCaml Programming: Correct + Efficient + Beautiful*
 
@@ -125,6 +124,5 @@ NPTEL course content must be CC BY-NC-SA 4.0. This is compatible with:
 
 It is *not* directly compatible with a CC BY-NC-ND input (such as
 CS3110) when the output is judged a derivative work. The mitigation
-is the independent-expression test recorded per lecture in
-`LICENSING_AUDIT.md`, optionally supplemented by explicit permission
-from the source's maintainer.
+is the independent-expression test applied per lecture and recorded
+in each lecture's *Sources* footer.
