@@ -65,6 +65,56 @@ maintaining an invariant we do not want callers to see or break.
 
 :::
 
+## A picture first: how the two lists work
+
+Before the code, trace three enqueues and a dequeue. `enqueue`
+always conses onto `back`, so `back` holds the newest elements in
+*reverse* arrival order. `dequeue` pops the head of `front`; when
+`front` is empty, it reverses `back` onto `front`, which flips
+those elements back into arrival order, so the oldest comes out
+first.
+
+```text
+            front (pop here)        back (push here)
+enqueue 1   []                      [1]
+enqueue 2   []                      [2; 1]
+enqueue 3   []                      [3; 2; 1]
+
+dequeue     front is empty: reverse back onto front
+            [1; 2; 3]               []
+            pop the head, returns 1
+            [2; 3]                  []
+```
+
+After the reverse, the next dequeues are plain list-head pops:
+that is the seed of the amortised-O(1) argument we make below.
+Both `enqueue` and `dequeue` are amortised O(1): `enqueue` is a
+single cons, and each element is reversed onto the front only
+once in its lifetime.
+
+:::slide
+
+## Tracing the two-stack queue
+
+- `enqueue` conses onto `back`: newest first, in reverse order.
+- `dequeue` pops `front`; an empty `front` reverses `back` onto it.
+- The reverse flips back into arrival order: FIFO preserved.
+- Both push and pop are amortised O(1).
+
+```text
+            front (pop here)        back (push here)
+enqueue 1   []                      [1]
+enqueue 2   []                      [2; 1]
+enqueue 3   []                      [3; 2; 1]
+
+dequeue     front empty: reverse back onto front
+            [1; 2; 3]               []
+            pop the head, returns 1
+            [2; 3]                  []
+```
+
+:::
+
 ## The implementation, unsealed
 
 We start with the raw implementation, with no signature attached.
@@ -84,11 +134,11 @@ let rec dequeue q =
   | x :: rest, _ -> Some (x, { q with front = rest })
   | [], back -> dequeue { front = List.rev back; back = [] }
 
-let q = enqueue 3 (enqueue 2 (enqueue 1 empty))
-let _ = dequeue q
+let q = empty |> enqueue 1 |> enqueue 2 |> enqueue 3
+let _ = dequeue q   (* = Some (1, ...) *)
 ```
 
-The toplevel reports `Some (1, ...)`. Let's walk through each
+Let's walk through each
 piece.
 
 The type `'a queue` is a record with two fields, both `'a list`.
@@ -142,14 +192,22 @@ let rec dequeue q =
   | [], [] -> None
   | x :: rest, _ -> Some (x, { q with front = rest })
   | [], back -> dequeue { front = List.rev back; back = [] }
-
-let q = enqueue 3 (enqueue 2 (enqueue 1 empty))
-let _ = dequeue q
 ```
 
-`Some (1, ...)`. The first `dequeue` hits the recursive case (front
-empty), reverses `back` into `front`, and recurses. Subsequent
-dequeues are O(1).
+:::
+
+:::slide
+
+## The implementation: a run
+
+```ocaml
+let q = empty |> enqueue 1 |> enqueue 2 |> enqueue 3
+let _ = dequeue q   (* = Some (1, ...) *)
+```
+
+- First `dequeue` hits the recursive case (front empty), reverses
+  `back` into `front`, recurses.
+- Subsequent dequeues are O(1).
 
 :::
 
@@ -161,8 +219,8 @@ directly, possibly violating our invariant. Even worse, a caller
 can come to *rely on* the two-list shape, so that any future
 change to the representation breaks their code.
 
-The fix from [M07-L07](M07-L07-signatures.html#abstract-types): a
-signature with an abstract type.
+The fix from the [signatures lecture](M07-L07-signatures.html#abstract-types):
+a signature with an abstract type.
 
 ```ocaml
 module type QUEUE = sig
@@ -188,14 +246,18 @@ module Queue : QUEUE = struct
     | x :: rest, _ -> Some (x, { q with front = rest })
     | [], back -> dequeue { front = List.rev back; back = [] }
 end
-
-let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty))
-let _ = Queue.dequeue q
-let _ = Queue.is_empty Queue.empty
 ```
 
-The toplevel reports `Some (1, <abstr>)` for the dequeue and
-`true` for `is_empty Queue.empty`.
+Running it from outside the module:
+
+```ocaml
+let q = Queue.empty |> Queue.enqueue 1 |> Queue.enqueue 2 |> Queue.enqueue 3
+let _ = Queue.dequeue q          (* = Some (1, <abstr>) *)
+let _ = Queue.is_empty Queue.empty   (* = true *)
+```
+
+The dequeue now returns `<abstr>` in place of the record: from
+outside `Queue`, the second component is an opaque `'a t`.
 
 The `QUEUE` signature lists exactly the operations callers can
 use. The type `'a t` is abstract: outside `Queue`, you cannot see
@@ -230,30 +292,39 @@ end
 ```ocaml
 module Queue : QUEUE = struct
   type 'a t = { front : 'a list; back : 'a list }
-
   let empty = { front = []; back = [] }
   let is_empty q = q.front = [] && q.back = []
   let enqueue x q = { q with back = x :: q.back }
-
   let rec dequeue q =
     match q.front, q.back with
     | [], [] -> None
     | x :: rest, _ -> Some (x, { q with front = rest })
     | [], back -> dequeue { front = List.rev back; back = [] }
 end
-
-let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty))
-let _ = Queue.dequeue q
 ```
 
-`Some (1, ...)`. Outside, only the operations in `QUEUE` work; the
-record fields `front` / `back` are inaccessible.
+- Outside, only `QUEUE`'s operations work; the fields `front` /
+  `back` are inaccessible.
+
+:::
+
+:::slide
+
+## Sealed: the run
+
+```ocaml
+let q = Queue.empty |> Queue.enqueue 1 |> Queue.enqueue 2 |> Queue.enqueue 3
+let _ = Queue.dequeue q   (* = Some (1, <abstr>) *)
+```
+
+- `dequeue` returns `<abstr>` for the queue component: from
+  outside, it is an opaque `'a t`.
 
 :::
 
 ## Why hide the representation?
 
-The [two reasons from M07-L07](M07-L07-signatures.html#why-hide-internals),
+The [two reasons we hid internals](M07-L07-signatures.html#why-hide-internals),
 applied here.
 
 :::slide
@@ -293,9 +364,9 @@ with a typed printer attached. (Maybe we want a debugger view, or
 a logger that prints queue contents.) The element type can no
 longer be free: we need a way to turn an element into a string.
 
-The mechanism from [M07-L08](M07-L08-functors.html): a functor. We
-start by writing a signature describing what we need from the
-element type.
+The mechanism from the [functors lecture](M07-L08-functors.html): a
+functor. We start by writing a signature describing what we need
+from the element type.
 
 ```ocaml
 module type ELT = sig
@@ -317,22 +388,26 @@ module Make (E : ELT) = struct
     | [], back -> dequeue { front = List.rev back; back = [] }
 
   let print q =
-    let f = String.concat ", " (List.map E.to_string q.front) in
-    let b = String.concat ", " (List.map E.to_string (List.rev q.back)) in
-    print_endline ("[" ^ f ^ " | " ^ b ^ "]")
+    let items = q.front @ List.rev q.back in
+    print_endline ("[" ^ String.concat ", " (List.map E.to_string items) ^ "]")
 end
-
-module IQ = Make (struct type t = int let to_string = string_of_int end)
-
-let q = IQ.enqueue 3 (IQ.enqueue 2 (IQ.enqueue 1 IQ.empty))
-let () = IQ.print q
 ```
 
-This prints `[ | 3, 2, 1]`. Inside the queue, `front` is empty,
-and `back` is `[3; 2; 1]` (because we conses in reverse, with `3`
-the most recently added). The print function reverses `back` for
-display, so the output reads "back contains, in FIFO order, 1
-then 2 then 3."
+Apply it to `int` and run:
+
+```ocaml
+module IQ = Make (struct type t = int let to_string = string_of_int end)
+
+let q = IQ.empty |> IQ.enqueue 1 |> IQ.enqueue 2 |> IQ.enqueue 3
+let () = IQ.print q   (* prints: [1, 2, 3] *)
+```
+
+Notice `print` shows the queue as a single FIFO sequence, not the
+internal two-list split: it joins `front @ List.rev back`, exactly
+the conceptual queue. The printer respects the abstraction it
+sits behind: callers see `[1, 2, 3]`, never the `front` / `back`
+representation. Internally `front` is empty and `back` is
+`[3; 2; 1]` here, but that never reaches the output.
 
 :::slide
 
@@ -359,25 +434,22 @@ end
 module Make (E : ELT) = struct
   type elt = E.t
   type t = { front : elt list; back : elt list }
-
   let empty = { front = []; back = [] }
   let is_empty q = q.front = [] && q.back = []
   let enqueue x q = { q with back = x :: q.back }
-  let rec dequeue q =
-    match q.front, q.back with
+  let rec dequeue q = match q.front, q.back with
     | [], [] -> None
     | x :: rest, _ -> Some (x, { q with front = rest })
     | [], back -> dequeue { front = List.rev back; back = [] }
-
   let print q =
-    let f = String.concat ", " (List.map E.to_string q.front) in
-    let b = String.concat ", " (List.map E.to_string (List.rev q.back)) in
-    print_endline ("[" ^ f ^ " | " ^ b ^ "]")
+    let xs = q.front @ List.rev q.back in
+    print_endline ("[" ^ String.concat ", " (List.map E.to_string xs) ^ "]")
 end
 ```
 
-`E.t` is the element type; `E.to_string` is its printer. The body
-is the same two-list queue plus a typed `print`.
+- `E.t` is the element type; `E.to_string` is its printer.
+- `print` shows the logical FIFO sequence (`front @ List.rev
+  back`), not the internal two-list split.
 
 :::
 
@@ -391,12 +463,12 @@ module IQ = Make (struct
   let to_string = string_of_int
 end)
 
-let q = IQ.enqueue 3 (IQ.enqueue 2 (IQ.enqueue 1 IQ.empty))
-let () = IQ.print q
+let q = IQ.empty |> IQ.enqueue 1 |> IQ.enqueue 2 |> IQ.enqueue 3
+let () = IQ.print q   (* prints: [1, 2, 3] *)
 ```
 
-Prints `[ | 3, 2, 1]`. Pass an inline module providing `int` +
-`string_of_int`; get out a fully working int-queue with printing.
+- Pass an inline module providing `int` + `string_of_int`; get
+  out a fully working int-queue with printing.
 
 :::
 
@@ -430,6 +502,7 @@ module String_queue = Make (struct
   let to_string s = s
 end)
 ```
+<!-- KC: this should be an ```ocaml block? Show an example run. -->
 
 - This is how `Map.Make`, `Set.Make`, `Hashtbl.Make` work in the
   standard library.
@@ -452,6 +525,7 @@ module String_queue = Make (struct
   let to_string s = s
 end)
 ```
+<!-- KC: this should be an ```ocaml block? -->
 
 This is exactly how `Map.Make`, `Set.Make`, and `Hashtbl.Make` in
 the standard library work: one implementation, many specialised
@@ -533,7 +607,7 @@ let queue_length _q : int = failwith "not implemented"
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty)) in
+  let q = Queue.empty |> Queue.enqueue 1 |> Queue.enqueue 2 |> Queue.enqueue 3 in
   check (queue_length q = 3) "three elements";
   check (queue_length Queue.empty = 0) "empty";
   (match Queue.dequeue q with
@@ -619,11 +693,9 @@ module Queue : QUEUE = struct
     | [], back -> dequeue { front = List.rev back; back = [] }
 end
 
-let q = Queue.enqueue 3 (Queue.enqueue 2 (Queue.enqueue 1 Queue.empty))
-let _ = Queue.length q
+let q = Queue.empty |> Queue.enqueue 1 |> Queue.enqueue 2 |> Queue.enqueue 3
+let _ = Queue.length q   (* = 3 *)
 ```
-
-`int = 3`.
 
 :::
 

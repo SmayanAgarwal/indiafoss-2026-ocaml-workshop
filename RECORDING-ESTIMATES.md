@@ -243,11 +243,11 @@ M07-L04 streams and M07-L05 memoization lectures added on
 | M07-L03 | Exceptions | 18 | 2 | 1 | 27 | 38 |
 | M07-L04 | Streams and laziness | 19 | 2 | 1 | 29 | 40 |
 | M07-L05 | Memoization | 18 | 2 | 1 | 27 | 38 |
-| M07-L06 | Module basics | 16 | 2 | 1 | 24 | 34 |
-| M07-L07 | Module signatures | 16 | 2 | 1 | 24 | 34 |
-| M07-L08 | Functors | 13 | 2 | 1 | 20 | 28 |
+| M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
+| M07-L07 | Module signatures | 18 | 2 | 1 | 27 | 38 |
+| M07-L08 | Functors | 15 | 2 | 1 | 23 | 32 |
 | M07-L09 | Tutorial: a queue functor | 15 | 2 | 1 | 23 | 32 |
-| **M07 total** | | **159** | **19** | **9** | **241** | **336** |
+| **M07 total** | | **162** | **19** | **9** | **246** | **342** |
 | | | | | | **(3.9 h)** | **(5.5 h)** |
 | M07-L10 | Practice: mutability, modules, and streams (not recorded) | 0 | 0 | 19 | 0 | 0 |
 
@@ -268,7 +268,7 @@ to bring the count to 17, then added an `assert` /
 `Assert_failure` slide and rewrote the exception/option/result
 comparison around a runnable `List.assoc` lookup example to bring
 the count to 18.
-M07-L08 (13 slides / 20 min) sits right at the floor; M07-L04
+M07-L08 (15 slides / 23 min) sits right at the floor; M07-L04
 grew to 19 slides on 2026-05-29 (from 13): the combined
 map/filter/zip slide was split into three (one function per
 slide); the `Lazy.t` slide was broken into thunk-reruns /

@@ -329,11 +329,11 @@ let safely f x =
   | Invalid_argument msg -> Error ("invalid: " ^ msg)
   | Division_by_zero     -> Error "div by zero"
 
-let _ = safely (fun n -> 100 / n) 4
-let _ = safely (fun n -> 100 / n) 0
+let _ = safely (fun n -> 100 / n) 4   (* = Ok 25 *)
+let _ = safely (fun n -> 100 / n) 0   (* = Error "div by zero" *)
 ```
 
-`Ok 25` for `n = 4`, `Error "div by zero"` for `n = 0`. Each
+Each
 clause has the same type as `Ok (f x)`, namely
 `(int, string) result`, so the whole `try` is well-typed at that
 type. Exceptions not listed (e.g., `Stack_overflow`) keep
@@ -512,10 +512,10 @@ let halve x =
   assert (x mod 2 = 0);
   x / 2
 
-let _ = halve 10
+let _ = halve 10   (* = 5 *)
 ```
 
-`int = 5`. If the precondition holds, `assert` returns `()` and
+If the precondition holds, `assert` returns `()` and
 evaluation continues. If it fails, `assert` raises
 `Assert_failure (file, line, column)` pointing at the failing
 line. The special form `assert false` is an idiom: it always
@@ -941,11 +941,9 @@ let find_first_opt p xs =
   try Some (find_first p xs)
   with Not_found -> None
 
-let _ = find_first_opt (fun n -> n > 5) [1; 7; 3]
-let _ = find_first_opt (fun n -> n > 100) [1; 2; 3]
+let _ = find_first_opt (fun n -> n > 5) [1; 7; 3]     (* = Some 7 *)
+let _ = find_first_opt (fun n -> n > 100) [1; 2; 3]   (* = None *)
 ```
-
-`Some 7`, `None`.
 
 - `find_first_opt` is the **safe wrapper**: catches the exception
   and turns it into an `option`.

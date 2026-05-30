@@ -633,18 +633,10 @@ let _ = Stack.pop ()     (* = Some 2 *)
 
 - Push 1, 2, 3; `peek` reads the top (`Some 3`) without removing.
 - `pop` returns and removes: `Some 3`, then `Some 2`.
+- There's *one* stack, shared by every caller: the simplest design.
+- For multiple independent stacks, parameterize (Lecture 8).
 
 :::
-
-:::
-
-:::slide
-
-## Notes on the stack solution
-
-- Push 1, 2, 3; peek gives `Some 3`; pop returns 3 then 2.
-- There's *one* stack, shared by every caller. Simplest design.
-- For multiple independent stacks: parameterize (Lecture 8).
 
 :::
 

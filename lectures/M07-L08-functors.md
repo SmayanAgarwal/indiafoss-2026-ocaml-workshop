@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 24
 concepts: [functors, parameterized modules, Map.Make, generic data structures]
 keywords: [OCaml, functor, Map.Make, Set.Make, parameterized modules]
-activity_question: "Use [Map.Make(String)] to build a string -> int map. Insert three entries. Then look up an existing key and a missing one; what types do you get back?"
+activity_question: "Write your own functor [Bag (E : ORDERED)] that builds a multiset (a set that remembers how many times each element was added): [add] increments an element's count, [count] returns it. Instantiate it for [int] and check the counts."
 think_about_this: "A functor is 'a module that takes a module as an argument'. Why is this strictly more powerful than just parameterizing over a *type*?"
 reading:
   - title: "Cornell CS3110, Functors"
@@ -86,6 +86,20 @@ ordering. Parametric polymorphism alone does not give you a
 comparison function or a hash function: those would have to come
 from somewhere.
 
+Take `Map` specifically, since it is the example we use below. A
+map answers `find k`: is there a binding for the key `k`, and
+what value does it carry? To make that fast, the standard library
+keeps the bindings in a *balanced binary search tree ordered by
+key*. Looking up `k` walks down from the root, and at each node it
+*compares* `k` with that node's key to decide whether to go left,
+go right, or stop because it found it. That is O(log n)
+comparisons rather than scanning all n bindings one by one. But
+comparing two keys needs a `compare` function on the key type, and
+parametric polymorphism cannot supply one: a polymorphic map would
+treat its keys as opaque tokens and never look inside them. The
+comparison has to be handed in from outside. That is precisely
+what the argument module to `Map.Make` provides.
+
 :::slide
 
 ## Why we need them
@@ -95,6 +109,30 @@ from somewhere.
 - Parametric polymorphism alone cannot supply those.
 - **Functors** take a module providing the missing operations.
 - Output: a data structure specialised to that module's type.
+
+:::
+
+:::slide
+
+## Why does a *map* need `compare`?
+
+A `Map` keeps its keys in a **sorted balanced tree**, so `find` is
+O(log n), not a linear scan. Each step compares the search key
+with the node's key to decide left, right, or stop:
+
+```text
+              2 -> "two"
+             /          \
+     1 -> "one"        3 -> "three"
+
+find 3:  compare 3 2 > 0  ->  go right  ->  found
+find 1:  compare 1 2 < 0  ->  go left   ->  found
+```
+
+- No ordering means no tree: you would scan *every* binding, O(n).
+- Parametric polymorphism can't compare two `'a`s (it never looks
+  inside them), so `compare` must be **supplied** by the argument
+  module.
 
 :::
 
@@ -113,7 +151,7 @@ around a functor called `Make`. Here is the everyday use:
 ```ocaml
 module Int_map = Map.Make(struct
   type t = int
-  let compare = Stdlib.compare
+  let compare = Int.compare
 end)
 
 let m =
@@ -122,16 +160,13 @@ let m =
   |> Int_map.add 2 "two"
   |> Int_map.add 3 "three"
 
-let _ = Int_map.find 2 m
-let _ = Int_map.find_opt 999 m
+let _ = Int_map.find 2 m        (* = "two" *)
+let _ = Int_map.find_opt 999 m  (* = None *)
 ```
-
-The toplevel reports `"two"` for the existing key and `None` for
-the missing one.
 
 A few things to read out of that code. `Map.Make` is the functor.
 Its *argument* is the inline module `struct type t = int; let
-compare = Stdlib.compare end`. The argument module provides the
+compare = Int.compare end`. The argument module provides the
 key type and a comparison function on that type. `Map.Make`
 returns a full map module specialised to that key type: `empty`,
 `add`, `find`, `find_opt`, `mem`, and all the other standard map
@@ -144,7 +179,7 @@ operations. We bind the result to the name `Int_map`.
 ```ocaml
 module Int_map = Map.Make(struct
   type t = int
-  let compare = Stdlib.compare
+  let compare = Int.compare
 end)
 
 let m =
@@ -153,11 +188,9 @@ let m =
   |> Int_map.add 2 "two"
   |> Int_map.add 3 "three"
 
-let _ = Int_map.find 2 m
-let _ = Int_map.find_opt 999 m
+let _ = Int_map.find 2 m        (* = "two" *)
+let _ = Int_map.find_opt 999 m  (* = None *)
 ```
-
-`"two"`, `None`.
 
 - `Map.Make` is a **functor**.
 - Its argument is a module providing a type `t` and a `compare`
@@ -188,11 +221,9 @@ let m =
   |> String_map.add "bob" 25
   |> String_map.add "carol" 28
 
-let _ = String_map.find_opt "alice" m
-let _ = String_map.find_opt "dave" m
+let _ = String_map.find_opt "alice" m   (* = Some 30 *)
+let _ = String_map.find_opt "dave" m     (* = None *)
 ```
-
-`Some 30` and `None`.
 
 `String` has the right shape because the standard library is
 designed for it: `String.t = string` and `String.compare` has the
@@ -213,11 +244,9 @@ let m =
   |> String_map.add "bob" 25
   |> String_map.add "carol" 28
 
-let _ = String_map.find_opt "alice" m
-let _ = String_map.find_opt "dave" m
+let _ = String_map.find_opt "alice" m   (* = Some 30 *)
+let _ = String_map.find_opt "dave" m     (* = None *)
 ```
-
-`Some 30`, `None`.
 
 - `String` already has the right shape: a type `t` aliased to
   `string` and a `String.compare`.
@@ -231,22 +260,22 @@ let _ = String_map.find_opt "dave" m
 Conceptually, `Map.Make` is defined something like this:
 
 ```text
-module Map = struct
-  module Make (Key : sig
-    type t
-    val compare : t -> t -> int
-  end) = struct
-    type key = Key.t
-    type 'a t = ...  (* balanced tree implementation *)
-    let empty = ...
-    let add k v m = ...
-    let find k m = ...
-    let find_opt k m = ...
-  end
+module Make (Key : sig
+  type t
+  val compare : t -> t -> int
+end) = struct
+  type key = Key.t
+  type 'a t = ...  (* balanced tree implementation *)
+  let empty = ...
+  let add k v m = ...
+  let find k m = ...
+  let find_opt k m = ...
 end
 ```
 
-`Make` takes a parameter `Key` of an inline signature: any module
+(`Make` lives inside the standard library's `Map` module, so you
+write `Map.Make`.) `Make` takes a parameter `Key` of an inline
+signature: any module
 with a type `t` and a `compare : t -> t -> int`. Inside `Make`,
 the type `Key.t` and the function `Key.compare` are available;
 the body of the functor implements the map (with a balanced
@@ -260,21 +289,20 @@ to `Key.compare` for ordering comparisons.
 Conceptually:
 
 ```text
-module Map = struct
-  module Make (Key : sig
-    type t
-    val compare : t -> t -> int
-  end) = struct
-    type key = Key.t
-    type 'a t = ...  (* balanced tree implementation *)
-    let empty = ...
-    let add k v m = ...
-    let find k m = ...
-  end
+module Make (Key : sig
+  type t
+  val compare : t -> t -> int
+end) = struct
+  type key = Key.t
+  type 'a t = ...  (* balanced tree implementation *)
+  let empty = ...
+  let add k v m = ...
+  let find k m = ...
 end
 ```
 
-`Make` is a functor: takes a module with `(type t, compare)` and
+`Make` is a functor (it lives in `Map`, hence `Map.Make`): takes a
+module with `(type t, compare)` and
 returns a full map module. The stdlib's `Map.Make` is a few hundred
 lines of balanced-binary-search-tree code; the *interface* is this
 same shape.
@@ -301,7 +329,7 @@ end
 
 module SetLite (E : ORDERED) = struct
   type elt = E.t
-  type t = elt list  (* sorted, no duplicates *)
+  type t = elt list  (* ascending, no duplicates *)
 
   let empty = []
 
@@ -322,16 +350,23 @@ end
 
 module Int_set = SetLite (struct
   type t = int
-  let compare = Stdlib.compare
+  let compare = Int.compare
 end)
 
-let s = Int_set.add 5 (Int_set.add 2 (Int_set.add 8 Int_set.empty))
-let _ = Int_set.mem 5 s
-let _ = Int_set.mem 99 s
+let s =
+  Int_set.empty
+  |> Int_set.add 8
+  |> Int_set.add 2
+  |> Int_set.add 5
+let _ = Int_set.mem 5 s    (* = true *)
+let _ = Int_set.mem 99 s   (* = false *)
 ```
 
-`true`, `false`. A working sorted-list set in about twenty lines,
-parameterized over any ordered type.
+A working sorted-list set in about twenty lines, parameterized
+over any ordered type. The list is kept in ascending order
+(smallest first), which is what lets `add` stop at the right
+insertion point and `mem` give up as soon as it passes where `x`
+would be.
 
 :::slide
 
@@ -345,16 +380,13 @@ end
 
 module SetLite (E : ORDERED) = struct
   type elt = E.t
-  type t = elt list  (* sorted, no duplicates *)
-
+  type t = elt list  (* ascending, no duplicates *)
   let empty = []
-
   let rec mem x = function
     | [] -> false
     | y :: rest ->
         let c = E.compare x y in
         c = 0 || (c > 0 && mem x rest)
-
   let rec add x = function
     | [] -> [x]
     | y :: rest as ys ->
@@ -365,8 +397,6 @@ module SetLite (E : ORDERED) = struct
 end
 ```
 
-A toy set in maybe twenty lines, parameterized over any ordered type.
-
 :::
 
 :::slide
@@ -376,17 +406,20 @@ A toy set in maybe twenty lines, parameterized over any ordered type.
 ```ocaml
 module Int_set = SetLite (struct
   type t = int
-  let compare = Stdlib.compare
+  let compare = Int.compare
 end)
 
-let s = Int_set.add 5 (Int_set.add 2 (Int_set.add 8 Int_set.empty))
-let _ = Int_set.mem 5 s
-let _ = Int_set.mem 99 s
+let s =
+  Int_set.empty
+  |> Int_set.add 8
+  |> Int_set.add 2
+  |> Int_set.add 5
+let _ = Int_set.mem 5 s    (* = true *)
+let _ = Int_set.mem 99 s   (* = false *)
 ```
 
-`true`, `false`. Apply with `SetLite (M)` where `M` satisfies
-`ORDERED`. `SetLite (String)` would give you a string set the same
-way.
+- Apply with `SetLite (M)` where `M` satisfies `ORDERED`.
+- `SetLite (String)` would give you a string set the same way.
 
 :::
 
@@ -454,7 +487,7 @@ operations of a standard `Map`, *plus* a few of your own. The
 `include` keyword from the previous lecture combines with functor
 application to make this easy.
 
-```text
+```ocaml
 module Int_map = struct
   include Map.Make(Int)
   let pp pp_value fmt m =
@@ -472,10 +505,10 @@ given you, plus our `pp`."
 
 ## Including a functor's output
 
-- Build a module from a functor and want to extend it?
-- Use `include` on the result:
+Want a functor's output *plus* your own helpers? `include` the
+result:
 
-```text
+```ocaml
 module Int_map = struct
   include Map.Make(Int)
   let pp pp_value fmt m =
@@ -483,13 +516,10 @@ module Int_map = struct
 end
 ```
 
-- Start with `Map.Make(Int)`.
-- Include all its definitions.
-- Add a `pp` function on top.
-- The resulting `Int_map` is the **standard int-map plus our
-  extension**.
-- (This snippet uses `Format`, which we won't go into detail on
-  here.)
+- `include Map.Make(Int)` brings in every map operation; `pp` adds
+  a printer on top.
+- The result is the **standard int-map plus our extension**.
+- (Uses `Format`; not detailed here.)
 
 :::
 
@@ -545,35 +575,46 @@ and the most recent binding for a key wins.
 
 ## Activity
 
-Use `Map.Make(String)` to build a `string -> int` map. Insert
-three entries. Look up an existing key and a missing one; report
-both results.
+We wrote `SetLite (E : ORDERED)`, a functor that builds a *set*
+(membership only). Write `Bag (E : ORDERED)` instead: a *multiset*
+that remembers how many times each element was added. `add x`
+increments `x`'s count; `count x` returns it (`0` if never added).
 
 :::
 
 :::quiz code id=M07-L08-q1
-Build a string-keyed map of ages. Fill in `lookup_known` to return
-the age of an existing key and `lookup_missing` to return `None`
-for a missing one.
+Fill in `add` and `count`. The representation is an association
+list pairing each distinct element with its current count.
 
 ```ocaml
-module M = Map.Make(String)
+module type ORDERED = sig
+  type t
+  val compare : t -> t -> int
+end
 
-let ages =
-  M.empty
-  |> M.add "alice" 30
-  |> M.add "bob" 25
-  |> M.add "carol" 28
-
-let lookup_known () : int option = failwith "not implemented"
-let lookup_missing () : int option = failwith "not implemented"
+module Bag (E : ORDERED) = struct
+  type elt = E.t
+  type t = (elt * int) list   (* each distinct element with its count *)
+  let empty = []
+  let add _x _b = failwith "not implemented"
+  let count _x _b = failwith "not implemented"
+end
 ```
 
 ```ocaml skip
+module Int_bag = Bag (struct type t = int let compare = Int.compare end)
+
 let check b m = if not b then failwith m
 let () =
-  check (lookup_known () = Some 30) "alice age";
-  check (lookup_missing () = None) "dave missing";
+  let b =
+    Int_bag.empty
+    |> Int_bag.add 2
+    |> Int_bag.add 5
+    |> Int_bag.add 2
+  in
+  check (Int_bag.count 2 b = 2) "two 2s";
+  check (Int_bag.count 5 b = 1) "one 5";
+  check (Int_bag.count 99 b = 0) "absent element";
   print_endline "all tests passed"
 ```
 :::
@@ -583,8 +624,15 @@ let () =
 Reference solution:
 
 ```text
-let lookup_known () = M.find_opt "alice" ages
-let lookup_missing () = M.find_opt "dave" ages
+let rec add x = function
+  | [] -> [(x, 1)]
+  | (y, c) :: rest ->
+      if E.compare x y = 0 then (y, c + 1) :: rest
+      else (y, c) :: add x rest
+
+let rec count x = function
+  | [] -> 0
+  | (y, c) :: rest -> if E.compare x y = 0 then c else count x rest
 ```
 
 :::
@@ -593,48 +641,75 @@ let lookup_missing () = M.find_opt "dave" ages
 
 :::slide
 
-## Activity solution
+## Activity solution: the functor
+
+Reusing the same `ORDERED` signature from `SetLite`:
 
 ```ocaml
-module M = Map.Make(String)
-
-let ages =
-  M.empty
-  |> M.add "alice" 30
-  |> M.add "bob" 25
-  |> M.add "carol" 28
-
-let _ = M.find_opt "alice" ages
-let _ = M.find_opt "dave" ages
+module Bag (E : ORDERED) = struct
+  type elt = E.t
+  type t = (elt * int) list
+  let empty = []
+  let rec add x = function
+    | [] -> [(x, 1)]
+    | (y, c) :: rest ->
+        if E.compare x y = 0 then (y, c + 1) :: rest
+        else (y, c) :: add x rest
+  let rec count x = function
+    | [] -> 0
+    | (y, c) :: rest -> if E.compare x y = 0 then c else count x rest
+end
 ```
 
-`Some 30`, `None`.
+- `add` bumps an existing element's count or starts it at `1`;
+  `count` returns `0` when the element is absent.
 
-- `M.find_opt` returns `int option`: `Some n` for found keys,
-  `None` for missing.
-- `M.find` raises `Not_found` instead.
-- Same convention as Module 7 Lecture 3.
+:::
+
+:::slide
+
+## Activity solution: using it
+
+```ocaml
+module Int_bag = Bag (struct type t = int let compare = Int.compare end)
+
+let b =
+  Int_bag.empty
+  |> Int_bag.add 2
+  |> Int_bag.add 5
+  |> Int_bag.add 2
+let _ = Int_bag.count 2 b    (* = 2 *)
+let _ = Int_bag.count 99 b   (* = 0 *)
+```
+
+- Instantiate the functor once for `int`; the result is a full
+  multiset module.
+- The same `Bag` functor would build a string multiset from
+  `(struct type t = string let compare = String.compare end)`.
 
 :::
 
 :::
 
-A few things to notice. The [`|>` operator](M06-L05-pipelines.html)
-chains the inserts left to right, which is far more readable than
-the alternative `M.add "alice" 30 (M.add "bob" 25 (M.add "carol" 28
-M.empty))`. Each `M.add` returns a *new* map; the old map is
-unchanged. (Inside, `Map.Make` uses persistent balanced trees that
-share structure between versions; the per-insert cost is O(log n),
-not O(n).)
+The point of the activity is that one functor argument
+(`ORDERED`) supports many data structures: the same `compare` we
+used for a set drives a multiset, a map, a priority queue, and so
+on. Writing `Bag` as a functor (rather than fixing `elt = int`)
+means it works for strings, dates, or any type you can order,
+exactly like `SetLite`.
 
-The `_opt` suffix on `find_opt` is the same convention from
-[M07-L03](M07-L03-exceptions.html#exception-vs-option-vs-result):
-the raising form `M.find` is older; the optional form is the one to
-reach for in new code.
+For comparison, the standard library's `Map.Make` we saw earlier
+chains its inserts with the [`|>` operator](M06-L05-pipelines.html),
+and each `add` returns a *new* map sharing structure with the old
+one (persistent balanced trees, O(log n) per insert). The
+association-list `Bag` here is simpler but O(n); swapping in a
+balanced-tree representation later would not change its interface,
+which is the whole point of [sealing a module behind a
+signature](M07-L07-signatures.html).
 
 ## What's next
 
-[Lecture 9](M07-L09-tutorial.html) is the tutorial for Module 7.
+The [module tutorial](M07-L09-tutorial.html) is next.
 We build a small *functional queue* using the classic two-stack
 trick: keep two lists, one for the front and one for the back in
 reverse order; push onto the back and pop from the front, refilling

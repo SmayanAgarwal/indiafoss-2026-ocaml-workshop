@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 22
 concepts: [signatures, sig...end, .mli files, abstraction, abstract types]
 keywords: [OCaml, signature, sig, mli, abstract type, encapsulation]
-activity_question: "Define a module [Counter] that exposes only [next : unit -> int] and [reset : unit -> unit]; hide the internal ref. Verify that external code cannot read or mutate the ref directly."
+activity_question: "Define a module [Logbook] that exposes only [log : string -> unit], [count : unit -> int], and [last : unit -> string option]; hide the internal list ref. Verify that external code cannot read or mutate the ref directly."
 think_about_this: "A signature is the type-level description of a module. Once you constrain a module by a signature, what changes from the compiler's perspective? What can external callers stop relying on?"
 reading:
   - title: "Cornell CS3110, Signatures"
@@ -63,6 +63,90 @@ than nominal, and it is checked entirely at compile time.
   `public` / `interface`, at the module level.
 - Structural rather than nominal; checked entirely at compile
   time.
+
+:::
+
+## Recall: the stack whose `ref` leaks
+
+Last lecture's `Stack` kept its state in a
+[`ref`](M07-L01-references.html) inside the module, with no
+interface to hide it:
+
+```ocaml
+module Stack = struct
+  let s = ref []
+  let push x = s := x :: !s
+  let pop () =
+    match !s with
+    | [] -> None
+    | x :: rest -> s := rest; Some x
+  let peek () =
+    match !s with
+    | [] -> None
+    | x :: _ -> Some x
+end
+```
+
+Because nothing constrains the module, the internal `s` is just
+another name anyone can reach. Outside code can read it and, far
+worse, scramble it in ways that make no sense for a stack:
+
+```ocaml
+let () = Stack.push 3
+let () = Stack.push 1
+let () = Stack.push 2
+let _ = !Stack.s                             (* = [2; 1; 3] *)
+
+(* sort the stack's internals: meaningless for a LIFO stack *)
+let () = Stack.s := List.sort compare !Stack.s
+let _ = !Stack.s                             (* = [1; 2; 3] *)
+let _ = Stack.pop ()                         (* = Some 1, not Some 2! *)
+```
+
+Running `List.sort` on a stack is nonsense: a stack has no
+business being sorted, and `pop` should hand back the most
+recently pushed element (`2`), not the smallest. But with `s`
+exposed, the compiler accepts it without complaint. The invariant
+"`pop` returns elements last-in-first-out" is *unenforceable* as
+long as the `ref` leaks. This lecture's job is to seal that leak.
+
+:::slide
+
+## Recall: the stack whose `ref` leaks
+
+Last lecture's stack kept its state in a `ref`, with no interface
+to hide it:
+
+```ocaml
+module Stack = struct
+  let s = ref []
+  let push x = s := x :: !s
+  let pop () =
+    match !s with [] -> None | x::r -> s := r; Some x
+  let peek () =
+    match !s with [] -> None | x::_ -> Some x
+end
+```
+
+- Everything in the module is visible by default, `s` included.
+
+:::
+
+:::slide
+
+## ...and the `ref` leaks out
+
+```ocaml
+let () = Stack.push 3; Stack.push 1; Stack.push 2
+let _ = !Stack.s                                 (* = [2; 1; 3] *)
+let () = Stack.s := List.sort compare !Stack.s   (* nonsense! *)
+let _ = Stack.pop ()                             (* = Some 1, not 2 *)
+```
+
+- Outside code reads `s` and even *rewrites* it.
+- Sorting a stack is meaningless, yet the compiler allows it.
+- `pop` now returns `Some 1`, not the last-pushed `2`: the LIFO
+  invariant is broken, and nothing prevented it.
 
 :::
 
@@ -125,13 +209,13 @@ module Counter : COUNTER = struct
   let reset () = n := 0
 end
 
-let _ = Counter.next ()
-let _ = Counter.next ()
+let _ = Counter.next ()   (* = 1 *)
+let _ = Counter.next ()   (* = 2 *)
 let () = Counter.reset ()
-let _ = Counter.next ()
+let _ = Counter.next ()   (* = 1 *)
 ```
 
-The toplevel reports `1`, `2`, `1`. Two things are happening at
+Two things are happening at
 the colon. First, the compiler *checks* that every value listed
 in `COUNTER` is provided by the structure, with a type matching
 or more general than what the signature requires. (Both `next`
@@ -140,7 +224,7 @@ passes.) Second, the compiler *hides* anything not in the
 signature. The internal `n` is not listed, so from the outside,
 `Counter.n` does not exist:
 
-```text
+```ocaml skip
 let _ = !Counter.n  (* error: Unbound value Counter.n *)
 ```
 
@@ -164,14 +248,14 @@ module Counter : COUNTER = struct
   let reset () = n := 0
 end
 
-let _ = Counter.next ()
-let _ = Counter.next ()
+let _ = Counter.next ()   (* = 1 *)
+let _ = Counter.next ()   (* = 2 *)
 let () = Counter.reset ()
-let _ = Counter.next ()
+let _ = Counter.next ()   (* = 1 *)
 ```
 
-`1`, `2`, `1`. Counter compiles because every value listed in
-`COUNTER` is provided by the struct.
+- Counter compiles because every value listed in `COUNTER` is
+  provided by the struct.
 
 :::
 
@@ -181,7 +265,7 @@ let _ = Counter.next ()
 
 The internal `n` is **not listed** in `COUNTER`, so it's hidden:
 
-```text
+```ocaml skip
 let _ = !Counter.n  (* error: Unbound value Counter.n *)
 ```
 
@@ -324,11 +408,11 @@ end
 
 ```ocaml
 let s = Stack.push 1 (Stack.push 2 (Stack.push 3 Stack.empty))
-let _ = Stack.pop s
+let _ = Stack.pop s   (* = Some (1, <abstr>) *)
 ```
 
-`Some (1, ...)`. From outside, `Stack.t` is opaque; you can only
-build stacks via `empty` + `push` and take them apart via `pop`.
+- From outside, `Stack.t` is opaque; you can only build stacks via
+  `empty` + `push` and take them apart via `pop`.
 
 :::
 
@@ -339,8 +423,8 @@ build stacks via `empty` + `push` and take them apart via `pop`.
 - From outside, `Stack.t` is **abstract**: you can't tell it's a list.
 - The only way to make or take apart a stack is through `empty`,
   `push`, `pop`.
-- Change the representation later (Dynarray, two-list amortized,
-  ...) and no external code notices.
+- Change the representation later (a `Dynarray`, a record that
+  caches the depth, ...) and no external code notices.
 
 :::
 
@@ -352,11 +436,14 @@ start from `Stack.empty` and apply `Stack.push`. The only way to
 `Stack.empty :: [1]` from outside and the compiler refuses:
 `Stack.empty` has type `'a Stack.t`, not `'a list`.
 
-If you later switch the representation to a `Dynarray`, or to two
-lists for amortised O(1) operations (we will see this in the
-tutorial, [M07-L09](M07-L09-tutorial.html)), no external code
-notices. The signature is the *only* place the rest of the program
-sees the type.
+If you later switch the representation to a `Dynarray`, or to a
+record that caches the current depth, no external code notices.
+(The same hiding technique lets the queue in the
+[module tutorial](M07-L09-tutorial.html) switch to a two-list,
+amortised-O(1) representation: the two-list trick is the classic
+move for queues, not stacks, since a plain list is already O(1)
+for a stack.) The signature is the *only* place the rest of the
+program sees the type.
 
 Abstract types are how almost every serious OCaml library is
 structured. `Set.t`, `Map.t`, `Hashtbl.t`, `Buffer.t`: all
@@ -437,11 +524,9 @@ module Greet_extended = struct
   let shout name = String.uppercase_ascii (hello name)
 end
 
-let _ = Greet_extended.hello "alice"
-let _ = Greet_extended.shout "alice"
+let _ = Greet_extended.hello "alice"   (* = "hello, alice" *)
+let _ = Greet_extended.shout "alice"   (* = "HELLO, ALICE" *)
 ```
-
-`"hello, alice"`, `"HELLO, ALICE"`.
 
 `include Greet` copies all of `Greet`'s definitions into
 `Greet_extended` as if they had been written there directly.
@@ -464,11 +549,9 @@ module Greet_extended = struct
   let shout name = String.uppercase_ascii (hello name)
 end
 
-let _ = Greet_extended.hello "alice"
-let _ = Greet_extended.shout "alice"
+let _ = Greet_extended.hello "alice"   (* = "hello, alice" *)
+let _ = Greet_extended.shout "alice"   (* = "HELLO, ALICE" *)
 ```
-
-`"hello, alice"`, `"HELLO, ALICE"`.
 
 - `include Greet` **copies all of `Greet`'s definitions** into
   `Greet_extended`.
@@ -503,7 +586,7 @@ end
 
 module Int_ord : ORDERED = struct
   type t = int
-  let compare = Stdlib.compare
+  let compare = Int.compare
 end
 
 module String_ord : ORDERED = struct
@@ -513,7 +596,14 @@ end
 ```
 
 We have defined a signature `ORDERED` for "any type with a
-`compare` operation" and provided two modules that fit. This is
+`compare` operation" and provided two modules that fit. Note that
+`compare` returns an `int`, not a `bool`: it follows the standard
+three-way contract (negative if the first argument is smaller,
+zero if equal, positive if larger). A single `<` would return
+only `bool` and could not distinguish "equal" from "greater," so
+it would not satisfy `val compare : t -> t -> int`. `Int.compare`
+and `String.compare` both honour the three-way contract, which is
+why we reach for them rather than rolling our own from `<`. This is
 how OCaml encodes what [Haskell](https://www.haskell.org/) calls
 a *type class* (`Ord`, the class of types with ordering). The
 difference is just where the polymorphism lives: in Haskell, the
@@ -537,7 +627,7 @@ end
 
 module Int_ord : ORDERED = struct
   type t = int
-  let compare = Stdlib.compare
+  let compare = Int.compare
 end
 
 module String_ord : ORDERED = struct
@@ -610,37 +700,43 @@ compiler refuses.
 
 ## Activity
 
-Define a `Counter` module that exposes only `next : unit -> int`
-and `reset : unit -> unit`. Verify that external code cannot read
-the internal ref directly.
+Define a `Logbook` module that exposes only `log : string ->
+unit`, `count : unit -> int`, and `last : unit -> string option`.
+Hide the internal list ref so external code cannot read or mutate
+it directly.
 
 :::
 
 :::quiz code id=M07-L07-q1
-Define a sealed `Counter` module. The signature has been written
-for you; fill in the implementation.
+Define a sealed `Logbook` module: `log` appends a message,
+`count` returns how many have been logged, and `last` returns the
+most recent message (or `None`). The signature is written for
+you; fill in the implementation, keeping the list of entries
+hidden behind it.
 
 ```ocaml
-module type COUNTER = sig
-  val next : unit -> int
-  val reset : unit -> unit
+module type LOGBOOK = sig
+  val log : string -> unit
+  val count : unit -> int
+  val last : unit -> string option
 end
 
-module Counter : COUNTER = struct
-  let next () = failwith "not implemented"
-  let reset () = failwith "not implemented"
+module Logbook : LOGBOOK = struct
+  let log _ = failwith "not implemented"
+  let count () = failwith "not implemented"
+  let last () = failwith "not implemented"
 end
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (Counter.next () = 1) "first next";
-  check (Counter.next () = 2) "second next";
-  check (Counter.next () = 3) "third next";
-  Counter.reset ();
-  check (Counter.next () = 1) "next after reset";
-  check (Counter.next () = 2) "another next";
+  check (Logbook.count () = 0) "empty count";
+  check (Logbook.last () = None) "empty last";
+  Logbook.log "boot";
+  Logbook.log "ready";
+  check (Logbook.count () = 2) "count after two logs";
+  check (Logbook.last () = Some "ready") "last is most recent";
   print_endline "all tests passed"
 ```
 :::
@@ -650,10 +746,11 @@ let () =
 Reference solution:
 
 ```text
-module Counter : COUNTER = struct
-  let n = ref 0
-  let next () = incr n; !n
-  let reset () = n := 0
+module Logbook : LOGBOOK = struct
+  let entries = ref []
+  let log msg = entries := msg :: !entries
+  let count () = List.length !entries
+  let last () = match !entries with [] -> None | x :: _ -> Some x
 end
 ```
 
@@ -666,41 +763,43 @@ end
 ## Activity solution
 
 ```ocaml
-module type COUNTER = sig
-  val next : unit -> int
-  val reset : unit -> unit
+module type LOGBOOK = sig
+  val log : string -> unit
+  val count : unit -> int
+  val last : unit -> string option
 end
 
-module Counter : COUNTER = struct
-  let n = ref 0
-  let next () = incr n; !n
-  let reset () = n := 0
+module Logbook : LOGBOOK = struct
+  let entries = ref []
+  let log msg = entries := msg :: !entries
+  let count () = List.length !entries
+  let last () = match !entries with [] -> None | x :: _ -> Some x
 end
 
-let _ = Counter.next ()
-let _ = Counter.next ()
-let () = Counter.reset ()
-let _ = Counter.next ()
+let () = Logbook.log "boot"
+let () = Logbook.log "ready"
+let _ = Logbook.count ()   (* = 2 *)
+let _ = Logbook.last ()    (* = Some "ready" *)
 ```
 
-`1`, `2`, `1`. Try `let _ = !Counter.n` and the compiler refuses with
-`Unbound value Counter.n`. The signature has hidden it.
+The most recent message is at the head because `log` prepends.
+Try `let _ = !Logbook.entries` and the compiler refuses with
+`Unbound value Logbook.entries`. The signature has hidden it.
 
 :::
 
 :::
 
-The implementation is the same `Counter` from the previous
-lecture; the difference is the `: COUNTER` annotation. Outside,
-the `n` field has *vanished*. `!Counter.n` is no longer a valid
-expression. The encapsulation is total and checked at compile
-time.
+The list of entries is private to the module; the only way in is
+`log`, and the only ways to observe it are `count` and `last`.
+Outside, `Logbook.entries` has *vanished*: `!Logbook.entries` is
+no longer a valid expression. The encapsulation is total and
+checked at compile time.
 
-If you wanted to change the implementation later, say to use a
-mutable record instead of a `ref`, or to add a maximum value
-beyond which `next` raises an exception, no external code would
-notice. The signature is the contract; the rest is implementation
-detail.
+If you wanted to change the implementation later, say to keep the
+entries in a `Buffer` or a `Dynarray`, or to cap the log at the
+last hundred messages, no external code would notice. The
+signature is the contract; the rest is implementation detail.
 
 ## What's next
 

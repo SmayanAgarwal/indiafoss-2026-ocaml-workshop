@@ -89,11 +89,9 @@ type counter = { mutable n : int; name : string }
 let c = { n = 0; name = "visits" }
 let () = c.n <- c.n + 1
 let () = c.n <- c.n + 1
-let _ = c.n
-let _ = c.name
+let _ = c.n      (* = 2 *)
+let _ = c.name   (* = "visits" *)
 ```
-
-`int = 2`, `string = "visits"`.
 
 - Only fields marked `mutable` can be updated.
 - The `name` field is immutable.
@@ -432,13 +430,11 @@ A fixed-size, mutable sequence:
 ```ocaml
 let a = [| 10; 20; 30; 40; 50 |]
 
-let _ = a.(0)
-let _ = a.(2)
+let _ = a.(0)            (* = 10 *)
+let _ = a.(2)            (* = 30 *)
 let () = a.(2) <- 999
-let _ = a
+let _ = a                (* = [|10; 20; 999; 40; 50|] *)
 ```
-
-`int = 10`, `int = 30`, then `int array = [|10; 20; 999; 40; 50|]`.
 
 - Array literals use `[| ... |]` with `;` separators.
 - Indexing uses `a.(i)`.
@@ -863,10 +859,8 @@ let reverse_in_place a =
 
 let a = [|1; 2; 3; 4; 5|]
 let () = reverse_in_place a
-let _ = a
+let _ = a   (* = [|5; 4; 3; 2; 1|] *)
 ```
-
-`[|5; 4; 3; 2; 1|]`.
 
 - Returns `unit`; effect is to mutate `a`.
 - **Two-pointer reverse:** swap `a.(i)` and `a.(n-1-i)`, halfway.
