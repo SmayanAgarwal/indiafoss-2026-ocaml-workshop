@@ -19,14 +19,16 @@ async function main() {
 
   await page.goto(URL, { waitUntil: 'domcontentloaded' });
 
-  // Wait for x-ocaml registration.
-  await page.waitForFunction(() => !!customElements.get('x-ocaml'), null, { timeout: 30_000 });
+  // Wait for x-ocaml registration. The bundle is a large wasm toplevel;
+  // on a cold load right after a full rebuild, first compile can take a
+  // while, so allow a generous window before declaring failure.
+  await page.waitForFunction(() => !!customElements.get('x-ocaml'), null, { timeout: 90_000 });
 
   // Wait for cells to upgrade (shadow DOM populated with the Run button).
   await page.waitForFunction(
     () => Array.from(document.querySelectorAll('x-ocaml'))
             .every(c => c.shadowRoot?.querySelector('.run_btn button')),
-    null, { timeout: 30_000 });
+    null, { timeout: 90_000 });
 
   const cellCount = await page.evaluate(() => document.querySelectorAll('x-ocaml').length);
   console.log('cells upgraded:', cellCount);

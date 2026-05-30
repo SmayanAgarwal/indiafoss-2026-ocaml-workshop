@@ -73,6 +73,12 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   let worker_v =
     bundle_hash (Printf.sprintf "assets/%s/x-ocaml.worker.js" bundle_dir)
   in
+  (* Cache-bust the local stylesheets the same way as the bundle, so an
+     edited chapter.css / slides.css invalidates the browser's cached
+     copy on the next build (these are served without far-future caching
+     but browsers still hold a copy across visits). *)
+  let chapter_css_v = bundle_hash "assets/css/chapter.css" in
+  let slides_css_v = bundle_hash "assets/css/slides.css" in
   Printf.sprintf
     {|<!doctype html>
 <html lang="en">
@@ -84,8 +90,8 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   <title>%s</title>
   <link rel="stylesheet" href="%s/assets/reveal/dist/reveal.css">
   <link rel="stylesheet" href="%s/assets/reveal/dist/theme/white.css" id="reveal-theme">
-  <link rel="stylesheet" href="%s/assets/css/chapter.css">
-  <link rel="stylesheet" href="%s/assets/css/slides.css">
+  <link rel="stylesheet" href="%s/assets/css/chapter.css?v=%s">
+  <link rel="stylesheet" href="%s/assets/css/slides.css?v=%s">
   <!-- KaTeX for inline / display math. Auto-render walks the DOM after
        load and rewrites $...$ and \(...\) inline and $$...$$ / \[...\]
        display delimiters into rendered math. We skip <x-ocaml>, <code>,
@@ -122,7 +128,7 @@ let head ~asset_root ~(fm : Frontmatter.t) =
     (Parse.html_escape commit_sha)
     (Parse.html_escape quiz_api_url)
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
-    asset_root asset_root asset_root asset_root
+    asset_root asset_root asset_root chapter_css_v asset_root slides_css_v
     asset_root bundle_dir main_v asset_root bundle_dir worker_v
     src_load_attr
 
@@ -905,6 +911,97 @@ let runtime_script ~asset_root =
       }
     }
     setupHeadingAnchors();
+
+    // ---------- On-this-page TOC (chapter mode only) ----------
+    // Built from the prose section headings (h2/h3 that are NOT inside
+    // a slide callout), reusing the ids setupHeadingAnchors() just
+    // assigned so every TOC link matches its permalink anchor. Styled
+    // and hidden-by-context (slides / print / narrow) entirely in CSS.
+    const TOC_KEY = 'nptel-toc-collapsed';
+    function headingLabel(h) {
+      // h.textContent now includes the trailing permalink glyph; drop it.
+      const clone = h.cloneNode(true);
+      const pl = clone.querySelector('.permalink');
+      if (pl) pl.remove();
+      return clone.textContent.trim();
+    }
+    function buildToc() {
+      const heads = Array.from(
+        document.querySelectorAll('.chapter h2, .chapter h3'))
+        .filter(h => h.id && !h.closest('section.slide'));
+      // Short lectures don't need an outline.
+      if (heads.length < 3) return;
+
+      const nav = document.createElement('nav');
+      nav.className = 'toc chapter-only';
+      nav.setAttribute('aria-label', 'On this page');
+
+      const head = document.createElement('div');
+      head.className = 'toc-head';
+      const title = document.createElement('span');
+      title.className = 'toc-title';
+      title.textContent = 'On this page';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'toc-collapse';
+      head.appendChild(title);
+      head.appendChild(btn);
+
+      const list = document.createElement('ul');
+      list.className = 'toc-body';
+      const linkFor = Object.create(null);
+      for (const h of heads) {
+        const li = document.createElement('li');
+        li.className = (h.tagName === 'H3') ? 'toc-h3' : 'toc-h2';
+        const a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = headingLabel(h);
+        li.appendChild(a);
+        list.appendChild(li);
+        linkFor[h.id] = a;
+      }
+      nav.appendChild(head);
+      nav.appendChild(list);
+      body.appendChild(nav);
+
+      // Collapse toggle, persisted like the left sidebar.
+      function applyCollapsed(c) {
+        nav.classList.toggle('collapsed', c);
+        btn.setAttribute('aria-label', c ? 'Show contents' : 'Collapse contents');
+        btn.setAttribute('title', c ? 'Show contents' : 'Collapse contents');
+      }
+      applyCollapsed(localStorage.getItem(TOC_KEY) === '1');
+      btn.addEventListener('click', () => {
+        const c = !nav.classList.contains('collapsed');
+        applyCollapsed(c);
+        localStorage.setItem(TOC_KEY, c ? '1' : '0');
+      });
+
+      // Scroll-spy: active = the last heading whose top has scrolled
+      // above a line just under the sticky header. Deterministic scan
+      // (heads is short); the IntersectionObserver is only a cheap
+      // "something crossed the viewport" trigger.
+      const SPY_OFFSET = 96;
+      let active = null;
+      function setActive(id) {
+        if (id === active) return;
+        if (active && linkFor[active]) linkFor[active].classList.remove('active');
+        active = id;
+        if (active && linkFor[active]) linkFor[active].classList.add('active');
+      }
+      function updateActive() {
+        let current = heads[0];
+        for (const h of heads) {
+          if (h.getBoundingClientRect().top - SPY_OFFSET <= 0) current = h;
+          else break;
+        }
+        setActive(current.id);
+      }
+      const io = new IntersectionObserver(updateActive, { threshold: 0 });
+      for (const h of heads) io.observe(h);
+      updateActive();
+    }
+    buildToc();
 
     function setupMcqQuizzes() {
       document.querySelectorAll('.quiz-mcq').forEach(setupMcqQuiz);

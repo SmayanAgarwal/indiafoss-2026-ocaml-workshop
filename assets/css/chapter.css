@@ -705,3 +705,86 @@ x-ocaml {
    [hidden] HTML attribute that parse.ml adds for [ocaml test] cells. */
 .quiz-code x-ocaml[data-quiz-test] { display: none !important; }
 .quiz-code.show-tests x-ocaml[data-quiz-test] { display: block !important; }
+
+/* ---- On-this-page TOC (right-hand, chapter mode only) ----
+   Built client-side from the prose section headings (see buildToc in
+   the runtime script). Complements the left course-outline sidebar:
+   left answers "which lecture", this answers "where in this lecture".
+   Shown only on wide screens; never in slide mode or print/PDF. */
+
+.toc {
+  position: fixed;
+  top: 3.6rem;
+  right: 1rem;
+  width: 220px;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  padding: 0.6rem 0.75rem 0.8rem;
+  background: #fcfcfb;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  z-index: 5;
+}
+.toc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+.toc-title {
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.toc-collapse {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: 1rem/1 ui-sans-serif, system-ui, sans-serif;
+  padding: 0 0.2rem;
+}
+.toc-collapse:hover { color: var(--accent); }
+/* Glyph flips with state: visible list shows a "minimise" mark,
+   collapsed shows a "contents" mark. */
+.toc-collapse::before { content: "\2013"; }            /* en dash */
+.toc.collapsed .toc-collapse::before { content: "\2261"; } /* triple bar */
+.toc.collapsed { width: auto; }
+.toc.collapsed .toc-head { margin-bottom: 0; }
+.toc.collapsed .toc-title { display: none; }
+.toc.collapsed .toc-body { display: none; }
+
+.toc-body {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.toc-body li { margin: 0; }
+.toc-body a {
+  display: block;
+  padding: 0.18rem 0.4rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  border-radius: 0 3px 3px 0;
+  overflow-wrap: anywhere;
+}
+.toc-body a:hover { color: var(--fg); background: var(--code-bg); }
+.toc-body a.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-left-color: var(--accent);
+  background: var(--code-bg);
+}
+.toc-h3 a { padding-left: 1.3rem; font-size: 0.95em; }
+
+/* Visibility: chapter-mode, wide screens, screen (not print) only. */
+body.mode-slides .toc { display: none; }
+@media print { .toc { display: none; } }
+@media (max-width: 1279px) { .toc { display: none; } }
