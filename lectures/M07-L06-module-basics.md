@@ -108,11 +108,9 @@ module Greet = struct
   let goodbye name = "goodbye, " ^ name
 end
 
-let _ = Greet.hello "world"
-let _ = Greet.goodbye "world"
+let _ = Greet.hello "world"     (* = "hello, world" *)
+let _ = Greet.goodbye "world"   (* = "goodbye, world" *)
 ```
-
-`"hello, world"`, `"goodbye, world"`.
 
 - A module is `module Name = struct ... end`.
 - Inside the struct, you write top-level definitions just like in
@@ -200,10 +198,8 @@ module Color = struct
 end
 
 let c : Color.t = Color.Red
-let _ = Color.to_string c
+let _ = Color.to_string c   (* = "red" *)
 ```
-
-`"red"`.
 
 - The `Color` module exposes a type `t` and a function
   `to_string`.
@@ -262,10 +258,8 @@ end
 
 let _ =
   let open Greet in
-  hello "alice" ^ "; " ^ goodbye "alice"
+  hello "alice" ^ "; " ^ goodbye "alice"   (* = "hello, alice; goodbye, alice" *)
 ```
-
-`"hello, alice; goodbye, alice"`.
 
 - `let open M in expr` opens `M` inside `expr` only.
 - Outside, `Greet` is still required as a prefix.
@@ -312,8 +306,8 @@ There is a middle form, `M.(expr)`, which opens `M` in just the
 parenthesised expression. It is even shorter than a local open
 when you have a tight cluster of references:
 
-```text
-let _ = List.(map (fun x -> x * 2) [1; 2; 3])
+```ocaml
+let _ = List.(map (fun x -> x * 2) [1; 2; 3])   (* = [2; 4; 6] *)
 ```
 
 Use whichever feels clearest at the call site.
@@ -358,12 +352,12 @@ module Counter = struct
   let reset () = n := 0
 end
 
-let _ = Counter.next ()
-let _ = !Counter.n  (* leaks: external code pokes at n *)
+let _ = Counter.next ()   (* = 1 *)
+let _ = !Counter.n        (* = 1; leaks: external code pokes at n *)
 ```
 
-`1`, `1`. The `n` ref is visible from outside; Lecture 7 hides it
-with a module signature.
+- The `n` ref is visible from outside; the next lecture hides it
+  with a module signature.
 
 :::
 
@@ -421,12 +415,12 @@ module Geometry = struct
 end
 
 let p = Geometry.Point.make 3.0 4.0
-let _ = p.x
+let _ = p.x   (* = 3.0 *)
 ```
 
-`float = 3.0`. Sub-modules organize a tree of related concepts;
-module access goes through the full path, but the field read is
-just `p.x` (the type of `p` fixes which record `x` belongs to).
+- Sub-modules organize a tree of related concepts.
+- Module access goes through the full path; the field read is just
+  `p.x` (the type of `p` fixes which record `x` belongs to).
 
 :::
 
@@ -573,27 +567,6 @@ let () =
 
 :::solution
 
-Reference solution: store the stack in a private `ref` of a list.
-
-```ocaml
-module Stack = struct
-  let s = ref []
-  let push x = s := x :: !s
-  let pop () =
-    match !s with
-    | [] -> None
-    | x :: rest -> s := rest; Some x
-  let peek () =
-    match !s with
-    | [] -> None
-    | x :: _ -> Some x
-end
-```
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution: the module
@@ -634,7 +607,8 @@ let _ = Stack.pop ()     (* = Some 2 *)
 - Push 1, 2, 3; `peek` reads the top (`Some 3`) without removing.
 - `pop` returns and removes: `Some 3`, then `Some 2`.
 - There's *one* stack, shared by every caller: the simplest design.
-- For multiple independent stacks, parameterize (Lecture 8).
+- For multiple independent stacks, parameterize with a functor
+  (a later lecture).
 
 :::
 
@@ -645,8 +619,8 @@ of an `int list`, held by the module itself. Every caller of
 `Stack.push` mutates the same list; there is exactly one stack in
 the program. If you wanted multiple independent stacks, you would
 either (a) make the stack a *type* with operations that take and
-return stacks (the functional style we will see in
-[M07-L09](M07-L09-tutorial.html)), or (b) provide a constructor
+return stacks (the functional style we will see in the
+[module tutorial](M07-L09-tutorial.html)), or (b) provide a constructor
 `Stack.make ()` that returns a fresh ref each time.
 
 The other thing to notice: the `s` ref is visible to outside

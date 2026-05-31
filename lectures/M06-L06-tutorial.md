@@ -809,7 +809,7 @@ After Module 6 you can:
 What's coming up:
 
 - [Module 7](M07-L01-references.html): side effects (`ref`, mutation, exceptions) and **modules** (the OCaml language feature, not the NPTEL kind).
-- [Module 8](M08-L01-sequencing.html): monads and GADTs.
+- [Module 8](M08-L01-option-monad.html): monads and GADTs.
 
 :::
 
@@ -821,7 +821,7 @@ exceptions, `Printf`), and *modules* (the OCaml language feature for
 organising code into named, type-bearing units). Higher-order
 functions remain in play throughout; we will see them again in
 Module 7 in the form of references that hold functions and in
-[Module 8](M08-L02-option-monad.html) in the form of monads, where
+[Module 8](M08-L01-option-monad.html) in the form of monads, where
 the whole programming pattern is built on higher-order composition.
 
 ## Reading

@@ -544,8 +544,8 @@ Common stdlib exceptions you will catch:
 - `Assert_failure (file, line, col)`: from the `assert` keyword.
 
 ```ocaml
-let _ = try List.hd [] with Failure _ -> 0
-   (* = 0; List.hd [] raises Failure "hd", handler catches *)
+(* List.hd [] raises Failure "hd"; the handler catches it *)
+let _ = try List.hd [] with Failure _ -> 0   (* = 0 *)
 ```
 
 :::

@@ -625,7 +625,7 @@ distinguish among kinds of failure ("user gave bad input" vs.
 "the disk is full" vs. "network timed out"), `result` lets you
 carry that information through. The `result` type also threads
 nicely through chained computations; we will see that with the
-`let*` sugar in [M08-L04](M08-L04-result-monad.html).
+`let*` sugar in [the result-monad lecture](M08-L02-laws-list-result.html).
 
 How to *use* an `option` or `result` (the `match` on `None` vs.
 `Some`, or `Ok` vs. `Error`) is the subject of

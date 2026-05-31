@@ -43,7 +43,7 @@ reasoning you give up runs through both halves of the lecture.
 
 :::slide
 
-## This lecture: arrays and mutation
+## This lecture: mutable records and arrays
 
 - Beyond `ref`: two more mutable building blocks in OCaml.
 - *Mutable record fields*: mark individual fields with `mutable`.
@@ -524,12 +524,10 @@ length `n` where element `i` is computed by calling `f i`.
 ## Building an array
 
 ```ocaml
-let _ = Array.make 5 0
-let _ = Array.init 5 (fun i -> i * i)
-let _ = Array.of_list [10; 20; 30]
+let _ = Array.make 5 0                  (* = [|0; 0; 0; 0; 0|] *)
+let _ = Array.init 5 (fun i -> i * i)   (* = [|0; 1; 4; 9; 16|] *)
+let _ = Array.of_list [10; 20; 30]      (* = [|10; 20; 30|] *)
 ```
-
-`[|0; 0; 0; 0; 0|]`, `[|0; 1; 4; 9; 16|]`, `[|10; 20; 30|]`.
 
 - `Array.make n x` creates an array of length `n` with every
   element `x`.

@@ -1,11 +1,11 @@
 ---
 title: "GADTs: variants with type-level information"
-lecture_no: 7
+lecture_no: 4
 week: 8
 duration_target_min: 24
 concepts: [GADT, generalized algebraic data types, type-level information, pattern matching on GADTs]
 keywords: [OCaml, GADT, type refinement, type-safe AST]
-activity_question: "Write a GADT [type _ expr] with [Int_lit : int -> int expr], [Bool_lit : bool -> bool expr], [If : bool expr * 'a expr * 'a expr -> 'a expr]. Write an evaluator [eval : 'a expr -> 'a]. Why is [If (Int_lit 5, ..., ...)] a *type* error?"
+activity_question: "Extend the lecture's [type _ expr] with a constructor [Is_zero : int expr -> bool expr] and add the matching case to [eval]. Notice how one constructor takes an [int expr] yet produces a [bool expr]."
 think_about_this: "An ordinary variant says: 'each constructor produces a value of the type'. A GADT says: 'each constructor produces a value of a *specific* type that may differ from the others'. What is the cost of this extra precision?"
 reading:
   - title: "Real World OCaml, GADTs"
@@ -20,14 +20,14 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">GADTs: variants with type-level information</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 7</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 4</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
 This lecture switches gears entirely from the
-[monad story](M08-L01-sequencing.html). So far in Module 8 we have
+[monad story](M08-L01-option-monad.html). So far in Module 8 we have
 been about *sequencing* computations; now we turn to a more
 advanced type-system feature called *generalized algebraic data
 types*, almost always abbreviated *GADTs*. They are the second
@@ -42,10 +42,8 @@ compiler can prove things at compile time that an ordinary variant
 would have to check at runtime. Wrong combinations become type
 errors, not crashes.
 
-The idea is in some ways simple. The notation is unusual. The
-type theory is involved. We will keep the type theory light, focus
-on a few worked examples, and revisit them in the next lecture
-with more substantial use cases.
+The idea is in some ways simple; the notation is unusual; the type
+theory is involved. We keep it light and lean on worked examples.
 
 :::slide
 
@@ -179,9 +177,9 @@ Both compile. `Add` is given two `int expr`s; `If` has a
 
 ## The broken versions are caught at compile time
 
-```
+```ocaml skip
 let bad = Add (Int_lit 1, Bool_lit true)
-let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
+let worse = If (Int_lit 5, Int_lit 1, Int_lit 2)
 ```
 
 - `Add` rejects `Bool_lit true`: it wants `int expr`.
@@ -406,14 +404,14 @@ If the answer is "I would have to add an
 [`option`](M04-L04-recursive-types.html#the-option-type) return
 type and pattern-match in two places", they are probably not.
 
-The [next lecture](M08-L08-gadts-use-cases.html) shows three or
-four real use cases that pull this into focus: typed
-pretty-printers, heterogeneous lists, type-safe builders, and the
-GADT machinery behind `Printf`.
+The [next lecture](M08-L05-gadts-use-cases.html) shows real use
+cases that pull this into focus, typed pretty-printers and
+type-safe builders, and the lecture after adds heterogeneous lists
+and the GADT machinery behind `Printf`.
 
 ## A quick check
 
-:::quiz mcq id=M08-L07-q3
+:::quiz mcq id=M08-L04-q3
 What is the type of `Add (Int_lit 1, Int_lit 2)`?
 
 - [x] `int expr`
@@ -426,7 +424,7 @@ What is the type of `Add (Int_lit 1, Int_lit 2)`?
 `int expr`. The compiler refuses to apply `Add` to anything else.
 :::
 
-:::quiz mcq id=M08-L07-q2
+:::quiz mcq id=M08-L04-q2
 Why does the `eval` function need the annotation `type a. a expr
 -> a`?
 
@@ -449,9 +447,10 @@ functions often need this annotation explicitly.
 
 ## Activity
 
-Define a GADT `type _ expr` with `Int_lit`, `Bool_lit`, and `If`.
-Write `eval : 'a expr -> 'a`. Try to construct `If (Int_lit 5,
-Int_lit 1, Int_lit 2)`. Note the compile error.
+The lecture's `expr` has `Int_lit`, `Bool_lit`, `Add`, `If`. Add a
+constructor `Is_zero : int expr -> bool expr` (true when its
+`int expr` evaluates to 0) and extend `eval` to handle it. It
+takes an `int expr` but produces a `bool expr`.
 
 :::
 
@@ -465,19 +464,24 @@ Int_lit 1, Int_lit 2)`. Note the compile error.
 type _ expr =
   | Int_lit  : int  -> int expr
   | Bool_lit : bool -> bool expr
+  | Add      : int expr * int expr -> int expr
   | If       : bool expr * 'a expr * 'a expr -> 'a expr
+  | Is_zero  : int expr -> bool expr
 
 let rec eval : type a. a expr -> a = function
   | Int_lit  n -> n
   | Bool_lit b -> b
+  | Add (x, y) -> eval x + eval y
   | If (c, t, e) -> if eval c then eval t else eval e
+  | Is_zero e -> eval e = 0
 
-let _ = eval (If (Bool_lit true, Int_lit 5, Int_lit 10))
-let _ = eval (If (Bool_lit false, Bool_lit true, Bool_lit false))
+let _ = eval (If (Is_zero (Add (Int_lit 2, Int_lit (-2))),
+                  Int_lit 1, Int_lit 0))            (* = 1 *)
 ```
 
-`5`, `false`. The `If` constructor's type forces the branches to
-match each other and the condition to be `bool expr`.
+- `Is_zero` consumes an `int expr` but its result type is
+  `bool expr`, so it can sit in `If`'s condition slot.
+- Its `eval` case computes the inner `int`, then compares to 0.
 
 :::
 
@@ -491,7 +495,7 @@ match each other and the condition to be `bool expr`.
 let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
 ```
 
-```
+```text
 Error: The constant 5 has type int but an expression was
        expected of type bool expr
 ```
@@ -503,7 +507,7 @@ compiler enforces it.
 
 A code quiz:
 
-:::quiz code id=M08-L07-q1
+:::quiz code id=M08-L04-q1
 Define a GADT `type _ value` with two constructors `VInt : int ->
 int value` and `VBool : bool -> bool value`. Write `unwrap : type
 a. a value -> a` that returns the underlying value.
@@ -549,24 +553,22 @@ single concrete `a` to satisfy both branches.
 
 ## What is next
 
-Lecture 8: **GADT use cases**.
+Lecture 5: **GADT use cases**.
 
-- Heterogeneous lists and type witnesses.
-- The format-string trick behind `Printf`.
-- Less-trivial examples.
-- Then Lecture 10: combining GADTs with monads in a typed
-  evaluator.
+- Typed pretty-printers and type witnesses.
+- Type-safe builders.
+- Then Lecture 6 (hlists, the `Printf` trick) and the Lecture 7
+  tutorial.
 
 :::
 
-The [next lecture](M08-L08-gadts-use-cases.html) takes the basic
-machinery here and shows three or four real applications. The
-[lecture after that](M08-L10-tutorial.html) is the tutorial:
-combining a GADT-based typed AST with an
-[option-monad](M08-L02-option-monad.html) evaluator that can fail
-at runtime (division by zero, say) while still guaranteeing type
-safety on the success path. That is the capstone for the OCaml
-half of the course.
+The [next lecture](M08-L05-gadts-use-cases.html) takes the basic
+machinery here and shows real applications. The
+[tutorial](M08-L07-tutorial.html) later combines a GADT-based typed
+AST with an [option-monad](M08-L01-option-monad.html) evaluator
+that can fail at runtime (division by zero, say) while still
+guaranteeing type safety on the success path. That is the capstone
+for the OCaml half of the course.
 
 ## Reading
 

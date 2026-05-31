@@ -14,8 +14,8 @@ reading:
 # Practice: mutability, modules, and streams
 
 This is a *Practice* chapter, not a Tutorial. There are no slides
-and there is no video; it is a worksheet. The Tutorial
-([M07-L09](M07-L09-tutorial.html)) walked through a queue functor
+and there is no video; it is a worksheet. The
+[Tutorial](M07-L09-tutorial.html) walked through a queue functor
 on screen. Here you solve the problems yourself, directly in the
 browser. Each problem has an editable cell seeded with
 `failwith "not implemented"` (or a stub module) and a test cell
@@ -27,17 +27,17 @@ solution to compare.
 The worksheet has three parts, one per thread of the module:
 
 - **Part 1: mutability** (Problems 1 to 7). References, mutable
-  record fields, and in-place array update, from
-  [M07-L01](M07-L01-references.html) and
-  [M07-L02](M07-L02-arrays-and-mutation.html).
+  record fields, and in-place array update, from the
+  [references lecture](M07-L01-references.html) and
+  [arrays lecture](M07-L02-arrays-and-mutation.html).
 - **Part 2: modules and functors** (Problems 8 to 13). Packaging
   code behind a [signature](M07-L07-signatures.html), and writing
   [functors](M07-L08-functors.html) that build modules from
   modules. Several problems tie Parts 1 and 2 together: functors
   whose result type is *mutable*.
 - **Part 3: streams** (Problems 14 to 19). Infinite data built
-  from thunks, from
-  [M07-L04](M07-L04-streams-and-laziness.html).
+  from thunks, from the
+  [streams lecture](M07-L04-streams-and-laziness.html).
 
 Difficulty rises roughly as you go. The functor problems in Part 2
 are the meatiest; if you get stuck, skip ahead to the streams and
@@ -248,8 +248,8 @@ see or reset the count.
 
 :::quiz code id=M07-L10-q4
 Implement `gensym`. Capture a `ref` counter in a closure (the
-private-state-in-a-closure pattern from
-[M07-L01](M07-L01-references.html)).
+private-state-in-a-closure pattern from the
+[references lecture](M07-L01-references.html)).
 
 ```ocaml
 let gensym = fun () ->
@@ -726,7 +726,7 @@ end
 
 The node is a record with one immutable field (`value`) and two
 `mutable` fields (`next`, `prev`), exactly the doubly-linked-list
-node from [M07-L02](M07-L02-arrays-and-mutation.html), now packaged
+node from the [arrays lecture](M07-L02-arrays-and-mutation.html), now packaged
 inside a functor. The functor is parameterised by `C : Showable`,
 so `content` is `C.t`; the `with type content = C.t` ascription
 exposes that equation so the test can call `create 1` with a plain
@@ -1191,8 +1191,8 @@ depend on it being a list. (CS3100's version uses a function
 
 ## Part 3: streams
 
-These problems use the thunk-based stream type from
-[M07-L04](M07-L04-streams-and-laziness.html). Each problem's cell
+These problems use the thunk-based stream type from the
+[streams lecture](M07-L04-streams-and-laziness.html). Each problem's cell
 seeds the type and the helpers it needs (`hd`, `tl`, `take`, and
 sometimes `from` / `map_s`); you write the new function.
 
@@ -1604,7 +1604,7 @@ By the end of these nineteen problems you should be comfortable with:
   (`merge` / Hamming), unfolding (`iterate`), scanning
   (`partial_sums`), and diagonalising a grid (`nat_pairs`).
 
-[Module 8](M08-L01-sequencing.html) goes further with two more
+[Module 8](M08-L01-option-monad.html) goes further with two more
 advanced ideas: *monads* (a uniform way to sequence computations
 that carry context, including the kind of functional-heap state you
 built in Problem 13) and *generalised algebraic data types* (GADTs).

@@ -395,7 +395,7 @@ let command_list_gen : command list QCheck.arbitrary =
 The `let*` is QCheck's monadic let-binding for `Gen.t`: it draws
 one random value from a generator and binds it to a name (same
 shape as the monadic `let*` from
-[M08-L02](M08-L02-option-monad.html)).
+[the option monad](M08-L01-option-monad.html)).
 
 Three observations on the generator:
 

@@ -634,39 +634,6 @@ let () =
 
 :::solution
 
-Reference solution: extend the signature to add `length` and the
-implementation alongside.
-
-```text
-module type QUEUE = sig
-  type 'a t
-  val empty : 'a t
-  val is_empty : 'a t -> bool
-  val length : 'a t -> int
-  val enqueue : 'a -> 'a t -> 'a t
-  val dequeue : 'a t -> ('a * 'a t) option
-end
-
-module Queue : QUEUE = struct
-  type 'a t = { front : 'a list; back : 'a list }
-  let empty = { front = []; back = [] }
-  let is_empty q = q.front = [] && q.back = []
-  let length q = List.length q.front + List.length q.back
-  let enqueue x q = { q with back = x :: q.back }
-  let rec dequeue q =
-    match q.front, q.back with
-    | [], [] -> None
-    | x :: rest, _ -> Some (x, { q with front = rest })
-    | [], back -> dequeue { front = List.rev back; back = [] }
-end
-
-let queue_length = Queue.length
-```
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution: the signature
@@ -822,12 +789,12 @@ grouping and namespacing.
 structures parameterised by element operations. Together they are
 enough to structure a real OCaml project at scale.
 
-[Module 8](M08-L01-sequencing.html) turns to two more advanced
+[Module 8](M08-L01-option-monad.html) turns to two more advanced
 abstractions: *monads*, which sequence computations cleanly across
-effects ([option](M08-L02-option-monad.html),
-[result](M08-L04-result-monad.html),
-[state](M08-L05-state-monad.html), exceptions, IO), and
-[*GADTs*](M08-L07-gadts-basics.html), generalized algebraic data
+effects ([option](M08-L01-option-monad.html),
+[result](M08-L02-laws-list-result.html),
+[state](M08-L03-state-monad.html), exceptions, IO), and
+[*GADTs*](M08-L04-gadts-basics.html), generalized algebraic data
 types, which let you encode richer constraints in the type
 system. Both are common in serious OCaml code; both reward the
 groundwork we have laid through Modules 1 through 7.

@@ -304,33 +304,34 @@ doubly-linked list, `MakeSet`/`MakeDict`, a functional heap) is
 drawn from CS3100's mutability-and-modules and monads assignments
 plus the `Set.Make`/`Map.Make` shape; Parts 1 and 3 are original.
 
-### M08: Monads and GADTs (10 lectures)
+### M08: Monads and GADTs (7 lectures)
 
-Re-estimated 2026-05-25 by `grep -c '^:::slide'` of the current
-M08 drafts. M08 grew from 7 to 10 lectures (added L03 monad laws +
-list monad, L06 parameterised state, L09 hlists + witnesses; the
-renumbered existing files are L04, L05, L07, L08, L10). Estimate
-uses slide_count x 1.5 min.
+Re-estimated 2026-05-31 by `grep -c '^:::slide'` of the current
+M08 drafts. M08 was **compressed from 10 back to 7 lectures**
+(6 lectures + 1 tutorial), merging the repetitive monad half
+(option+sequencing -> L01; laws+list+result -> L02; state+
+parameterised -> L03) and renumbering the GADT half + tutorial to
+L04-L07. Estimate uses slide_count x 1.5 min; the merged lectures
+carry more chapter prose per slide than the originals, so the
+video figures are a floor and real recording trends toward the
+~3 h target.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M08-L01 | Sequencing computations: motivation for monads | 13 | 2 | 1 | 20 | 28 |
-| M08-L02 | The option monad and `let*` sugar | 13 | 2 | 1 | 20 | 28 |
-| M08-L03 | Monad laws and the list monad | 19 | 2 | 1 | 29 | 40 |
-| M08-L04 | The result monad: errors with information | 16 | 2 | 1 | 24 | 34 |
-| M08-L05 | The state monad | 16 | 2 | 1 | 24 | 34 |
-| M08-L06 | Parameterised state and a typed stack machine | 14 | 2 | 1 | 21 | 29 |
-| M08-L07 | GADTs: variants with type-level information | 14 | 2 | 1 | 21 | 29 |
-| M08-L08 | GADTs: use cases beyond toy interpreters | 11 | 2 | 1 | 17 | 24 |
-| M08-L09 | GADTs: hlists and witnesses | 15 | 2 | 1 | 23 | 32 |
-| M08-L10 | Tutorial: a tiny well-typed evaluator | 16 | 2 | 1 | 24 | 34 |
-| **M08 total** | | **147** | **20** | **10** | **221** | **309** |
-| | | | | | **(3.7 h)** | **(5.2 h)** |
+| M08-L01 | The option monad and `let*` | 11 | 2 | 1 | 17 | 24 |
+| M08-L02 | Monad laws, the list monad, the result monad | 10 | 2 | 1 | 15 | 21 |
+| M08-L03 | The state monad and parameterised state | 15 | 2 | 1 | 23 | 32 |
+| M08-L04 | GADTs: basics | 14 | 2 | 1 | 21 | 29 |
+| M08-L05 | GADTs: use cases | 9 | 2 | 1 | 14 | 20 |
+| M08-L06 | GADTs: hlists, witnesses, and `printf` | 15 | 2 | 1 | 23 | 32 |
+| M08-L07 | Tutorial: a tiny well-typed evaluator | 16 | 2 | 1 | 24 | 34 |
+| **M08 total** | | **90** | **14** | **7** | **137** | **192** |
+| | | | | | **(2.3 h)** | **(3.2 h)** |
 
-M08-L08 (11 slides / 17 min) sits below the NPTEL 20-min floor;
-M08-L03 (19 slides / 29 min) is the heaviest lecture and rides
-the 30-min ceiling. Other lectures land comfortably between the
-floor and ceiling.
+M08-L02 and M08-L05 sit near the 20-min floor by raw slide count,
+but both are dense merges (laws+list+result; pretty-printers+
+builders) whose chapter prose pushes the real running time up.
+M08-L07 (tutorial) is the heaviest at the 30-min ceiling.
 
 ### M09: Concurrency and Testing (8 lectures)
 
@@ -479,7 +480,7 @@ state; expect movement during each module's polish pass):**
 
 | Lecture | Slides |
 |---|---:|
-| M08-L08 GADTs use cases | 11 |
+| M08-L05 GADTs use cases | 9 |
 | M12-L05 MirageOS = Library OS + Virtualisation + OCaml | 12 |
 
 (M07-L03 and M07-L05 were lifted out of this list by the
@@ -501,9 +502,9 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1831 min (30.5 hours) across
-  81 lectures and 12 modules.
-- **Estimated recording time**: 2565 min (42.8 hours)
+- **Final video**: 1747 min (29.1 hours) across
+  78 lectures and 12 modules.
+- **Estimated recording time**: 2448 min (40.8 hours)
   at the 1.4x multiplier.
 
 The 30.5 hours of final video meets NPTEL's ~30 hr target
@@ -518,10 +519,11 @@ expansion (+1 lecture, +44 video min for TCB-growth /
 ClickOS / Solo5 ABI / GC-in-a-unikernel / Bob-the-Bin-Man;
 M12 grew from 5 to 6 lectures with M12-L01..L04 also growing,
 and L05 held for KC's separate rewrite). The M08
-monads-and-GADTs polish on 2026-05-25 took the module from
-7 to 10 lectures and added 1.3 h of video (new M08-L03 monad
-laws and list monad, M08-L06 parameterised state and a typed
-stack machine, M08-L09 hlists and witnesses). Numbers reflect
+monads-and-GADTs module was expanded to 10 lectures on
+2026-05-25 and then **re-compressed to 7** on 2026-05-31
+(6 lectures + 1 tutorial), merging the repetitive monad half
+and curating to a ~3 h budget; this removed ~2 h of recording
+time. Numbers reflect
 the
 2026-05-22 re-estimate for M02, M03, and M04 (slide_count x
 1.5), the 2026-05-23 addition of M07-L04 and M07-L05, the
@@ -546,7 +548,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **42.8 hours of recording / 4.3 hours per day = ~9.9 studio days.**
+- **40.8 hours of recording / 4.3 hours per day = ~9.5 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -560,12 +562,12 @@ sessions:
 | M05 Pattern matching | 3.6 | 0.8 |
 | M06 Higher-order programming | 3.2 | 0.7 |
 | M07 Side effects and modular programming | 4.8 | 1.1 |
-| M08 Monads and GADTs | 5.2 | 1.2 |
+| M08 Monads and GADTs | 3.2 | 0.7 |
 | M09 Concurrency and Testing | 4.1 | 1.0 |
 | M10 Memory safety and security | 3.1 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 3.7 | 0.9 |
 | M12 Unikernels (MirageOS) | 2.8 | 0.7 |
-| **Total** | **42.8** | **9.9** |
+| **Total** | **40.8** | **9.5** |
 
 ## Caveats
 

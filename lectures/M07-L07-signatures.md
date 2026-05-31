@@ -564,8 +564,8 @@ let _ = Greet_extended.shout "alice"   (* = "HELLO, ALICE" *)
 `include` is the OCaml moral equivalent of inheritance, but it
 operates structurally rather than by class hierarchy. It is
 commonly used to *extend* a stdlib module with your own helpers
-(`include Map.Make (Int)` followed by a printer, say) or to layer
-modules where one is "everything in A plus a bit more."
+(`include List` followed by your own list utilities, say) or to
+layer modules where one is "everything in A plus a bit more."
 
 The distinction with `open`: `open M` brings `M`'s names into the
 local scope *temporarily*, but the names are not part of any new

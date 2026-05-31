@@ -1,0 +1,491 @@
+---
+title: "The option monad and `let*`"
+lecture_no: 1
+week: 8
+duration_target_min: 26
+concepts: [pyramid of doom, bind, return, option monad, let-operators, Option.bind, Option.map]
+keywords: [OCaml, monad, sequencing, bind, option, let*]
+activity_question: "Using the [bind] we wrote in this lecture, define [add_opt : int option -> int option -> int option] that returns [Some (x + y)] when both inputs are present and [None] otherwise. Do not re-derive [bind]; use it."
+think_about_this: "What other shapes besides 'maybe a value' might want the same kind of sequencing helper? List three."
+reading:
+  - title: "Cornell CS3110, Monads"
+    url: https://cs3110.github.io/textbook/chapters/ds/monads.html
+---
+
+# The option monad and `let*`
+
+
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Functional Programming with OCaml</p>
+<h2 class="title-slide-lecture">The option monad and `let*`</h2>
+<p class="title-slide-label">Module 8 &middot; Lecture 1</p>
+<p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
+</div>
+
+:::
+
+Module 8 is about two ideas that recur all over real OCaml code.
+The first, which occupies this lecture and the next two, is the
+*monad*: a small design pattern for *sequencing computations of a
+particular shape* without writing the plumbing by hand. The second,
+from lecture 4 onward, is *GADTs*, a type-system feature for giving
+variants more precise types. The two come together in the closing
+tutorial.
+
+The word *monad* sounds scarier than it is. The mathematical
+machinery lives in [category
+theory](https://en.wikipedia.org/wiki/Category_theory), which is a
+beautiful subject but not what we are doing here. For programming,
+a monad is just a *type* plus two operations (`return` and `bind`)
+that let you chain computations of one shape cleanly. This lecture
+builds that pattern from a concrete pain point and lands on OCaml's
+`let*` syntax for it.
+
+:::slide
+
+## Module 8 roadmap
+
+- **Monads** (this lecture and the next two): a pattern for
+  sequencing.
+  - L1: the **option monad** and `let*` (you are here).
+  - L2: the monad **laws**, the **list** monad, the **result**
+    monad.
+  - L3: the **state** monad and parameterised state.
+- **GADTs** (L4-L6): variants that carry type-level information.
+- **L7 tutorial**: a tiny well-typed evaluator combining both.
+
+:::
+
+## A motivating problem
+
+We ended [M05-L06](M05-L06-tutorial.html) with a little expression
+evaluator built out of nested `match`es on `option`: every
+sub-result was unwrapped with a `Some _`/`None` arm, and `None`
+propagated by hand. That boilerplate is the problem this lecture
+solves.
+
+Here is the pattern in miniature. Suppose we parse a number from a
+string, double it, check it is in range, and print it. Each step
+might fail, so each returns an
+[`'a option`](M04-L04-recursive-types.html#the-option-type):
+`Some x` on success, `None` on failure.
+
+```ocaml
+let parse_int s = int_of_string_opt s
+let double x = Some (x * 2)
+let small x = if x < 100 then Some x else None
+let print_num x = print_endline (string_of_int x); Some ()
+```
+
+We want to wire them together: parse, then double, then check, then
+print. At each step, if the previous step said `None`, the whole
+pipeline gives up; if it said `Some x`, we feed `x` to the next
+step. The naive translation nests a `match` per step:
+
+:::slide
+
+## The pyramid of doom
+
+```ocaml
+let parse_int s = int_of_string_opt s
+let double x = Some (x * 2)
+let small x = if x < 100 then Some x else None
+let print_num x = print_endline (string_of_int x); Some ()
+
+let demo s =
+  match parse_int s with
+  | None -> None
+  | Some x ->
+      match double x with
+      | None -> None
+      | Some y ->
+          match small y with
+          | None -> None
+          | Some z -> print_num z
+```
+
+- Four steps, three `None -> None` arms, four levels of indent.
+- The interesting logic is buried inside; the boring plumbing is on
+  the outside.
+
+:::
+
+Every step has *exactly the same shape*: "if the previous step is
+`None`, return `None`; otherwise unwrap and continue." It is
+written once, then twice, then three times, growing linearly with
+the number of steps. That repetition is the signal to pull out an
+abstraction.
+
+## Capturing the pattern: `bind`
+
+Lift the repetition into a function. It takes an `option` and a
+function saying "what to do if we have a value", and returns the
+next `option`:
+
+```ocaml
+let bind opt f =
+  match opt with
+  | None -> None
+  | Some x -> f x
+```
+
+OCaml infers the type `'a option -> ('a -> 'b option) -> 'b
+option`. Read it slowly: given the previous step's result (an `'a
+option`) and a continuation (`'a -> 'b option`), produce the
+combined, possibly-short-circuited next step. The two type
+variables are independent because the value type changes from step
+to step (string to int, int to int, and so on).
+
+With `bind`, the pyramid flattens to a vertical sequence:
+
+```ocaml
+let demo s =
+  bind (parse_int s) (fun x ->
+  bind (double x) (fun y ->
+  bind (small y) (fun z ->
+  print_num z)))
+```
+
+One `bind` per step; the "what to do on `None`" logic lives once,
+inside `bind`. It still has noise: each line opens a parenthesis
+that piles up at the end, and `bind ... (fun x -> ...)` is heavier
+than `let x = ... in ...`. OCaml has one more piece of sugar that
+closes the gap.
+
+## Definition
+
+A monad is a type plus two operations. Concretely for `option`:
+
+:::slide
+
+## Definition
+
+```ocaml
+module Opt = struct
+  let return x = Some x
+  let bind opt f =
+    match opt with
+    | None -> None
+    | Some x -> f x
+  let ( let* ) = bind
+end
+```
+
+Two functions and one operator alias:
+
+- `return : 'a -> 'a option`. Lift a plain value into the option
+  world (just `Some`).
+- `bind : 'a option -> ('a -> 'b option) -> 'b option`. Sequence
+  two optional steps.
+- `let*` is `bind` under a syntactic-sugar name.
+
+:::
+
+`return` (sometimes called `pure`) is the trivial way to put a
+plain value into the option world. It earns a name because it is
+part of the monad *interface*: anything claiming to be a monad
+provides `return` and `bind`, and the rest of the code can pretend
+not to know which monad it is using.
+
+The line `let ( let* ) = bind` is where the magic happens. The
+identifier `( let* )` is a *let-operator* (an OCaml feature since
+4.08). Any identifier `let X` whose `X` starts with a punctuation
+character can be bound to a function; once it is in scope, the
+compiler treats `let* p = e in body` as sugar for `( let* ) e (fun
+p -> body)`, which is `bind e (fun p -> body)`. That single
+rewrite rule is the whole feature.
+
+## Using `let*`
+
+The pyramid, one more time, now with `let*`:
+
+:::slide
+
+## Using `let*`
+
+```ocaml
+let ( let* ) opt f =
+  match opt with
+  | None -> None
+  | Some x -> f x
+
+let parse_int s = int_of_string_opt s
+let double x = Some (x * 2)
+let small x = if x < 100 then Some x else None
+
+let demo s =
+  let* x = parse_int s in
+  let* y = double x in
+  small y
+
+let _ = demo "5"      (* = Some 10 *)
+let _ = demo "frog"   (* = None *)
+let _ = demo "200"    (* = None *)
+```
+
+- Each step is `let* name = expression in ...`.
+- Looks almost like ordinary `let ... in ...`; the only mark is the
+  `*`.
+- Hidden: if any step gives `None`, the rest is skipped.
+
+:::
+
+The compiled code is identical to the nested-`match` and
+explicit-`bind` forms: `let*` is purely syntactic sugar that
+elaborates back to `bind`. A reader learns to read `let*` as "this
+might fail, and if it does, give up"; each `let*` line names the
+*successful* result, and the short-circuit on failure is implicit.
+The whole function reads top to bottom with no nested matches.
+
+## `Option.bind` and `Option.map`
+
+The standard library ships these, so you do not write them yourself
+in real code:
+
+:::slide
+
+## `Option.bind` and `Option.map`
+
+```ocaml
+let _ = Option.bind (Some 5) (fun x -> if x > 0 then Some (x * 2) else None)  (* = Some 10 *)
+let _ = Option.bind None (fun x -> Some (x + 1))   (* = None *)
+let _ = Option.map (fun x -> x * 2) (Some 5)        (* = Some 10 *)
+```
+
+- `Option.bind` is exactly the `bind` we defined.
+- `Option.map` is weaker: it applies a *pure* function inside the
+  option (the continuation cannot fail).
+- Use `bind` when the next step itself returns an option; use `map`
+  when it is a pure transformation.
+
+:::
+
+In monad-speak, `map` is the *functor* operation and `bind` the
+stronger monad operation; `map` can be defined as `bind opt (fun x
+-> Some (f x))`. There is also a sibling let-operator, `( let+ )`,
+for map-only chains where no new failure is introduced; you will
+meet it in real code, but `let*` alone covers everything we need
+here.
+
+In practice, codebases that lean on monads define a small module
+per monad with `bind`, `( let* )`, and helpers, then `let open M
+in` at the top of a function so the rest reads as plain `let*`. The
+compiler does not guess which monad you mean: you choose it by what
+is in scope, and the type of `let*` is always right there in front
+of you.
+
+## When *not* to use a monad
+
+A monad is overkill for a single optional step. The plain `match`
+is shorter and just as clear:
+
+:::slide
+
+## When *not* to use a monad
+
+```ocaml
+let _ =
+  match int_of_string_opt "frog" with
+  | Some n -> n * 2
+  | None -> 0
+```
+
+`int = 0`. Two cases, one `match`, three lines. No monad needed.
+
+- Reach for `let*` at **three or more** sequential optional steps.
+- Below three, the `match` is shorter and equally clear.
+- Above three, the pyramid bites, and `let*` wins.
+
+:::
+
+There is nothing magic about three; it is a rule of thumb. If you
+find yourself indenting past column 50 to handle a third level of
+`None`, switch to `let*`. (A *lawful* monad's `return` and `bind`
+also satisfy three equational laws; we make those precise in the
+[next lecture](M08-L02-laws-list-result.html).)
+
+## Where else does this come up?
+
+The pattern is worth learning because the same `'a t` + `return` +
+`bind` shape recurs everywhere, with `t` different each time:
+
+:::slide
+
+## Same shape, many monads
+
+- `'a option`: maybe a value (this lecture).
+- `('a, 'e) result`: a value or an error with information (L2).
+- `'a list`: zero, one, or many values; `bind` is flat-map across
+  all of them (the list monad, L2).
+- `state -> 'a * state`: a value threaded against ambient state
+  (L3).
+- `'a Lwt.t` / `'a Eio.Promise.t`: a value available after I/O
+  completes (concurrent programming).
+- `'a parser`: a parser consuming input (parser combinators).
+
+One notation (`let*`), one intuition, many concrete monads.
+
+:::
+
+Build the habit of asking "is this shape a monad?" whenever you
+write a computation that may not produce a plain value, and you
+will spot the pattern far more often than you would expect.
+
+## A quick check
+
+:::quiz mcq id=M08-L01-q1
+What is the type of the helper `bind` we defined?
+
+- [ ] `'a option -> 'a option -> 'a option`
+- [x] `'a option -> ('a -> 'b option) -> 'b option`
+- [ ] `'a -> ('a -> 'b option) -> 'b option`
+- [ ] `'a option -> ('a -> 'b) -> 'b option`
+
+**Why:** `bind` takes an option (the previous step's result), a
+function that turns the unwrapped value into the next option, and
+returns that next option. The two type variables `'a` and `'b` are
+independent because the value type can change from step to step
+(parse a string to an int, then double the int, etc.).
+:::
+
+:::quiz mcq id=M08-L01-q2
+You have `let* x = e1 in let* y = e2 in let* z = e3 in Some (x, y,
+z)`, where `e1` is `Some 1`, `e2` is `None`, and `e3` is some
+expression. What does the whole thing evaluate to, and how many
+times is `e3` evaluated?
+
+- [ ] `Some (1, ?, ?)`, evaluated once.
+- [x] `None`, evaluated zero times.
+- [ ] `Some (1, _, _)`, evaluated zero times.
+- [ ] An exception is raised.
+
+**Why:** the option monad short-circuits on the first `None`. Once
+`e2` is `None`, the surrounding `let*` returns `None` without
+evaluating its continuation, so `e3` never runs. Failure is
+detected as soon as it happens and downstream code is skipped.
+:::
+
+:::slide
+
+## Activity
+
+The `bind` we wrote chains *one* option into the next. Use it to
+combine *two*: define `add_opt : int option -> int option -> int
+option` that returns `Some (x + y)` when both inputs are present,
+and `None` if either is missing. Do not re-derive `bind`; use it.
+
+:::
+
+:::solution
+
+:::slide
+
+## Activity solution
+
+```ocaml
+let bind opt f =
+  match opt with
+  | None -> None
+  | Some x -> f x
+
+let add_opt a b =
+  bind a (fun x ->
+  bind b (fun y ->
+  Some (x + y)))
+
+let _ = add_opt (Some 3) (Some 4)   (* = Some 7 *)
+let _ = add_opt (Some 3) None       (* = None *)
+let _ = add_opt None (Some 4)       (* = None *)
+```
+
+- The outer `bind` unwraps `a`, the inner unwraps `b`; the body
+  runs only when both are `Some`.
+- If either is `None`, the matching `bind` short-circuits to
+  `None`.
+
+:::
+
+:::
+
+A code quiz to consolidate:
+
+:::quiz code id=M08-L01-q3
+Using the given `bind` and `safe_div`, write `div_chain : int ->
+int -> int -> int option` that computes `a / b / c`, returning
+`None` if either division is by zero.
+
+```ocaml
+let bind opt f =
+  match opt with
+  | None -> None
+  | Some x -> f x
+
+let safe_div a b = if b = 0 then None else Some (a / b)
+
+let div_chain a b c =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (div_chain 100 5 2 = Some 10) "both divisions succeed";
+  check (div_chain 100 0 2 = None) "first division by zero";
+  check (div_chain 100 5 0 = None) "second division by zero";
+  check (div_chain 7 2 1 = Some 3) "integer division floors";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+Reference solution:
+
+```
+let div_chain a b c =
+  bind (safe_div a b) (fun ab ->
+  safe_div ab c)
+```
+
+Two divisions, one `bind`, then a tail call. The chain
+short-circuits on the first divide-by-zero. Sugared with `let*`
+this reads `let* ab = safe_div a b in safe_div ab c`.
+
+:::
+
+## What is next
+
+:::slide
+
+## What is next
+
+Lecture 2: the **monad laws**, the **list** monad, and the
+**result** monad.
+
+- Three equations a "lawful" monad satisfies.
+- `'a list` as a monad: `bind = List.concat_map` (non-determinism).
+- `('a, 'e) result`: the same shape, but failure carries
+  information.
+
+:::
+
+The [next lecture](M08-L02-laws-list-result.html) states the three
+laws that make a monad well-behaved, then shows the same `let*`
+notation driving two very different shapes: the list monad (many
+values) and the result monad (a value or an informative error).
+
+## Reading
+
+- **Cornell CS3110**, *Monads*:
+  <https://cs3110.github.io/textbook/chapters/ds/monads.html>
+
+## Sources
+
+This lecture's prose, worked examples, and quizzes are original to
+this course. Materials referenced during preparation are listed in
+the *Reading* section above; Cornell CS3110 and Real World OCaml
+are CC BY-NC-ND-licensed and have not been derivatively reused.
+See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
+at the repository root for the full source posture.

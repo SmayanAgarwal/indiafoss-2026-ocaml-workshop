@@ -714,7 +714,7 @@ Files have to be opened and closed. Databases have transactions.
 Networks have sockets. Your program has to interact with these
 things, which means your program has to have some effectful code in
 it somewhere. Functional purists go to elaborate lengths to "wrap"
-these effects ([monads](M08-L01-sequencing.html), in Haskell); OCaml
+these effects ([monads](M08-L01-option-monad.html), in Haskell); OCaml
 takes a more pragmatic view, lets you do I/O directly, and only asks
 that you keep the effectful parts of your program small and
 identifiable. [Module 7](M07-L01-references.html) covers this
@@ -869,7 +869,7 @@ with the simplest expressions and bindings;
 together are how you do most of your data modelling;
 [Module 6](M06-L01-functions-revisited.html) puts higher-order
 functions to work. By the end of
-[Module 8](M08-L01-sequencing.html) you will have all the basic FP
+[Module 8](M08-L01-option-monad.html) you will have all the basic FP
 tools.
 
 The second half of the course (Modules 9-12) is where we use those

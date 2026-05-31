@@ -50,13 +50,10 @@
   M07-L08-functors.md
   M07-L09-tutorial.md
   M07-L10-practice.md
-  M08-L01-sequencing.md
-  M08-L02-option-monad.md
-  M08-L03-monad-laws-list-monad.md
-  M08-L04-result-monad.md
-  M08-L05-state-monad.md
-  M08-L06-parameterised-state.md
-  M08-L07-gadts-basics.md
-  M08-L08-gadts-use-cases.md
-  M08-L09-hlists-witnesses.md
-  M08-L10-tutorial.md))
+  M08-L01-option-monad.md
+  M08-L02-laws-list-result.md
+  M08-L03-state-monad.md
+  M08-L04-gadts-basics.md
+  M08-L05-gadts-use-cases.md
+  M08-L06-hlists-witnesses.md
+  M08-L07-tutorial.md))

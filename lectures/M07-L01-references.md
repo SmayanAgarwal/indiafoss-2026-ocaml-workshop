@@ -414,9 +414,9 @@ let n = ref 0
 let () = incr n
 let () = incr n
 let () = incr n
-let _ = !n
+let _ = !n        (* = 3 *)
 let () = decr n
-let _ = !n
+let _ = !n        (* = 2 *)
 ```
 
 `incr r` is shorthand for `r := !r + 1`; `decr r` is shorthand for

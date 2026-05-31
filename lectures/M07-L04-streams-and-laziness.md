@@ -198,10 +198,8 @@ up a list of length `n`. The first `n` nodes get computed; the
 rest stay as thunks.
 
 ```ocaml
-let _ = take 10 zero_ones
+let _ = take 10 zero_ones   (* = [0; 1; 0; 1; 0; 1; 0; 1; 0; 1] *)
 ```
-
-`int list = [0; 1; 0; 1; 0; 1; 0; 1; 0; 1]`.
 
 A companion, `drop`, throws away the first `n` elements and
 returns the rest of the stream:
@@ -361,10 +359,8 @@ let rec sieve s =
   Cons (p, fun () -> sieve (filter (fun x -> x mod p <> 0) (tl s)))
 
 let primes = sieve (from 2)
-let _ = take 10 primes
+let _ = take 10 primes   (* = [2; 3; 5; 7; 11; 13; 17; 19; 23; 29] *)
 ```
-
-`int list = [2; 3; 5; 7; 11; 13; 17; 19; 23; 29]`.
 
 A clean expression of an algorithm that is awkward to state with
 finite data. The recursion is exactly the recurrence: "the

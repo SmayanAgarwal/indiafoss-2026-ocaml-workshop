@@ -1,11 +1,11 @@
 ---
 title: "GADTs: use cases beyond toy interpreters"
-lecture_no: 8
+lecture_no: 5
 week: 8
 duration_target_min: 22
-concepts: [type witnesses, heterogeneous lists, type-safe APIs, printf-like format types]
-keywords: [OCaml, GADT, type witness, hlist, format]
-activity_question: "Define a GADT [type _ t] with [String_t : string t] and [Int_t : int t]. Write [convert : type a. a t -> a -> string] that pretty-prints the value."
+concepts: [type witnesses, typed pretty-printers, type-safe builders]
+keywords: [OCaml, GADT, type witness, builder]
+activity_question: "Reusing the lecture's [type _ ty] witness, write [default : type a. a ty -> a] that produces a default value for the witnessed type (0, the empty string, false, a pair of defaults, the empty list). This runs the witness the opposite direction from [show]."
 think_about_this: "A GADT lets you write a function whose return type depends on the input *value* (not just the input type). Why is that more powerful than overloading or type classes?"
 reading:
   - title: "Real World OCaml, More GADTs"
@@ -20,20 +20,24 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">GADTs: use cases beyond toy interpreters</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 8</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-The [toy expression-AST from Lecture 7](M08-L07-gadts-basics.html#the-gadt-form)
+The [toy expression-AST from the previous lecture](M08-L04-gadts-basics.html#the-gadt-form)
 is the standard "first example" of GADTs. It is useful for showing
 the mechanics, but it leaves a misleading impression: that GADTs
-are mostly for interpreters. They are not. This lecture shows four
-idioms you will see in real OCaml code where GADTs earn their keep.
+are mostly for interpreters. They are not. This lecture shows two
+idioms you will see in real OCaml code where GADTs earn their keep:
+typed pretty-printers and type-safe builders. Two further idioms,
+heterogeneous lists and the machinery behind `printf`, are big
+enough to get their own treatment in the
+[next lecture](M08-L06-hlists-witnesses.html).
 
-The common thread across all four is *type witnesses*. Where an
-ordinary value carries data, a witness is a value whose runtime
+The common thread across all of these is *type witnesses*. Where
+an ordinary value carries data, a witness is a value whose runtime
 shape is uninteresting but whose *type* carries information the
 program needs at compile time. GADTs are how OCaml encodes
 witnesses naturally.
@@ -44,11 +48,11 @@ witnesses naturally.
 
 - Last lecture's toy expression AST leaves a misleading
   impression: that GADTs are mostly for interpreters.
-- They are not. Four idioms where GADTs earn their keep:
+- They are not. Two idioms where GADTs earn their keep:
   - Typed pretty-printers.
-  - Heterogeneous lists.
-  - Type-safe APIs that prevent illegal states.
-  - `printf`-like format strings (type-safe).
+  - Type-safe builders that prevent illegal states.
+- Two more, big enough for their own lecture next time:
+  heterogeneous lists and the GADT behind `printf`.
 - Common thread: *type witnesses*. A value whose runtime shape
   is uninteresting; whose *type* carries information.
 - GADTs are how OCaml encodes witnesses naturally.
@@ -133,62 +137,7 @@ deriving infrastructure: you derive a value of type `'a ty` for
 your record type, then use it to serialise, deserialise, generate
 test cases, or print values, all without writing the code by hand.
 
-## Use 2: heterogeneous lists
-
-A list whose elements have *different* types, each tracked at
-compile time:
-
-:::slide
-
-## Use 2: heterogeneous lists
-
-```ocaml
-type _ hlist =
-  | HNil  : unit hlist
-  | HCons : 'a * 'rest hlist -> ('a * 'rest) hlist
-
-let example : (int * (string * (bool * unit))) hlist =
-  HCons (42, HCons ("hi", HCons (true, HNil)))
-
-let first : type a r. (a * r) hlist -> a = function
-  | HCons (x, _) -> x
-
-let _ = first example
-```
-
-`int = 42`. The type `(int * (string * (bool * unit))) hlist`
-spells out the sequence of element types; pattern matching
-destructures with the right type per slot.
-
-:::
-
-A heterogeneous list (often `hlist`) is a list where each element
-can have a different type, and the type system tracks the
-*sequence* of types. The type `(int * (string * (bool * unit)))
-hlist` says "this list has an `int`, then a `string`, then a
-`bool`, then nothing".
-
-The constructor `HCons : 'a * 'rest hlist -> ('a * 'rest) hlist`
-is the workhorse: it takes a head of any type `'a` and a tail of
-type `'rest hlist`, producing a list whose type is `('a * 'rest)
-hlist`. The encoding uses tuples in the type to record the
-sequence; you could equally use a list-in-the-type structure with
-some other notation.
-
-Why would you want this? When you have a *fixed-shape but
-heterogeneous* collection, an ordinary [list](M04-L04-recursive-types.html)
-`'a list` cannot encode it (the elements must all share `'a`).
-[Tuples](M04-L01-tuples.html) work for small fixed shapes
-(`(int, string, bool)` for three) but do not generalise to
-"n elements with given types". Heterogeneous lists are the OCaml
-answer: a type-level encoding of "list with these exact element
-types".
-
-You see this in the implementation of typed printf (next use case),
-in some database libraries that map tuple types to column types,
-and in type-safe builder APIs.
-
-## Use 3: type-safe builders
+## Use 2: type-safe builders
 
 A *builder* is an API that lets you construct a value piece by
 piece, where the partially-built value has some type that changes
@@ -197,7 +146,7 @@ value sharp:
 
 :::slide
 
-## Use 3: type-safe builders
+## Use 2: type-safe builders
 
 ```ocaml
 type _ query =
@@ -234,87 +183,50 @@ builders, configuration DSLs, and parser combinators all use type
 parameters that change as you compose pieces, with GADTs ensuring
 the composition is type-safe.
 
-## Use 4: format strings (and Printf)
+## Two more idioms, next lecture
 
-The most famous use of GADTs in OCaml is hidden: it is the
-machinery behind [`Printf`](https://v2.ocaml.org/api/Printf.html).
-A format string like `"%d %s\n"` has a *type* that encodes which
-arguments must follow:
+Two further GADT idioms are common enough to deserve their own
+treatment, and the [next lecture](M08-L06-hlists-witnesses.html)
+develops both:
 
-:::slide
+- *Heterogeneous lists*: a list whose elements have different
+  types, each tracked at compile time, that you can still recurse
+  over. The witness pattern from `show` generalises to drive
+  operations across such a list.
+- *Format strings and `Printf`*: the most famous hidden use of
+  GADTs in OCaml. A format string like `"%d %s\n"` has a *type*
+  that forces the following arguments to be `int` then `string`,
+  checked at compile time. It is a witness list encoded inside the
+  string literal.
 
-## Use 4: format strings
+Both build directly on the typed-witness idea above, which is why
+they fit naturally after this lecture rather than inside it.
 
-- `Printf.printf` is implemented with a GADT.
-- The format string `"%d %s\n"` has a *type*.
-- That type encodes "this format takes an `int`, then a `string`,
-  then prints":
+## Do I need a GADT here?
 
-```
-val printf : ('a, out_channel, unit) format -> 'a
-```
-
-- `Printf.printf "%d %s\n" 42 "hello"`: the format type forces the
-  next argument to be `int`, then `string`.
-- `Printf.printf "%d %s\n" "wrong" 42` is a type error.
-- You will not write `printf`'s format type machinery yourself;
-  the stdlib provides it.
-- You feel its safety on every use: typed format strings via GADTs.
-
-:::
-
-The format-string type in OCaml is `('a, 'b, 'c) format`, and the
-GADT machinery inside `printf` decodes the format string at
-*compile time* into a function type that pinpoints what arguments
-are required. So `printf "%d\n"` has type `int -> unit` and
-`printf "%d %s\n"` has type `int -> string -> unit`. Pass the
-wrong type and the compiler complains; pass too few arguments and
-the call type-checks but produces a partially-applied function.
-
-This is the polished version of the "type-safe builder" idea above:
-the GADT machinery tracks state (which format specifiers remain
-unprocessed) and the resulting function's type reflects that state.
-You will use it constantly; you will not write the machinery
-yourself.
-
-## When GADTs do not help
-
-For everyday OCaml code, GADTs are usually the wrong hammer.
-[Records](M04-L02-records.html) and
-[variants](M04-L03-variants.html) cover most needs:
+The [last lecture's guidance on when to reach for a
+GADT](M08-L04-gadts-basics.html#when-to-reach-for-gadts) applies
+to these use cases too: most code is better served by plain
+[records](M04-L02-records.html) and
+[variants](M04-L03-variants.html), and the sharp edges (locally
+abstract types, explicit annotations, hostile error messages) are
+the same. Before reaching for the heavier machinery, a short
+checklist:
 
 :::slide
 
-## When GADTs do not help
-
-Prefer plain types for:
-
-- Business data: records and variants.
-- Configuration: a record.
-- Most parsing: regular ADT plus interpreter.
-- Anything well-served by simple types.
-
-**Sharp edges of GADTs:**
-
-- Locally abstract types.
-- Explicit annotations.
-- Sometimes-hostile error messages.
-
-Reach for GADTs only when heterogeneous typed data must flow
-through one function.
-
-:::
-
-A short checklist of "do I need a GADT here?":
+## Do I need a GADT here?
 
 - Do different cases need to carry *different* type information?
   (If no: ordinary variant.)
-- Will the compiler reject an illegal construction *and* I can
-  show a concrete bug class that this prevents? (If no: not worth
+- Will the compiler reject an illegal construction *and* can I
+  name a concrete bug class that this prevents? (If no: not worth
   the cost.)
 - Am I building a small embedded language or a typed-witness API?
   (If yes: GADTs are likely the right tool.)
 - Is the complexity proportional to the safety win? (Always check.)
+
+:::
 
 Most real OCaml code never needs GADTs. The small fraction that
 does (typed DSLs, query builders, the format-string code in the
@@ -324,7 +236,7 @@ GADTs the default.
 
 ## A quick check
 
-:::quiz mcq id=M08-L08-q3
+:::quiz mcq id=M08-L05-q3
 In the `show` function with a GADT witness, why does
 `show (T_pair (T_int, T_string)) (3, "hi")` type-check while
 `show T_int (3, "hi")` does not?
@@ -343,32 +255,36 @@ string) ty`, so the second argument must be `int * string`. `T_int
 not match `int`, hence the type error in the second case.
 :::
 
-:::quiz mcq id=M08-L08-q2
-Why is a heterogeneous list (`'a hlist`) different from a tuple
-like `int * string * bool`?
+:::quiz mcq id=M08-L05-q2
+In the builder GADT, `Map (All, fun () -> 42)` has type
+`int query`. Why does the compiler reject
+`Where (Map (All, fun () -> 42), fun s -> s = "x")`?
 
-- [x] An `hlist` is built and pattern-matched constructor by
-  constructor, so it composes recursively; a tuple is a flat fixed
-  shape.
-- [ ] `hlist`s are mutable; tuples are not.
-- [ ] `hlist`s have a single uniform element type, like an
-  ordinary list.
-- [ ] There is no difference; one is just an alias for the other.
+- [x] `Map (...)` is an `int query`, so `Where`'s predicate must
+  be `int -> bool`; `fun s -> s = "x"` is `string -> bool`, which
+  does not match.
+- [ ] `Where` cannot follow `Map`; the constructors must appear in
+  a fixed order.
+- [ ] `All` is not a valid starting point for a builder.
+- [ ] Predicates are not allowed to use `=`.
 
-**Why:** an `hlist` is structurally a chain of `HCons` cells with
-`HNil` at the end, like an ordinary list, but each cell can carry
-a different element type tracked at the type level. You can write
-recursive functions over an `hlist`; you cannot recurse over a
-tuple. That recursion is the whole reason for the encoding.
+**Why:** the type parameter of `query` tracks the *current*
+element type. `Map (All, fun () -> 42)` maps `unit` to `int`, so
+its type is `int query`. `Where`'s signature is `'a query * ('a ->
+bool) -> 'a query`, so the predicate must accept the same `'a`,
+here `int`. A `string -> bool` predicate fails to unify, and the
+mistake is caught at compile time rather than at query execution.
 :::
 
 :::slide
 
 ## Activity
 
-Define a GADT `type _ t` with `String_t : string t` and `Int_t :
-int t`. Write `convert : type a. a t -> a -> string` that
-pretty-prints the value of the given type.
+`show` *consumes* a value given its witness. Go the other way:
+reusing the lecture's `ty`, write `default : type a. a ty -> a`
+that *produces* a default value for the witnessed type: `0` for
+`T_int`, `""` for `T_string`, `false` for `T_bool`, a pair of
+defaults for `T_pair`, and `[]` for `T_list`.
 
 :::
 
@@ -379,27 +295,22 @@ pretty-prints the value of the given type.
 ## Activity solution
 
 ```ocaml
-type _ t =
-  | String_t : string t
-  | Int_t    : int t
-
-let convert : type a. a t -> a -> string = fun t v ->
+let rec default : type a. a ty -> a = fun t ->
   match t with
-  | String_t -> "\"" ^ v ^ "\""
-  | Int_t    -> string_of_int v
+  | T_int    -> 0
+  | T_string -> ""
+  | T_bool   -> false
+  | T_pair (a, b) -> (default a, default b)
+  | T_list _ -> []
 
-let _ = convert Int_t 42
-let _ = convert String_t "hello"
+let _ = default T_int                       (* = 0 *)
+let _ = default (T_pair (T_int, T_string))  (* = (0, "") *)
 ```
 
-`"42"`, `"\"hello\""`.
-
-- `convert`'s return type is always `string`.
-- The *input* value's type depends on the witness.
-- With `String_t`, `v : string`; with `Int_t`, `v : int`.
-- The compiler refines `a` per case.
-- Without GADTs you would write two functions (one per type) or
-  hand-code dispatch on an `option`.
+- `default` runs the witness *backwards*: instead of reading a
+  value it builds one, with the type fixed per case as in `show`.
+- `T_list` ignores its element witness: the empty list has no
+  element to default.
 
 :::
 
@@ -407,7 +318,7 @@ let _ = convert String_t "hello"
 
 A code quiz:
 
-:::quiz code id=M08-L08-q1
+:::quiz code id=M08-L05-q1
 Extend the witness GADT with a `Bool_t : bool t` constructor and
 write `convert3 : type a. a t -> a -> string` that handles all
 three.
@@ -460,22 +371,24 @@ output.
 
 ## What is next
 
-Lecture 10: the Module 8 **tutorial**.
+Lecture 6: **hlists and witnesses**.
 
-- We combine the option monad, GADTs, and pattern matching.
-- Build a tiny well-typed expression evaluator.
-- Capstone for the OCaml half of the course.
+- Heterogeneous lists: mixed element types you can recurse over.
+- Driving operations across them with a list of witnesses.
+- The witness list behind `Format.printf`.
 
 :::
 
-The [tutorial in lecture 10](M08-L10-tutorial.html) brings together
-the monad pattern from
-lectures [1](M08-L01-sequencing.html)-[4](M08-L05-state-monad.html)
+The [next lecture](M08-L06-hlists-witnesses.html) takes the
+typed-witness idea from this lecture and pushes it to
+heterogeneous lists and the GADT machinery behind `printf`. After
+that, the [tutorial](M08-L07-tutorial.html) brings together the
+monad pattern from
+lectures [1](M08-L01-option-monad.html)-[3](M08-L03-state-monad.html)
 and the GADT pattern from
-lectures [5](M08-L07-gadts-basics.html)-[6](M08-L08-gadts-use-cases.html).
-We build a small
-expression language whose AST is a GADT (so ill-typed programs
-cannot be constructed), and an evaluator that returns `'a option`
+lectures [4](M08-L04-gadts-basics.html)-[6](M08-L06-hlists-witnesses.html):
+a small expression language whose AST is a GADT (so ill-typed
+programs cannot be constructed), evaluated through an option monad
 (so runtime failures like division-by-zero short-circuit cleanly).
 
 ## Reading

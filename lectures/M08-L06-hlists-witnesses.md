@@ -1,11 +1,11 @@
 ---
 title: "GADTs: hlists and witnesses"
-lecture_no: 9
+lecture_no: 6
 week: 8
 duration_target_min: 22
 concepts: [heterogeneous list, hlist, type witness, generic programming, fold over witnesses]
 keywords: [OCaml, GADT, hlist, witness, Format, printf]
-activity_question: "Define a [pp_hlist] that pretty-prints a heterogeneous list, driven by a list of witnesses, one per element. The witness GADT should cover [int], [string], [bool]."
+activity_question: "Write [length_hlist : type ix. ix hlist -> int] that returns the number of elements in a heterogeneous list. (No witnesses needed: counting ignores the element values.)"
 think_about_this: "[Format.printf]'s format strings have a type that depends on the literal characters in the string. That dependency is encoded with GADTs of essentially the same shape we build in this lecture. Where else have you seen a value's type depend on another value's contents?"
 reading:
   - title: "Real World OCaml, More GADTs"
@@ -20,15 +20,15 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">GADTs: hlists and witnesses</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 9</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-[Lecture 7](M08-L07-gadts-basics.html) showed GADTs with a single
+[Lecture 4](M08-L04-gadts-basics.html) showed GADTs with a single
 type index (the `int expr` / `bool expr` AST).
-[Lecture 8](M08-L08-gadts-use-cases.html) showed witness GADTs
+[Lecture 5](M08-L05-gadts-use-cases.html) showed witness GADTs
 (`T_int`, `T_string`, ...) that let one function dispatch on the
 type its argument has. This lecture combines both ideas at scale.
 We define a *heterogeneous list* (an "hlist"), a list whose
@@ -46,8 +46,8 @@ folds across them. We will sketch the connection at the end.
 
 ## This lecture
 
-- Recap: GADTs ([L07](M08-L07-gadts-basics.html)) and witnesses
-  ([L08](M08-L08-gadts-use-cases.html)).
+- Recap: GADTs ([L4](M08-L04-gadts-basics.html)) and witnesses
+  ([L5](M08-L05-gadts-use-cases.html)).
 - **Heterogeneous lists** (hlists): lists with different element
   types tracked in the type.
 - **Per-element witnesses**: a witness GADT recording one element
@@ -162,7 +162,7 @@ call site: you cannot accidentally take the head of an empty hlist.
 
 To do something with each element of an hlist, we need a way to
 say "this is an int" or "this is a string" *at runtime*. The
-witness GADT from [Lecture 8](M08-L08-gadts-use-cases.html) does
+witness GADT from [Lecture 5](M08-L05-gadts-use-cases.html) does
 this:
 
 :::slide
@@ -391,8 +391,10 @@ infrastructure; you do not have to build it yourself.
 
 ## When *not* to reach for hlists
 
-Like all GADT machinery, hlists are heavy for everyday use. A
-plain `list`, a record, or a tuple is usually what you want.
+The general [when-to-reach-for-GADTs
+guidance](M08-L04-gadts-basics.html#when-to-reach-for-gadts)
+applies; hlists add one more choice to make. A plain `list`, a
+record, or a tuple is usually what you want:
 
 :::slide
 
@@ -413,7 +415,7 @@ lists) and not just to be clever.
 
 ## A quick check
 
-:::quiz mcq id=M08-L09-q3
+:::quiz mcq id=M08-L06-q3
 Why does `pp_hlist : 'ix tylist -> 'ix hlist -> string list` use
 *the same* type variable `'ix` for both arguments?
 
@@ -431,7 +433,7 @@ the two parameters used different type variables, the compiler
 would accept mismatched calls, defeating the purpose.
 :::
 
-:::quiz mcq id=M08-L09-q2
+:::quiz mcq id=M08-L06-q2
 What is the index type of `HCons (1, HCons (true, HNil))`?
 
 - [ ] `int * bool`
@@ -473,11 +475,9 @@ let rec length_hlist : type ix. ix hlist -> int = function
   | HNil -> 0
   | HCons (_, rest) -> 1 + length_hlist rest
 
-let _ = length_hlist (HCons (1, HCons ("hi", HCons (true, HNil))))
-let _ = length_hlist HNil
+let _ = length_hlist (HCons (1, HCons ("hi", HCons (true, HNil))))  (* = 3 *)
+let _ = length_hlist HNil                                           (* = 0 *)
 ```
-
-`3`, `0`.
 
 - The `type ix. ...` annotation lets the compiler refine `ix` per
   branch (to `unit` for `HNil`, to `'a * 'rest` for `HCons`).
@@ -491,7 +491,7 @@ let _ = length_hlist HNil
 
 A code quiz to consolidate the witness-driven pattern:
 
-:::quiz code id=M08-L09-q1
+:::quiz code id=M08-L06-q1
 Write `sum_int_hlist : (int * (int * unit)) hlist -> int` that
 sums a two-element hlist of ints. (No witnesses needed: the *type*
 already promises both elements are `int`.)
@@ -538,7 +538,7 @@ because the shape is fully concrete.
 
 ## What is next
 
-Lecture 10: the **Module 8 tutorial**.
+Lecture 7: the **Module 8 tutorial**.
 
 - Tie monads and GADTs together.
 - Build a tiny well-typed evaluator with a GADT-indexed AST.
@@ -546,7 +546,7 @@ Lecture 10: the **Module 8 tutorial**.
 
 :::
 
-The [tutorial in lecture 10](M08-L10-tutorial.html) brings monads
+The [tutorial in lecture 7](M08-L07-tutorial.html) brings monads
 and GADTs together one more time. We build a small typed AST
 (GADTs), evaluate it with an option monad (`let*`), and close by
 showing how the GADT version rejects the

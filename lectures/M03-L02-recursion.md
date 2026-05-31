@@ -272,7 +272,7 @@ recur" is the sequenced body. We need the bracketing because the
 sequencing `;` would otherwise be ambiguous with the `else`
 branch. `begin/end` is the more readable form in OCaml; plain
 parens work too. (Side effects and sequencing get full treatment
-in [M08-L01](M08-L01-sequencing.html); for this lecture, just
+in [M08-L01](M08-L01-option-monad.html); for this lecture, just
 trust the brackets do what you would expect.)
 
 ## Recursion on numbers, summing

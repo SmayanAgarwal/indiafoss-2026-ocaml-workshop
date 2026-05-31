@@ -683,7 +683,7 @@ combining function. This pattern generalises beyond trees to any
 [algebraic data type](M04-L04-recursive-types.html), and it is the
 entry point to the abstract idea of a *catamorphism* (a fancy name
 for "generalised fold") that appears in category theory. We will see
-more of it in [Module 8](M08-L01-sequencing.html).
+more of it in [Module 8](M08-L01-option-monad.html).
 
 ## When `fold` is overkill
 

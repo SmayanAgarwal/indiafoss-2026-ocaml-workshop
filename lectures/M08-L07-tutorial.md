@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: a tiny well-typed evaluator"
-lecture_no: 10
+lecture_no: 7
 week: 8
 duration_target_min: 28
 concepts: [GADT-driven AST, type-safe evaluator, optional + result monad in evaluation]
@@ -20,7 +20,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Tutorial: a tiny well-typed evaluator</h2>
-<p class="title-slide-label">Module 8 &middot; Lecture 10</p>
+<p class="title-slide-label">Module 8 &middot; Lecture 7</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -32,8 +32,8 @@ reading:
 
 - Capstone for the OCaml half (M01-M08).
 - One worked example that ties together:
-  - The [monad pattern](M08-L01-sequencing.html) (option, result, state).
-  - [GADTs](M08-L07-gadts-basics.html) for type-indexed ASTs.
+  - The [monad pattern](M08-L01-option-monad.html) (option, result, state).
+  - [GADTs](M08-L04-gadts-basics.html) for type-indexed ASTs.
   - [Pattern matching](M05-L01-basic-patterns.html) with type
     refinement.
 - Builds the GADT-typed interpreter that
@@ -47,13 +47,13 @@ This is the capstone for the OCaml half of the course. We are
 going to build a small expression language that combines almost
 everything we have seen in Module 8:
 
-- A [GADT](M08-L07-gadts-basics.html) for the abstract syntax tree,
+- A [GADT](M08-L04-gadts-basics.html) for the abstract syntax tree,
   so that ill-typed programs cannot be constructed.
 - A [pattern-matching](M05-L01-basic-patterns.html) evaluator that
-  uses [GADT type refinement](M08-L07-gadts-basics.html#pattern-matching-with-type-refinement)
+  uses [GADT type refinement](M08-L04-gadts-basics.html#pattern-matching-with-type-refinement)
   to return the right type for each constructor.
 - An optional-failure layer, in the
-  [option-monad style](M08-L02-option-monad.html), that
+  [option-monad style](M08-L01-option-monad.html), that
   short-circuits when evaluation has a runtime problem (such as
   division by zero).
 - Two pretty-printers and an extension exercise (adding `<`).
@@ -62,8 +62,8 @@ The exercise serves two purposes. First, it is a useful piece of
 code on its own: a typed mini-interpreter is the foundation of
 many production OCaml tools (configuration languages, query
 builders, embedded scripting). Second, it is a working example
-that ties together [monads](M08-L01-sequencing.html),
-[GADTs](M08-L07-gadts-basics.html), and
+that ties together [monads](M08-L01-option-monad.html),
+[GADTs](M08-L04-gadts-basics.html), and
 [pattern matching](M05-L01-basic-patterns.html), the three big
 OCaml ideas from the back half of the functional-programming half
 of the course.
@@ -380,7 +380,7 @@ purpose.
 So far our `eval` cannot fail: every constructor evaluates
 cleanly. Real interpreters have runtime failures (division by
 zero, missing variable, stack overflow). The
-[option monad (Lecture 2)](M08-L02-option-monad.html) is the
+[option monad (Lecture 1)](M08-L01-option-monad.html) is the
 natural way to add a layer of fallibility:
 
 :::slide
@@ -420,7 +420,7 @@ zero until you evaluate it, so you handle that case with `None`
 short-circuit semantics.
 
 For a real interpreter you would pick
-[`result`](M08-L04-result-monad.html) over `option` so that the
+[`result`](M08-L02-laws-list-result.html) over `option` so that the
 error case carries a useful message ("divide by zero at expression
 4711"). The shape of the code is identical: `let*` chains, GADT
 pattern matching with `type a. ...`, runtime checks in the
@@ -483,7 +483,7 @@ need ordering witnesses or other extensions.
 
 A code quiz to put it together:
 
-:::quiz code id=M08-L10-q3
+:::quiz code id=M08-L07-q3
 Add a `Neg : int expr * int expr -> int expr` constructor that
 represents subtraction (despite its name; let us call it `Sub`).
 Write the evaluator that handles `Int_lit`, `Add`, and `Sub`.
@@ -531,7 +531,7 @@ arithmetic.
 
 ## A check
 
-:::quiz mcq id=M08-L10-q2
+:::quiz mcq id=M08-L07-q2
 We pattern-match on a GADT inside `eval`. Why is the `type a.
 ...` annotation usually needed?
 
@@ -549,7 +549,7 @@ branch's `a` independently. This is the standard idiom for
 writing functions on GADTs.
 :::
 
-:::quiz mcq id=M08-L10-q1
+:::quiz mcq id=M08-L07-q1
 Why does combining GADTs with the option monad in `eval_safe`
 make sense?
 
@@ -686,8 +686,8 @@ up through [`let` bindings](M02-L02-let-bindings.html),
 [algebraic data types](M04-L03-variants.html),
 [higher-order functions](M06-L01-functions-revisited.html),
 [modules](M07-L06-module-basics.html),
-[monads](M08-L01-sequencing.html), and
-[GADTs](M08-L07-gadts-basics.html). Each module fed the next: refs
+[monads](M08-L01-option-monad.html), and
+[GADTs](M08-L04-gadts-basics.html). Each module fed the next: refs
 in M07 gave the imperative ground for the state monad in M08;
 variants in M04 set up GADTs in M08; modules in M07 are the
 packaging you reach for whenever you grow a real codebase.

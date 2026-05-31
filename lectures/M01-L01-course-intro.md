@@ -615,7 +615,7 @@ We will not survey every feature of OCaml. The language has many
 corners: objects and classes (rarely used in modern code), ppx
 syntax extensions (a tooling topic of its own), polymorphic variants (mostly
 specialised), first-class modules (advanced),
-[GADTs](M08-L07-gadts-basics.html) (we touch them briefly), effect
+[GADTs](M08-L04-gadts-basics.html) (we touch them briefly), effect
 handlers (a Multicore OCaml feature we leave for a follow-on
 course). I have picked the subset that will be most useful to you in
 the largest number of future situations.

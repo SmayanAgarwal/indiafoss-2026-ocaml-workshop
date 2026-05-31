@@ -710,7 +710,7 @@ concatenates the results. For example, `flat_map (fun x -> [x; x * 10])
 `flat_map` is `map` followed by `concat` (the standard library calls
 it `List.concat_map`). It is the workhorse behind list
 comprehensions in other languages, and is the *bind* of the list
-monad you will meet in [Module 8](M08-L03-monad-laws-list-monad.html).
+monad you will meet in [Module 8](M08-L02-laws-list-result.html).
 
 :::quiz code id=M06-L07-q11
 Implement `flat_map`. Either `fold_right` with `@`, or

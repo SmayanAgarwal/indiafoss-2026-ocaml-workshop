@@ -621,24 +621,6 @@ let () =
 
 :::solution
 
-Reference solution:
-
-```text
-let rec add x = function
-  | [] -> [(x, 1)]
-  | (y, c) :: rest ->
-      if E.compare x y = 0 then (y, c + 1) :: rest
-      else (y, c) :: add x rest
-
-let rec count x = function
-  | [] -> 0
-  | (y, c) :: rest -> if E.compare x y = 0 then c else count x rest
-```
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution: the functor
@@ -723,7 +705,7 @@ module.
 
 ## What's next
 
-Lecture 9 is the **tutorial** for Module 7.
+The next lecture is the **tutorial** for Module 7.
 
 - Build a small "functional queue" using two stacks.
 - Package it as a module with an interface.

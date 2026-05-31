@@ -617,17 +617,17 @@ near-copies of each other with different right-hand sides. This
 boilerplate is exactly what the *option monad* captures, with a
 `let*` operator that compresses each nested `match` to one line.
 We take this same interpreter and rewrite it with `let*` in
-[M08-L02](M08-L02-option-monad.html). The shape stays the same;
-the noise disappears.
+[the option-monad lecture](M08-L01-option-monad.html). The shape
+stays the same; the noise disappears.
 
 **Why can `eval` fail at all?** Look at `bad1`: `Add (Bool true,
 Int 1)` is a well-typed *OCaml value* of type `expr`, but it
 represents a program that makes no sense. The OCaml type system
 cannot see this, because our `expr` lumps integer expressions
 and boolean expressions together. *GADTs*, in
-[M08-L07](M08-L07-gadts-basics.html) and
-[M08-L08](M08-L08-gadts-use-cases.html), let you index `expr`
-by what it produces (`int` vs `bool`). With that indexing, the
+[the GADT lectures](M08-L04-gadts-basics.html), let you index
+`expr` by what it produces (`int` vs `bool`). With that indexing,
+the
 type system rules out `Add (Bool true, _)` at compile time, and
 the option return type disappears entirely.
 
@@ -640,13 +640,13 @@ as a fact of life. Both get repaired by the end of Module 8.
 
 - **Why so much `None`-bookkeeping?**
   Every recursive clause threads `option` by hand.
-  [M08-L02](M08-L02-option-monad.html) compresses each nested
-  `match` to a one-line `let*`.
+  [The option monad](M08-L01-option-monad.html) compresses each
+  nested `match` to a one-line `let*`.
 - **Why can `eval` fail at all?**
   `expr` lumps int and bool expressions together; the OCaml
   type system cannot reject `Add (Bool true, _)`.
-  [GADTs in M08-L07/L08](M08-L07-gadts-basics.html) index
-  `expr` by what it produces, ruling `bad1` out at compile time.
+  [GADTs](M08-L04-gadts-basics.html) index `expr` by what it
+  produces, ruling `bad1` out at compile time.
 - The `option` return type then disappears entirely.
 
 :::
