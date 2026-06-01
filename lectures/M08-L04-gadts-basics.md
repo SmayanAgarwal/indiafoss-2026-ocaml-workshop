@@ -551,24 +551,6 @@ let _ = eval (If (Is_zero (Add (Int_lit 2, Int_lit (-2))),
 
 :::
 
-:::slide
-
-## A bad `If` is a compile error
-
-```ocaml skip
-let bad = If (Int_lit 5, Int_lit 1, Int_lit 2)
-```
-
-```text
-Error: The constant 5 has type int but an expression was
-       expected of type bool expr
-```
-
-`Int_lit 5 : int expr` does not fit `If`'s `bool expr` slot. The
-compiler enforces it.
-
-:::
-
 A code quiz:
 
 :::quiz code id=M08-L04-q1
