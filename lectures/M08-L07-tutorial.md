@@ -300,12 +300,13 @@ expr`s and produces a `bool expr`:
 
 ## Adding a comparison: `<`
 
-Add one constructor to `expr` and one case to `eval`:
+Add one constructor to `expr` and one case to `eval`. Both splice
+into the running definitions from earlier in this lecture, so we
+show only the lines that change (not a fresh standalone program):
 
 ```text
   | Less : int expr * int expr -> bool expr
 ```
-<!-- KC: why is this text? -->
 
 ```text
   | Less (a, b) -> eval a < eval b
@@ -331,9 +332,10 @@ exhaustiveness check would not apply.
 
 ## Adding a pretty printer
 
-The reverse direction: turn an expression back into a string. The
-return type is always `string`, regardless of the expression's
-type index:
+The reverse direction: turn an expression back into a string. This
+is the pretty-printer for the whole language (`<` included), built
+on the running definitions, so it is shown as a listing. The return
+type is always `string`, regardless of the expression's type index:
 
 :::slide
 
@@ -356,7 +358,6 @@ let _ = pretty
        Mul (Int_lit 4, Int_lit 5)))
 (* = "(if (3 < 5) then (1 + 2) else (4 * 5))" *)
 ```
-<!-- KC: why is this text? -->
 
 Return type is always `string`, regardless of `a`;
 consume-a-GADT/produce-a-fixed-type is a common pattern (hashers,
@@ -591,7 +592,6 @@ type expr = Int of int | Bool of bool | Add of expr * expr | ...
 let bad1 = Add (Bool true, Int 1)
 let _ = eval [] bad1  (* = None at runtime *)
 ```
-<!-- KC: why is this text? -->
 
 - In the Module 5 tutorial this compiles fine.
 - The `eval` function returns `None` *at runtime* because the
@@ -672,28 +672,39 @@ own variables stand in for the language's.
 type _ expr =
   | Int_lit : int -> int expr
   | Add     : int expr * int expr -> int expr
+  | Val     : 'a -> 'a expr                      (* a computed value *)
   | Let     : 'a expr * ('a expr -> 'b expr) -> 'b expr
 
 let rec eval : type a. a expr -> a = function
   | Int_lit n     -> n
   | Add (a, b)    -> eval a + eval b
-  | Let (e, body) -> eval (body e)
+  | Val v         -> v
+  | Let (e, body) -> let v = eval e in eval (body (Val v))
 
 (* let x = 10 in x + 5 *)
 let _ = eval (Let (Int_lit 10, fun x -> Add (x, Int_lit 5)))   (* = 15 *)
 ```
 
-`Let (e, body)` hands the bound expression `e` to `body`, an
-ordinary OCaml function; `eval` "substitutes" by applying it. There
-is no variable name and no environment, yet it stays fully typed:
-`Let (Int_lit 10, fun x -> ...)` gives `x : int expr`, so using `x`
-where a `bool expr` is wanted would not compile. The costs are that
-the body can only be *applied*, never inspected, and that `let x = e
-in ...` re-evaluates `e` on each use. Named variables with fully
-static types instead need the typed environment mentioned above,
-which is where dependently typed languages (Agda, Idris, F\*) and
-OCaml's own typed-tagless interpreters go next. That is one step
-past where this course stops.
+The body is an ordinary OCaml function, so OCaml's own variables
+stand in for the language's, fully typed: `Let (Int_lit 10, fun x ->
+...)` gives `x : int expr`, and using `x` where a `bool expr` is
+wanted would not compile.
+
+The subtlety is *when* `e` runs. The naive `Let (e, body) -> eval
+(body e)` substitutes the whole *expression* `e`, re-evaluating it on
+every use of the variable: wrong as soon as `e` has a side effect,
+and wasteful even when it does not. To evaluate `e` exactly once we
+compute its value and re-inject it with `Val : 'a -> 'a expr`,
+giving `let v = eval e in eval (body (Val v))`. `Val` must be
+*generic*: inside this branch we do not know whether `'a` is `int`
+or `bool`, so we cannot wrap `v` with `Int_lit` or `Bool_lit`; a
+single `Val : 'a -> 'a expr` carries a value of any type back into
+the AST.
+
+Named variables with fully static types instead need the typed
+environment mentioned above, which is where dependently typed
+languages (Agda, Idris, F\*) and OCaml's own typed-tagless
+interpreters go next. That is one step past where this course stops.
 
 ## You finished Module 8
 
