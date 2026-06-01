@@ -241,22 +241,40 @@ turn those into *compile* errors by recording the list's *length* in
 its type.
 
 To do that we first need *numbers that live in types*. We build them
-the way you count on your fingers: start at zero, then add one as
-often as needed. Two type names capture exactly that: `z` for zero,
-and `'n s` (`s` for *successor*) for one more than `'n`. So `z` is
-0, `z s` is 1, `z s s` is 2, and so on. (This is the classic
-*church*, or *Peano*, encoding of the natural numbers.) A list type
-that carries one of these as an index then records how long the list
-is, and the compiler keeps that honest.
+the way you count on your fingers: `z` is zero, and `'n s` (`s` for
+*successor*) is one more than `'n`. So `z` is 0, `z s` is 1, `z s s`
+is 2, and so on, the classic *church* (or *Peano*) encoding:
+
+:::slide
+
+## Church numerals: numbers in the types
+
+```ocaml
+type z = Z               (* zero           *)
+type 'n s = S of 'n      (* successor, n+1 *)
+
+let zero = Z             (* : z     *)
+let one  = S Z           (* : z s   *)
+let two  = S (S Z)       (* : z s s *)
+
+let succ n     = S n     (* 'n -> 'n s  : add one      *)
+let pred (S n) = n       (* 'n s -> 'n  : take one off *)
+```
+
+- `z`, `z s`, `z s s`, ... are the naturals, one `S` per unit.
+- `succ` adds an `S`; `pred` peels one off, and takes only `'n s`,
+  so the predecessor of zero cannot even be written.
+
+:::
+
+A list type that carries one of these numbers as an index records
+how long the list is, and the compiler keeps it honest:
 
 :::slide
 
 ## Use 3: a length-indexed list
 
 ```ocaml
-type z = Z               (* the number 0   *)
-type 'n s = S of 'n      (* successor, n+1 *)
-
 type ('a, _) vec =
   | Nil  : ('a, z) vec
   | Cons : 'a * ('a, 'n) vec -> ('a, 'n s) vec
@@ -264,8 +282,8 @@ type ('a, _) vec =
 let v = Cons (1, Cons (2, Cons (3, Nil)))   (* (int, z s s s) vec *)
 ```
 
-- The second index counts the elements: `z` is 0, `z s` is 1, and
-  `z s s s` is 3.
+- The length is in the index: `Nil` has length `z`, and each `Cons`
+  adds one `s`.
 - So `v`'s type, `(int, z s s s) vec`, says "three ints" out loud.
 
 :::
