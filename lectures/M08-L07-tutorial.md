@@ -648,6 +648,50 @@ two are complementary, and together they shrink the runtime
 failure surface of a typed interpreter to the genuine impossibles
 (divisor zero, missing key) that no static check can prevent.
 
+## Aside: variables and `let` (book only)
+
+This section is in the book, not the slides; skip it on a first
+read. The Module 5 AST had two features ours leaves out: a `Var`
+for variables and a `Let_in` that bound one, carrying an *optional*
+type annotation (`ty option`). The annotation is the easy part: in
+the GADT AST every expression already knows its own type, so there
+is nothing left to annotate, and the type the annotation would have
+recorded is checked for free.
+
+Variables are the hard part. A `Var "x"` has whatever type `x` was
+bound to, and to keep that *static* the compiler must track a
+*typed environment*, a sizeable step up. One clean way to get `let`
+with no named environment at all is *higher-order abstract syntax*
+(HOAS): make the body of the binding an OCaml function, so OCaml's
+own variables stand in for the language's.
+
+```ocaml
+type _ expr =
+  | Int_lit : int -> int expr
+  | Add     : int expr * int expr -> int expr
+  | Let     : 'a expr * ('a expr -> 'b expr) -> 'b expr
+
+let rec eval : type a. a expr -> a = function
+  | Int_lit n     -> n
+  | Add (a, b)    -> eval a + eval b
+  | Let (e, body) -> eval (body e)
+
+(* let x = 10 in x + 5 *)
+let _ = eval (Let (Int_lit 10, fun x -> Add (x, Int_lit 5)))   (* = 15 *)
+```
+
+`Let (e, body)` hands the bound expression `e` to `body`, an
+ordinary OCaml function; `eval` "substitutes" by applying it. There
+is no variable name and no environment, yet it stays fully typed:
+`Let (Int_lit 10, fun x -> ...)` gives `x : int expr`, so using `x`
+where a `bool expr` is wanted would not compile. The costs are that
+the body can only be *applied*, never inspected, and that `let x = e
+in ...` re-evaluates `e` on each use. Named variables with fully
+static types instead need the typed environment mentioned above,
+which is where dependently typed languages (Agda, Idris, F\*) and
+OCaml's own typed-tagless interpreters go next. That is one step
+past where this course stops.
+
 ## You finished Module 8
 
 :::slide
