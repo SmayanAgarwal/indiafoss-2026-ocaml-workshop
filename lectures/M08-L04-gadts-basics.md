@@ -3,8 +3,8 @@ title: "GADTs: variants with type-level information"
 lecture_no: 4
 week: 8
 duration_target_min: 24
-concepts: [GADT, generalized algebraic data types, type-level information, pattern matching on GADTs]
-keywords: [OCaml, GADT, type refinement, type-safe AST]
+concepts: [GADT, generalized algebraic data types, type-level information, pattern matching on GADTs, polymorphic recursion]
+keywords: [OCaml, GADT, type refinement, type-safe AST, polymorphic recursion]
 activity_question: "Extend the lecture's [type _ expr] with a constructor [Is_zero : int expr -> bool expr] and add the matching case to [eval]. Notice how one constructor takes an [int expr] yet produces a [bool expr]."
 think_about_this: "An ordinary variant says: 'each constructor produces a value of the type'. A GADT says: 'each constructor produces a value of a *specific* type that may differ from the others'. What is the cost of this extra precision?"
 reading:
@@ -262,18 +262,24 @@ Two new things:
   `a`, this function takes an `a expr` and returns an `a`."
 - Each case refines `a`: `Int_lit n -> n` forces `a = int`, so
   `n : int` matches the return type.
+- *Required*, not optional: `eval` recurses at a different type than
+  its own (*polymorphic recursion*), which OCaml cannot infer.
 
 :::
 
-The `type a. ...` syntax is OCaml's way of saying "this function
-is polymorphic in `a`, and inside the body, `a` is treated as an
-abstract type". It is sometimes called a *locally abstract type*
-or a *polymorphic recursion annotation*. For GADT pattern matching
-to work, you almost always need it. The reason is technical: OCaml
-needs to type-check each branch in a way that knows `a` might be
-refined to a different concrete type per branch, and the `type a.
-...` annotation gives the compiler permission to do that
-refinement.
+The `type a. ...` syntax says "this function is polymorphic in `a`,
+and inside the body `a` is an abstract type." Why is it needed here,
+when most OCaml functions need no annotation at all? Because `eval`
+does *polymorphic recursion*: it calls itself at a *different* type
+than the one it was called at. In the `If` case, the condition `c`
+is a `bool expr` even when the whole `If` is an `int expr`, so
+`eval c` recurses at `bool` while the outer call is at `int`.
+OCaml's automatic inference assumes a recursive function calls
+itself at the *same* type (that assumption is what keeps inference
+decidable), so it cannot work this case out on its own. The
+`type a.` annotation supplies the type up front, and that is exactly
+what lets each branch refine `a` independently. This is one of the
+few places in OCaml where an annotation is not optional.
 
 Reading the cases:
 
