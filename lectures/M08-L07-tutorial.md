@@ -305,6 +305,7 @@ Add one constructor to `expr` and one case to `eval`:
 ```text
   | Less : int expr * int expr -> bool expr
 ```
+<!-- KC: why is this text? -->
 
 ```text
   | Less (a, b) -> eval a < eval b
@@ -355,6 +356,7 @@ let _ = pretty
        Mul (Int_lit 4, Int_lit 5)))
 (* = "(if (3 < 5) then (1 + 2) else (4 * 5))" *)
 ```
+<!-- KC: why is this text? -->
 
 Return type is always `string`, regardless of `a`;
 consume-a-GADT/produce-a-fixed-type is a common pattern (hashers,
@@ -589,6 +591,7 @@ type expr = Int of int | Bool of bool | Add of expr * expr | ...
 let bad1 = Add (Bool true, Int 1)
 let _ = eval [] bad1  (* = None at runtime *)
 ```
+<!-- KC: why is this text? -->
 
 - In the Module 5 tutorial this compiles fine.
 - The `eval` function returns `None` *at runtime* because the
@@ -710,8 +713,8 @@ After Module 8 you can:
 - See how a GADT-typed AST rejects the Module 5 tutorial's `bad1` at
   compile time.
 
-End of the **functional programming** half (Modules 1-8); the
-secure-systems half builds on this foundation.
+End of the **functional-programming** half (Modules 1-8). What
+comes next builds on this foundation.
 
 :::
 
@@ -738,14 +741,9 @@ in M07 gave the imperative ground for the state monad in M08;
 variants in M04 set up GADTs in M08; modules in M07 are the
 packaging you reach for whenever you grow a real codebase.
 
-The secure-systems half of the course
-(Modules [9](M09-L01-why-test-typed-code.html)-12) takes these
-habits further: [testing and concurrency](M09-L01-why-test-typed-code.html),
-[memory safety](M10-L01-ub-and-the-zoo.html),
-[OxCaml's type-level safety extensions](M11-L01-modes-as-safety.html),
-and [unikernels with MirageOS](M12-L01-why-an-os.html). The
-typed-first thinking you built in Modules 1-8 is exactly what those
-modules cash out into systems code.
+The remaining modules turn from the language itself to building
+real systems with it. The typed-first thinking you built in
+Modules 1-8 is the foundation they rest on.
 
 What you carry forward from here is not the specific syntax of
 `let*` or the exact shape of a GADT constructor, but a *taste* for
