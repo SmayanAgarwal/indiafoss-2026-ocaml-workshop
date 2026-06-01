@@ -52,13 +52,13 @@ theory is involved. We keep it light and lean on worked examples.
 - Module 8 shifts gears: from sequencing (monads) to a more
   advanced type-system feature.
 - *Generalized algebraic data types* (GADTs).
-- Ordinary variants: "value is one of a finite set of cases".
-- GADTs add: "and each case can have a *different* type index".
+  - Ordinary variants: "value is one of a finite set of cases".
+  - GADTs add: "and each case can have a *different* type index".
 - Practical consequence: wrong combinations become type errors,
   not runtime crashes.
 - Idea is simple; notation is unusual; type theory is involved.
-- We keep the theory light and focus on worked examples; more
-  substantial use cases follow next lecture.
+  - We keep the theory light and focus on worked examples; more
+    substantial use cases follow next lecture.
 
 :::
 
@@ -232,14 +232,14 @@ let rec eval (e : 'a expr) : 'a = function
 - Without help, OCaml fixes a *single* `'a` across the whole match.
 - `Int_lit` forces `'a = int`; `Bool_lit` forces `'a = bool`: they
   conflict, so it is a type error.
-- The `type a.` annotation lets each branch refine `a` on its own.
 
 :::
 
-The compiler's bookkeeping continues into
-[pattern matching](M05-L01-basic-patterns.html). When you `match`
-on a GADT value, each case knows which constructor fired, and
-OCaml *refines* the type index based on which one it was.
+The fix is the `type a.` annotation: it lets `a` be a *different*
+type in each branch. With it, OCaml's
+[pattern matching](M05-L01-basic-patterns.html) *refines* the type
+index per case: each branch knows which constructor fired and
+specialises `a` accordingly.
 
 :::slide
 
