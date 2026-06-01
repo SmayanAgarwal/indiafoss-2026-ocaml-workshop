@@ -141,11 +141,11 @@ type _ hlist =
 let hhead : type a r. (a * r) hlist -> a = function
   | HCons (x, _) -> x
 
-let _ = hhead (HCons (42, HCons ("hi", HNil)))
+let _ = hhead (HCons (42, HCons ("hi", HNil)))  (* = 42 *)
 ```
 
-`int = 42`. The signature says: given an hlist whose index starts
-with `a`, return an `a`.
+The signature says: given an hlist whose index starts with `a`,
+return an `a`.
 
 - `HCons (x, _)` matches the only constructor that produces an
   `('a * 'r) hlist`.
@@ -186,8 +186,9 @@ type _ ty =
 A value of type `int ty` carries no runtime information beyond
 "this exists"; the compiler reads its type and knows the element
 it witnesses is an `int`. The pattern is the same as the typed
-pretty-printer from L08, just specialised for our three primitive
-types.
+pretty-printer from the
+[previous lecture](M08-L05-gadts-use-cases.html), just specialised
+for our three primitive types.
 
 ## A list of witnesses, paired with an hlist
 
@@ -239,7 +240,7 @@ string.
 
 :::slide
 
-## `pp_hlist`: print each element using its witness
+## `pp_hlist`: the three types
 
 ```ocaml
 type _ ty =
@@ -254,7 +255,18 @@ type _ hlist =
 type _ tylist =
   | TyNil  : unit tylist
   | TyCons : 'a ty * 'rest tylist -> ('a * 'rest) tylist
+```
 
+- A witness `ty`, the heterogeneous `hlist`, and a `tylist` of
+  witnesses sharing the hlist's index.
+
+:::
+
+:::slide
+
+## `pp_hlist`: walking both in lock-step
+
+```ocaml
 let pp_one : type a. a ty -> a -> string = fun t v ->
   match t with
   | T_int -> string_of_int v
@@ -270,8 +282,8 @@ let rec pp_hlist : type ix. ix tylist -> ix hlist -> string list =
 ```
 
 - `pp_one` dispatches on a single witness.
-- `pp_hlist` recurses on both structures in lock-step.
-- The shared index `ix` forces witness and hlist to align.
+- `pp_hlist` recurses on both structures in lock-step; the shared
+  index `ix` forces witness and hlist to align.
 
 :::
 
@@ -286,10 +298,8 @@ let tys : (int * (string * (bool * unit))) tylist =
 let hl : (int * (string * (bool * unit))) hlist =
   HCons (42, HCons ("hi", HCons (true, HNil)))
 
-let _ = pp_hlist tys hl
+let _ = pp_hlist tys hl   (* = ["42"; "\"hi\""; "true"] *)
 ```
-
-`["42"; "\"hi\""; "true"]`.
 
 - Each element printed using its corresponding witness.
 - The compiler verifies that 42 lines up with `T_int`, `"hi"` with
@@ -563,10 +573,9 @@ pointer that opened Module 8.
 
 This lecture's prose, worked examples, and quizzes are original to
 this course. The hlist encoding and witness-driven recursion draw
-on the CS3100 GADTs notebook
-(`_references/cs3100_m20/lectures/lec16_GADTs/`), used here as a
-private structural reference; the surface code, comments, and
-explanations are written from scratch. Real World OCaml is CC
+on the author's CS3100 GADTs notebook, used here as a private
+structural reference; the surface code, comments, and explanations
+are written from scratch. Real World OCaml is CC
 BY-NC-ND-licensed and has not been derivatively reused. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

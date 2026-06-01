@@ -60,8 +60,9 @@ builds that pattern from a concrete pain point and lands on OCaml's
 
 ## A motivating problem
 
-We ended [M05-L06](M05-L06-tutorial.html) with a little expression
-evaluator built out of nested `match`es on `option`: every
+We ended the [Module 5 tutorial](M05-L06-tutorial.html) with a
+little expression evaluator built out of nested `match`es on
+`option`: every
 sub-result was unwrapped with a `Some _`/`None` arm, and `None`
 propagated by hand. That boilerplate is the problem this lecture
 solves.

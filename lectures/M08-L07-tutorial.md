@@ -36,8 +36,8 @@ reading:
   - [GADTs](M08-L04-gadts-basics.html) for type-indexed ASTs.
   - [Pattern matching](M05-L01-basic-patterns.html) with type
     refinement.
-- Builds the GADT-typed interpreter that
-  [M05-L06](M05-L06-tutorial.html) forward-pointed to.
+- Builds the GADT-typed interpreter that the
+  [Module 5 tutorial](M05-L06-tutorial.html) forward-pointed to.
 - By the end: `Add (Bool_lit true, _)` is a compile error, not a
   runtime `None`.
 
@@ -230,11 +230,11 @@ let e2 =
       Int_lit 100,
       Int_lit 200)
 
-let _ = eval e1
-let _ = eval e2
+let _ = eval e1   (* = 9 *)
+let _ = eval e2   (* = 100 *)
 ```
 
-`9` and `100`. `e1` is `(1 + 2) * 3` (int expr). `e2` is
+`e1` is `(1 + 2) * 3` (int expr). `e2` is
 `if 1 + 2 = 3 then 100 else 200` (int expr, equality holds).
 
 :::
@@ -312,11 +312,11 @@ Add one constructor to `expr` and one case to `eval`:
 
 ```text
 let _ = eval (If (Less (Int_lit 3, Int_lit 5), Int_lit 1, Int_lit 0))
+(* = 1, since 3 < 5 *)
 ```
 
-`1` (3 < 5 is true). Compiler forces us to add the `eval` case
-via exhaustiveness; type refinement gives us `a = bool` inside
-the `Less` branch.
+Compiler forces us to add the `eval` case via exhaustiveness; type
+refinement gives us `a = bool` inside the `Less` branch.
 
 :::
 
@@ -325,8 +325,8 @@ A useful detail: the
 still works for GADTs. When you add `Less` to the type and forget
 to add it to `eval`, the compiler warns about a non-exhaustive
 match. This is one of the things you would lose if you encoded the
-AST as a polymorphic-variant-tagged dictionary (or similar dynamic
-approach): the exhaustiveness check would not apply.
+AST in a dynamically-typed way (tags plus a dictionary, say): the
+exhaustiveness check would not apply.
 
 ## Adding a pretty printer
 
@@ -353,11 +353,12 @@ let _ = pretty
   (If (Less (Int_lit 3, Int_lit 5),
        Add (Int_lit 1, Int_lit 2),
        Mul (Int_lit 4, Int_lit 5)))
+(* = "(if (3 < 5) then (1 + 2) else (4 * 5))" *)
 ```
 
-`"(if (3 < 5) then (1 + 2) else (4 * 5))"`. Return type is always
-`string`, regardless of `a`; consume-a-GADT/produce-a-fixed-type
-is a common pattern (hashers, size estimators, printers).
+Return type is always `string`, regardless of `a`;
+consume-a-GADT/produce-a-fixed-type is a common pattern (hashers,
+size estimators, printers).
 
 :::
 
@@ -402,12 +403,12 @@ let rec eval_safe : type a. a expr -> a option = function
       if y = 0 then None
       else Some (x / y)
 
-let _ = eval_safe (Div (Int_lit 10, Int_lit 2))
-let _ = eval_safe (Div (Int_lit 10, Int_lit 0))
+let _ = eval_safe (Div (Int_lit 10, Int_lit 2))   (* = Some 5 *)
+let _ = eval_safe (Div (Int_lit 10, Int_lit 0))   (* = None *)
 ```
 
-`Some 5`, `None`. GADT rules out type errors at compile time;
-option monad handles the runtime "divide by zero" case.
+GADT rules out type errors at compile time; the option monad
+handles the runtime "divide by zero" case.
 
 :::
 
@@ -568,10 +569,10 @@ that no static type can detect. They are complementary, not
 redundant.
 :::
 
-## Closing the loop: `bad1` from M05-L06
+## Closing the loop: `bad1` from the Module 5 tutorial
 
 Cast your mind back to the
-[M05-L06 tutorial interpreter](M05-L06-tutorial.html). It had
+[Module 5 tutorial interpreter](M05-L06-tutorial.html). It had
 three failing programs, `bad1`, `bad2`, `bad3`. Two of them
 (`bad2`'s unbound variable, `bad3`'s non-bool condition) are
 *runtime* failures: the kind monads handle gracefully. `bad1` is
@@ -579,17 +580,17 @@ different. Its source was:
 
 :::slide
 
-## The M05-L06 `bad1`, revisited
+## The Module 5 `bad1`, revisited
 
 ```text
-(* M05-L06: ordinary-variant AST *)
+(* Module 5 tutorial: ordinary-variant AST *)
 type expr = Int of int | Bool of bool | Add of expr * expr | ...
 
 let bad1 = Add (Bool true, Int 1)
 let _ = eval [] bad1  (* = None at runtime *)
 ```
 
-- In M05-L06 this compiles fine.
+- In the Module 5 tutorial this compiles fine.
 - The `eval` function returns `None` *at runtime* because the
   nested match falls through.
 - The compiler had no way to notice the mistake.
@@ -606,7 +607,7 @@ type _ expr =
   | Bool_lit : bool -> bool expr
   | Add      : int expr * int expr -> int expr
 
-(* Try to construct M05-L06's bad1: *)
+(* Try to construct the Module 5 tutorial's bad1: *)
 let bad1 = Add (Bool_lit true, Int_lit 1)
 ```
 
@@ -623,8 +624,9 @@ Error: This expression has type bool expr
 
 :::
 
-This is the long-promised payoff. M05-L06 had to live with `eval
-[] bad1 = None` at runtime because ordinary variants lump all
+This is the long-promised payoff. The Module 5 tutorial had to live
+with `eval [] bad1 = None` at runtime because ordinary variants lump
+all
 expression shapes into one type. The GADT-typed version indexes
 `expr` by what it produces (`int` vs `bool`). With that indexing,
 the construction `Add (Bool_lit true, _)` is ill-typed: the
@@ -632,7 +634,7 @@ compiler sees that the first argument's type does not match what
 `Add` wants, and refuses.
 
 The class of bug that motivated *the entire option monad
-treatment* of `eval` in M05-L06 is gone. We do not need to
+treatment* of `eval` in the Module 5 tutorial is gone. We do not need to
 short-circuit on a type mismatch because the type mismatch cannot
 arise. We still want the option monad (or the result monad) for
 *runtime* failures like division by zero, missing variables, or
@@ -661,8 +663,8 @@ After Module 8 you can:
 - Define and use GADTs to encode type-level information,
   including hlists and witnesses.
 - Combine GADTs with monads in a small typed interpreter.
-- See how a GADT-typed AST rejects M05-L06's `bad1` at compile
-  time.
+- See how a GADT-typed AST rejects the Module 5 tutorial's `bad1` at
+  compile time.
 
 End of the **functional programming** half (Modules 1-8); the
 secure-systems half builds on this foundation.

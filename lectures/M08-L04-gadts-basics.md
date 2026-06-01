@@ -215,6 +215,27 @@ turns this on. Read the `eval` walkthrough that follows slowly;
 the four cases each illustrate a different facet of the
 refinement.
 
+First, see why a plain annotation will not do. The obvious
+`eval : 'a expr -> 'a` does not type-check:
+
+:::slide
+
+## First: why the naive version fails
+
+```ocaml skip
+let rec eval (e : 'a expr) : 'a = function
+  | Int_lit n  -> n   (* this branch needs 'a = int  *)
+  | Bool_lit b -> b   (* this branch needs 'a = bool *)
+  (* ... and the other constructors ... *)
+```
+
+- Without help, OCaml fixes a *single* `'a` across the whole match.
+- `Int_lit` forces `'a = int`; `Bool_lit` forces `'a = bool`: they
+  conflict, so it is a type error.
+- The `type a.` annotation lets each branch refine `a` on its own.
+
+:::
+
 The compiler's bookkeeping continues into
 [pattern matching](M05-L01-basic-patterns.html). When you `match`
 on a GADT value, each case knows which constructor fired, and
@@ -231,11 +252,11 @@ let rec eval : type a. a expr -> a = function
   | Add (a, b) -> eval a + eval b
   | If (c, t, e) -> if eval c then eval t else eval e
 
-let _ = eval (Add (Int_lit 3, Int_lit 4))
-let _ = eval (If (Bool_lit true, Int_lit 5, Int_lit 10))
+let _ = eval (Add (Int_lit 3, Int_lit 4))                 (* = 7 *)
+let _ = eval (If (Bool_lit true, Int_lit 5, Int_lit 10))  (* = 5 *)
 ```
 
-`7`, `5`. Two new things:
+Two new things:
 
 - `type a. ...` is a *locally abstract type* annotation: "for any
   `a`, this function takes an `a expr` and returns an `a`."
@@ -332,46 +353,45 @@ parameter is enough:
 ## A simpler use: phantom types
 
 ```ocaml
-type 'a id = string
-let new_user_id (s : string) : [`User] id = s
-let new_order_id (s : string) : [`Order] id = s
+type celsius
+type fahrenheit
+type 'a temp = float        (* 'a is phantom: a float underneath *)
 
-let greet (u : [`User] id) = "hello, " ^ u
+let celsius (f : float) : celsius temp = f
+let to_fahrenheit (c : celsius temp) : fahrenheit temp =
+  c *. 9. /. 5. +. 32.
 ```
 
-- The `'a` in `'a id` is *phantom*: it never appears in the
-  implementation (always a `string` underneath).
-- The compiler keeps `` [`User] id `` and `` [`Order] id `` distinct.
+- `'a` in `'a temp` is *phantom*: never stored, it only *tags* the
+  float.
+- `celsius temp` and `fahrenheit temp` are distinct types, so the
+  two units cannot be mixed up.
 
 ```text
-let order = new_order_id "ord-42"
-let _ = greet order  (* error: [`Order] id is not [`User] id *)
+let _ = to_fahrenheit (to_fahrenheit (celsius 100.))
+(* error: this is fahrenheit temp but to_fahrenheit wants celsius temp *)
 ```
 
-A "poor person's GADT": similar safety, simpler machinery.
+A "poor person's GADT": similar safety, simpler machinery, no new
+constructors.
 
 :::
 
-The trick is that `'a id` is a *type alias* for `string`, but the
-`'a` parameter is part of the type even though no value of type
-`'a` is actually stored. The compiler tracks `'a` purely for
-identity. Two strings tagged with `[`User]` and `[`Order]` are
-*different types*, even though they have identical runtime
-representations. The user cannot mix them up without an explicit
-cast.
+The `'a` in `'a temp` is a *type alias* parameter that never shows
+up in the representation (always a `float`); the compiler tracks it
+purely for identity. `celsius temp` and `fahrenheit temp` carry
+identical runtime values yet are incompatible types, so applying
+`to_fahrenheit` twice, or adding a `celsius` to a `fahrenheit`, is a
+compile error. This is the classic *units of measure* safety net:
+the metric-versus-imperial mix-up that doomed the Mars Climate
+Orbiter becomes unrepresentable.
 
-This trick has a name (*phantom types*) and a long history. It
-predates GADTs and is far less heavy machinery; many of the same
-safety wins are available with just a `type 'a t = string` plus
-careful API design. Real codebases use phantom types where they
-suffice and reach for GADTs only when phantom types cannot express
-the relationship they want.
-
-The polymorphic variants `` [`User] `` and `` [`Order] `` are a
-related OCaml feature ([Module 4](M04-L03-variants.html) covered
-ordinary variants; we will not dive into polymorphic variants in
-this course). The key thing for now: they are tags that the type
-system tracks distinctly.
+Phantom types have a long history and predate GADTs. They are far
+lighter machinery: many safety wins are available with just a
+`type 'a t = ...` alias plus careful API design (only `celsius` and
+`to_fahrenheit` ever mint or convert the tagged values). Real
+codebases use phantom types where they suffice and reach for GADTs
+only when phantom types cannot express the relationship they want.
 
 ## When to reach for GADTs
 
@@ -458,7 +478,7 @@ takes an `int expr` but produces a `bool expr`.
 
 :::slide
 
-## Activity solution
+## Activity solution: the type
 
 ```ocaml
 type _ expr =
@@ -467,7 +487,18 @@ type _ expr =
   | Add      : int expr * int expr -> int expr
   | If       : bool expr * 'a expr * 'a expr -> 'a expr
   | Is_zero  : int expr -> bool expr
+```
 
+- `Is_zero` consumes an `int expr` but its result type is
+  `bool expr`, so it can sit in `If`'s condition slot.
+
+:::
+
+:::slide
+
+## Activity solution: `eval`
+
+```ocaml
 let rec eval : type a. a expr -> a = function
   | Int_lit  n -> n
   | Bool_lit b -> b
@@ -479,9 +510,7 @@ let _ = eval (If (Is_zero (Add (Int_lit 2, Int_lit (-2))),
                   Int_lit 1, Int_lit 0))            (* = 1 *)
 ```
 
-- `Is_zero` consumes an `int expr` but its result type is
-  `bool expr`, so it can sit in `If`'s condition slot.
-- Its `eval` case computes the inner `int`, then compares to 0.
+- The `Is_zero` case computes the inner `int`, then compares to 0.
 
 :::
 

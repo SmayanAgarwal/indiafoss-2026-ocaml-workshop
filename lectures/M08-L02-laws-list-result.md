@@ -523,10 +523,9 @@ step to step, a first bridge toward GADTs.
 
 This lecture's prose, worked examples, and quizzes are original to
 this course. The list-monad framing and the monad-laws layout draw
-on the CS3100 monads notebook
-(`_references/cs3100_m20/lectures/lec15_monads/`), used here as a
-private structural reference; the surface code, comments, and
-explanations are written from scratch. Cornell CS3110 and Real
+on the author's CS3100 monads notebook, used here as a private
+structural reference; the surface code, comments, and explanations
+are written from scratch. Cornell CS3110 and Real
 World OCaml are CC BY-NC-ND-licensed and have not been derivatively
 reused. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)

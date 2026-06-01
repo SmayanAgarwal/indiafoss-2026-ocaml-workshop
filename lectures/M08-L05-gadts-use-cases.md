@@ -2,9 +2,9 @@
 title: "GADTs: use cases beyond toy interpreters"
 lecture_no: 5
 week: 8
-duration_target_min: 22
-concepts: [type witnesses, typed pretty-printers, type-safe builders]
-keywords: [OCaml, GADT, type witness, builder]
+duration_target_min: 25
+concepts: [type witnesses, typed pretty-printers, type-safe builders, church encoding, length-indexed lists]
+keywords: [OCaml, GADT, type witness, query builder, length-indexed list, church encoding, vec]
 activity_question: "Reusing the lecture's [type _ ty] witness, write [default : type a. a ty -> a] that produces a default value for the witnessed type (0, the empty string, false, a pair of defaults, the empty list). This runs the witness the opposite direction from [show]."
 think_about_this: "A GADT lets you write a function whose return type depends on the input *value* (not just the input type). Why is that more powerful than overloading or type classes?"
 reading:
@@ -29,12 +29,12 @@ reading:
 The [toy expression-AST from the previous lecture](M08-L04-gadts-basics.html#the-gadt-form)
 is the standard "first example" of GADTs. It is useful for showing
 the mechanics, but it leaves a misleading impression: that GADTs
-are mostly for interpreters. They are not. This lecture shows two
+are mostly for interpreters. They are not. This lecture shows three
 idioms you will see in real OCaml code where GADTs earn their keep:
-typed pretty-printers and type-safe builders. Two further idioms,
-heterogeneous lists and the machinery behind `printf`, are big
-enough to get their own treatment in the
-[next lecture](M08-L06-hlists-witnesses.html).
+typed pretty-printers, type-safe builders, and types that enforce a
+data structure's shape. Two further idioms, heterogeneous lists and
+the machinery behind `printf`, are big enough to get their own
+treatment in the [next lecture](M08-L06-hlists-witnesses.html).
 
 The common thread across all of these is *type witnesses*. Where
 an ordinary value carries data, a witness is a value whose runtime
@@ -48,14 +48,14 @@ witnesses naturally.
 
 - Last lecture's toy expression AST leaves a misleading
   impression: that GADTs are mostly for interpreters.
-- They are not. Two idioms where GADTs earn their keep:
+- They are not. Three idioms where GADTs earn their keep:
   - Typed pretty-printers.
   - Type-safe builders that prevent illegal states.
-- Two more, big enough for their own lecture next time:
-  heterogeneous lists and the GADT behind `printf`.
-- Common thread: *type witnesses*. A value whose runtime shape
-  is uninteresting; whose *type* carries information.
-- GADTs are how OCaml encodes witnesses naturally.
+  - Length-indexed lists: safe `hd`/`tl`, equal-length `zip`.
+- Two more next time: heterogeneous lists and the GADT behind
+  `printf`.
+- Common thread: the *type* carries information the program needs.
+- GADTs are how OCaml encodes this naturally.
 
 :::
 
@@ -101,13 +101,13 @@ let rec show : type a. a ty -> a -> string = fun t v ->
 ## Using the typed pretty-printer
 
 ```ocaml
-let _ = show T_int 42
-let _ = show (T_pair (T_int, T_string)) (3, "hi")
-let _ = show (T_list T_int) [1; 2; 3]
+let _ = show T_int 42                              (* = "42" *)
+let _ = show (T_pair (T_int, T_string)) (3, "hi")  (* = "(3, \"hi\")" *)
+let _ = show (T_list T_int) [1; 2; 3]              (* = "[1; 2; 3]" *)
 ```
 
-`"42"`, `"(3, \"hi\")"`, `"[1; 2; 3]"`. Each case of `show`
-refines the type and unpacks the value accordingly.
+Each case of `show` refines the type and unpacks the value
+accordingly.
 
 :::
 
@@ -139,49 +139,249 @@ test cases, or print values, all without writing the code by hand.
 
 ## Use 2: type-safe builders
 
-A *builder* is an API that lets you construct a value piece by
-piece, where the partially-built value has some type that changes
-as you add pieces. GADTs let you keep the type of the partial
-value sharp:
+A *builder* lets you assemble a value piece by piece while the type
+of the partial value changes as you go. A small SQL-style query is
+the classic example: the type parameter tracks the *current row
+type*, exactly as a SQL result schema does. We build it as a GADT
+and actually run it over in-memory rows:
 
 :::slide
 
-## Use 2: type-safe builders
+## Use 2: a type-safe query builder
 
 ```ocaml
 type _ query =
-  | All        : unit query
-  | Where      : 'a query * ('a -> bool) -> 'a query
-  | Map        : 'a query * ('a -> 'b) -> 'b query
-
-let _ : int query =
-  Where (Map (All, fun () -> 42), fun n -> n > 0)
+  | From   : 'row list -> 'row query
+  | Where  : 'row query * ('row -> bool) -> 'row query
+  | Select : 'row query * ('row -> 'col) -> 'col query
 ```
 
-- Each builder step refines the type.
-- The next step's expected input type is fixed by the previous.
-- A `Where` filter expecting the wrong type is a compile-time error.
+- `From rows`: a query over a table of `'row`s.
+- `Where (q, p)`: keep the rows of `q` that pass `p`; row type
+  unchanged.
+- `Select (q, f)`: project each row through `f`; row type becomes
+  `'col`.
 
 :::
 
-Reading the constructors: `All` is the trivial unit query. `Map (q,
-f)` takes a query producing `'a` and a function `f : 'a -> 'b`,
-giving a query producing `'b`. `Where (q, p)` keeps a query
-producing `'a` and a predicate `'a -> bool`, giving a query still
-producing `'a`. The composition `Where (Map (All, fun () -> 42),
-fun n -> n > 0)` chains them: start from `unit`, map to `int`,
-filter the `int`s, giving `int query` overall.
+:::slide
 
-The type tracks the *current* element type of the query. If you
-try to `Where`-filter an `int query` with a predicate that expects
-a string, the compiler refuses: the predicate's type does not
-match the query's element type. Bugs that would otherwise hide in
-the dynamic SQL generation become compile errors.
+## Running a query
 
-Several real OCaml libraries are built on this style: query
-builders, configuration DSLs, and parser combinators all use type
-parameters that change as you compose pieces, with GADTs ensuring
-the composition is type-safe.
+```ocaml
+let rec run : type a. a query -> a list = function
+  | From rows     -> rows
+  | Where (q, p)  -> List.filter p (run q)
+  | Select (q, f) -> List.map f (run q)
+```
+
+- `run` interprets the pipeline: `From` yields the rows, `Where`
+  filters them, `Select` projects each one.
+
+:::
+
+:::slide
+
+## Running a query: an example
+
+```ocaml
+type emp = { name : string; dept : string; salary : int }
+let staff =
+  [ { name = "Asha";  dept = "Eng"; salary = 120 };
+    { name = "Ravi";  dept = "Ops"; salary = 90  };
+    { name = "Meera"; dept = "Eng"; salary = 150 } ]
+
+let top_eng : string query =
+  Select (Where (From staff, fun e -> e.dept = "Eng" && e.salary > 100),
+          fun e -> e.name)
+
+let _ = run top_eng   (* = ["Asha"; "Meera"] *)
+```
+
+- `From staff` is an `emp query`; `Select (..., fun e -> e.name)`
+  turns it into a `string query`. The type follows the rows.
+
+:::
+
+:::slide
+
+## The type catches a bad filter
+
+```ocaml skip
+let _ = Where (From staff, fun s -> s = "Eng")
+(* error: predicate is string -> bool, but the rows are emp *)
+```
+
+- `Where`'s predicate must match the query's *current* row type.
+- A filter written against the wrong column type is a compile
+  error, not a runtime query failure.
+
+:::
+
+The type parameter of `query` is always the type of a row at that
+point in the pipeline. `From staff` starts at `emp`; `Where` keeps
+the row type; `Select` rewrites it to whatever the projection
+returns. Compose them and the compiler checks every stage lines up,
+so a predicate or projection applied to the wrong row type is
+rejected before the query ever runs.
+
+Real query libraries push this much further. OCaml's
+[Petrol](https://github.com/Gopiandcode/petrol), for instance, keeps
+the *columns* and which operations are legal (you cannot `ORDER BY`
+a non-`SELECT`) in the type as well. That extra safety rides on
+heavier type machinery than we use here, but the core idea is
+exactly this one: let the type track the shape of the data as the
+query is built.
+
+## Use 3: length-indexed lists
+
+The standard `List.hd []` and `List.tl []` raise at runtime, the way
+indexing past the end of a C array is undefined behaviour. We can
+turn those into *compile* errors by recording the list's *length* in
+its type.
+
+To do that we first need *numbers that live in types*. We build them
+the way you count on your fingers: start at zero, then add one as
+often as needed. Two type names capture exactly that: `z` for zero,
+and `'n s` (`s` for *successor*) for one more than `'n`. So `z` is
+0, `z s` is 1, `z s s` is 2, and so on. (This is the classic
+*church*, or *Peano*, encoding of the natural numbers.) A list type
+that carries one of these as an index then records how long the list
+is, and the compiler keeps that honest.
+
+:::slide
+
+## Use 3: a length-indexed list
+
+```ocaml
+type z = Z               (* the number 0   *)
+type 'n s = S of 'n      (* successor, n+1 *)
+
+type ('a, _) vec =
+  | Nil  : ('a, z) vec
+  | Cons : 'a * ('a, 'n) vec -> ('a, 'n s) vec
+
+let v = Cons (1, Cons (2, Cons (3, Nil)))   (* (int, z s s s) vec *)
+```
+
+- The second index counts the elements: `z` is 0, `z s` is 1, and
+  `z s s s` is 3.
+- So `v`'s type, `(int, z s s s) vec`, says "three ints" out loud.
+
+:::
+
+:::slide
+
+## Safe `hd` and `tl`
+
+```ocaml
+let hd : type n. ('a, n s) vec -> 'a = fun (Cons (x, _)) -> x
+let tl : type n. ('a, n s) vec -> ('a, n) vec = fun (Cons (_, xs)) -> xs
+
+let _ = hd v   (* = 1 *)
+```
+
+```ocaml skip
+let _ = hd Nil   (* error: Nil has length z, hd needs length n s *)
+```
+
+- `hd` / `tl` take only `'n s`-length vectors: the non-empty ones
+  (length at least one).
+- `hd Nil` will not compile, so the `List.hd []` crash can no longer
+  be written.
+- OCaml knows `Nil` cannot have a length-`'n s` type, so the single
+  `Cons` case is already complete (no missing-case warning).
+
+:::
+
+:::slide
+
+## `map`: length-preserving
+
+```ocaml
+let rec map : type n. ('a -> 'b) -> ('a, n) vec -> ('b, n) vec =
+  fun f l -> match l with
+  | Nil -> Nil
+  | Cons (x, xs) -> Cons (f x, map f xs)
+
+let _ = map (fun x -> x * 10) v
+(* = Cons (10, Cons (20, Cons (30, Nil))) *)
+```
+
+- The result type carries the *same* length index `n` as the input.
+- Length preservation is enforced by the type, not just intended.
+
+:::
+
+:::slide
+
+## `zip`: equal lengths only
+
+```ocaml
+let rec zip : type n. ('a, n) vec -> ('b, n) vec -> ('a * 'b, n) vec =
+  fun xs ys -> match xs, ys with
+  | Nil, Nil -> Nil
+  | Cons (x, xs), Cons (y, ys) -> Cons ((x, y), zip xs ys)
+```
+
+```ocaml skip
+let _ = zip v (Cons ("a", Cons ("b", Nil)))
+(* error: v has length z s s s, this one z s s *)
+```
+
+- Both inputs share the same length `n`, so zipping lists of
+  different lengths does not type-check.
+- A `Nil` paired with a `Cons` would mean unequal lengths, which
+  cannot happen here, so the two cases are all OCaml needs.
+
+:::
+
+:::slide
+
+## `reverse`: why the obvious version is tricky
+
+```ocaml skip
+let rec rev l acc = match l with
+  | Nil -> acc
+  | Cons (x, xs) -> rev xs (Cons (x, acc))
+```
+
+- Its result length is `'m + 'n` (the two pieces added), so its
+  type would be `('a, 'm) vec -> ('a, 'n) vec -> ('a, 'm + 'n) vec`.
+- But OCaml's types cannot *add*: there is no `'m + 'n`, so this
+  version cannot be given a length-indexed type.
+
+:::
+
+:::slide
+
+## `reverse`: with successor only
+
+```ocaml
+let rec snoc : type n. ('a, n) vec -> 'a -> ('a, n s) vec =
+  fun l x -> match l with
+  | Nil -> Cons (x, Nil)
+  | Cons (y, ys) -> Cons (y, snoc ys x)
+
+let rec rev : type n. ('a, n) vec -> ('a, n) vec =
+  fun l -> match l with
+  | Nil -> Nil
+  | Cons (x, xs) -> snoc (rev xs) x
+
+let _ = rev v   (* = Cons (3, Cons (2, Cons (1, Nil))) *)
+```
+
+- `snoc` adds *one* element (`n` to `n s`), so no `'m + 'n` arises.
+- `rev`'s type promises the result has the *same* length `n`.
+
+:::
+
+These vectors put the *length* in the type; the
+[next lecture's](M08-L06-hlists-witnesses.html) heterogeneous lists
+put the *element types* there instead. Both are the same move:
+encode a structural invariant as a type index, and the compiler
+checks it for you. (A tail-recursive reverse that proves the
+`'m + 'n` length needs type-level proofs we will not pursue here.)
 
 ## Two more idioms, next lecture
 
@@ -256,23 +456,21 @@ not match `int`, hence the type error in the second case.
 :::
 
 :::quiz mcq id=M08-L05-q2
-In the builder GADT, `Map (All, fun () -> 42)` has type
-`int query`. Why does the compiler reject
-`Where (Map (All, fun () -> 42), fun s -> s = "x")`?
+`From staff` has type `emp query`. Why does the compiler reject
+`Where (From staff, fun s -> s = "Eng")`?
 
-- [x] `Map (...)` is an `int query`, so `Where`'s predicate must
-  be `int -> bool`; `fun s -> s = "x"` is `string -> bool`, which
+- [x] `From staff` is an `emp query`, so `Where`'s predicate must
+  be `emp -> bool`; `fun s -> s = "Eng"` is `string -> bool`, which
   does not match.
-- [ ] `Where` cannot follow `Map`; the constructors must appear in
+- [ ] `Where` cannot follow `From`; the constructors must appear in
   a fixed order.
-- [ ] `All` is not a valid starting point for a builder.
+- [ ] `From` is not a valid starting point for a builder.
 - [ ] Predicates are not allowed to use `=`.
 
-**Why:** the type parameter of `query` tracks the *current*
-element type. `Map (All, fun () -> 42)` maps `unit` to `int`, so
-its type is `int query`. `Where`'s signature is `'a query * ('a ->
-bool) -> 'a query`, so the predicate must accept the same `'a`,
-here `int`. A `string -> bool` predicate fails to unify, and the
+**Why:** the type parameter of `query` tracks the *current* row
+type. `From staff` is an `emp query`, so `Where`'s signature
+`'row query * ('row -> bool) -> 'row query` forces the predicate to
+accept `emp`. A `string -> bool` predicate fails to unify, and the
 mistake is caught at compile time rather than at query execution.
 :::
 
