@@ -28,15 +28,15 @@ reading:
 
 [Lecture 4](M08-L04-gadts-basics.html) showed GADTs with a single
 type index (the `int expr` / `bool expr` AST).
-[Lecture 5](M08-L05-gadts-use-cases.html) showed witness GADTs
-(`T_int`, `T_string`, ...) that let one function dispatch on the
-type its argument has. This lecture combines both ideas at scale.
-We define a *heterogeneous list* (an "hlist"), a list whose
-elements may have different types, all tracked at the type level.
-Then we drive operations on the hlist with a *list of witnesses*,
-one per element. The result is a clean answer to "how do I write a
-generic operation across a fixed-but-mixed collection of typed
-values?"
+[Lecture 5](M08-L05-gadts-use-cases.html) built a typed
+pretty-printer, `show : 'a ty -> 'a -> string`, that read a witness
+(`T_int`, `T_string`, ...) to decide how to render *one* value. This
+lecture lifts that from a single value to a whole *heterogeneous
+list* (an "hlist"): a list whose elements may have different types,
+all tracked at the type level. We pair the hlist with a *list of
+witnesses*, one per element, and reuse `show` on each. The result is
+a clean answer to "how do I write a generic operation across a
+fixed-but-mixed collection of typed values?"
 
 This pattern is the engine behind OCaml's `Format` module: every
 `%d`, `%s`, `%b` in a format string is a witness, and `printf`
@@ -46,13 +46,13 @@ folds across them. We will sketch the connection at the end.
 
 ## This lecture
 
-- Recap: GADTs ([L4](M08-L04-gadts-basics.html)) and witnesses
-  ([L5](M08-L05-gadts-use-cases.html)).
+- Start from Lecture 5's typed pretty-printer `show`, lifted to a
+  *list*.
 - **Heterogeneous lists** (hlists): lists with different element
   types tracked in the type.
-- **Per-element witnesses**: a witness GADT recording one element
-  type each.
-- `pp_hlist`: a generic pretty-printer driven by witnesses.
+- **Witness list**: reuse Lecture 5's `ty` witness, one per element,
+  indexed to match the hlist.
+- `pp_hlist`: Lecture 5's `show`, folded across the whole list.
 - Aside: OCaml's `Format.printf` uses GADTs of this shape.
 
 :::
@@ -158,55 +158,26 @@ The function's type `(a * r) hlist -> a` rules out applying
 not match the shape `a * r`. The compiler verifies this at the
 call site: you cannot accidentally take the head of an empty hlist.
 
-## A per-element type witness
+## A witness list for the hlist
 
-To do something with each element of an hlist, we need a way to
-say "this is an int" or "this is a string" *at runtime*. The
-witness GADT from [Lecture 5](M08-L05-gadts-use-cases.html) does
-this:
-
-:::slide
-
-## A per-element witness
-
-```ocaml
-type _ ty =
-  | T_int    : int ty
-  | T_string : string ty
-  | T_bool   : bool ty
-```
-
-- `T_int : int ty` is a value whose runtime shape is uninteresting
-  but whose *type* tells the compiler "this is an int witness".
-- Same for `T_string` and `T_bool`.
-- These are the per-element witnesses we will pair with an hlist.
-
-:::
-
-A value of type `int ty` carries no runtime information beyond
-"this exists"; the compiler reads its type and knows the element
-it witnesses is an `int`. The pattern is the same as the typed
-pretty-printer from the
-[previous lecture](M08-L05-gadts-use-cases.html), just specialised
-for our three primitive types.
-
-## A list of witnesses, paired with an hlist
-
-To drive a recursion across an hlist we also need a list of
-witnesses, one per element. The witness list is itself a GADT,
-parameterised by the same index type as the hlist:
+To *print* an element we need to know its type at runtime, and that
+is exactly the witness `ty` from
+[Lecture 5's pretty-printer](M08-L05-gadts-use-cases.html). We reuse
+it unchanged. The one new idea: pair a whole *list* of those
+witnesses with the hlist, indexed by the **same** type, so each
+witness sits opposite the element it describes.
 
 :::slide
 
-## A list of witnesses, paired with the hlist
+## A witness list matching the hlist
 
 ```ocaml
-type _ ty =
+type _ ty =                     (* the witness from Lecture 5 *)
   | T_int    : int ty
   | T_string : string ty
   | T_bool   : bool ty
 
-type _ tylist =
+type _ tylist =                 (* one witness per element *)
   | TyNil  : unit tylist
   | TyCons : 'a ty * 'rest tylist -> ('a * 'rest) tylist
 
@@ -214,64 +185,32 @@ let tys : (int * (string * (bool * unit))) tylist =
   TyCons (T_int, TyCons (T_string, TyCons (T_bool, TyNil)))
 ```
 
-- `tylist` is a parallel structure to `hlist`: same index, same
-  recursion shape.
-- Each `TyCons` carries one witness for the corresponding hlist
-  position.
-- The compiler insists `tylist` and `hlist` share the same index.
+- `tylist` mirrors `hlist`: the same `unit` / `'a * 'rest` index.
+- **The crux:** witness list and hlist share *one* index, so a
+  witness lines up with each element and any mismatch is rejected.
 
 :::
 
-The trick is that `tylist` and `hlist` share the *exact same*
-index type. If your hlist has index `(int * (string * (bool *
-unit)))`, your witness list must too. The compiler will reject any
-mismatch.
-
-This is what we mean by "driven by witnesses": each step of the
-hlist recursion reads off the next witness, which tells us what
-type the current element has and therefore what we are allowed to
-do with it.
+That shared index is the whole trick: an `hlist` of shape
+`(int * (string * (bool * unit)))` demands a `tylist` of the same
+shape, so the two recurse together with a witness always opposite
+its value.
 
 ## Generic pretty-printer: `pp_hlist`
 
-Now the payoff. Walk the two structures in parallel: at each
-position, the witness tells us how to convert the element to a
-string.
-
-:::slide
-
-## `pp_hlist`: the three types
-
-```ocaml
-type _ ty =
-  | T_int    : int ty
-  | T_string : string ty
-  | T_bool   : bool ty
-
-type _ hlist =
-  | HNil  : unit hlist
-  | HCons : 'a * 'rest hlist -> ('a * 'rest) hlist
-
-type _ tylist =
-  | TyNil  : unit tylist
-  | TyCons : 'a ty * 'rest tylist -> ('a * 'rest) tylist
-```
-
-- A witness `ty`, the heterogeneous `hlist`, and a `tylist` of
-  witnesses sharing the hlist's index.
-
-:::
+Now the payoff: one recursive function walks both structures in
+lock-step, using each witness to render its element.
 
 :::slide
 
 ## `pp_hlist`: walking both in lock-step
 
 ```ocaml
-let pp_one : type a. a ty -> a -> string = fun t v ->
-  match t with
-  | T_int -> string_of_int v
+let pp_one : type a. a ty -> a -> string =   (* Lecture 5's show *)
+  fun t v -> match t with
+  | T_int    -> string_of_int v
   | T_string -> "\"" ^ v ^ "\""
-  | T_bool -> string_of_bool v
+  | T_bool   -> string_of_bool v
 
 let rec pp_hlist : type ix. ix tylist -> ix hlist -> string list =
   fun tys hl ->
@@ -281,8 +220,8 @@ let rec pp_hlist : type ix. ix tylist -> ix hlist -> string list =
         pp_one t v :: pp_hlist trest vrest
 ```
 
-- `pp_one` dispatches on a single witness.
-- `pp_hlist` recurses on both structures in lock-step; the shared
+- `pp_one` is Lecture 5's `show`, on the three primitive witnesses.
+- `pp_hlist` folds it over both structures in lock-step; the shared
   index `ix` forces witness and hlist to align.
 
 :::
