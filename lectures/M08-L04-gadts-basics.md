@@ -351,16 +351,24 @@ them; the code that *does* need them needs them in a serious way.
 
 ## Units of measure
 
-A famous units bug: in 1999 the $125 million Mars Climate Orbiter
-was lost because one team worked in imperial units and another in
-metric, and the two were combined as if they were the same. We can
-rule that out *by construction*, carrying each value's unit in its
-type so the compiler refuses to mix them.
+:::slide
 
-The trick is to tag a `float` with its unit. We declare three
-*uninhabited* types, `kelvin`, `celsius`, and `fahrenheit`, that
-have no values of their own; they exist only to sit in a type index.
-Then a GADT `temp` whose constructor picks the unit:
+## A units bug that cost $125 million
+
+- In 1999 the **Mars Climate Orbiter** was lost to a units mix-up.
+  - One team used imperial units, the other metric; the two were
+    combined as if identical.
+- A GADT lets one program hold *several* units at once yet refuse to
+  mix them, catching the bug *by construction*.
+
+:::
+
+That Mars Climate Orbiter loss is the motivating example: types can
+make a units mix-up impossible. We tag a `float` with its unit by
+declaring three *uninhabited* types, `kelvin`, `celsius`, and
+`fahrenheit`, that have no values of their own and exist only to sit
+in a type index. Then a GADT `temp` whose constructor picks the
+unit:
 
 :::slide
 
