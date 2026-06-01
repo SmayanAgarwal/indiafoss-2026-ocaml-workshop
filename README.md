@@ -2,10 +2,10 @@
 
 Source repository for **Functional Programming with OCaml**, a 12-week
 NPTEL MOOC taught by KC Sivaramakrishnan at IIT Madras. The first
-eight weeks (Modules 1-8, lectures 1-49) cover functional programming
-in OCaml; the final four turn to secure systems software (runtime,
-memory safety, unikernels, concurrency) and have not yet been
-authored.
+eight modules cover functional programming in OCaml; the final four
+turn to secure systems software (testing and concurrency, memory
+safety, OxCaml's type-level safety extensions, and unikernels with
+MirageOS). All twelve modules are now authored.
 
 Course launches on SWAYAM/NPTEL in **July 2026**.
 
@@ -16,9 +16,9 @@ Live preview: <https://fplaunchpad.github.io/ocaml_nptel/>.
 ```
 lectures/
   M01-L01-course-intro.md          One .md per lecture: M<module>-L<lecture>-<slug>.md.
-  M01-L02-why-fp.md                M01-M08, with L counts 5, 6, 6, 6, 6, 6, 7, 7.
-  ...                              (49 lectures, ~630 lines each)
-  M08-L07-tutorial.md
+  M01-L02-why-fp.md                M01-M12, with L counts 5, 6, 6, 6, 6, 7, 10, 7, 8, 6, 7, 6.
+  ...                              (80 files: 78 recorded lectures + 2 slide-free
+  M12-L06-bob-the-bin-man.md       practice chapters, M06-L07 and M07-L10).
   modules.txt                      Module titles used in sidebar + landing page.
   dune                             ocaml-mdx stanza listing every lecture.
 
@@ -90,11 +90,10 @@ See [`lectures/M02-L01-literals.md`](lectures/M02-L01-literals.md)
 for the canonical example: ~700 lines, prose-first chapter view,
 slides as terse video summaries, with both an MCQ and a code quiz.
 
-Lecture numbers in the navigation, header bar, and landing page
-**run continuously** across the course: Module 1 holds L01-L05,
-Module 2 L06-L11, Module 3 L12-L17, and so on through Module 8 at
-L44-L49. The header bar of each lecture shows the running number
-too (`Module 5 · Lecture 24` for the first lecture of Module 5).
+Lecture numbers **restart within each module**: the header bar and
+title slide of each lecture show `Module <m> · Lecture <n>`, where
+`<n>` is the lecture's position inside its own module (so the first
+lecture of Module 5 reads `Module 5 · Lecture 1`).
 
 ## Build & preview locally
 

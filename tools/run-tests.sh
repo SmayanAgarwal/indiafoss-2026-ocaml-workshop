@@ -54,18 +54,31 @@ bold '[4/5] build site'
 tools/build-site.sh
 
 bold '[5/5] playwright end-to-end'
+SMOKE_URL=http://localhost:8765/_site/test/smoke.html
 SERVER_PID=""
-if ! curl -sf -o /dev/null http://localhost:8765/_site/test/smoke.html; then
+if ! curl -sf -o /dev/null "$SMOKE_URL"; then
   green "  starting http.server on 8765 for the duration of the test"
   python3 -m http.server 8765 --directory . >/dev/null 2>&1 &
   SERVER_PID=$!
   # give it a moment to bind
   for _ in 1 2 3 4 5; do
     sleep 0.3
-    curl -sf -o /dev/null http://localhost:8765/_site/test/smoke.html && break
+    curl -sf -o /dev/null "$SMOKE_URL" && break
   done
 fi
 trap '[ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+# Fail fast with an actionable message rather than letting playwright-check.mjs
+# time out for 90s waiting for x-ocaml on a page that 404s. The usual cause is a
+# stale http.server already squatting on :8765 from a different document root, so
+# /_site/test/smoke.html resolves to 404 and our own server can't bind the port.
+if ! curl -sf -o /dev/null "$SMOKE_URL"; then
+  red "  $SMOKE_URL is not reachable (HTTP non-2xx)."
+  red "  Something is likely already serving :8765 from the wrong root."
+  red "  Free the port (e.g. 'lsof -nP -iTCP:8765 -sTCP:LISTEN' then kill it)"
+  red "  and re-run, or start the server from the repo root."
+  exit 1
+fi
 
 node "$SCRIPT_DIR/playwright-check.mjs"
 

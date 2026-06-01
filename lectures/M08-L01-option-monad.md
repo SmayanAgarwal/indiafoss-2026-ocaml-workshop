@@ -30,9 +30,9 @@ Module 8 is about two ideas that recur all over real OCaml code.
 The first, which occupies this lecture and the next two, is the
 *monad*: a small design pattern for *sequencing computations of a
 particular shape* without writing the plumbing by hand. The second,
-from lecture 4 onward, is *GADTs*, a type-system feature for giving
-variants more precise types. The two come together in the closing
-tutorial.
+which the module turns to after the monads, is *GADTs*, a
+type-system feature for giving variants more precise types. The two
+come together in the closing tutorial.
 
 The word *monad* sounds scarier than it is. The mathematical
 machinery lives in [category
@@ -74,10 +74,21 @@ might fail, so each returns an
 
 ```ocaml
 let parse_int s = int_of_string_opt s
-let double x = Some (x * 2)
+let double x = if x > max_int / 2 then None else Some (x * 2)
 let small x = if x < 100 then Some x else None
 let print_num x = print_endline (string_of_int x); Some ()
 ```
+
+Each `None` here marks a real failure mode. `parse_int` fails when
+the string is not a number. `double` can *overflow*: native OCaml's
+`int` is 63-bit, but the same code compiled to JavaScript with
+[js_of_ocaml](https://ocsigen.org/js_of_ocaml/) uses 32-bit `int`s
+(this is exactly how the runnable cells on this page execute), so
+doubling a large value silently wraps to a wrong answer. We refuse
+it and return `None` rather than lie. `small` fails when the result
+is out of range. Only `print_num` always succeeds, but it still
+returns `Some ()` so that every step shares the same `'a -> 'b
+option` shape: that uniformity is exactly what lets us chain them.
 
 We want to wire them together: parse, then double, then check, then
 print. At each step, if the previous step said `None`, the whole
@@ -90,7 +101,7 @@ step. The naive translation nests a `match` per step:
 
 ```ocaml
 let parse_int s = int_of_string_opt s
-let double x = Some (x * 2)
+let double x = if x > max_int / 2 then None else Some (x * 2)
 let small x = if x < 100 then Some x else None
 let print_num x = print_endline (string_of_int x); Some ()
 
@@ -121,26 +132,21 @@ abstraction.
 ## Capturing the pattern: `bind`
 
 Lift the repetition into a function. It takes an `option` and a
-function saying "what to do if we have a value", and returns the
-next `option`:
+continuation saying "what to do if we have a value", and returns
+the next `option`. With it the four nested matches flatten to a
+vertical sequence, one `bind` per step:
+
+:::slide
+
+## Capturing the pattern: `bind`
 
 ```ocaml
 let bind opt f =
   match opt with
   | None -> None
   | Some x -> f x
-```
 
-OCaml infers the type `'a option -> ('a -> 'b option) -> 'b
-option`. Read it slowly: given the previous step's result (an `'a
-option`) and a continuation (`'a -> 'b option`), produce the
-combined, possibly-short-circuited next step. The two type
-variables are independent because the value type changes from step
-to step (string to int, int to int, and so on).
-
-With `bind`, the pyramid flattens to a vertical sequence:
-
-```ocaml
+(* parse_int, double, small, print_num from the pyramid slide *)
 let demo s =
   bind (parse_int s) (fun x ->
   bind (double x) (fun y ->
@@ -148,19 +154,32 @@ let demo s =
   print_num z)))
 ```
 
-One `bind` per step; the "what to do on `None`" logic lives once,
-inside `bind`. It still has noise: each line opens a parenthesis
-that piles up at the end, and `bind ... (fun x -> ...)` is heavier
-than `let x = ... in ...`. OCaml has one more piece of sugar that
-closes the gap.
+- `bind : 'a option -> ('a -> 'b option) -> 'b option`: an option,
+  plus a continuation, giving the next option.
+- One `bind` per step; the `None` plumbing lives once, inside it.
+- Still noisy: the parentheses pile up, heavier than `let ... in`.
 
-## Definition
+:::
+
+OCaml infers `bind`'s type as `'a option -> ('a -> 'b option) -> 'b
+option`: given the previous step's result and a continuation that
+produces the next option, it returns the combined,
+possibly-short-circuited result. The two type variables are
+independent because the value type changes from step to step
+(string to int, int to int, and so on).
+
+`bind` collapses the three `None -> None` arms into one definition,
+but it is still noisy: each line opens a parenthesis that piles up
+at the end, and `bind ... (fun x -> ...)` is heavier than `let x =
+... in ...`. OCaml has one more piece of sugar that closes the gap.
+
+## Monad definition
 
 A monad is a type plus two operations. Concretely for `option`:
 
 :::slide
 
-## Definition
+## Monad definition
 
 ```ocaml
 module Opt = struct
@@ -193,8 +212,8 @@ The line `let ( let* ) = bind` is where the magic happens. The
 identifier `( let* )` is a *let-operator* (an OCaml feature since
 4.08). Any identifier `let X` whose `X` starts with a punctuation
 character can be bound to a function; once it is in scope, the
-compiler treats `let* p = e in body` as sugar for `( let* ) e (fun
-p -> body)`, which is `bind e (fun p -> body)`. That single
+compiler treats `let* x = e in rest` as sugar for `( let* ) e (fun
+x -> rest)`, which is `bind e (fun x -> rest)`. That single
 rewrite rule is the whole feature.
 
 ## Using `let*`
@@ -206,28 +225,23 @@ The pyramid, one more time, now with `let*`:
 ## Using `let*`
 
 ```ocaml
-let ( let* ) opt f =
-  match opt with
-  | None -> None
-  | Some x -> f x
-
-let parse_int s = int_of_string_opt s
-let double x = Some (x * 2)
-let small x = if x < 100 then Some x else None
+open Opt   (* Opt's let* and return are now in scope *)
 
 let demo s =
   let* x = parse_int s in
   let* y = double x in
-  small y
+  let* z = small y in
+  print_num z
 
-let _ = demo "5"      (* = Some 10 *)
+let _ = demo "5"      (* prints 10; = Some () *)
 let _ = demo "frog"   (* = None *)
 let _ = demo "200"    (* = None *)
 ```
 
-- Each step is `let* name = expression in ...`.
-- Looks almost like ordinary `let ... in ...`; the only mark is the
-  `*`.
+- `open Opt` brings the module's `let*` into scope, so we use it
+  without the `Opt.` prefix.
+- Each step is `let* name = expression in ...`; it reads almost
+  like ordinary `let ... in ...`, the only mark being the `*`.
 - Hidden: if any step gives `None`, the rest is skipped.
 
 :::
@@ -238,6 +252,33 @@ elaborates back to `bind`. A reader learns to read `let*` as "this
 might fail, and if it does, give up"; each `let*` line names the
 *successful* result, and the short-circuit on failure is implicit.
 The whole function reads top to bottom with no nested matches.
+
+## `let*` is not magic
+
+We just used `let*`; here is why it is not magic. *Ordinary* `let`
+works the same way. Name reverse application `flip` (so `flip a f =
+f a`): then `let x = e in rest` is `flip e (fun x -> rest)`, and
+`let*` has the *identical* shape, swapping `flip` for `bind`:
+
+:::slide
+
+## `let*` is not magic
+
+```text
+let  x = e in rest   is   flip e (fun x -> rest)
+let* x = e in rest   is   bind e (fun x -> rest)
+```
+
+- Same shape: `combinator value (fun x -> continuation)`.
+- `flip` just hands the value to the continuation; `bind` does that
+  *and* the monad's work (for `option`, the `None` short-circuit).
+- That extra work inside `bind` is the *only* difference.
+
+:::
+
+So reading `let*` is no harder than reading `let`: bind a name,
+then continue. The extra behaviour is invisible at the call site
+and lives entirely in the monad's `bind`.
 
 ## `Option.bind` and `Option.map`
 
@@ -276,6 +317,60 @@ compiler does not guess which monad you mean: you choose it by what
 is in scope, and the type of `let*` is always right there in front
 of you.
 
+## A realistic example: reaching into optional data
+
+A `user` may have no `address`, and an `address` may have no `zip`.
+To get a user's zip we must descend through both options. This is
+the pattern other languages bake into syntax as *optional chaining*
+(`a?.b?.c` in Swift, Kotlin, or C#; `&.` in Ruby); in OCaml it is
+just `let*` over `option`:
+
+:::slide
+
+## A realistic example: optional chaining
+
+```ocaml
+(* let* is in scope from the "Using let*" slide above *)
+type address = { zip : string option }   (* more fields in real life *)
+type user    = { name : string; address : address option }
+
+let user_zip u =
+  let* addr = u.address in   (* user may have no address *)
+  let* zip  = addr.zip in    (* address may have no zip  *)
+  Some (String.uppercase_ascii zip)
+```
+
+- `zip` comes from `addr`, which comes from `u.address`: each step
+  *needs* the previous value, so this cannot collapse to one match.
+- Any `None` on the way down short-circuits the whole lookup.
+
+:::
+
+:::slide
+
+## Trying it
+
+```ocaml
+let u1 = { name = "Asha";  address = Some { zip = Some "ec1a 1bb" } }
+let u2 = { name = "Ravi";  address = Some { zip = None } }
+let u3 = { name = "Meera"; address = None }
+
+let _ = user_zip u1   (* = Some "EC1A 1BB" *)
+let _ = user_zip u2   (* = None: address present, zip missing *)
+let _ = user_zip u3   (* = None: no address at all *)
+```
+
+- `u1`: every layer present, so the zip comes back uppercased.
+- `u2`, `u3`: a missing layer anywhere short-circuits to `None`.
+
+:::
+
+This is where `let*` genuinely beats a single `match`: because each
+step depends on the previous one's value, you cannot lift the
+checks into one flat match. It is the safe-navigation idiom that
+`option` plus `let*` gives you for free, the antidote to the null
+dereference [Module 4](M04-L04-recursive-types.html) warned about.
+
 ## When *not* to use a monad
 
 A monad is overkill for a single optional step. The plain `match`
@@ -289,10 +384,10 @@ is shorter and just as clear:
 let _ =
   match int_of_string_opt "frog" with
   | Some n -> n * 2
-  | None -> 0
+  | None -> 0          (* "frog" doesn't parse, so = 0 *)
 ```
 
-`int = 0`. Two cases, one `match`, three lines. No monad needed.
+Two cases, one `match`, three lines. No monad needed.
 
 - Reach for `let*` at **three or more** sequential optional steps.
 - Below three, the `match` is shorter and equally clear.
@@ -316,11 +411,12 @@ The pattern is worth learning because the same `'a t` + `return` +
 ## Same shape, many monads
 
 - `'a option`: maybe a value (this lecture).
-- `('a, 'e) result`: a value or an error with information (L2).
+- `('a, 'e) result`: a value or an error with information (next
+  lecture).
 - `'a list`: zero, one, or many values; `bind` is flat-map across
-  all of them (the list monad, L2).
+  all of them (the list monad, next lecture).
 - `state -> 'a * state`: a value threaded against ambient state
-  (L3).
+  (the state lecture).
 - `'a Lwt.t` / `'a Eio.Promise.t`: a value available after I/O
   completes (concurrent programming).
 - `'a parser`: a parser consuming input (parser combinators).

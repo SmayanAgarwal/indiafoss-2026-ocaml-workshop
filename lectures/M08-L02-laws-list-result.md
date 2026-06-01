@@ -5,7 +5,7 @@ week: 8
 duration_target_min: 26
 concepts: [monad laws, list monad, non-determinism, result monad, Result.bind, error propagation]
 keywords: [OCaml, monad laws, list monad, concat_map, result, Result.bind, let*]
-activity_question: "Define a [parse_pair_r : string -> ((int * int), string) result] that returns informative error messages. Use [let*] to chain the parses."
+activity_question: "Use the list monad's non-determinism to return every Pythagorean triple [a*a + b*b = c*c] with [a < b] and [a], [b], [c] each in [1..30], as [(a, b, c)]."
 think_about_this: "The option, list, and result monads share one [let*]. What is different about what [let*] *means* in each?"
 reading:
   - title: "Cornell CS3110, Monads"
@@ -36,6 +36,21 @@ shapes. The *list monad* (`'a list`) models many values at once;
 the *result monad* (`('a, 'e) result`) is option with an
 informative failure.
 
+:::slide
+
+## This lecture
+
+- The three **monad laws** (left identity, right identity,
+  associativity), and why they let you refactor `let*` chains
+  safely.
+- The **list monad**: `bind = List.concat_map`, for computations
+  with *many* results (non-determinism).
+- The **result monad**: like `option`, but failure carries
+  information.
+- One `let*`, three very different behaviours.
+
+:::
+
 ## The monad laws
 
 The three laws are the "good behaviour" contract that lets you
@@ -47,19 +62,67 @@ from scratch:
 ## The three laws
 
 ```text
-left identity   bind (return x) f  ===  f x
-right identity  bind m return      ===  m
-associativity   bind (bind m f) g  ===  bind m (fun x -> bind (f x) g)
+left identity   | bind (return x) f  ===  f x
+right identity  | bind m return      ===  m
+associativity   | bind (bind m f) g  ===
+                  bind m (fun x -> bind (f x) g)
 ```
 
 - Left and right identity fence `return` in: it can only wrap, do
   nothing else.
-- Associativity says nested `bind`s regroup freely, so a `let*`
-  chain reads as a flat sequence and you can refactor a sub-chain
-  into a helper without changing the result.
+- Associativity says nested `bind`s regroup freely
+  - A `let*` chain reads as a flat sequence
+  - You can refactor a sub-chain into a helper without changing the result.
 - They hold for every monad in this course (option, list, result,
-  state). You check them on paper, once, per monad; OCaml's type
-  system cannot enforce equalities.
+  state).
+  - OCaml's type system cannot enforce equalities.
+  - You check them on paper, once, per monad.
+
+:::
+
+The same three laws read more intuitively in the `let*` notation
+students actually use:
+
+:::slide
+
+## The laws in `let*` form
+
+```text
+left identity    | let* x = return v in f x ===
+                   f v
+right identity   | let* x = m in return x ===
+                   m
+associativity    | let* y = (let* x = m in f x) in g y ===
+                   let* x = m in let* y = f x in g y
+```
+
+- Left identity: wrap `v`, then immediately unwrap it and feed it
+  to `f`; the same as just `f v`.
+- Right identity: binding only to `return` changes nothing.
+- Associativity: nested and flat `let*` chains agree.
+
+:::
+
+A worked check of left identity on `option`, with concrete values:
+
+:::slide
+
+## Checking a law
+
+```ocaml
+let ( let* ) = Option.bind
+let f x = if x > 0 then Some (x * 10) else None
+
+let lhs = let* x = Some 5 in f x   (* = Some 50 *)
+let rhs = f 5                       (* = Some 50 *)
+let _ = (lhs = rhs)                 (* = true: left identity holds *)
+```
+
+- `return 5` for `option` is `Some 5`; binding it into `f` equals
+  calling `f 5` directly.
+- The other two laws check the same way. Nothing states them as
+  OCaml types, so the check is a one-time paper proof per monad,
+  not something the compiler does for you.
 
 :::
 
@@ -89,6 +152,7 @@ let _ = bind [1; 2; 3] (fun x -> [x; x * 10])  (* = [1; 10; 2; 20; 3; 30] *)
 let _ = return 7                                (* = [7] *)
 ```
 
+- The list monad models a computation with *many* results at once.
 - `bind xs f` maps `f` across `xs` and concatenates: that is
   exactly `List.concat_map` (`flat_map` in other languages).
 - `return x = [x]`: one value, lifted to a one-element list.
@@ -160,69 +224,59 @@ changes.
 
 :::slide
 
-## `Result.bind` and `let*`
+## `result`'s `bind`, and the steps
 
 ```ocaml
-let ( let* ) = Result.bind
+(* Result.bind = option's bind, with Ok/Error for Some/None *)
+let bind r f = match r with Ok x -> f x | Error e -> Error e
+let ( let* ) = bind
 
 let parse_int_msg s =
   match int_of_string_opt s with
   | Some n -> Ok n
   | None -> Error ("not an int: " ^ s)
 
-let double_r x = Ok (x * 2)
-let small_r x = if x < 100 then Ok x else Error "too big"
+let double_r x =
+  if x > max_int / 2 then Error "overflow" else Ok (x * 2)
 
+let small_r x = if x < 100 then Ok x else Error "too big"
+let print_num_r x = print_endline (string_of_int x); Ok ()
+```
+
+- `bind` is `option`'s `bind` with `Ok`/`Error` for `Some`/`None`;
+  the stdlib ships exactly this as `Result.bind`.
+- `double_r` guards overflow with an informative `Error`, just as
+  `double` used `None` in the previous lecture.
+
+:::
+
+:::slide
+
+## `Result.bind`: the pipeline
+
+```ocaml
 let demo s =
   let* x = parse_int_msg s in
   let* y = double_r x in
-  small_r y
+  let* z = small_r y in
+  print_num_r z
 
-let _ = demo "5"      (* = Ok 10 *)
+let _ = demo "5"      (* prints 10; = Ok () *)
 let _ = demo "frog"   (* = Error "not an int: frog" *)
 let _ = demo "200"    (* = Error "too big" *)
 ```
 
-- `type ('a, 'e) result = Ok of 'a | Error of 'e`; the error type
-  `'e` is yours to choose.
-- Same shape as the option monad; failure now names *why*.
+- Same shape as the option-monad demo; failure now names *why*.
+- The first `Error` to fire is returned; later steps do not run.
 
 :::
 
-The structure is identical to the option-monad demo from lecture 1.
-`let*` still means "unwrap the success, or short-circuit"; the only
-visible change is that the failure case has a payload. When several
-distinct things can go wrong, a [variant](M04-L03-variants.html) in
-the error slot beats a `string`, because callers can
-[pattern-match](M05-L01-basic-patterns.html) on it:
-
-:::slide
-
-## A typed-error variant
-
-```ocaml
-type parse_error =
-  | Not_an_int of string
-  | Empty_input
-  | Too_large of int
-
-let parse_int_v s =
-  if s = "" then Error Empty_input
-  else
-    match int_of_string_opt s with
-    | None -> Error (Not_an_int s)
-    | Some n when n > 1000 -> Error (Too_large n)
-    | Some n -> Ok n
-
-let _ = parse_int_v "42"     (* = Ok 42 *)
-let _ = parse_int_v "frog"   (* = Error (Not_an_int "frog") *)
-let _ = parse_int_v ""       (* = Error Empty_input *)
-let _ = parse_int_v "9999"   (* = Error (Too_large 9999) *)
-```
-
-- The type lists every failure mode; callers match and respond.
-
-:::
+The structure is identical to the option-monad demo from the
+previous lecture. `let*` still means "unwrap the success, or
+short-circuit"; the only visible change is that the failure case
+carries a payload. (That payload can be anything, a `string` or a
+[variant](M04-L03-variants.html) when callers must tell failures
+apart; the monad behaves the same whatever it is.)
 
 Like the option monad, `result` short-circuits on the *first*
 `Error`: subsequent steps do not run, and the origin of failure is
@@ -233,6 +287,90 @@ pattern, a sibling shape we do not pursue here.) The rule of thumb:
 use `option` when "no value" is the whole story, and `result` when
 the failure deserves a reason, typically at module boundaries and
 user-facing APIs.
+
+## One interface for every monad
+
+Three monads, one `let*`. That repetition is not a coincidence:
+`option`, `list`, and `result` all expose the same two operations
+over their own type. Module 7 gives us the tool to write that
+shared interface down as a
+[module type](M07-L07-signatures.html):
+
+:::slide
+
+## One interface: `module type MONAD`
+
+```ocaml
+module type MONAD = sig
+  type 'a t
+  val return : 'a -> 'a t
+  val bind   : 'a t -> ('a -> 'b t) -> 'b t
+end
+```
+
+- `type 'a t` is the monad's shape, left abstract: `option`,
+  `list`, `result`, ... each fills it in.
+- Every monad in this course provides exactly these two values, and
+  `let*` is always just `bind` renamed.
+
+:::
+
+Each monad we built *ascribes* to `MONAD`, using a *sharing
+constraint* `with type 'a t = ...` to keep its concrete carrier
+visible. That part earns its keep: without it `'a t` stays
+abstract, and you could not even pass a plain `int list` to
+`List_monad.bind`, which is exactly what the activity below does.
+
+:::slide
+
+## Two instances of `MONAD`
+
+```ocaml
+module Option_monad : MONAD with type 'a t = 'a option = struct
+  type 'a t = 'a option
+  let return x = Some x
+  let bind o f = match o with None -> None | Some x -> f x
+end
+
+module List_monad : MONAD with type 'a t = 'a list = struct
+  type 'a t = 'a list
+  let return x = [x]
+  let bind xs f = List.concat_map f xs
+end
+```
+
+- Same two operations, different carriers; each `bind` is the one
+  we wrote for that monad above.
+- `with type 'a t = ...` is the *sharing constraint*: it keeps the
+  carrier visible, so a plain `int list` still counts as a
+  `List_monad.t`.
+
+:::
+
+:::slide
+
+## ...and `result`
+
+```ocaml
+module Result_monad :
+  MONAD with type 'a t = ('a, string) result = struct
+  type 'a t = ('a, string) result
+  let return x = Ok x
+  let bind r f = match r with Ok x -> f x | Error e -> Error e
+end
+```
+
+- `result` settles on `string` for its error so that `'a t` takes a
+  single parameter, like every other monad here.
+- One `MONAD`, three implementations: that is why a single `let*`
+  serves all of them.
+
+:::
+
+This is the precise version of the claim from
+[the previous lecture](M08-L01-option-monad.html) that `return` and
+`bind` form an *interface*: each monad in this course is one
+concrete implementation of the same `MONAD`.
 
 ## A quick check
 
@@ -271,10 +409,12 @@ long chains.
 
 ## Activity
 
-Define `parse_pair_r : string -> ((int * int), string) result` that
-reads `"(3, 4)"` into the pair `(3, 4)` and returns informative
-error messages otherwise. Use `let*` to chain the two integer
-parses.
+Use the **list monad**'s non-determinism to find every Pythagorean
+triple `a*a + b*b = c*c` with `a < b` and `a`, `b`, `c` each in
+`1..30` (the `a < b` is the standard convention, so each triple is
+listed once). Take each of `a`, `b`, `c` from `List.init 30 succ`
+with `let*`, reusing the `List_monad` from above, and use the
+empty-list guard to keep only the matching triples, as `(a, b, c)`.
 
 :::
 
@@ -285,34 +425,23 @@ parses.
 ## Activity solution
 
 ```ocaml
-let ( let* ) = Result.bind
+let ( let* ) = List_monad.bind   (* reuse the module from above *)
 
-let int_or_err prefix s =
-  match int_of_string_opt s with
-  | Some n -> Ok n
-  | None -> Error (prefix ^ ": not an int: " ^ s)
+let triples =
+  let* c = List.init 30 succ in   (* [1; 2; ...; 30] *)
+  let* a = List.init 30 succ in
+  let* b = List.init 30 succ in
+  if a < b && a * a + b * b = c * c then [(a, b, c)] else []
 
-let parse_pair_r s =
-  let s = String.trim s in
-  let n = String.length s in
-  if n < 5 || s.[0] <> '(' || s.[n-1] <> ')' then
-    Error "expected '(... , ...)'"
-  else
-    let inner = String.sub s 1 (n-2) in
-    match String.split_on_char ',' inner with
-    | [a; b] ->
-        let* x = int_or_err "first" (String.trim a) in
-        let* y = int_or_err "second" (String.trim b) in
-        Ok (x, y)
-    | _ -> Error "expected exactly one comma"
-
-let _ = parse_pair_r "(3, 4)"      (* = Ok (3, 4) *)
-let _ = parse_pair_r "(3, frog)"   (* = Error "second: not an int: frog" *)
-let _ = parse_pair_r "frog"        (* = Error "expected '(... , ...)'" *)
+let _ = List.length triples   (* = 11 *)
 ```
 
-- The outer `if`/`match` handles shape errors with ordinary control
-  flow; the two `let*`s short-circuit on the first bad integer.
+- This typechecks *only* because the sharing constraint exposed
+  `List_monad.t` as `'a list`, so `List.init 30 succ` (an `int
+  list`) is accepted by `List_monad.bind`.
+- Three `let*`s search all `a, b, c` in `1..30`; the guard keeps
+  the matches with `a < b` (the standard form, no `(4,3,5)`-style
+  swaps) and `else []` drops the rest, giving 11 triples.
 
 :::
 

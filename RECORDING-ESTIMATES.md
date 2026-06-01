@@ -52,21 +52,21 @@ ratio (average 1.49).
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M02-L01 | Literals: integers, floats, booleans, strings | 20 | 2 | 0 | 30 | 42 |
-| M02-L02 | `let` bindings and shadowing | 16 | 1 | 1 | 24 | 34 |
+| M02-L01 | Literals: integers, floats, booleans, strings | 21 | 2 | 0 | 32 | 45 |
+| M02-L02 | `let` bindings and shadowing | 19 | 1 | 1 | 29 | 41 |
 | M02-L03 | Static vs dynamic semantics, and type inference | 15 | 3 | 0 | 23 | 32 |
-| M02-L04 | Operators, precedence, and common pitfalls | 13 | 1 | 1 | 20 | 28 |
+| M02-L04 | Operators, precedence, and common pitfalls | 14 | 1 | 1 | 21 | 29 |
 | M02-L05 | `if`/`then`/`else` as an expression | 14 | 2 | 1 | 21 | 29 |
 | M02-L06 | Tutorial: small expressions, end to end | 11 | 0 | 2 | 17 | 24 |
-| **M02 total** | | **89** | **9** | **5** | **135** | **189** |
+| **M02 total** | | **94** | **9** | **5** | **143** | **200** |
 | | | | | | **(2.2 h)** | **(3.1 h)** |
 
-M02-L01 sits at the 30 min NPTEL upper bound (the Expressions /
-Values / six-literal-kinds opening grew the lecture). M02-L06 is
-just below the 20 min lower bound; that is fine for a tutorial
-but worth flagging if NPTEL wants strict 20-30 min videos. The
-old M02 estimate was 145 video min / 205 recording min, so the
-polish net-shrunk M02 by about 10 video minutes.
+M02-L01 now edges just over the 30 min NPTEL upper bound (32 min;
+the Expressions / Values / six-literal-kinds opening grew the
+lecture). M02-L06 is just below the 20 min lower bound; that is
+fine for a tutorial but worth flagging if NPTEL wants strict
+20-30 min videos. The current M02 estimate is 143 video min /
+200 recording min.
 
 ### M03: Functions (6 lectures)
 
@@ -78,13 +78,13 @@ M03-L06 list-free with fast_power and is_prime).
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M03-L01 | Functions as values, and anonymous functions | 18 | 2 | 1 | 27 | 38 |
-| M03-L02 | Recursion | 15 | 1 | 1 | 23 | 32 |
-| M03-L03 | Currying and partial application | 14 | 2 | 1 | 21 | 29 |
+| M03-L01 | Functions as values, and anonymous functions | 20 | 2 | 1 | 30 | 42 |
+| M03-L02 | Recursion | 16 | 1 | 1 | 24 | 34 |
+| M03-L03 | Currying and partial application | 15 | 2 | 1 | 23 | 32 |
 | M03-L04 | Tail recursion and accumulators | 12 | 1 | 1 | 18 | 25 |
-| M03-L05 | Local functions and mutual recursion | 10 | 2 | 1 | 15 | 21 |
+| M03-L05 | Local functions and mutual recursion | 11 | 2 | 1 | 17 | 24 |
 | M03-L06 | Tutorial: Fibonacci, GCD, power, digits | 11 | 2 | 1 | 17 | 24 |
-| **M03 total** | | **80** | **10** | **6** | **121** | **169** |
+| **M03 total** | | **85** | **10** | **6** | **129** | **181** |
 | | | | | | **(2.0 h)** | **(2.8 h)** |
 
 M03-L05 and M03-L06 drop just below the NPTEL 20 min lower
@@ -119,11 +119,11 @@ has six lectures. Estimate uses slide_count x 1.5 min.
 |---|---|---:|---:|---:|---:|---:|
 | M04-L01 | Tuples | 17 | 2 | 1 | 26 | 36 |
 | M04-L02 | Records | 17 | 1 | 1 | 26 | 36 |
-| M04-L03 | Variants (sum types) | 9 | 1 | 1 | 14 | 20 |
+| M04-L03 | Variants (sum types) | 11 | 1 | 1 | 17 | 24 |
 | M04-L04 | Recursive types, polymorphism, option / result | 24 | 2 | 1 | 36 | 50 |
 | M04-L05 | Tutorial: a tiny AST for OCaml | 16 | 3 | 0 | 24 | 34 |
-| M04-L06 | Tutorial: a tiny file system | 14 | 3 | 0 | 21 | 30 |
-| **M04 total** | | **97** | **12** | **4** | **147** | **206** |
+| M04-L06 | Tutorial: a tiny file system | 14 | 3 | 0 | 21 | 29 |
+| **M04 total** | | **99** | **12** | **4** | **150** | **209** |
 | | | | | | **(2.5 h)** | **(3.4 h)** |
 
 M04-L04 is the longest lecture in the course at 36 video min; it
@@ -135,7 +135,7 @@ billion-dollar mistake" - everything before is recursive /
 parameterised variants, everything after is `option` / `result`
 design.
 
-M04-L03 is below the NPTEL 20-min lower bound at 9 slides / 14
+M04-L03 is below the NPTEL 20-min lower bound at 11 slides / 17
 min and is the thinnest standalone lecture in the polished
 modules. See the sweep notes below.
 
@@ -245,13 +245,13 @@ slide_count x 1.5 min.
 | M07-L01 | Mutable references | 22 | 3 | 1 | 33 | 46 |
 | M07-L02 | Mutable records and arrays | 22 | 2 | 1 | 33 | 46 |
 | M07-L03 | Exceptions | 18 | 2 | 1 | 27 | 38 |
-| M07-L04 | Streams and laziness | 19 | 2 | 1 | 29 | 40 |
+| M07-L04 | Streams and laziness | 19 | 2 | 1 | 29 | 41 |
 | M07-L05 | Memoization | 18 | 2 | 1 | 27 | 38 |
 | M07-L06 | Module basics | 15 | 2 | 1 | 23 | 32 |
 | M07-L07 | Module signatures | 18 | 2 | 1 | 27 | 38 |
 | M07-L08 | Functors | 15 | 2 | 1 | 23 | 32 |
 | M07-L09 | Tutorial: a queue functor | 21 | 2 | 1 | 32 | 45 |
-| **M07 total** | | **168** | **19** | **9** | **254** | **355** |
+| **M07 total** | | **168** | **19** | **9** | **254** | **356** |
 | | | | | | **(4.2 h)** | **(5.9 h)** |
 | M07-L10 | Practice: mutability, modules, and streams (not recorded) | 0 | 0 | 19 | 0 | 0 |
 
@@ -319,13 +319,13 @@ video figures are a floor and real recording trends toward the
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
 | M08-L01 | The option monad and `let*` | 11 | 2 | 1 | 17 | 24 |
-| M08-L02 | Monad laws, the list monad, the result monad | 10 | 2 | 1 | 15 | 21 |
+| M08-L02 | Monad laws, the list monad, the result monad | 12 | 2 | 1 | 18 | 25 |
 | M08-L03 | The state monad and parameterised state | 15 | 2 | 1 | 23 | 32 |
 | M08-L04 | GADTs: basics | 14 | 2 | 1 | 21 | 29 |
 | M08-L05 | GADTs: use cases | 9 | 2 | 1 | 14 | 20 |
 | M08-L06 | GADTs: hlists, witnesses, and `printf` | 15 | 2 | 1 | 23 | 32 |
 | M08-L07 | Tutorial: a tiny well-typed evaluator | 16 | 2 | 1 | 24 | 34 |
-| **M08 total** | | **90** | **14** | **7** | **137** | **192** |
+| **M08 total** | | **92** | **14** | **7** | **140** | **196** |
 | | | | | | **(2.3 h)** | **(3.2 h)** |
 
 M08-L02 and M08-L05 sit near the 20-min floor by raw slide count,
@@ -354,8 +354,8 @@ slide_count x 1.5 min.
 | M09-L05 | Model-based testing | 16 | 2 | 1 | 24 | 34 |
 | M09-L06 | Effect handlers for concurrency | 15 | 2 | 1 | 23 | 32 |
 | M09-L07 | Fibers and lightweight concurrency | 13 | 2 | 1 | 20 | 28 |
-| M09-L08 | Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs | 14 | 1 | 1 | 21 | 30 |
-| **M09 total** | | **116** | **16** | **7** | **174** | **244** |
+| M09-L08 | Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs | 14 | 1 | 1 | 21 | 29 |
+| **M09 total** | | **116** | **16** | **7** | **177** | **247** |
 | | | | | | **(2.9 h)** | **(4.1 h)** |
 
 All M09 lectures now land in the 20-36 min band. L03 still
@@ -383,8 +383,8 @@ Estimate uses slide_count x 1.5 min.
 | M10-L03 | How OCaml rules them out by construction | 15 | 2 | 1 | 23 | 32 |
 | M10-L04 | Where OCaml itself has UB | 15 | 2 | 0 | 23 | 32 |
 | M10-L05 | Resource safety: file descriptors, sockets, and buffers | 15 | 2 | 1 | 23 | 32 |
-| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 2 | 1 | 21 | 30 |
-| **M10 total** | | **89** | **12** | **3** | **134** | **187** |
+| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 2 | 1 | 21 | 29 |
+| **M10 total** | | **89** | **12** | **3** | **136** | **189** |
 | | | | | | **(2.2 h)** | **(3.1 h)** |
 
 All M10 lectures now land in the 20-30 min NPTEL band; the
@@ -450,7 +450,7 @@ HTTP unikernel end to end. Estimate uses slide_count x 1.5 min.
 | M12-L04 | Ingredient 3: OCaml for systems | 15 | 2 | 0 | 23 | 32 |
 | M12-L05 | MirageOS = Library OS + Virtualisation + OCaml | 12 | 2 | 0 | 18 | 25 |
 | M12-L06 | Bob the Bin Man: a worked unikernel example | 13 | 2 | 0 | 20 | 28 |
-| **M12 total** | | **81** | **12** | **0** | **122** | **171** |
+| **M12 total** | | **81** | **12** | **0** | **123** | **171** |
 | | | | | | **(2.0 h)** | **(2.8 h)** |
 
 M12-L01..L04 and L06 all land in the 20-30 min NPTEL band.
@@ -463,13 +463,14 @@ L05 work is committed.
 At the calibrated slide_count x 1.5 cadence, anything under ~14
 slides runs short of the NPTEL 20-min floor, and anything under
 ~10 slides is awkwardly thin for a standalone lecture. Counts
-below are from a `grep -c '^:::slide'` sweep of all 71 lectures.
+below are from a `grep -c '^:::slide'` sweep of all 78 recorded
+lectures.
 
 **Polished modules (numbers reflect today's lecture state):**
 
 | Lecture | Slides | Video (min) | Status |
 |---|---:|---:|---|
-| M04-L03 Variants | 9 | 14 | **Too thin.** KC's call. Options: expand with a worked `tcp_state` / `shape` design example; absorb into M04-L04 (pushes L04 to ~46 min, too long); or rebalance L03/L04 by splitting L04 and shuffling. Pending KC decision. |
+| M04-L03 Variants | 11 | 17 | Grew two slides since first flagged, so it now sits in the borderline tier rather than under the ~10-slide line. **KC decision (2026-05-31): leave as-is** at 17 min, borderline-but-acceptable for a standalone lecture. |
 | M02-L06 Tutorial | 11 | 17 | Borderline; tutorials run light by design. Acceptable. |
 | M03-L05 Local and mutual | 11 | 17 | Borderline. Post-list-removal shrinkage; OK to leave per current note. |
 | M03-L06 Tutorial | 11 | 17 | Borderline; same reason. |
@@ -502,12 +503,12 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1747 min (29.1 hours) across
+- **Final video**: 1825 min (30.4 hours) across
   78 lectures and 12 modules.
-- **Estimated recording time**: 2448 min (40.8 hours)
+- **Estimated recording time**: 2549 min (42.5 hours)
   at the 1.4x multiplier.
 
-The 30.5 hours of final video meets NPTEL's ~30 hr target
+The 30.4 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
 min for effect-handler concurrency), the M10 expansion (+1
 lecture, +36 video min for resource safety; M10 grew from 5 to
@@ -548,7 +549,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **40.8 hours of recording / 4.3 hours per day = ~9.5 studio days.**
+- **42.5 hours of recording / 4.3 hours per day = ~9.9 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -556,18 +557,18 @@ sessions:
 | Module | Recording (h) | Studio days @ 4.3 h |
 |---|---:|---:|
 | M01 Intro to functional programming | 2.7 | 0.6 |
-| M02 Expressions | 3.1 | 0.7 |
-| M03 Functions | 2.8 | 0.7 |
-| M04 Data types | 3.4 | 0.8 |
+| M02 Expressions | 3.3 | 0.8 |
+| M03 Functions | 3.0 | 0.7 |
+| M04 Data types | 3.5 | 0.8 |
 | M05 Pattern matching | 3.6 | 0.8 |
-| M06 Higher-order programming | 3.2 | 0.7 |
-| M07 Side effects and modular programming | 4.8 | 1.1 |
-| M08 Monads and GADTs | 3.2 | 0.7 |
+| M06 Higher-order programming | 3.4 | 0.8 |
+| M07 Side effects and modular programming | 5.9 | 1.4 |
+| M08 Monads and GADTs | 3.3 | 0.8 |
 | M09 Concurrency and Testing | 4.1 | 1.0 |
-| M10 Memory safety and security | 3.1 | 0.7 |
-| M11 OxCaml: type-level extensions of safety | 3.7 | 0.9 |
-| M12 Unikernels (MirageOS) | 2.8 | 0.7 |
-| **Total** | **40.8** | **9.5** |
+| M10 Memory safety and security | 3.2 | 0.7 |
+| M11 OxCaml: type-level extensions of safety | 3.7 | 0.8 |
+| M12 Unikernels (MirageOS) | 2.9 | 0.7 |
+| **Total** | **42.5** | **9.9** |
 
 ## Caveats
 

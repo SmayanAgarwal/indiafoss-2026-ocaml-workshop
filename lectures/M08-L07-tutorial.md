@@ -692,10 +692,14 @@ in M07 gave the imperative ground for the state monad in M08;
 variants in M04 set up GADTs in M08; modules in M07 are the
 packaging you reach for whenever you grow a real codebase.
 
-<!-- TODO: the secure-systems half (runtime/GC, memory safety,
-     unikernels with Mirage, concurrency with Eio) is planned but
-     not yet authored; this paragraph will link forward once those
-     modules exist. -->
+The secure-systems half of the course
+(Modules [9](M09-L01-why-test-typed-code.html)-12) takes these
+habits further: [testing and concurrency](M09-L01-why-test-typed-code.html),
+[memory safety](M10-L01-ub-and-the-zoo.html),
+[OxCaml's type-level safety extensions](M11-L01-modes-as-safety.html),
+and [unikernels with MirageOS](M12-L01-why-an-os.html). The
+typed-first thinking you built in Modules 1-8 is exactly what those
+modules cash out into systems code.
 
 What you carry forward from here is not the specific syntax of
 `let*` or the exact shape of a GADT constructor, but a *taste* for
