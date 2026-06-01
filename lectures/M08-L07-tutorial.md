@@ -672,14 +672,12 @@ own variables stand in for the language's.
 type _ expr =
   | Int_lit : int -> int expr
   | Add     : int expr * int expr -> int expr
-  | Val     : 'a -> 'a expr                      (* a computed value *)
   | Let     : 'a expr * ('a expr -> 'b expr) -> 'b expr
 
 let rec eval : type a. a expr -> a = function
   | Int_lit n     -> n
   | Add (a, b)    -> eval a + eval b
-  | Val v         -> v
-  | Let (e, body) -> let v = eval e in eval (body (Val v))
+  | Let (e, body) -> eval (body e)
 
 (* let x = 10 in x + 5 *)
 let _ = eval (Let (Int_lit 10, fun x -> Add (x, Int_lit 5)))   (* = 15 *)
@@ -690,16 +688,15 @@ stand in for the language's, fully typed: `Let (Int_lit 10, fun x ->
 ...)` gives `x : int expr`, and using `x` where a `bool expr` is
 wanted would not compile.
 
-The subtlety is *when* `e` runs. The naive `Let (e, body) -> eval
-(body e)` substitutes the whole *expression* `e`, re-evaluating it on
-every use of the variable: wrong as soon as `e` has a side effect,
-and wasteful even when it does not. To evaluate `e` exactly once we
-compute its value and re-inject it with `Val : 'a -> 'a expr`,
-giving `let v = eval e in eval (body (Val v))`. `Val` must be
-*generic*: inside this branch we do not know whether `'a` is `int`
-or `bool`, so we cannot wrap `v` with `Int_lit` or `Bool_lit`; a
-single `Val : 'a -> 'a expr` carries a value of any type back into
-the AST.
+`Let (e, body) -> eval (body e)` simply substitutes the expression
+`e` into the body. Because this little language has no side effects,
+that is observationally fine, even though `e` is re-evaluated on each
+use of the variable (at worst a little wasted work). A call-by-value
+version that ran `e` exactly once would have to feed its *value*
+back to `body`, which expects an `'a expr`; you could not tell
+whether to wrap that value with `Int_lit` or `Bool_lit`, so it would
+need a generic `Val : 'a -> 'a expr` constructor. With no effects to
+force the issue, substitution is the simpler choice.
 
 Named variables with fully static types instead need the typed
 environment mentioned above, which is where dependently typed
