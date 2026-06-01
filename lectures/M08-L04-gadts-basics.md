@@ -3,8 +3,8 @@ title: "GADTs: variants with type-level information"
 lecture_no: 4
 week: 8
 duration_target_min: 24
-concepts: [GADT, generalized algebraic data types, type-level information, pattern matching on GADTs, polymorphic recursion]
-keywords: [OCaml, GADT, type refinement, type-safe AST, polymorphic recursion]
+concepts: [GADT, generalized algebraic data types, type-level information, pattern matching on GADTs, polymorphic recursion, units of measure, phantom types]
+keywords: [OCaml, GADT, type refinement, type-safe AST, polymorphic recursion, units of measure, phantom type]
 activity_question: "Extend the lecture's [type _ expr] with a constructor [Is_zero : int expr -> bool expr] and add the matching case to [eval]. Notice how one constructor takes an [int expr] yet produces a [bool expr]."
 think_about_this: "An ordinary variant says: 'each constructor produces a value of the type'. A GADT says: 'each constructor produces a value of a *specific* type that may differ from the others'. What is the cost of this extra precision?"
 reading:
@@ -349,55 +349,76 @@ inference fails, are harder to read than ordinary type errors.
 Most OCaml code does not need GADTs and is better off without
 them; the code that *does* need them needs them in a serious way.
 
-## A simpler use: phantom types
+## Units of measure
 
-You do not always need a fancy GADT. Sometimes a *phantom* type
-parameter is enough:
+A famous units bug: in 1999 the $125 million Mars Climate Orbiter
+was lost because one team worked in imperial units and another in
+metric, and the two were combined as if they were the same. We can
+rule that out *by construction*, carrying each value's unit in its
+type so the compiler refuses to mix them.
+
+The trick is to tag a `float` with its unit. We declare three
+*uninhabited* types, `kelvin`, `celsius`, and `fahrenheit`, that
+have no values of their own; they exist only to sit in a type index.
+Then a GADT `temp` whose constructor picks the unit:
 
 :::slide
 
-## A simpler use: phantom types
+## Units of measure: a typed temperature
 
 ```ocaml
+type kelvin
 type celsius
 type fahrenheit
-type 'a temp = float        (* 'a is phantom: a float underneath *)
 
-let celsius (f : float) : celsius temp = f
-let to_fahrenheit (c : celsius temp) : fahrenheit temp =
-  c *. 9. /. 5. +. 32.
+type _ temp =
+  | Kelvin     : float -> kelvin temp
+  | Celsius    : float -> celsius temp
+  | Fahrenheit : float -> fahrenheit temp
 ```
 
-- `'a` in `'a temp` is *phantom*: never stored, it only *tags* the
-  float.
-- `celsius temp` and `fahrenheit temp` are distinct types, so the
-  two units cannot be mixed up.
-
-```text
-let _ = to_fahrenheit (to_fahrenheit (celsius 100.))
-(* error: this is fahrenheit temp but to_fahrenheit wants celsius temp *)
-```
-
-A "poor person's GADT": similar safety, simpler machinery, no new
-constructors.
+- `kelvin` / `celsius` / `fahrenheit` are empty types used only as
+  *labels* (the index `'a` in `'a temp` is phantom).
+- `Kelvin 300. : kelvin temp`, `Celsius 25. : celsius temp`:
+  distinct types, though each just holds a `float`.
 
 :::
 
-The `'a` in `'a temp` is a *type alias* parameter that never shows
-up in the representation (always a `float`); the compiler tracks it
-purely for identity. `celsius temp` and `fahrenheit temp` carry
-identical runtime values yet are incompatible types, so applying
-`to_fahrenheit` twice, or adding a `celsius` to a `fahrenheit`, is a
-compile error. This is the classic *units of measure* safety net:
-the metric-versus-imperial mix-up that doomed the Mars Climate
-Orbiter becomes unrepresentable.
+Now write addition so it can only ever combine temperatures of the
+*same* unit:
 
-Phantom types have a long history and predate GADTs. They are far
-lighter machinery: many safety wins are available with just a
-`type 'a t = ...` alias plus careful API design (only `celsius` and
-`to_fahrenheit` ever mint or convert the tagged values). Real
-codebases use phantom types where they suffice and reach for GADTs
-only when phantom types cannot express the relationship they want.
+:::slide
+
+## Adding temperatures, units enforced
+
+```ocaml
+let add_temp : type u. u temp -> u temp -> u temp =
+  fun a b -> match a, b with
+  | Kelvin x, Kelvin y         -> Kelvin (x +. y)
+  | Celsius x, Celsius y       -> Celsius (x +. y)
+  | Fahrenheit x, Fahrenheit y -> Fahrenheit (x +. y)
+
+let _ = add_temp (Kelvin 20.) (Kelvin 30.)   (* = Kelvin 50. *)
+```
+
+```ocaml skip
+let _ = add_temp (Kelvin 20.) (Celsius 12.)
+(* error: celsius temp is not compatible with kelvin temp *)
+```
+
+- Both arguments share the unit `u`, so the only possible pairs are
+  Kelvin/Kelvin, Celsius/Celsius, Fahrenheit/Fahrenheit: the three
+  cases are exhaustive.
+- Adding a kelvin to a celsius is a *compile* error, though both are
+  `float` underneath. The mix-up that lost the orbiter cannot be
+  written.
+
+:::
+
+This is a *phantom type* encoded with a GADT: the unit lives only in
+the type index, never in the runtime value, yet it is enough for the
+compiler to keep the units apart. Real OCaml code uses exactly this
+pattern for units, currencies, and tagged identifiers.
 
 ## When to reach for GADTs
 
