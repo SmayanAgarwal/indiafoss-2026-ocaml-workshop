@@ -61,19 +61,33 @@ $JSOO_LISTUNITS -o "$workdir/units.txt" \
   "$QCFULL/qCheck_runner.cmi" \
   "$OU/oUnit.cmi"  "$OU/oUnit2.cmi"
 
-# 3. Embed the cmis so the toplevel can elaborate hover types and
-#    `open` declarations against the QCheck/OUnit2 signatures.
-file_args=()
-for f in "$QC"/qCheck.cmi "$QC"/qCheck2.cmi \
-         "$QCR"/qCheck_base_runner.cmi \
-         "$QCFULL"/qCheck_runner.cmi \
-         "$OU"/oUnit.cmi "$OU"/oUnit2.cmi; do
-  file_args+=("--file=$f:/static/cmis/")
-done
-
-# 4. Build the extension bundle.
+# 3. Build the extension bundle.
+#
+#    Do NOT pass explicit --file=<cmi>:/static/cmis/ embeds here:
+#    --toplevel already auto-embeds the cmis of the exported units,
+#    and a second registration of the same path makes the bundle
+#    raise Sys_error("... file already exists") at load time, which
+#    aborts the remaining module initialisers (QCheck/OUnit2 then
+#    show up as interface-only: "Reference to undefined compilation
+#    unit"). Hover/type elaboration works off the auto-embedded
+#    copies.
 $JSOO --toplevel --toplevel-extend --export="$workdir/units.txt" \
-  "${file_args[@]}" \
   "$workdir/stub.byte" -o "$OUT"
+
+# 4. Prepend a runtime shim. The vanilla worker runtime does not
+#    provide caml_unix_gethostname, but ounit2's OUnitUtils calls
+#    Unix.gethostname at module-init time; without the shim the
+#    extras load dies partway (TypeError) and OUnit2 never
+#    registers. Any hostname string will do.
+shim='// Prepended by tools/build-m09-extras.sh: the vanilla worker
+// runtime lacks caml_unix_gethostname, which OUnitUtils calls at
+// module init.
+(function (g) {
+  var r = g.jsoo_runtime;
+  if (r && !r.caml_unix_gethostname) {
+    r.caml_unix_gethostname = function () { return "browser"; };
+  }
+})(globalThis);'
+printf '%s\n' "$shim" | cat - "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
 
 ls -lh "$OUT"
