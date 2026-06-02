@@ -1,11 +1,11 @@
 ---
-title: "Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs"
+title: "Tutorial: testing the expr evaluator with OUnit2 and QCheck"
 lecture_no: 8
 week: 9
 duration_target_min: 25
-concepts: [testing tutorial, OUnit2, QCheck, properties, invariants, expression evaluator, debugging, effect-handler stubs, dependency stubbing]
-keywords: [OCaml, testing, OUnit2, QCheck, tutorial, expression evaluator, AST, property-based testing, debugging, shrinking, effect handlers, stubs]
-activity_question: "Take the expr AST eval from M05-L06 and pretend its Sub case is buggy (swapped arguments). Which OUnit2 case catches this? Which QCheck property catches this most quickly, and what is the shrunk counterexample likely to look like?"
+concepts: [testing tutorial, specifications, test design, OUnit2, QCheck, properties, invariants, expression evaluator, debugging, differential testing]
+keywords: [OCaml, testing, OUnit2, QCheck, tutorial, expression evaluator, AST, property-based testing, debugging, shrinking, differential testing, simplifier]
+activity_question: "Take the arithmetic expr AST and its eval, and pretend the Sub case is buggy (swapped arguments). Which OUnit2 case catches this? Which QCheck property catches this most quickly, and what is the shrunk counterexample likely to look like?"
 think_about_this: "If your QCheck property compares the OCaml-implemented eval against a hand-written reference (e.g. via float arithmetic in the property itself), what happens when the reference is also buggy? How do you avoid testing one bug against itself?"
 reading:
   - title: "Cornell CS3110, Testing and OUnit"
@@ -14,37 +14,39 @@ reading:
     url: https://github.com/c-cube/qcheck
 ---
 
-# Tutorial: testing the `expr` evaluator with OUnit2, QCheck, and effect-handler stubs
+# Tutorial: testing the `expr` evaluator with OUnit2 and QCheck
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs</h2>
+<h2 class="title-slide-lecture">Tutorial: testing the expr evaluator with OUnit2 and QCheck</h2>
 <p class="title-slide-label">Module 9 &middot; Lecture 8</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-This tutorial puts the testing half of this module (lectures
-L01 through L05) to work on a single larger example, then
-borrows one idea from the concurrency half (L06's effect
-handlers) to stub a side effect so the function under test
-becomes pure. We take the [`expr` AST and `eval`
-function from M05-L06](M05-L06-tutorial.html), give them a full
-test suite, deliberately break the implementation, and watch
-QCheck find the bug. By the end you should have a complete test
-file you could copy into a project and adapt.
+This tutorial puts the whole module to work on a single larger
+example, walking the full arc once, end to end: write the
+specification, design the cases, mechanise them with OUnit2,
+quantify them with QCheck, and finish with a differential test
+of an optimiser against the original. We take the
+[`expr` AST and `eval` function from the pattern-matching
+tutorial](M05-L06-tutorial.html), give them a full test suite,
+deliberately break the implementation, and watch QCheck find
+the bug. By the end you should have a complete test file you
+could copy into a project and adapt.
 
-We have made one choice that runs through the whole tutorial: the
-function under test is `eval` from M05-L06, which evaluates a
-tree of arithmetic operations to a `float`. We chose it because
-it is small enough to fit on one screen, rich enough to have
-interesting properties, and from a part of the course (Module 5)
-that every student has already seen. Two alternatives would have
-worked: a `safe_div : int -> int -> int option` from the
+We have made one choice that runs through the whole tutorial:
+the function under test is the arithmetic evaluator `eval`,
+which evaluates a tree of arithmetic operations to a `float`.
+We chose it because it is small enough to fit on one screen,
+rich enough to have interesting properties, and from a part of
+the course that every student has already seen. Two
+alternatives would have worked: a
+`safe_div : int -> int -> int option` from the
 [option lecture](M04-L04-recursive-types.html) or a list
 reversal function. We chose `expr` because it gives
 us *both* simple-case unit tests AND structural properties that
@@ -57,20 +59,22 @@ different.
 ## What this tutorial does
 
 - Take the `expr` evaluator from
-  [M05-L06](M05-L06-tutorial.html).
-- Write **4-5 OUnit2 unit tests** for specific cases.
-- Write **3-4 QCheck properties** for invariants.
+  [the pattern-matching tutorial](M05-L06-tutorial.html).
+- Write its **specification**; design **black-box cases** from
+  it.
+- Mechanise the cases as an **OUnit2 suite**.
+- Write **QCheck properties** for invariants.
 - Break one operation deliberately; watch QCheck find the bug.
-- Extend the evaluator with a *side effect* (a `Print`).
-- Use an **effect-handler stub** from L06 to test it without
-  touching stdout.
+- Write a **simplifier** and test it *differentially* against
+  `eval`.
 - Walk away with a complete test file.
 
 :::
 
 ## The function under test
 
-From [M05-L06](M05-L06-tutorial.html), restated:
+From [the pattern-matching tutorial](M05-L06-tutorial.html),
+restated:
 
 ```ocaml
 type expr =
@@ -125,10 +129,62 @@ let rec eval = function
 
 :::
 
-## Part 1: OUnit2 unit tests
+## Part 1: the specification
 
-We start with hand-written cases. Each one nails down a *known
-specific behaviour*. Five cases:
+The module's discipline says: before any tool, write the
+contract. For `eval` it is short, but two of its clauses take a
+real decision, and writing them down is what surfaces the
+decision.
+
+```text
+(** [eval e] is the value of the arithmetic expression [e],
+    where [Num n] is [n] and [Add], [Sub], [Mul], [Div]
+    denote IEEE-754 float +. , -. , *. and /. on the values
+    of their sub-expressions.
+    [eval] never raises: division by zero follows float
+    semantics ([1/0] is [infinity], [0/0] is [nan]).
+    Example: [eval (Mul (Add (Num 1., Num 2.),
+                         Sub (Num 4., Num 0.5))) = 10.5]. *)
+val eval : expr -> float
+```
+
+The first decision is hiding in the words "IEEE-754": the spec
+commits `eval` to float arithmetic as it actually is, not
+arithmetic as remembered from school. The second is the raises
+clause that says there isn't one: dividing by zero is *defined*
+behaviour here (`infinity`), not an error. A different contract
+(raise, or return an `option`) would be legitimate; this one was
+chosen, and now it is written down, every test below has an
+authority to appeal to.
+
+With a spec in hand, the test-design lecture's recipe applies.
+Boundaries and partitions, read straight off the clauses:
+
+:::slide
+
+## The spec, and the cases it implies
+
+"[eval e] is the value of [e] under IEEE-754 float
+arithmetic; never raises; division by zero follows float
+semantics."
+
+| Region | Representative case |
+| --- | --- |
+| the leaf (base case) | `Num 3.0` |
+| each operator, once | `Add`, `Sub`, `Mul`, `Div` of two leaves |
+| asymmetric operands | `Sub (Num 2., Num 3.)`, not `3 - 3` |
+| recursion (glass-box) | a two-level nested tree |
+| the div-by-zero clause | `Div (Num 1., Num 0.)` is `infinity` |
+
+- One row per behaviourally distinct region.
+- Asymmetric inputs so a swapped-argument bug cannot hide.
+
+:::
+
+## Part 2: OUnit2 unit tests
+
+The table becomes a suite. Each row turns into a named case
+that nails down a *known specific behaviour*:
 
 ### Case 1: a leaf
 
@@ -193,7 +249,7 @@ let test_nested _ =
   assert_equal ~printer:string_of_float 10.5 (eval expr)
 ```
 
-This is the M05-L06 running example. It exercises the recursive
+This is the running example from the pattern-matching tutorial. It exercises the recursive
 case for `Mul`, which has two sub-expressions, each of which is
 itself a binary node. If the recursion forgot to recurse (e.g.
 `Mul (a, _) -> eval a *. eval a`, a typical typo), this case
@@ -274,7 +330,7 @@ nested case to exercise recursion, one edge case (div-by-zero → ∞).
 
 :::
 
-## Part 2: QCheck properties
+## Part 3: QCheck properties
 
 The unit tests check seven specific behaviours. We now write
 *properties* that should hold of any well-formed `expr`. The
@@ -474,7 +530,7 @@ bug. Together: a sieve no incorrect `eval` will pass cleanly.
 
 :::
 
-## Part 3: a deliberately buggy implementation
+## Part 4: a deliberately buggy implementation
 
 Now the dramatic part. Suppose someone "refactors" `eval` and
 introduces a bug. The classic version of this is: they confuse
@@ -571,13 +627,11 @@ applied"; that is enough.
 
 ## Watching QCheck catch the bug
 
-```ocaml
+```text
 let rec bad_eval = function
   | Sub (a, b) -> bad_eval b -. bad_eval a    (* SWAPPED *)
   | ...
 ```
-
-Right property to catch this:
 
 ```ocaml
 let test_sub_matches_minus =
@@ -587,9 +641,7 @@ let test_sub_matches_minus =
     (fun (a, b) -> eval (Sub (Num a, Num b)) = a -. b)
 ```
 
-Result:
-
-```
+```text
 Test failed on input: (0.0, 1.0).
 expected: -1.0; got: 1.0
 ```
@@ -635,7 +687,7 @@ references for the things they implement.
 
 :::
 
-## Part 4: putting it together
+## Part 5: putting it together
 
 The complete test file, all parts assembled:
 
@@ -776,216 +828,292 @@ that exercises everything.
 
 :::
 
-## Part 5: stubbing side effects with effect handlers
+## Part 6: differential testing, an optimiser vs `eval`
 
-So far the function under test is pure: input goes in, output
-comes out. Real code is not always like that. Suppose we
-extend the AST with a `Print` constructor (mimicking a
-statement-style language):
+The model-based lecture's central move was to test a clever
+implementation against a simple reference: the reference is an
+executable specification, and any disagreement is a bug. That
+idea is not reserved for stateful data structures. Whenever you
+have *two* routes to the same answer, each tests the other; the
+technique is called *differential testing*, and it is, among
+other things, how C compilers get fuzzed.
 
-```ocaml skip
-type expr =
-  | Num of float
-  | Add of expr * expr
-  | Sub of expr * expr
-  | Mul of expr * expr
-  | Div of expr * expr
-  | Print of expr  (* evaluate, then send to stdout, return value *)
+We close the tutorial by applying it to a pure function. Suppose
+we want an optimiser for `expr`: a function
+`simplify : expr -> expr` that rewrites an expression into a
+cheaper one. Its specification is one sentence, and the sentence
+is a differential property:
+
+```text
+(** [simplify e] is an expression with the same value as [e]:
+    [eval (simplify e) = eval e]. *)
+val simplify : expr -> expr
 ```
 
-The natural evaluator calls `print_endline`:
-
-```ocaml skip
-let rec eval = function
-  | ...
-  | Print e ->
-    let v = eval e in
-    print_endline (string_of_float v);
-    v
-```
-
-Now `eval` is not pure: every call writes to stdout. Two
-problems for the test suite.
-
-1. **Output noise.** Running 1000 QCheck cases on a generator
-   that produces nested `Print`s buries the test runner's
-   output in numeric noise.
-2. **No oracle.** We cannot assert in OCaml that "the program
-   would have printed exactly these values." Capturing stdout
-   from inside the same process is awkward; using
-   `Unix.dup2` to redirect is brittle.
-
-The clean fix, in OCaml 5: replace the direct call to
-`print_endline` with an effect. The effect's *handler* is the
-boundary: in production, it calls `print_endline`; in tests,
-it records the printed values into a buffer the test can
-inspect.
-
-```ocaml skip
-open Effect
-open Effect.Deep
-
-type _ Effect.t += Print : float -> unit Effect.t
-
-let rec eval = function
-  | ...
-  | Print e ->
-    let v = eval e in
-    perform (Print v);
-    v
-```
-
-`eval` now mentions no I/O primitive. The `perform` is the only
-side-effecting construct; the *meaning* of `Print` depends
-entirely on whichever handler is in scope.
+The original `eval` is the oracle. We do not need to predict
+what any particular expression simplifies *to*; we only demand
+that whatever comes out evaluates to the same float. (This part
+is self-contained; in a project it would be its own test file
+alongside the one we just assembled.)
 
 :::slide
 
-## A side-effecting evaluator
+## Differential testing: the original as oracle
 
-```ocaml skip
-type _ Effect.t += Print : float -> unit Effect.t
-
-let rec eval = function
-  | ...
-  | Print e ->
-    let v = eval e in
-    perform (Print v);
-    v
-```
-
-- `Print` is an effect, not a direct I/O call.
-- The handler decides what `Print` does.
-- Production: `print_endline`. Test: append to a buffer.
-- The evaluator's *source* does not change between the two.
+- Two routes to the same answer test each other.
+  - The model-based recipe, applied to a *pure* function.
+- The optimiser's whole spec is one equation:
+  - `eval (simplify e) = eval e`.
+- `eval` plays the reference; no expected outputs to write.
+- The same trick fuzzes C compilers: compile the same program
+  two ways, run both, compare.
 
 :::
 
-### The production handler: print to stdout
+Two tools first. A printer, so counterexamples are readable
+(the "fancier printer" promised back in Part 3), and a
+generator tuned for this property:
 
-```ocaml skip
-let with_stdout_printing f =
-  try f () with
-  | effect (Print v), k ->
-    print_endline (string_of_float v);
-    continue k ()
+```ocaml
+let rec expr_str = function
+  | Num n -> Printf.sprintf "%g" n
+  | Add (a, b) -> "(" ^ expr_str a ^ " + " ^ expr_str b ^ ")"
+  | Sub (a, b) -> "(" ^ expr_str a ^ " - " ^ expr_str b ^ ")"
+  | Mul (a, b) -> "(" ^ expr_str a ^ " * " ^ expr_str b ^ ")"
+  | Div (a, b) -> "(" ^ expr_str a ^ " / " ^ expr_str b ^ ")"
+
+let _ = expr_str (Mul (Num 0.0, Div (Num 1.0, Num 0.0)))
+(* = "(0 * (1 / 0))" *)
 ```
 
-A four-line wrapper. Any code run inside `with_stdout_printing
-(fun () -> ...)` sees `Print` translated to a real
-`print_endline`. The semantics are exactly what we removed
-from `eval`.
+The generator choice matters more than it looks, and it is the
+input-space lesson from the QCheck lecture paying rent. The
+interesting failures of an arithmetic optimiser involve *exact
+zeros* in awkward places, and `float_range (-100.0) 100.0`
+essentially never produces the float `0.0` at random. So this
+generator draws small *integer-valued* constants instead: zeros,
+ones, and collisions galore.
 
-### The test handler: capture the trace
-
-```ocaml skip
-let with_captured_printing f =
-  let trace = ref [] in
-  let result =
-    try f () with
-    | effect (Print v), k ->
-      trace := v :: !trace;
-      continue k ()
+```ocaml
+let rec gen_small depth =
+  let open QCheck.Gen in
+  let leaf =
+    map (fun n -> Num (float_of_int n)) (int_range (-3) 3)
   in
-  (List.rev !trace, result)
+  if depth <= 0 then leaf
+  else
+    oneof [
+      leaf;
+      map2 (fun a b -> Add (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
+      map2 (fun a b -> Sub (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
+      map2 (fun a b -> Mul (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
+      map2 (fun a b -> Div (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
+    ]
+
+let arb_small = QCheck.make ~print:expr_str (gen_small 4)
 ```
 
-This handler does not print; it appends to a local list. The
-return value is `(list_of_printed_floats, original_result)`.
-A test can call
+And the harness: one parametrised property, usable on every
+candidate optimiser we write. The only subtlety is NaN, which
+is not equal to itself; two NaNs count as agreement.
 
-```ocaml skip
-let trace, v = with_captured_printing (fun () ->
-  eval (Print (Add (Num 1.0, Num 2.0)))) in
-assert (trace = [3.0]);
-assert (v = 3.0)
+```ocaml
+let preserves_value name simp =
+  QCheck.Test.make ~name ~count:1000 arb_small
+    (fun e ->
+       let v1 = eval e in
+       let v2 = eval (simp e) in
+       (Float.is_nan v1 && Float.is_nan v2) || v1 = v2)
 ```
-
-The evaluator under test is *exactly* the production
-evaluator, byte for byte. No mocks, no dependency injection,
-no global flags. The substitution happens at the handler
-boundary.
 
 :::slide
 
-## Stubbing Print: production vs test handler
+## The harness
 
-```ocaml skip
-(* production *)
-let with_stdout_printing f =
-  try f () with
-  | effect (Print v), k ->
-    print_endline (string_of_float v); continue k ()
-
-(* test *)
-let with_captured_printing f =
-  let trace = ref [] in
-  let r = try f () with
-    | effect (Print v), k -> trace := v :: !trace; continue k ()
-  in (List.rev !trace, r)
+```ocaml
+let preserves_value name simp =
+  QCheck.Test.make ~name ~count:1000 arb_small
+    (fun e ->
+       let v1 = eval e in
+       let v2 = eval (simp e) in
+       (Float.is_nan v1 && Float.is_nan v2) || v1 = v2)
 ```
 
-- Same `eval`. Two handlers.
-- Production: real I/O.
-- Test: capture into a list the test can assert on.
+- `arb_small`: integer-valued leaves in -3..3.
+  - Exact zeros must be *reachable*; `float_range` would
+    almost never produce one.
+- Two NaNs count as agreement (`nan <> nan` in IEEE-754).
+- Parametrised by `simp`: every candidate gets the same exam.
 
 :::
 
-### A QCheck property that uses the stub
+### Round 1: constant folding
 
-The combination is striking. We can now write QCheck
-properties that *predict* the printed output:
+The safest optimisation there is: wherever both operands are
+literals, do the arithmetic now.
 
-```ocaml skip
-let test_print_returns_value =
-  QCheck.Test.make
-    ~name:"Print e returns the same value as e"
-    arb_expr
-    (fun e ->
-       let trace, v = with_captured_printing (fun () -> eval (Print e)) in
-       List.length trace = 1 && List.hd trace = v)
+```ocaml
+let rec fold_consts = function
+  | Num n -> Num n
+  | Add (a, b) -> (match (fold_consts a, fold_consts b) with
+      | Num x, Num y -> Num (x +. y) | a, b -> Add (a, b))
+  | Sub (a, b) -> (match (fold_consts a, fold_consts b) with
+      | Num x, Num y -> Num (x -. y) | a, b -> Sub (a, b))
+  | Mul (a, b) -> (match (fold_consts a, fold_consts b) with
+      | Num x, Num y -> Num (x *. y) | a, b -> Mul (a, b))
+  | Div (a, b) -> (match (fold_consts a, fold_consts b) with
+      | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
+
+let _ = QCheck_runner.run_tests
+          [ preserves_value "fold_consts" fold_consts ]
+(* = 0  (all tests pass) *)
 ```
 
-This property asserts two things at once: `Print e` prints
-exactly one value, and the value it prints equals the value
-it returns. The production handler would not let us assert
-this without intercepting stdout; the test handler does.
+It passes, and it deserves to: folding performs *exactly the
+operation* `eval` would have performed, just earlier. Even
+`Div (Num 1.0, Num 0.0)` folds honestly, to `Num infinity`.
 
-The same recipe scales to *any* side effect: file I/O, network,
-database, random number generation, time-of-day, even
-non-determinism in a scheduler. Declare an effect, perform
-inside the code under test, swap the handler between
-production and test.
+### Round 2: four tempting identities
+
+Folding alone leaves money on the table. Every algebra student
+knows four more rewrites: `0 + e = e`, `e - 0 = e`,
+`1 * e = e`, `0 * e = 0`. Add them:
+
+```ocaml
+let rec simplify = function
+  | Num n -> Num n
+  | Add (a, b) -> (match (simplify a, simplify b) with
+      | Num 0.0, e | e, Num 0.0 -> e
+      | Num x, Num y -> Num (x +. y) | a, b -> Add (a, b))
+  | Sub (a, b) -> (match (simplify a, simplify b) with
+      | e, Num 0.0 -> e
+      | Num x, Num y -> Num (x -. y) | a, b -> Sub (a, b))
+  | Mul (a, b) -> (match (simplify a, simplify b) with
+      | Num 1.0, e | e, Num 1.0 -> e
+      | Num 0.0, _ | _, Num 0.0 -> Num 0.0
+      | Num x, Num y -> Num (x *. y) | a, b -> Mul (a, b))
+  | Div (a, b) -> (match (simplify a, simplify b) with
+      | e, Num 1.0 -> e
+      | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
+
+let _ = QCheck_runner.run_tests
+          [ preserves_value "simplify" simplify ]
+(* = 1  (the property FAILS; see below) *)
+```
+
+Run it (the exact counterexample varies with the random seed):
+
+```text
+--- Failure -----------------------------------------------
+
+Test simplify failed:
+
+(2 / ((0 * -3) / (1 / -3)))
+```
+
+Read the counterexample inside out, with the oracle on one
+shoulder. `eval` says: `0 * -3` is `-0.0` (IEEE-754 zero
+carries a *sign*, and positive times negative is negative).
+Then `-0.0 / (1 / -3)` is `+0.0`, and `2 / +0.0` is
+`+infinity`. The simplifier said instead: `0 * -3` rewrites to
+`Num 0.0` by the new rule, the sign is gone, and the same
+pipeline now ends at `-infinity`. The two routes disagree.
+
+The failure is genuinely informative, in a way no hand-written
+case would have been. Two of our four identities are unsound
+in float arithmetic:
+
+- **`0 * e = 0` is wrong twice over.** If `e` evaluates to
+  `infinity` or `nan`, the true value is `nan`, not `0`. And if
+  `e` is merely *negative*, the true value is `-0.0`: equal to
+  `0.0` under `=`, but observably different the moment anything
+  divides by it.
+- **`0 + e = e` is wrong about signed zero too**: if `e`
+  evaluates to `-0.0`, then `0.0 +. -0.0` is `+0.0`, not the
+  `-0.0` the rewrite preserves.
+
+The other two survive scrutiny: `1 *. v` and `v -. 0.0` are
+exact in IEEE-754 for every `v`, including infinities, NaN, and
+both zeros.
 
 :::slide
 
-## QCheck + captured trace
+## Round 2: four tempting identities
 
-```ocaml skip
-let test_print_returns_value =
-  QCheck.Test.make ~name:"Print e returns e's value"
-    arb_expr
-    (fun e ->
-       let trace, v =
-         with_captured_printing (fun () -> eval (Print e))
-       in
-       List.length trace = 1 && List.hd trace = v)
+`0 + e = e`, `e - 0 = e`, `1 * e = e`, `0 * e = 0`. Added.
+
+```text
+--- Failure -----------------------------------------------
+Test simplify failed:
+
+(2 / ((0 * -3) / (1 / -3)))
 ```
 
-- Generate any expression, wrap in `Print`.
-- Run under the test handler; capture the trace.
-- Assert that what was printed matches what was returned.
-- Stubbing a side effect = swapping a handler.
+- The oracle: `0 * -3` is `-0.0`; signs flow on; result
+  `+infinity`.
+- The rewrite: `0 * -3` becomes `0.0`; result `-infinity`.
+- Unsound in floats: `0 * e` (loses NaN, infinity, *and* the
+  zero's sign) and `0 + e` (loses the sign of `-0.0`).
+- Sound: `1 * e` and `e - 0` are exact for every float.
 
 :::
 
-The technique generalises beyond testing. The same handler
-swap lets a debugger record every print, lets a
-deterministic-replay system log every random choice, lets a
-golden-file test compare actual vs expected traces, lets a
-property-based test on a "would-be-stateful" function
-exercise it as if it were pure. Effect handlers turn side
-effects into *programmable* boundaries.
+### Round 3: keep the sound two
+
+```ocaml
+let rec simplify_sound = function
+  | Num n -> Num n
+  | Add (a, b) -> (match (simplify_sound a, simplify_sound b) with
+      | Num x, Num y -> Num (x +. y) | a, b -> Add (a, b))
+  | Sub (a, b) -> (match (simplify_sound a, simplify_sound b) with
+      | e, Num 0.0 -> e
+      | Num x, Num y -> Num (x -. y) | a, b -> Sub (a, b))
+  | Mul (a, b) -> (match (simplify_sound a, simplify_sound b) with
+      | Num 1.0, e | e, Num 1.0 -> e
+      | Num x, Num y -> Num (x *. y) | a, b -> Mul (a, b))
+  | Div (a, b) -> (match (simplify_sound a, simplify_sound b) with
+      | e, Num 1.0 -> e
+      | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
+
+let _ = QCheck_runner.run_tests
+          [ preserves_value "simplify_sound" simplify_sound ]
+(* = 0  (all tests pass) *)
+```
+
+One thousand cases, no disagreement (we ran ten thousand while
+preparing this lecture; same answer). Note what just happened:
+we did not become IEEE-754 experts before writing the
+optimiser. We wrote the algebra we believed, and the
+differential property *taught us* the float semantics by
+counterexample, twice. The reference implementation knew more
+than we did, and the harness transferred that knowledge at the
+cost of one equation.
+
+One honest caveat, which is this module's recurring theme in
+miniature: the oracle is only as good as the reference. If
+`eval` itself were wrong, `simplify` would be tested against
+the wrong standard (the think-about-this question below picks
+this up). Differential testing tells you the two routes
+*agree*; choosing which one to believe is still your job.
+
+:::slide
+
+## Round 3: keep the sound two
+
+```ocaml
+let _ = QCheck_runner.run_tests
+          [ preserves_value "simplify_sound" simplify_sound ]
+(* = 0  (all tests pass) *)
+```
+
+- We wrote the algebra we *believed*;
+  - the oracle taught us IEEE-754 by counterexample, twice.
+- Differential testing transfers the reference's knowledge
+  for the price of one equation.
+- Caveat: the oracle is only as good as the reference.
+  - Agreement is symmetric; belief is not.
+
+:::
 
 ## Activity
 
@@ -1049,7 +1177,7 @@ statement is just one equation, plus a NaN guard.
 A colleague writes a single QCheck property for an option-returning
 `safe_div : int -> int -> int option`:
 
-```ocaml skip
+```text
 let test = QCheck.Test.make QCheck.(pair int int)
   (fun (a, b) ->
      match safe_div a b with
@@ -1132,25 +1260,27 @@ After this module:
 - Articulate why a well-typed program can still be wrong, and
   what testing adds on top of types
   ([L01](M09-L01-why-test-typed-code.html)).
+- Write a function's contract (returns, requires, raises,
+  examples) and a data abstraction's AF / RI / `rep_ok`
+  ([L02](M09-L02-specifications-invariants.html)).
+- Design test cases deliberately: boundaries and partitions
+  from the spec, paths and coverage from the code
+  ([L03](M09-L03-test-design.html)).
 - Write OUnit2 unit tests for any module of your own:
   `assert_equal`, `assert_raises`, `>::`, `TestList`, `dune`
-  integration ([L02](M09-L02-unit-testing.html)).
+  integration ([L04](M09-L04-unit-testing.html)).
 - Write QCheck properties for invariants of a function:
   generators, properties, shrinking, statistics
-  ([L03](M09-L03-property-based-testing.html)).
+  ([L05](M09-L05-property-based-testing.html)).
 - Build custom generators (sorted lists, valid BSTs, DAGs)
   by construction, and bundle generator + printer + shrinker
-  into an `arbitrary` ([L04](M09-L04-custom-generators-stateful.html)).
+  into an `arbitrary` ([L06](M09-L06-custom-generators-stateful.html)).
 - Test stateful data structures against a reference
   implementation using sequences of operations
-  ([L05](M09-L05-model-based-testing.html)).
-- Write code that uses **effect handlers** for non-local
-  control flow, including cooperative concurrency
-  ([L06](M09-L06-effect-handlers.html),
-  [L07](M09-L07-fibers-concurrency.html)).
-- Combine OUnit2 + QCheck on a real function, including
-  catching a deliberately introduced bug, and stubbing side
-  effects with effect handlers (this lecture).
+  ([L07](M09-L07-model-based-testing.html)).
+- Combine the toolkit on a real function: spec-derived cases,
+  a deliberately introduced bug caught and shrunk, and a
+  differential test against an oracle (this lecture).
 
 The next module, [Memory safety and security](M10-L01-ub-and-the-zoo.html),
 moves in the other direction: from what tests catch to what
@@ -1163,14 +1293,15 @@ context of memory safety, with security as the application.
 ## What you can do now
 
 - Explain why a well-typed program can still be wrong (L1).
-- Write OUnit2 unit tests (L2).
-- Write QCheck properties for invariants (L3).
-- Build custom generators and stateful PBT harnesses (L4).
-- Apply model-based testing to stateful code (L5).
-- Use effect handlers for non-local control flow and
-  cooperative concurrency (L6-L7).
-- Combine OUnit2 + QCheck + handler-stubs on a real function
-  (this lecture).
+- Write contracts and rep invariants (L2).
+- Design cases: black-box boundaries, glass-box paths,
+  coverage (L3).
+- Write OUnit2 unit tests (L4).
+- Write QCheck properties for invariants (L5).
+- Build custom generators and stateful PBT harnesses (L6).
+- Apply model-based testing to stateful code (L7).
+- Combine the toolkit, plus differential testing, on a real
+  function (this lecture).
 
 Next module: M10 on memory safety. Tests catch behaviour;
 *types and the runtime* catch the next layer.
@@ -1194,7 +1325,7 @@ Next module: M10 on memory safety. Tests catch behaviour;
 
 This tutorial's prose, worked examples, and quizzes are original
 to this course. The `expr` AST and `eval` function are reused
-from [M05-L06](M05-L06-tutorial.html), itself original. The
+from [the pattern-matching tutorial](M05-L06-tutorial.html), itself original. The
 deliberate-bug pattern (swapping operands of `Sub`) is folklore
 in the PBT community, presented here in our own words. Cornell
 CS3110's testing chapter is the conceptual antecedent for the
