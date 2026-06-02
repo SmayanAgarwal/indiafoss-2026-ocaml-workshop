@@ -42,6 +42,13 @@ ALLOWLIST = {
     # model-based-testing pattern. Natural extension per
     # feedback-activity-fresh-code.
     ("M09-L07-model-based-testing.md", "command_to_string"),
+    # Chapter walks `rep_ok` through for the Rational module
+    # (predicate: nonzero denominator). Activity asks for a
+    # `rep_ok` for an interval record (predicate: lo <= hi,
+    # with the lo = hi boundary as the teaching point) --
+    # different ADT, same CS3110 rep_ok convention, whose
+    # *name* is part of what is being taught.
+    ("M09-L02-specifications-invariants.md", "rep_ok"),
 }
 
 LET_RE = re.compile(r"^\s*let(?:\s+rec)?\s+([a-zA-Z_][a-zA-Z_0-9']*)\s*")

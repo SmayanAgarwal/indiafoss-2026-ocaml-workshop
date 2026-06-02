@@ -333,37 +333,38 @@ but both are dense merges (laws+list+result; pretty-printers+
 builders) whose chapter prose pushes the real running time up.
 M08-L07 (tutorial) is the heaviest at the 30-min ceiling.
 
-### M09: Concurrency and Testing (8 lectures)
+### M09: Testing (8 lectures)
 
-Re-estimated 2026-05-25 after the M09 restructure: the module
-was renamed from "Testing" to "Concurrency and Testing"; the
-existing L03 was split into L03 (QCheck basics + shrinking)
-and a new L04 (custom generators + stateful PBT); model-based
-testing moved from L04 to L05; two new concurrency lectures
-(L06 effect handlers, L07 fibers and lightweight concurrency)
-were inserted; the tutorial moved from L05 to L08 and was
-extended with effect-handler stubs. Estimate uses
+Re-estimated 2026-06-02 after the testing-only restructure:
+the two concurrency lectures (effect handlers; fibers) were
+removed from the course, the module was renamed back to
+"Testing", and two new lectures were inserted ahead of the
+tool lectures: L02 (specifications and invariants: contracts,
+AF/RI, rep_ok) and L03 (designing test cases: black-box,
+glass-box, coverage). The former testing lectures renumbered
+to L04-L07; the tutorial lost its effect-handler part and
+gained a specification part and a differential-testing part
+(an expr optimiser vs eval as oracle). Estimate uses
 slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M09-L01 | Why test a type-safe (and concurrent) program? | 13 | 3 | 0 | 20 | 28 |
-| M09-L02 | Unit testing in OCaml with OUnit2 | 15 | 2 | 1 | 23 | 32 |
-| M09-L03 | Property-based testing with QCheck: basics and shrinking | 17 | 2 | 1 | 26 | 36 |
-| M09-L04 | Custom generators and stateful property tests | 13 | 2 | 1 | 20 | 28 |
-| M09-L05 | Model-based testing | 16 | 2 | 1 | 24 | 34 |
-| M09-L06 | Effect handlers for concurrency | 15 | 2 | 1 | 23 | 32 |
-| M09-L07 | Fibers and lightweight concurrency | 13 | 2 | 1 | 20 | 28 |
-| M09-L08 | Tutorial: testing the expr evaluator with OUnit2, QCheck, and effect-handler stubs | 14 | 1 | 1 | 21 | 29 |
-| **M09 total** | | **116** | **16** | **7** | **177** | **247** |
-| | | | | | **(2.9 h)** | **(4.1 h)** |
+| M09-L01 | Why test a type-safe program? | 13 | 3 | 0 | 20 | 28 |
+| M09-L02 | Specifications and invariants | 19 | 2 | 1 | 29 | 41 |
+| M09-L03 | Designing test cases: black-box and glass-box | 15 | 2 | 1 | 23 | 32 |
+| M09-L04 | Unit testing in OCaml with OUnit2 | 15 | 2 | 1 | 23 | 32 |
+| M09-L05 | Property-based testing with QCheck: basics and shrinking | 17 | 2 | 1 | 26 | 36 |
+| M09-L06 | Custom generators and stateful property tests | 14 | 2 | 1 | 21 | 29 |
+| M09-L07 | Model-based testing | 16 | 2 | 1 | 24 | 34 |
+| M09-L08 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 16 | 1 | 1 | 24 | 34 |
+| **M09 total** | | **125** | **16** | **7** | **190** | **266** |
+| | | | | | **(3.2 h)** | **(4.4 h)** |
 
-All M09 lectures now land in the 20-36 min band. L03 still
-overruns the NPTEL 30-min ceiling slightly (26 min was 32 min
-pre-split, so the split helped but L03 is still on the heavy
-side). L04 and L07 sit at the 20-min floor; both are
-introductions that hand off to the following lecture so the
-weight is appropriate.
+All M09 lectures land in the 20-29 min video band. L02 is the
+heaviest at 29 min (specifications AND invariants in one
+lecture); if a polish pass needs to cut, splitting L02 is the
+designed-in relief valve. L05 remains on the heavy side at 26
+min. L01 sits at the 20-min floor as the module opener.
 
 ### M10: Memory safety and security (6 lectures)
 
@@ -503,14 +504,20 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1825 min (30.4 hours) across
+- **Final video**: 1838 min (30.6 hours) across
   78 lectures and 12 modules.
-- **Estimated recording time**: 2549 min (42.5 hours)
+- **Estimated recording time**: 2568 min (42.8 hours)
   at the 1.4x multiplier.
 
-The 30.4 hours of final video meets NPTEL's ~30 hr target
+The 30.6 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
-min for effect-handler concurrency), the M10 expansion (+1
+min for effect-handler concurrency), the 2026-06-02 M09
+restructure (concurrency removed from the course entirely;
+M09 became a pure 8-lecture testing module with new lectures
+on specifications/invariants and test-case design, and a
+differential-testing tutorial part; net +13 video min vs the
+previous M09 estimate, lecture count unchanged), the M10
+expansion (+1
 lecture, +36 video min for resource safety; M10 grew from 5 to
 6 lectures with L01/L03/L06 also growing), the 2026-05-25 M11
 expansion (+2 lectures, +64 video min for portability and
@@ -564,11 +571,11 @@ sessions:
 | M06 Higher-order programming | 3.4 | 0.8 |
 | M07 Side effects and modular programming | 5.9 | 1.4 |
 | M08 Monads and GADTs | 3.3 | 0.8 |
-| M09 Concurrency and Testing | 4.1 | 1.0 |
+| M09 Testing | 4.4 | 1.0 |
 | M10 Memory safety and security | 3.2 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 3.7 | 0.8 |
 | M12 Unikernels (MirageOS) | 2.9 | 0.7 |
-| **Total** | **42.5** | **9.9** |
+| **Total** | **42.8** | **10.0** |
 
 ## Caveats
 
