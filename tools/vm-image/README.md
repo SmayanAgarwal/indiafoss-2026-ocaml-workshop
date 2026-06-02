@@ -1,20 +1,61 @@
-# vm-image: dune-in-the-browser VM build tooling
+# vm-image: dune-in-the-browser VM
 
-Builds the Linux VM image that powers the in-browser dune
-terminal: 32-bit Alpine with OCaml 5.4.0 (bytecode), dune, and
-bisect_ppx, run by the v86 emulator (x86-to-wasm JIT) entirely
-client-side, with the rootfs lazily fetched as zstd chunks over
-9p and an instant-resume boot snapshot.
+Builds the Linux VM image behind the course's in-browser dune
+terminal: a real shell where students run `dune build` /
+`dune runtest` / `dune exec` (and bisect_ppx coverage) entirely
+client-side. No backend, static hosting only (GitHub Pages), OSS
+components only, packages baked into the image (no live
+`opam install`, no network inside the VM).
 
-Full design, decision log, Phase 2 integration plan, and gotchas:
-see `HANDOFF.md` in this directory.
+Agents working in this directory: read `AGENTS.md`. The remaining
+site-integration work is specced in `PHASE2.md`.
+
+## Design
+
+v86 (<https://github.com/copy/v86>, BSD-2-Clause), an x86-to-wasm
+JIT emulator, runs 32-bit Alpine Linux 3.23 with OCaml 5.4.0
+(bytecode-only; OCaml 5 has no 32-bit native backend) and dune
+3.20.2, both from Alpine's x86 apk repos. The VM resumes from a
+zstd-compressed post-boot snapshot (no kernel boot at page load)
+and lazily fetches rootfs chunks over 9p, so students download
+only the files their commands actually touch.
+
+Libraries come in two tiers, both baked at image-build time: apk
+for the few OCaml libs Alpine packages, and an opam layer (switch
+on `ocaml-system`, i.e. the apk compiler) for everything else;
+bisect_ppx is installed that way. Policy: the compiler and dune
+stay apk (the native dune binary is what keeps builds fast under
+emulation); opam is for libraries only.
+
+Rejected alternatives, for the record: WebVM/CheerpX (academic
+use needs a commercial license; engine not self-hostable),
+container2wasm (interpreted CPU, too slow for dune), WebContainers
+(Node-only), toolchain-to-WASI (dune needs fork/exec of
+subprocesses; browser WASI shims have none).
+
+## Measured (2026-06-02, localhost serving)
+
+- Page load to interactive shell: ~1 s after ~12 MB initial
+  download (9.0 MB zstd state + 2.4 MB engine + fs.json).
+- Plain dune: hello cold build 6.5 s; multi-module lib+bin+test
+  cold 12-17 s; runtest 0.6 s; no-op 0.3 s; incremental 3.3 s.
+- Coverage: first `dune build --instrument-with bisect_ppx` ~90 s
+  (one-time per-project ppx driver link), then instrumented
+  runtest 2.4 s; `bisect-ppx-report summary` instant; the HTML
+  report can be pulled out of the VM by the host page via
+  `emulator.read_file()` and rendered in the browser.
+- Downloads (cold cache): boot-only ~12 MB; running everything
+  incl. coverage ~53 MB total. Chunk store on disk: 153 MB, of
+  which untouched chunks are never downloaded. Biggest session
+  chunks: gcc cc1 12.7 MB, ocamlcommon.cma 6.9 MB, dune 4 MB.
 
 ## Layout
 
 - `image/Dockerfile`: the VM filesystem (read its comments).
-- `image/projects/`: sample dune projects baked into `/root/`.
+- `image/projects/`: sample dune projects baked into `/root/`
+  (`hello/`, `roman/`; prototype placeholders, see PHASE2.md).
 - `image/build.sh`: Docker image -> rootfs tar -> fs.json +
-  chunk store.
+  zstd chunk store.
 - `make-state.mjs`: headless boot, saves the resume snapshot.
 - `run-workflow.mjs`: headless end-to-end smoke test.
 - `prototype.html`: minimal demo page (Phase 1 prototype).
@@ -36,10 +77,6 @@ node tools/vm-image/run-workflow.mjs        # must end "workflow complete"
 (cd _vm-prototype && python3 -m http.server 8766)
 # open http://localhost:8766/prototype.html
 ```
-
-Any change under `image/` requires re-running build.sh,
-make-state.mjs, and the zstd step together: the snapshot and
-fs.json must come from the same rootfs build.
 
 ## Pinned versions
 
