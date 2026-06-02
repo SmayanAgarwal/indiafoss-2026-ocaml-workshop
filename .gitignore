@@ -3,6 +3,12 @@ _site/
 *.install
 .merlin
 
+# VM-image build scratch: pinned third-party inputs (v86 clone,
+# prebuilt engine) and heavy build outputs (rootfs chunk store,
+# boot snapshots). Sources live in tools/vm-image/; regenerate the
+# scratch with tools/vm-image/setup-scratch.sh.
+_vm-prototype/
+
 # Video pipeline: heavy artifacts are rebuildable from the playlist.
 # We commit only transcript.md (the readable view) and
 # slides_with_narration.json (the small alignment file). The raw
