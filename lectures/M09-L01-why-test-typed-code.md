@@ -5,7 +5,7 @@ week: 9
 duration_target_min: 25
 concepts: [testing, type safety, behaviour, validation, complementary roles of types and tests, faults and failures]
 keywords: [OCaml, testing, type safety, behaviour, unit testing, property-based testing, validation, faults, failures, debugging]
-activity_question: "Here is a well-typed OCaml function: [let sort xs = xs]. Its declared type is ['a list -> 'a list]. The compiler is happy. Is the program correct?"
+activity_question: "A colleague's deduplication function is [let dedup (xs : 'a list) : 'a list = []]. The compiler accepts it without warnings. What is the strongest statement you can make about this function?"
 think_about_this: "If types eliminate whole classes of bugs by construction, why are there still bugs in well-typed programs? What kind of bug is the type checker structurally unable to see?"
 reading:
   - title: "Cornell CS3110, Testing and Debugging"
@@ -44,7 +44,8 @@ have hit in C, Python, or Java really are gone: you do not pass an
 list case of a recursive function, you do not extract a value from
 an `Option.t` without saying what should happen on `None`. Each of
 those was a runtime crash in the language you came from. In OCaml,
-each is a compile error.
+the first is a compile error and the other two are exhaustiveness
+warnings the compiler insists you confront.
 
 This module asks a sharper question. *What kind of bug does the
 type system structurally fail to catch?* And what do you do about
@@ -57,9 +58,10 @@ appreciate that distinction precisely.
 
 ## Where we are
 
-- Eight modules of OCaml safety: types catch type errors,
-  exhaustive matches force case handling, abstraction enforces
-  interfaces.
+- Eight modules of OCaml safety:
+  - types catch type errors,
+  - exhaustive matches force case handling,
+  - abstraction enforces interfaces.
 - A common impression: "if it type-checks, it's mostly correct."
 - That impression is *almost* right, but the gap matters.
 - This module: what types do NOT catch, and how testing fills the
@@ -74,7 +76,7 @@ Here is the example to keep in mind for the rest of this module.
 ```ocaml
 let sort (xs : 'a list) : 'a list = xs
 
-let _ = sort [3; 1; 2]
+let _ = sort [3; 1; 2]  (* = [3; 1; 2] *)
 ```
 
 This is a function called `sort`, of type `'a list -> 'a list`,
@@ -146,8 +148,9 @@ genuinely impressive.
   empty list, for `None`, or for some constructor of a variant.
 - **Use-before-definition**: variables not yet bound; recursive
   references without `let rec`.
-- **Parametricity**: a function of type `'a -> 'a` is the identity
-  (up to non-termination); it cannot read or alter the value.
+- **Forced shapes**: `'a -> 'a` is so polymorphic that only the
+  identity inhabits it (up to non-termination)
+  - the technical name is *parametricity*; rare but real.
 
 :::
 
@@ -297,19 +300,18 @@ The tools then mechanize what the answers tell you to check.
 
 ## Two kinds of test, plus a side door
 
-1. **Unit tests** (L4): "for this specific input, the output is
-   this specific value." Hand-written examples.
-2. **Property-based tests** (L5, L6): "for *any* input drawn
-   from this generator, this property holds." Random exploration,
-   plus custom generators and stateful command sequences.
+1. **Unit tests** (L4): "for *this* input, *this* output."
+   Hand-written examples.
+2. **Property-based tests** (L5, L6): "for *any* generated
+   input, this property holds."
 3. **Model-based tests** (L7): stateful PBT against a simple
    reference implementation.
-4. **Expect tests** (mentioned in L4): "the output, captured
-   verbatim, is this string." Useful for exploratory and
-   end-to-end cases.
+4. **Expect tests** (mentioned in L4): the output, captured
+   verbatim, compared on every run.
 
-- Before any tool: *what* counts as correct (specifications, L2)
-  - and *which* inputs are worth trying (test design, L3).
+- Before any tool, two questions no tool answers:
+  - *what counts as correct?* (specifications, L2)
+  - *which inputs are worth trying?* (test design, L3)
 
 :::
 
@@ -495,11 +497,30 @@ why a chapter on testing in an OCaml textbook is shorter than
 the same chapter in a Python textbook, but no less important.
 You write fewer tests; the ones you write matter more.
 
+:::slide
+
+## Types shrink the test surface
+
+- Dynamic-language suites are full of malformed-input tests:
+  - wrong type, missing field, `None` where a list goes.
+- In OCaml the type checker rules those inputs out
+  - so those tests simply do not exist.
+- Tests target *behaviour on well-typed input*: a smaller
+  surface.
+- Fewer tests, each more informative
+  - RWO: types *raise* the value of every test you write.
+
+:::
+
 ## A small concrete demonstration
 
 Here is the example we will revisit through the module: a tiny
 function we *think* is right, with a small set of hand-written
 tests that probe its behaviour.
+
+:::slide
+
+## Five hand-written tests on `max3`
 
 ```ocaml
 let max3 x y z =
@@ -517,11 +538,17 @@ let () =
   print_endline "max3 tests passed"
 ```
 
+- Five specific cases. Each runs cheaply.
+- Each is informative: "this input maps to that output."
+
+:::
+
 Five hand-written assertions, each a simple equality check
 against a specific case. We run them; they all pass; we believe
-the function. (This is the CS3110 textbook's `max3` example,
-which we will steal again in [Lecture 2](M09-L02-unit-testing.html)
-when we move from raw `assert` to a proper test framework.)
+the function. (This is the CS3110 textbook's `max3` example, a
+stock teaching function; it returns in the
+[test-design lecture](M09-L03-test-design.html) as the glass-box
+specimen whose four paths we cover deliberately.)
 
 But notice the limit of what these five assertions can tell us.
 We have only checked the function on five specific inputs out of
@@ -532,38 +559,18 @@ not happen to try `max_int`. The five tests give us confidence,
 not proof. That is the deal that testing makes: confidence,
 scaled by the cleverness with which you pick inputs.
 
-:::slide
-
-## Five hand-written tests on `max3`
-
-```ocaml
-let () =
-  assert (max3 1 2 3 = 3);
-  assert (max3 3 2 1 = 3);
-  assert (max3 2 3 1 = 3);
-  assert (max3 5 5 5 = 5);
-  assert (max3 (-1) (-2) (-3) = -1);
-  print_endline "max3 tests passed"
-```
-
-- Five specific cases. Each runs cheaply.
-- Each is informative: "this input maps to that output."
-- We can choose more cases manually, or invite a library to
-  generate them for us. Both come next.
-
-:::
-
-In [Lecture 2](M09-L02-unit-testing.html), we'll lift those raw
-`assert`s into the OUnit2 framework: each `assert` becomes a
-named *test case*, the framework runs all of them, and a failure
-points at the specific case that failed. In
-[Lecture 3](M09-L03-property-based-testing.html), we'll go further:
-instead of choosing the inputs ourselves, we'll *generate* them
-randomly and check a *property* the answer should satisfy. The
-property for `max3` is easy: the answer should equal one of the
-three inputs, and should be greater than or equal to each of
-them. We will see QCheck find counterexamples to a buggy
-implementation of `max3` on the very first try.
+In [Lecture 4](M09-L04-unit-testing.html), we'll lift raw
+`assert`s like these into the OUnit2 framework: each `assert`
+becomes a named *test case*, the framework runs all of them, and
+a failure points at the specific case that failed. In
+[Lecture 5](M09-L05-property-based-testing.html), we'll go
+further: instead of choosing the inputs ourselves, we'll
+*generate* them randomly and check a *property* the answer
+should satisfy. The property for `max3` is easy to state: the
+answer equals one of the three inputs and is at least as large
+as each of them. And when a generated input does fail a
+property, you will watch QCheck *shrink* it to the smallest
+failing case before reporting it.
 
 ## Activity: the well-typed sort
 
@@ -674,6 +681,21 @@ not tell you the cases you did not try are fine. Systematic
 and code coverage tools (`bisect_ppx`, covered with test design)
 help close that gap, but never fully.
 
+:::slide
+
+## Common pitfalls
+
+1. **"It compiles" is not "it works"**: at least one test per
+   function, before you trust it.
+2. **Testing what the code does**: test against the *spec*, not
+   the implementation's existing branches.
+3. **Only regression tests**: a suite of past bugs finds only
+   the bugs you already knew about.
+4. **"All tests pass" is not "no bugs"**: design, PBT, and
+   coverage narrow the gap; nothing closes it.
+
+:::
+
 ## What's next
 
 This module has eight lectures: this one, two on deciding what
@@ -764,7 +786,7 @@ listed in the *Reading* section above; Cornell CS3110 and Real
 World OCaml are CC BY-NC-ND-licensed and have not been
 derivatively reused. The "well-typed sort that doesn't sort"
 framing is folklore in the typed-FP community; the `max3`
-example is borrowed conceptually from CS3110's testing chapter
-without lifting code or prose.
+function follows CS3110's testing chapter and is a stock
+teaching example, attributed where it appears.
 See [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.
