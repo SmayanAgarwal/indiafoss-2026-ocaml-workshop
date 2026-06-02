@@ -97,10 +97,7 @@ emit_index() {
   <article class="landing">
     <h1>Functional Programming with OCaml</h1>
     <p>A 12-week NPTEL course. Pick a lecture below, or start at
-    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.
-    There is also an <a href="playground.html">in-browser dune
-    playground</a>: a real Linux shell with the OCaml toolchain,
-    running entirely in your browser.</p>
+    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.</p>
 HEAD
 
     # Walk modules in order, then lectures in order. modules.txt

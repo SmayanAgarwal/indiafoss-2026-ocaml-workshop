@@ -118,6 +118,12 @@
             basefs: base + "/ocaml-fs.json",
           },
           autostart: true,
+          /* All input goes through xterm -> serial0. Without these,
+           * v86's emulated PS/2 devices grab page-global key and
+           * mouse events and the page stops scrolling. */
+          disable_keyboard: true,
+          disable_mouse: true,
+          disable_speaker: true,
         });
         root.vmEmulator = emulator; /* for tests and consoles */
 
