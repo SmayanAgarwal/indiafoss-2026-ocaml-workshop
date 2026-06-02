@@ -3,8 +3,8 @@ title: "Practice: monads and GADTs"
 lecture_no: 8
 week: 8
 duration_target_min: 0
-concepts: [practice problems, state monad, functional references, universal types, length-indexed lists, type-level arithmetic]
-keywords: [OCaml, practice, assignment, monad, state, ref, GADT, length-indexed, plus, mult, min]
+concepts: [practice problems, state monad, functional references, universal types, length-indexed lists, type-level arithmetic, typed interpreter, type witness, constant folding]
+keywords: [OCaml, practice, assignment, monad, state, ref, GADT, length-indexed, plus, mult, min, witness, simplify]
 think_about_this: "These are the stretch end of Module 8: a state monad that simulates mutable references, and length-indexed lists whose operations carry type-level proofs. Everything is pure; the types do the bookkeeping."
 reading:
   - title: "Real World OCaml, GADTs"
@@ -19,7 +19,9 @@ These are stretch problems, harder than the lectures and book-only
 references* without any real mutation; Part 2 pushes
 [length-indexed lists](M08-L05-gadts-use-cases.html) to operations
 that carry the [type-level proofs](M08-L05-gadts-use-cases.html#aside-type-level-arithmetic)
-from the L05 aside. Attempt them once Lectures 1 to 7 are
+from the L05 aside; Part 3 returns to the
+[tutorial's](M08-L07-tutorial.html) typed interpreter, combining
+witnesses with the evaluator. Attempt them once Lectures 1 to 7 are
 comfortable.
 
 Each problem is a fill-in-the-blank cell with a `Check` button; the
@@ -510,6 +512,165 @@ so the match is exhaustive.
 
 :::
 
+## Part 3: the typed interpreter
+
+These return to the GADT-typed AST from the
+[tutorial](M08-L07-tutorial.html): an `'a expr` that can only be
+built well-typed, run by `eval : 'a expr -> 'a`.
+
+### Problem 8: witness-driven `let`
+
+The tutorial's higher-order `let` evaluated by *substitution*,
+re-running the bound expression on each use. To run it exactly once,
+we evaluate it to a value and then turn that value *back* into an
+expression, and the snag was knowing which leaf to use, `Int_lit` or
+`Bool_lit`. A *type witness*
+([from L05](M08-L05-gadts-use-cases.html#use-1-typed-pretty-printers))
+settles it: `Let` carries an `'a ty`, and matching on it chooses the
+constructor.
+
+:::quiz code id=M08-L08-q8
+Implement `inject : 'a ty -> 'a -> 'a expr`, which wraps a value
+back into the AST using its witness. (`eval`'s `Let` case is already
+written; it evaluates the bound expression once and feeds it through
+`inject`.)
+
+```ocaml
+type _ ty =
+  | T_int  : int ty
+  | T_bool : bool ty
+
+type _ expr =
+  | Int_lit  : int -> int expr
+  | Bool_lit : bool -> bool expr
+  | Add      : int expr * int expr -> int expr
+  | If       : bool expr * 'a expr * 'a expr -> 'a expr
+  | Let      : 'a ty * 'a expr * ('a expr -> 'b expr) -> 'b expr
+
+let inject : type a. a ty -> a -> a expr = fun _t _v -> failwith "not implemented"
+
+let rec eval : type a. a expr -> a = function
+  | Int_lit n    -> n
+  | Bool_lit b   -> b
+  | Add (x, y)   -> eval x + eval y
+  | If (c, t, e) -> if eval c then eval t else eval e
+  | Let (t, e, body) -> let v = eval e in eval (body (inject t v))
+```
+
+```ocaml skip
+let () =
+  (* let x = 4 + 6 in x + x  ==> 20, with 4 + 6 evaluated once *)
+  let p1 = Let (T_int, Add (Int_lit 4, Int_lit 6), fun x -> Add (x, x)) in
+  if eval p1 <> 20 then failwith "let-int";
+  (* let b = true in if b then 1 else 0  ==> 1 *)
+  let p2 = Let (T_bool, Bool_lit true, fun b -> If (b, Int_lit 1, Int_lit 0)) in
+  if eval p2 <> 1 then failwith "let-bool";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+Reference solution:
+
+```
+let inject : type a. a ty -> a -> a expr = fun t v ->
+  match t with
+  | T_int  -> Int_lit v
+  | T_bool -> Bool_lit v
+```
+
+In the `inject` body the witness `t` refines `a`: in the `T_int`
+branch `a = int`, so `v : int` and `Int_lit v : int expr`; in the
+`T_bool` branch `a = bool`. That refinement is exactly what tells us
+which constructor is well-typed. With `inject`, `eval`'s `Let` case
+evaluates the bound expression once (`let v = eval e`) and threads
+the value back through the body, so there is no re-evaluation and no
+generic "value" constructor.
+
+:::
+
+### Problem 9: constant folding
+
+A `simplify` pass folds constant subexpressions (`1 + 2` becomes
+`3`) and prunes `if`s whose condition is already known, leaving
+everything else unchanged. Its type captures that it *preserves* the
+expression's type: an `'a expr` simplifies to an `'a expr`.
+
+:::quiz code id=M08-L08-q9
+Implement `simplify`. Fold `Add`, `Mul`, and `Eq_int` when both
+operands are literals; reduce `If` when the condition folds to a
+`Bool_lit`; otherwise rebuild the node from its simplified parts.
+
+```ocaml
+type _ expr =
+  | Int_lit  : int -> int expr
+  | Bool_lit : bool -> bool expr
+  | Add      : int expr * int expr -> int expr
+  | Mul      : int expr * int expr -> int expr
+  | Eq_int   : int expr * int expr -> bool expr
+  | If       : bool expr * 'a expr * 'a expr -> 'a expr
+
+let rec eval : type a. a expr -> a = function
+  | Int_lit n -> n
+  | Bool_lit b -> b
+  | Add (x, y) -> eval x + eval y
+  | Mul (x, y) -> eval x * eval y
+  | Eq_int (x, y) -> eval x = eval y
+  | If (c, t, e) -> if eval c then eval t else eval e
+
+let simplify : type a. a expr -> a expr = fun _ -> failwith "not implemented"
+```
+
+```ocaml skip
+let () =
+  let e = Mul (Add (Int_lit 1, Int_lit 2), Int_lit 3) in
+  if simplify e <> Int_lit 9 then failwith "fold arithmetic";
+  if eval (simplify e) <> 9 then failwith "eval matches";
+  let e2 = If (Eq_int (Int_lit 1, Int_lit 1), Int_lit 5, Int_lit 6) in
+  if simplify e2 <> Int_lit 5 then failwith "prune if";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+Reference solution:
+
+```
+let rec simplify : type a. a expr -> a expr = function
+  | Int_lit n  -> Int_lit n
+  | Bool_lit b -> Bool_lit b
+  | Add (x, y) ->
+      (match simplify x, simplify y with
+       | Int_lit a, Int_lit b -> Int_lit (a + b)
+       | x', y' -> Add (x', y'))
+  | Mul (x, y) ->
+      (match simplify x, simplify y with
+       | Int_lit a, Int_lit b -> Int_lit (a * b)
+       | x', y' -> Mul (x', y'))
+  | Eq_int (x, y) ->
+      (match simplify x, simplify y with
+       | Int_lit a, Int_lit b -> Bool_lit (a = b)
+       | x', y' -> Eq_int (x', y'))
+  | If (c, t, e) ->
+      (match simplify c with
+       | Bool_lit true  -> simplify t
+       | Bool_lit false -> simplify e
+       | c' -> If (c', simplify t, simplify e))
+```
+
+Every branch returns an expression of the *same* index it received
+(`Add` stays `int expr`, `Eq_int` stays `bool expr`), so the type
+`'a expr -> 'a expr` holds throughout: the optimiser cannot
+accidentally change a program's type. OCaml flags the inner matches
+as a "fragile match" (warning 4): the catch-all `x', y'` would keep
+absorbing cases if new constructors were added to `expr`. That is a
+fair warning in production code; for this fixed little language it is
+harmless.
+
+:::
+
 ## Where this sits
 
 Problems 1 and 2 are the [CS3100](https://kcsrk.info/cs3100_m21/)
@@ -517,10 +678,12 @@ monad assignment: a state monad rich enough to *be* a reference
 implementation, first monomorphic, then polymorphic via a universal
 type. Problems 3 to 7 are the GADT assignment: every length-changing
 operation carries a type-level proof, so the compiler checks the
-shapes that ordinary lists check (if at all) only at runtime. This
-is the far end of what we do with types in this course; if you
-enjoyed it, the dependently typed languages (Agda, Idris, F\*) make
-this style the default.
+shapes that ordinary lists check (if at all) only at runtime.
+Problems 8 and 9 extend the tutorial's interpreter: a witness-driven
+`let` (resolving the re-injection puzzle from L07's HOAS aside) and a
+type-preserving optimiser. This is the far end of what we do with
+types in this course; if you enjoyed it, the dependently typed
+languages (Agda, Idris, F\*) make this style the default.
 
 ## Reading
 
