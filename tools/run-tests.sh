@@ -25,10 +25,10 @@ red()   { printf '\033[31m%s\033[0m\n' "$*"; }
 green() { printf '\033[32m%s\033[0m\n' "$*"; }
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
 
-bold '[1/5] activity-fresh-code audit'
+bold '[1/6] activity-fresh-code audit'
 python3 tools/audit-activities.py
 
-bold '[2/5] KC-comment sweep'
+bold '[2/6] KC-comment sweep'
 # `KC:` (silent fix) is allowed to linger; `KC?:` and `KC!:` are
 # blockers per CLAUDE.md. Surface all three so the user sees them.
 KC_HITS=$(grep -rEn '<!--[[:space:]]*KC[!?]?:' \
@@ -47,13 +47,13 @@ else
   green '  no KC comments outstanding'
 fi
 
-bold '[3/5] dune runtest (mdx + OCaml tests)'
+bold '[3/6] dune runtest (mdx + OCaml tests)'
 opam exec -- dune runtest
 
-bold '[4/5] build site'
+bold '[4/6] build site'
 tools/build-site.sh
 
-bold '[5/5] playwright end-to-end'
+bold '[5/6] playwright end-to-end'
 SMOKE_URL=http://localhost:8765/_site/test/smoke.html
 SERVER_PID=""
 if ! curl -sf -o /dev/null "$SMOKE_URL"; then
@@ -81,5 +81,16 @@ if ! curl -sf -o /dev/null "$SMOKE_URL"; then
 fi
 
 node "$SCRIPT_DIR/playwright-check.mjs"
+
+bold '[6/6] playwright VM playground'
+# Boot the in-browser dune VM and build hello end-to-end. Use the
+# local VM data when the build scratch dir is present (fast, no
+# network); otherwise fall back to the production
+# fplaunchpad/ocaml-browser-vm Pages site baked into the component.
+if [ -f "$REPO_ROOT/_vm-prototype/images/ocaml-state.bin.zst" ]; then
+  export VMBASE="http://localhost:8765/_vm-prototype/images"
+  green "  using local VM data ($VMBASE)"
+fi
+node "$SCRIPT_DIR/playwright-vm-check.mjs"
 
 green 'All tests passed.'

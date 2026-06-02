@@ -33,7 +33,7 @@ let bundle_hash rel_path =
       Hashtbl.add bundle_hash_cache rel_path h;
       h
 
-let head ~asset_root ~(fm : Frontmatter.t) =
+let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
   (* [asset_root] is the prefix used in front of each asset path. For
      production we use root-relative paths like ["/assets/..."], so
      callers pass [""] and the leading slash comes from each href.
@@ -79,6 +79,17 @@ let head ~asset_root ~(fm : Frontmatter.t) =
      but browsers still hold a copy across visits). *)
   let chapter_css_v = bundle_hash "assets/css/chapter.css" in
   let slides_css_v = bundle_hash "assets/css/slides.css" in
+  (* The in-browser VM terminal loads only on the rare lecture that
+     carries a [:::vm-terminal] div. The component itself fetches
+     nothing further until the student clicks Start. *)
+  let vm_script =
+    if not vm_terminal then ""
+    else
+      Printf.sprintf
+        "\n  <script defer src=\"%s/assets/vm/vm-terminal.js?v=%s\"></script>"
+        asset_root
+        (bundle_hash "assets/vm/vm-terminal.js")
+  in
   Printf.sprintf
     {|<!doctype html>
 <html lang="en">
@@ -123,14 +134,14 @@ let head ~asset_root ~(fm : Frontmatter.t) =
   <script async
     src="%s/assets/%s/x-ocaml.js?v=%s"
     src-worker="%s/assets/%s/x-ocaml.worker.js?v=%s"
-    x-ocamlformat="margin=60"%s></script>
+    x-ocamlformat="margin=60"%s></script>%s
 </head>|}
     (Parse.html_escape commit_sha)
     (Parse.html_escape quiz_api_url)
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
     asset_root asset_root asset_root chapter_css_v asset_root slides_css_v
     asset_root bundle_dir main_v asset_root bundle_dir worker_v
-    src_load_attr
+    src_load_attr vm_script
 
 let header_bar ~(fm : Frontmatter.t) ~has_slides =
   let lecture_id =
@@ -1239,6 +1250,19 @@ let body_has_slides html_body =
   in
   scan 0
 
+(* A page carries the in-browser VM terminal iff the body has a
+   [:::vm-terminal] div (class emitted by Divs.preprocess). *)
+let body_has_vm_terminal html_body =
+  let needle = "class=\"vm-terminal\"" in
+  let nlen = String.length needle in
+  let blen = String.length html_body in
+  let rec scan i =
+    if i + nlen > blen then false
+    else if String.sub html_body i nlen = needle then true
+    else scan (i + 1)
+  in
+  scan 0
+
 let render_body ~html_body ~(fm : Frontmatter.t) ~manifest =
   let has_slides = body_has_slides html_body in
   let buf = Buffer.create (String.length html_body + 2048) in
@@ -1261,7 +1285,8 @@ let render_body ~html_body ~(fm : Frontmatter.t) ~manifest =
 
 let render ~asset_root ~(fm : Frontmatter.t) ~html_body ?manifest () =
   let buf = Buffer.create (String.length html_body + 4096) in
-  Buffer.add_string buf (head ~asset_root ~fm);
+  Buffer.add_string buf
+    (head ~asset_root ~fm ~vm_terminal:(body_has_vm_terminal html_body));
   Buffer.add_char buf '\n';
   Buffer.add_string buf (render_body ~html_body ~fm ~manifest);
   Buffer.add_string buf (runtime_script ~asset_root);

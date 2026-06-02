@@ -172,6 +172,58 @@ let divs_no_match () =
     (try ignore (Str.search_forward (Str.regexp_string "plain prose") out 0); true
      with Not_found -> false)
 
+(* ---- :::vm-terminal ------------------------------------------------ *)
+
+let divs_vm_terminal_basic () =
+  let out = Divs.preprocess ":::vm-terminal\nplaceholder prose\n:::\n" in
+  check_bool "vm-terminal div opens" true
+    (try ignore (Str.search_forward (Str.regexp_string "<div class=\"vm-terminal\">") out 0); true
+     with Not_found -> false);
+  check_bool "no data-dir without an argument" true
+    (try ignore (Str.search_forward (Str.regexp_string "data-dir") out 0); false
+     with Not_found -> true)
+
+let divs_vm_terminal_dir () =
+  let out = Divs.preprocess ":::vm-terminal dir=/root/morse\n:::\n" in
+  check_bool "data-dir carries the start directory" true
+    (try
+       ignore
+         (Str.search_forward
+            (Str.regexp_string "<div class=\"vm-terminal\" data-dir=\"/root/morse\">")
+            out 0);
+       true
+     with Not_found -> false)
+
+let divs_vm_terminal_malformed () =
+  (* Not absolute, shell-unsafe characters, unknown argument: each
+     falls through and leaves the line literal, like :::col. *)
+  let cases = [ "dir=morse"; "dir=/root/morse; rm"; "wat" ] in
+  List.iter
+    (fun spec ->
+      let src = Printf.sprintf ":::vm-terminal %s\nhi\n:::\n" spec in
+      let out = Divs.preprocess src in
+      let opened =
+        try
+          ignore
+            (Str.search_forward (Str.regexp_string "<div class=\"vm-terminal\"") out 0);
+          true
+        with Not_found -> false
+      in
+      Alcotest.(check bool)
+        (Printf.sprintf "malformed `%s` does not open a vm-terminal" spec)
+        false opened)
+    cases
+
+let divs_vm_terminal_max_one () =
+  let src = ":::vm-terminal\na\n:::\n\n:::vm-terminal\nb\n:::\n" in
+  let failed =
+    try
+      ignore (Divs.preprocess src);
+      false
+    with Failure _ -> true
+  in
+  check_bool "second vm-terminal per file fails the build" true failed
+
 (* ---- OCaml fence -> <x-ocaml> -------------------------------------- *)
 
 let parse_ocaml_block () =
@@ -340,6 +392,10 @@ let () =
           Alcotest.test_case "col no width" `Quick divs_col_no_width;
           Alcotest.test_case "col malformed/out-of-range" `Quick divs_col_malformed;
           Alcotest.test_case "no match" `Quick divs_no_match;
+          Alcotest.test_case "vm-terminal basic" `Quick divs_vm_terminal_basic;
+          Alcotest.test_case "vm-terminal dir arg" `Quick divs_vm_terminal_dir;
+          Alcotest.test_case "vm-terminal malformed" `Quick divs_vm_terminal_malformed;
+          Alcotest.test_case "vm-terminal max one" `Quick divs_vm_terminal_max_one;
         ] );
       ( "parse",
         [

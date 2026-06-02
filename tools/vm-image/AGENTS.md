@@ -58,6 +58,13 @@ integration work: `PHASE2.md`.
   `.cmt`/`.cmti` (49 MB). The static `/etc/profile.d/opam.sh` is
   captured BEFORE the repo is deleted; `eval $(opam env)` would
   not survive the trim.
+- **State restore requires identical memory geometry**: the
+  `memory_size` and `vga_memory_size` passed to V86 must exactly
+  match the values make-state.mjs used when saving the snapshot
+  (currently 512 MB / 8 MB); a mismatch fails with
+  "RangeError: offset is out of bounds" inside set_state. The
+  course-side component (assets/vm/vm-terminal.js) hardcodes the
+  same values; change them in lockstep.
 - **A restored snapshot emits no serial output on its own**: the
   prompt was printed before the state was saved. Anything waiting
   on serial must first send `"\n"` to elicit a fresh prompt

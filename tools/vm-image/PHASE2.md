@@ -6,6 +6,17 @@ brief for what remains. Delete it when the work ships. Work top
 to bottom; each step is independently verifiable. Read `AGENTS.md`
 first.
 
+STATUS 2026-06-02: steps 1, 2, 3, 4, 6, 7 are DONE (component at
+assets/vm/vm-terminal.js; :::vm-terminal div in nptel-build with
+unit+integration tests; playground.html + index links;
+fplaunchpad/ocaml-browser-vm live with v1 and README; playwright
+VM check wired as run-tests.sh stage 6/6). Step 5's M09 embeds are
+ON HOLD: KC is editing M09 concurrently; do not touch M09 files
+until he gives the all-clear. One design correction along the way:
+the embed does NOT get a smaller RAM size; the snapshot's memory
+geometry (512 MB / 8 MB VGA) must be matched exactly by the
+component or state restore fails (see AGENTS.md gotcha).
+
 1. **Embeddable terminal component (KC decision: build "both",
    component + standalone page).** A single self-contained JS
    component (`assets/vm/vm-terminal.js` + css) that renders a

@@ -91,6 +91,17 @@ let fragment_present () =
   check_bool "fragment div present" true
     (contains (Lazy.force html) "<div class=\"fragment\">")
 
+(* ---- VM terminal ---- *)
+
+let vm_terminal_div () =
+  check_bool "vm-terminal div with start dir" true
+    (contains (Lazy.force html)
+       "<div class=\"vm-terminal\" data-dir=\"/root/morse\">")
+
+let vm_terminal_script () =
+  check_bool "vm-terminal.js injected with cache-buster" true
+    (contains (Lazy.force html) "/assets/vm/vm-terminal.js?v=")
+
 (* ---- Mode toggle / runtime wiring ---- *)
 
 let mode_toggle_button () =
@@ -177,5 +188,10 @@ let () =
           Alcotest.test_case "cell controls" `Quick cell_controls;
           Alcotest.test_case "root-relative asset paths" `Quick asset_paths_root_relative;
           Alcotest.test_case "reveal wrapper" `Quick reveal_wrapper;
+        ] );
+      ( "vm terminal",
+        [
+          Alcotest.test_case "vm-terminal div" `Quick vm_terminal_div;
+          Alcotest.test_case "vm-terminal script" `Quick vm_terminal_script;
         ] );
     ]

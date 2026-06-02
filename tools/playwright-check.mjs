@@ -33,6 +33,12 @@ async function main() {
   const cellCount = await page.evaluate(() => document.querySelectorAll('x-ocaml').length);
   console.log('cells upgraded:', cellCount);
 
+  // The vm-terminal placeholder must render without booting anything
+  // (click-to-boot: zero VM downloads until the button is pressed).
+  const vmPlaceholder = await page.evaluate(() =>
+    !!document.querySelector('.vm-terminal button.vm-start'));
+  console.log('vm-terminal placeholder rendered:', vmPlaceholder);
+
   // --- chapter mode: chapter content should be visible ---
   const chapterVisible = await page.evaluate(() =>
     document.body.classList.contains('mode-chapter')

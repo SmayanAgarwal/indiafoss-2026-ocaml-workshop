@@ -88,3 +88,9 @@ let () =
   print_endline "all tests passed"
 ```
 :::
+
+The in-browser VM terminal (click-to-boot; downloads nothing until
+started):
+
+:::vm-terminal dir=/root/morse
+:::

@@ -97,7 +97,10 @@ emit_index() {
   <article class="landing">
     <h1>Functional Programming with OCaml</h1>
     <p>A 12-week NPTEL course. Pick a lecture below, or start at
-    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.</p>
+    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.
+    There is also an <a href="playground.html">in-browser dune
+    playground</a>: a real Linux shell with the OCaml toolchain,
+    running entirely in your browser.</p>
 HEAD
 
     # Walk modules in order, then lectures in order. modules.txt
@@ -132,6 +135,8 @@ HEAD
 
     cat <<FOOT
     <p style="margin-top: 3rem; font-size: 0.88rem; color: var(--muted);">
+      <a href="playground.html">Dune playground</a>
+      &nbsp;&middot;&nbsp;
       <a href="privacy.html">Privacy &amp; data collection</a>
       &nbsp;&middot;&nbsp;
       <a href="dashboard.html">Quiz analytics dashboard</a>
@@ -931,3 +936,71 @@ DASHBOARD
   printf 'built _site/dashboard.html\n'
 }
 emit_dashboard
+
+# Standalone playground page: the in-browser dune VM terminal with a
+# command cheat-sheet. The terminal component is click-to-boot, so
+# this page costs nothing to visitors who don't press Start. The VM
+# data (boot snapshot + lazy chunk store) is served from the
+# fplaunchpad/ocaml-browser-vm repo's GitHub Pages; this page only
+# ships the small engine assets under assets/vm/.
+emit_playground() {
+  local out="$REPO_ROOT/_site/playground.html"
+  local vm_v
+  vm_v=$(cksum "$REPO_ROOT/assets/vm/vm-terminal.js" | cut -d' ' -f1)
+  cat > "$out" <<PLAYGROUND
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dune playground — Functional Programming with OCaml</title>
+  <link rel="stylesheet" href="${ASSET_ROOT}/assets/css/chapter.css">
+  <script defer src="${ASSET_ROOT}/assets/vm/vm-terminal.js?v=${vm_v}"></script>
+  <style>
+    .playground { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    .playground h1 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 1.6rem; }
+    .playground table { border-collapse: collapse; font-size: 0.92rem; }
+    .playground td, .playground th { border: 1px solid var(--rule); padding: 0.3rem 0.7rem; text-align: left; }
+    .playground code { font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body class="mode-chapter">
+  <article class="playground">
+    <h1>The dune playground</h1>
+    <p><a href="index.html">&larr; back to the course</a></p>
+    <p>The lectures run OCaml snippets in a toplevel, one expression
+    at a time. Real projects are built with <strong>dune</strong>,
+    OCaml's build system: source files in a project tree, a build
+    command, a test runner. This page gives you that experience
+    without installing anything: pressing <em>Start</em> boots a
+    tiny Linux machine inside your browser tab with OCaml 5.4,
+    dune, and the bisect_ppx coverage tool preinstalled. It is a
+    real shell: everything you type runs locally in your browser,
+    and your work disappears when you close the page.</p>
+
+    <div class="vm-terminal"></div>
+
+    <h2>Things to try</h2>
+    <p>Three sample projects live in the home directory:
+    <code>hello</code>, <code>morse</code>, and <code>bowling</code>.</p>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>cd hello &amp;&amp; dune build</code></td><td>build your first project</td></tr>
+      <tr><td><code>dune exec ./hello.exe</code></td><td>run the executable</td></tr>
+      <tr><td><code>cd ~/morse &amp;&amp; dune runtest</code></td><td>build a library and run its tests</td></tr>
+      <tr><td><code>nano lib/morse.ml</code></td><td>edit code (Ctrl-O save, Ctrl-X exit), then rebuild</td></tr>
+      <tr><td><code>cd ~/bowling &amp;&amp; dune runtest --instrument-with bisect_ppx</code></td><td>run tests with coverage instrumentation (the first instrumented build takes a minute or two)</td></tr>
+      <tr><td><code>bisect-ppx-report summary</code></td><td>how much did the tests cover?</td></tr>
+    </table>
+
+    <p style="margin-top: 2rem; font-size: 0.88rem; color: var(--muted);">
+    The first build fetches compiler files on demand, so it is
+    slower than the ones after it. No code or telemetry leaves
+    your browser from this page.</p>
+  </article>
+</body>
+</html>
+PLAYGROUND
+  printf 'built _site/playground.html\n'
+}
+emit_playground

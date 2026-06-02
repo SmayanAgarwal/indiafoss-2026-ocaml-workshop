@@ -54,6 +54,11 @@ type kind =
   | Quiz_code of string * int
   | Cols
   | Col of int option  (* width as integer percent, e.g. Some 60; None = flex equally *)
+  | Vm_terminal of string option
+      (* in-browser Linux VM terminal; the payload is an optional
+         start directory inside the VM (e.g. Some "/root/morse").
+         At most one per lecture: each instance holds the guest RAM
+         buffer, so the build fails loudly on a second one. *)
 
 (* Sanitise an author-supplied id to a slug shape that survives in
    URL fragments. Lowercase, [a-z0-9-] only, collapse repeats,
@@ -128,6 +133,30 @@ let parse_col_width tail =
       | Some w when w >= 1 && w <= 99 -> Some (Some w)
       | _ -> None
 
+(* Parse the tail of a [:::vm-terminal ...] open. Accepts:
+     ""                  -> Some None              (boot into the home dir)
+     "dir=/root/morse"   -> Some (Some "/root/morse")
+   The directory must be an absolute path made of safe characters;
+   anything else yields None, so the caller falls through and the
+   line stays as plain text, like any unrecognised [:::foo]. *)
+let parse_vm_dir tail =
+  let t = String.trim tail in
+  if t = "" then Some None
+  else
+    let prefix = "dir=" in
+    let plen = String.length prefix in
+    if String.length t <= plen || String.sub t 0 plen <> prefix then None
+    else
+      let dir = String.sub t plen (String.length t - plen) |> String.trim in
+      let safe_char c =
+        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+        || (c >= '0' && c <= '9') || c = '/' || c = '_' || c = '-' || c = '.'
+      in
+      if String.length dir >= 2 && dir.[0] = '/'
+         && String.for_all safe_char dir
+      then Some (Some dir)
+      else None
+
 (* Quiz state is threaded through preprocess as a mutable counter
    used only for positional fallback ids. [line_no] is 1-based and
    refers to the input line of the opening [:::] marker; we stamp
@@ -153,6 +182,14 @@ let parse_open ~quiz_counter ~line_no line =
       let tail = String.sub rest 4 (String.length rest - 4) in
       (match parse_col_width tail with
        | Some w -> Some (Col w)
+       | None -> None)
+    | _ when rest = "vm-terminal" -> Some (Vm_terminal None)
+    | _ when String.length rest >= 12
+             && String.sub rest 0 12 = "vm-terminal "
+             ->
+      let tail = String.sub rest 12 (String.length rest - 12) in
+      (match parse_vm_dir tail with
+       | Some d -> Some (Vm_terminal d)
        | None -> None)
     | _ ->
       (match parse_quiz_kind rest with
@@ -189,6 +226,9 @@ let open_tag = function
   | Cols -> "<div class=\"cols\">"
   | Col None -> "<div class=\"col\">"
   | Col (Some w) -> Printf.sprintf "<div class=\"col\" style=\"flex: 0 0 %d%%;\">" w
+  | Vm_terminal None -> "<div class=\"vm-terminal\">"
+  | Vm_terminal (Some dir) ->
+      Printf.sprintf "<div class=\"vm-terminal\" data-dir=\"%s\">" dir
 
 let close_tag = function
   | Slide | Subslide -> "</section>"
@@ -197,6 +237,7 @@ let close_tag = function
   | Solution -> "</details>"
   | Quiz_mcq _ | Quiz_code _ -> "</div>"
   | Cols | Col _ -> "</div>"
+  | Vm_terminal _ -> "</div>"
 
 (* Inside [:::quiz code], the FIRST ocaml fence is the student cell
    and any subsequent ones are test cells (hidden assertion code).
@@ -242,6 +283,7 @@ let preprocess ?(line_offset = 0) src =
   let buf = Buffer.create (String.length src) in
   let stack = ref [] in
   let quiz_counter = ref 0 in
+  let vm_terminal_count = ref 0 in
   (* Track, per active Quiz_code on the stack, how many ocaml fences
      have appeared inside it so we know which is the student cell vs
      the test cell(s). Map: a counter for the topmost Quiz_code. *)
@@ -265,6 +307,14 @@ let preprocess ?(line_offset = 0) src =
           stack := k :: !stack;
           (match k with
            | Quiz_code _ -> quiz_code_fence_count := 0
+           | Vm_terminal _ ->
+               incr vm_terminal_count;
+               if !vm_terminal_count > 1 then
+                 failwith
+                   (Printf.sprintf
+                      "line %d: at most one :::vm-terminal per lecture \
+                       (each VM instance holds the guest RAM buffer)"
+                      line_no)
            | _ -> ());
           Buffer.add_string buf "\n";
           Buffer.add_string buf (open_tag k);

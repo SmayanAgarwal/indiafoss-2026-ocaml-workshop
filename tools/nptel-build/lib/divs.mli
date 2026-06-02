@@ -3,7 +3,11 @@
     Transforms [:::name ... :::] blocks into raw HTML wrappers so that
     cmarkit parses surrounding markdown normally inside them. Supported
     names: [slide], [subslide], [fragment], [notes], [quiz mcq],
-    [quiz code]. *)
+    [quiz code], [cols], [col], [vm-terminal].
+
+    [:::vm-terminal] (optionally [:::vm-terminal dir=/root/morse])
+    marks the spot for the in-browser Linux VM terminal; at most one
+    per lecture, enforced with a failure. *)
 
 (** [preprocess ?line_offset src] returns [src] with every fenced div
     rewritten as raw HTML. Quiz blocks additionally carry a
