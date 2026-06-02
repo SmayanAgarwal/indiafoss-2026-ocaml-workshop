@@ -50,14 +50,22 @@ first.
    - Do NOT commit: `ocaml-state.bin.zst` (~9 MB),
      `ocaml-fs.json` (~190 KB), `ocaml-rootfs-flat/` (~153 MB,
      thousands of small files). Host these in a separate
-     dedicated repo under the `fplaunchpad` org (e.g.
-     `fplaunchpad/ocaml-vm-image`) served via its own GitHub
-     Pages, and point the playground page at that base URL.
-     Every file is well under GitHub's 100 MB limit and v86
-     fetches chunks whole (no Range requests needed). CORS:
-     GitHub Pages sends `access-control-allow-origin: *`, so
-     cross-repo fetches are fine.
-   - Check with KC before creating any new repo.
+     dedicated repo, `fplaunchpad/ocaml-browser-vm` (name chosen
+     by KC), served via its own GitHub Pages, and point the
+     playground page at that base URL. Use a versioned directory
+     per image build (`v1/`, `v2/`, ...) holding the chunk store,
+     state, and fs.json together: they must always come from the
+     same rootfs build; the course-side component pins one
+     directory, so the two repos never need synchronized deploys
+     and rollback is trivial. Every file is well under GitHub's
+     100 MB limit and v86 fetches chunks whole (no Range requests
+     needed). CORS: GitHub Pages sends
+     `access-control-allow-origin: *`, so cross-repo fetches are
+     fine. Suggested repo description: "Bootable Linux VM image
+     (OCaml 5.4 + dune + bisect_ppx) served as lazy chunks to the
+     in-browser v86 emulator for the NPTEL OCaml course."
+   - KC has approved creating this one repo; any OTHER new repo
+     still needs his sign-off.
 4. **Sample projects (needs KC sign-off).** `hello/` is fine.
    `roman/` was a prototype placeholder: before going
    student-facing, check it against the course's fresh-code and
@@ -84,8 +92,8 @@ first.
    CI machines are slower than KC's laptop. Also verify
    `bash tools/run-tests.sh` stays green end-to-end: the
    playground must not disturb lecture builds or mdx tests.
-7. **VM-data repo documentation.** Whatever repo hosts the chunk
-   store gets a short README: rebuild commands (point at
-   tools/vm-image in the course repo), the Docker requirement,
-   and the pinned versions; record the resulting OCaml/dune
-   versions on every rebuild.
+7. **VM-data repo documentation.** `fplaunchpad/ocaml-browser-vm`
+   gets a short README: rebuild commands (point at tools/vm-image
+   in the course repo), the Docker requirement, and the pinned
+   versions; record the resulting OCaml/dune versions and the
+   versioned directory name on every rebuild.
