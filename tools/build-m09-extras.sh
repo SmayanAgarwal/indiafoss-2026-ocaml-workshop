@@ -80,12 +80,18 @@ $JSOO --toplevel --toplevel-extend --export="$workdir/units.txt" \
 #    extras load dies partway (TypeError) and OUnit2 never
 #    registers. Any hostname string will do.
 shim='// Prepended by tools/build-m09-extras.sh: the vanilla worker
-// runtime lacks caml_unix_gethostname, which OUnitUtils calls at
-// module init.
+// runtime lacks a few Unix primitives that ounit2 calls:
+// gethostname at module init (OUnitUtils), environment when
+// run_test_tt_main starts (OUnitConf). Stub both so OUnit2 loads
+// and its runner works in the browser toplevel.
 (function (g) {
   var r = g.jsoo_runtime;
-  if (r && !r.caml_unix_gethostname) {
+  if (!r) return;
+  if (!r.caml_unix_gethostname) {
     r.caml_unix_gethostname = function () { return "browser"; };
+  }
+  if (!r.caml_unix_environment) {
+    r.caml_unix_environment = function () { return [0]; };
   }
 })(globalThis);'
 printf '%s\n' "$shim" | cat - "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
