@@ -78,7 +78,10 @@ idea: the [QCheck](https://github.com/c-cube/qcheck) library.
 
 ## The limit of hand-written tests
 
-Let us sharpen the problem. We have a function:
+Let us sharpen the problem. We have a function you have written
+at least twice in this course, recursively in the functions
+module and via `fold` in the higher-order module; here it
+returns as a *test subject*:
 
 ```ocaml
 let rec rev = function
