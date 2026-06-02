@@ -66,23 +66,24 @@ first.
      in-browser v86 emulator for the NPTEL OCaml course."
    - KC has approved creating this one repo; any OTHER new repo
      still needs his sign-off.
-4. **Sample projects (needs KC sign-off).** `hello/` is fine.
-   `roman/` was a prototype placeholder: before going
-   student-facing, check it against the course's fresh-code and
-   domain-overlap conventions (no project that re-derives code a
-   lecture already walks through; no domain another lecture's
-   tutorial already uses). Propose 2-3 candidate projects to KC
-   and let him pick. bisect_ppx is baked into the image (the
-   roman sample's library stanza carries
-   `(instrumentation (backend bisect_ppx))`; build with
+4. **Sample projects: DONE (KC chose).** The image ships
+   `hello/`, `morse/`, and `bowling/`; domains verified fresh
+   against the lectures (RLE, dates, triangles, and matrix were
+   ruled out as already used; the earlier `roman/` placeholder
+   was dropped by KC). Both libraries carry
+   `(instrumentation (backend bisect_ppx))`; the demo flow is
    `dune build --instrument-with bisect_ppx`, then
-   `bisect-ppx-report summary`). Further opam libraries only if
-   KC asks.
-5. **Index + lecture links.** Add the playground to `index.html`
-   (emit_index in build-site.sh). Linking from specific lectures
-   is KC's call; ask, do not guess. Per course convention, link
-   text must be descriptive ("the in-browser dune playground"),
-   never "the M09 page".
+   `bisect-ppx-report summary`. Further opam libraries or new
+   projects only with KC's sign-off.
+5. **Index + lecture embeds (KC decided: module 9).** Add the
+   playground to `index.html` (emit_index in build-site.sh). The
+   `:::vm-terminal` embeds go in the M09 (testing) lectures:
+   pick the natural spots (e.g. where dune runtest and bisect_ppx
+   coverage are taught), at most one embed per lecture, and show
+   KC the diff before it lands. No embeds in other modules
+   without asking. Per course convention, link text must be
+   descriptive ("the in-browser dune playground"), never "the
+   M09 page".
 6. **Playwright end-to-end check.** Extend the playwright suite
    invoked by `tools/run-tests.sh`: load the playground page,
    wait for the serial prompt (match the suffix `:~# `, never an

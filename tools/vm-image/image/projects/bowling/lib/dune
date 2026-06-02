@@ -1,0 +1,4 @@
+(library
+ (name bowling)
+ (instrumentation
+  (backend bisect_ppx)))

@@ -52,8 +52,11 @@ subprocesses; browser WASI shims have none).
 ## Layout
 
 - `image/Dockerfile`: the VM filesystem (read its comments).
-- `image/projects/`: sample dune projects baked into `/root/`
-  (`hello/`, `roman/`; prototype placeholders, see PHASE2.md).
+- `image/projects/`: sample dune projects baked into `/root/`,
+  chosen by KC against the course's fresh-code and domain-overlap
+  conventions: `hello/` (30-second first build), `morse/`
+  (encoder/decoder, two modules, round-trip tests), `bowling/`
+  (ten-pin scorer, branchy; the coverage demo).
 - `image/build.sh`: Docker image -> rootfs tar -> fs.json +
   zstd chunk store.
 - `make-state.mjs`: headless boot, saves the resume snapshot.

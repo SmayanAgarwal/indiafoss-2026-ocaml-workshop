@@ -1,4 +1,4 @@
 (library
- (name roman)
+ (name morse)
  (instrumentation
   (backend bisect_ppx)))

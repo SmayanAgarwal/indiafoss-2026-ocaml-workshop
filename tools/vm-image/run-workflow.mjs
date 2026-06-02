@@ -30,7 +30,8 @@ const emulator = new V86({
 });
 
 const CMD = "cd /root/hello && dune build && dune exec ./hello.exe && " +
-    "cd /root/roman && dune build && dune runtest && " +
+    "cd /root/morse && dune build && dune runtest && " +
+    "cd /root/bowling && dune build && dune runtest && " +
     "time dune build --instrument-with bisect_ppx && " +
     "dune runtest --instrument-with bisect_ppx && " +
     "bisect-ppx-report summary && bisect-ppx-report html && ls _coverage\n";
