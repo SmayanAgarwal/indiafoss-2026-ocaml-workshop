@@ -294,25 +294,43 @@ of the interpreter.
 
 Let us extend the language with a less-than operator. The new
 constructor has the same shape as `Eq_int`: it takes two `int
-expr`s and produces a `bool expr`:
+expr`s and produces a `bool expr`. Only two lines are new (marked
+`new`); the rest repeats the running definitions so the cell is a
+complete program:
 
 :::slide
 
 ## Adding a comparison: `<`
 
-Add one constructor to `expr` and one case to `eval`. Both splice
-into the running definitions from earlier in this lecture, so we
-show only the lines that change (not a fresh standalone program):
+One new constructor in `expr`, one new case in `eval`:
 
-```text
-  | Less : int expr * int expr -> bool expr
+```ocaml
+type _ expr =
+  | Int_lit  : int -> int expr
+  | Bool_lit : bool -> bool expr
+  | Add      : int expr * int expr -> int expr
+  | Mul      : int expr * int expr -> int expr
+  | If       : bool expr * 'a expr * 'a expr -> 'a expr
+  | Eq_int   : int expr * int expr -> bool expr
+  | Less     : int expr * int expr -> bool expr     (* new *)
+
+let rec eval : type a. a expr -> a = function
+  | Int_lit  n  -> n
+  | Bool_lit b  -> b
+  | Add (a, b)  -> eval a + eval b
+  | Mul (a, b)  -> eval a * eval b
+  | Eq_int (a, b) -> eval a = eval b
+  | Less (a, b) -> eval a < eval b                  (* new *)
+  | If (c, t, e) -> if eval c then eval t else eval e
 ```
 
-```text
-  | Less (a, b) -> eval a < eval b
-```
+:::
 
-```text
+:::slide
+
+## Trying out `<`
+
+```ocaml
 let _ = eval (If (Less (Int_lit 3, Int_lit 5), Int_lit 1, Int_lit 0))
 (* = 1, since 3 < 5 *)
 ```
@@ -334,14 +352,14 @@ exhaustiveness check would not apply.
 
 The reverse direction: turn an expression back into a string. This
 is the pretty-printer for the whole language (`<` included), built
-on the running definitions, so it is shown as a listing. The return
-type is always `string`, regardless of the expression's type index:
+on the definitions from the previous slide. The return type is
+always `string`, regardless of the expression's type index:
 
 :::slide
 
 ## Adding a pretty printer
 
-```text
+```ocaml
 let rec pretty : type a. a expr -> string = function
   | Int_lit n -> string_of_int n
   | Bool_lit b -> string_of_bool b

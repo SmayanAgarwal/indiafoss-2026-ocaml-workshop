@@ -574,13 +574,14 @@ let () =
   check (unwrap (VBool false) = false) "VBool false";
   print_endline "all tests passed"
 ```
+
 :::
 
 :::solution
 
 Reference solution:
 
-```
+```text
 let unwrap : type a. a value -> a = function
   | VInt n -> n
   | VBool b -> b
