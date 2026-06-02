@@ -223,11 +223,18 @@ Five pieces:
 
 To run the test:
 
+```ocaml
+let _ = QCheck_runner.run_tests [test_rev_involutive]
+(* = 0 when the property holds on every generated input *)
+```
+
+That form works right here in the page's cells: the runner's
+report lands in the cell's output pane, and the call returns `0`
+when everything passed. In a `dune` project you would instead end
+the test file with the variant below, which additionally parses
+command-line flags and exits with the right status code:
+
 ```text
-(* QCheck_runner lives in the separate [qcheck] opam package and
-   is not bundled into the in-browser toplevel; this snippet is
-   for the dune-based project setup. In a cell, run a single
-   property with [QCheck.Test.check_exn test_rev_involutive]. *)
 let () =
   QCheck_runner.run_tests_main [test_rev_involutive]
 ```
@@ -259,13 +266,14 @@ let test_rev_involutive =
     QCheck.(list int)
     (fun xs -> rev (rev xs) = xs)
 
-let () = QCheck_runner.run_tests_main [test_rev_involutive]
+let _ = QCheck_runner.run_tests [test_rev_involutive]  (* = 0 *)
 ```
 
 - `QCheck.Test.make` constructs the test.
 - Generator: `QCheck.(list int)` produces random `int list`s.
 - Property: a function `'a -> bool`. Returns `true` if the input
   satisfies the law.
+- In a `dune` test file: `run_tests_main` (parses flags, exits).
 
 :::
 
