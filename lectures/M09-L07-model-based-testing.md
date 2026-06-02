@@ -1,6 +1,6 @@
 ---
 title: "Model-based testing of stateful data structures"
-lecture_no: 5
+lecture_no: 7
 week: 9
 duration_target_min: 25
 concepts: [model-based testing, stateful testing, reference implementation, command sequences, observable equivalence, hash table, PBT for state]
@@ -24,13 +24,13 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Model-based testing of stateful data structures</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 5</p>
+<p class="title-slide-label">Module 9 &middot; Lecture 7</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-[Lecture 3](M09-L03-property-based-testing.html) developed
+[Lecture 5](M09-L05-property-based-testing.html) developed
 property-based testing on *pure* functions: a list reversal, a
 sort, an expression evaluator. The properties were statements
 about a single function call: "for every input `xs`, `rev (rev
@@ -1074,7 +1074,7 @@ let run_real_q q c =
 
 ## Activity
 
-:::quiz mcq id=M09-L05-q1
+:::quiz mcq id=M09-L07-q1
 You are testing a custom red-black tree implementation using
 model-based PBT against an association-list reference. The
 default `command_gen` produces `Add k v`, `Remove k`, and
@@ -1109,7 +1109,7 @@ space so that random commands frequently target existing keys
 and exercise the algorithm's interesting branches.
 :::
 
-:::quiz mcq id=M09-L05-q2
+:::quiz mcq id=M09-L07-q2
 In the hash-table example, the property compares observations
 step-by-step:
 
@@ -1140,7 +1140,7 @@ shrinking, this gives you the smallest possible bug reproducer:
 4-command sequence ending in this `Find`."
 :::
 
-:::quiz code id=M09-L05-q3
+:::quiz code id=M09-L07-q3
 Write a `command` variant type for a *stack* with three
 operations: `push : int -> unit`, `pop : unit -> int option`,
 and `top : unit -> int option`. (Each operation takes only the

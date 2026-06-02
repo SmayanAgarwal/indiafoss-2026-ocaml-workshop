@@ -41,7 +41,7 @@ ALLOWLIST = {
     # `command_to_string` for a stack -- different ADT, same
     # model-based-testing pattern. Natural extension per
     # feedback-activity-fresh-code.
-    ("M09-L05-model-based-testing.md", "command_to_string"),
+    ("M09-L07-model-based-testing.md", "command_to_string"),
 }
 
 LET_RE = re.compile(r"^\s*let(?:\s+rec)?\s+([a-zA-Z_][a-zA-Z_0-9']*)\s*")

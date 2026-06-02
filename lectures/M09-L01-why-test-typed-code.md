@@ -1,10 +1,10 @@
 ---
-title: "Why test a type-safe (and concurrent) program?"
+title: "Why test a type-safe program?"
 lecture_no: 1
 week: 9
 duration_target_min: 25
-concepts: [testing, type safety, behaviour, validation, complementary roles of types and tests, concurrency-test challenges]
-keywords: [OCaml, testing, type safety, behaviour, unit testing, property-based testing, validation, concurrency, scheduling, race conditions]
+concepts: [testing, type safety, behaviour, validation, complementary roles of types and tests, faults and failures]
+keywords: [OCaml, testing, type safety, behaviour, unit testing, property-based testing, validation, faults, failures, debugging]
 activity_question: "Here is a well-typed OCaml function: [let sort xs = xs]. Its declared type is ['a list -> 'a list]. The compiler is happy. Is the program correct?"
 think_about_this: "If types eliminate whole classes of bugs by construction, why are there still bugs in well-typed programs? What kind of bug is the type checker structurally unable to see?"
 reading:
@@ -14,14 +14,14 @@ reading:
     url: https://dev.realworldocaml.org/testing.html
 ---
 
-# Why test a type-safe (and concurrent) program?
+# Why test a type-safe program?
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Why test a type-safe (and concurrent) program?</h2>
+<h2 class="title-slide-lecture">Why test a type-safe program?</h2>
 <p class="title-slide-label">Module 9 &middot; Lecture 1</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
@@ -244,15 +244,40 @@ type system has no vocabulary for.
 This complementarity is not new. Cornell CS3110's textbook makes
 the same point in its chapter on testing and debugging: "*Validation
 is the process of building our confidence in correct program
-behavior.*" Validation includes social methods (code review),
-formal methods (proofs), and testing; types sit naturally with
-the formal side, but the boundary is thin. Real World OCaml's
-testing chapter goes further: it argues that types *raise* the
-value of testing, because the snap-together quality of strongly
-typed code means a relatively small number of tests can exercise
-a large surface. The two are not in tension; if anything, they
-complement each other more strongly than tests-versus-types in a
-dynamic language.
+behavior.*" Validation is broader than testing. It includes
+*social* methods: a code review, where a colleague reads your
+change and asks why line 40 is safe; pair programming, where a
+second pair of eyes watches the code appear. (Industrial studies
+have repeatedly found code inspection to be embarrassingly
+effective at finding faults, often more so than the test suite.)
+It includes *formal* methods: mathematical proof that the code
+meets a specification, which we discuss below. And it includes
+*testing*: actually running the program on chosen inputs and
+checking what comes out. Types sit naturally with the formal
+side, but the boundary is thin.
+
+Real World OCaml's testing chapter adds a point worth keeping:
+types *raise* the value of testing, because the snap-together
+quality of strongly typed code means a relatively small number
+of tests can exercise a large surface. The two are not in
+tension; if anything, they complement each other more strongly
+than tests-versus-types in a dynamic language.
+
+:::slide
+
+## Three roads to confidence
+
+- **Social**: code review, pair programming, walkthroughs.
+  - Inspection finds faults tests miss; a human asks "why is
+    this safe?"
+- **Formal**: proofs that code meets a spec; types are the
+  everyday, automated end of this road.
+- **Testing**: run the program on chosen inputs, check the
+  output.
+  - Cheapest evidence per unit of effort; the focus of this
+    module.
+
+:::
 
 So the question for the rest of this module is not *whether* to
 test, but *how*.
@@ -261,25 +286,30 @@ test, but *how*.
 
 In practice, two styles of automated test cover most of what you
 need to do on a small to medium OCaml codebase, with a third
-narrower style filling a gap.
+narrower style filling a gap. Before any of them can do useful
+work, though, two questions have to be answered that no tool
+answers for you: what counts as *correct* (that is the job of a
+*specification*, the subject of the next lecture), and *which*
+inputs are worth trying (the subject of the lecture after that).
+The tools then mechanize what the answers tell you to check.
 
 :::slide
 
 ## Two kinds of test, plus a side door
 
-1. **Unit tests** (L02): "for this specific input, the output is
+1. **Unit tests** (L4): "for this specific input, the output is
    this specific value." Hand-written examples.
-2. **Property-based tests** (L03, L04): "for *any* input drawn
+2. **Property-based tests** (L5, L6): "for *any* input drawn
    from this generator, this property holds." Random exploration,
    plus custom generators and stateful command sequences.
-3. **Model-based tests** (L05): stateful PBT against a simple
+3. **Model-based tests** (L7): stateful PBT against a simple
    reference implementation.
-4. **Expect tests** (mentioned in L02): "the output, captured
+4. **Expect tests** (mentioned in L4): "the output, captured
    verbatim, is this string." Useful for exploratory and
    end-to-end cases.
 
-Then in L06-L07 we add the concurrency vocabulary, and L08
-brings everything together.
+- Before any tool: *what* counts as correct (specifications, L2)
+  - and *which* inputs are worth trying (test design, L3).
 
 :::
 
@@ -289,7 +319,7 @@ write down the expected output. `sort [3; 1; 2]` should equal `[1;
 `[42]`. Run the function on each, compare the output, report
 mismatches. The OCaml library for this in CS3110's tradition is
 [OUnit2](https://github.com/gildor478/ounit); we cover it in
-[Lecture 2](M09-L02-unit-testing.html). Other libraries
+[Lecture 4](M09-L04-unit-testing.html). Other libraries
 ([Alcotest](https://github.com/mirage/alcotest), the inline
 testing in Real World OCaml's chapter) take the same shape with
 different cosmetics; the conceptual content is the same.
@@ -301,7 +331,7 @@ a way to generate random inputs of the right shape. The library
 runs the property on a few hundred inputs and reports any input
 for which the property failed. The library we'll use is
 [QCheck](https://github.com/c-cube/qcheck), which is the OCaml
-descendant of Haskell's QuickCheck. Lecture 3 makes the case for
+descendant of Haskell's QuickCheck. Lecture 5 makes the case for
 why PBT is *particularly* natural in OCaml: pure functions and
 equational reasoning give you a clean way to state properties.
 
@@ -386,12 +416,27 @@ that for the inputs we tried, no fault produced a visible failure.
 Choosing inputs cleverly enough that the existing faults *do*
 fail is part of the craft.
 
+When a test does turn a fault into a failure, the remaining work
+is *debugging*: tracing the visible failure back to the fault
+that caused it. CS3110's advice here is to behave like a
+scientist. Look at the evidence (the failing input, the wrong
+output); form a hypothesis about what the code must be doing to
+produce it; design the *smallest* experiment that would confirm
+or refute the hypothesis (usually: a smaller input that still
+fails); and repeat until the fault is cornered. The single most
+useful debugging move is *shrinking the failing input*: a bug
+report that says `sort [2; 1] = [2; 1]` points at the fault far
+better than one that says a 10,000-element list came back
+wrong. Hold that thought; when we reach property-based testing
+you will see the library perform exactly this shrinking step,
+automatically.
+
 CS3110's chapter goes on to distinguish *black-box* testing
 (write tests against the specification, ignoring the
 implementation) and *glass-box* testing (write tests that exercise
-every branch of the implementation). Both have a place. We will
-treat them more concretely in [Lecture 2](M09-L02-unit-testing.html).
-For now, the vocabulary is enough.
+every branch of the implementation). Both have a place. They get
+a [whole lecture of their own](M09-L03-test-design.html) in this
+module. For now, the vocabulary is enough.
 
 :::slide
 
@@ -404,6 +449,19 @@ For now, the vocabulary is enough.
 - Tests turn faults into failures, so we can find them.
 - A green test suite means "we didn't trigger any fault on the
   inputs we tried", not "there are no faults".
+
+:::
+
+:::slide
+
+## From failure to fault: debug like a scientist
+
+- Evidence: the failing input and the wrong output.
+- Hypothesis: what must the code be doing to produce this?
+- Experiment: the *smallest* input that still fails.
+  - `sort [2; 1] = [2; 1]` beats a wrong 10,000-element list.
+- Refine and repeat until the fault is cornered.
+- Property-based testing automates the shrinking step.
 
 :::
 
@@ -611,145 +669,81 @@ intended behaviour, not just against past bugs.
 
 **Pitfall 4: equating "all tests pass" with "no bugs."** The
 test suite tells you the cases you tried did not fail. It does
-not tell you the cases you did not try are fine. PBT (Lecture 3)
-and code coverage tools (`bisect_ppx`, mentioned briefly in
-[Lecture 2](M09-L02-unit-testing.html#what-ounit2-does-not-do))
+not tell you the cases you did not try are fine. Systematic
+[test-case design](M09-L03-test-design.html), PBT (Lecture 5),
+and code coverage tools (`bisect_ppx`, covered with test design)
 help close that gap, but never fully.
-
-## Concurrency adds a new failure mode
-
-So far the bugs we have discussed (the `sort` that does not
-sort, the swapped arguments) all show up *deterministically*:
-the input fixes the output, and the test runs the same way every
-time. As soon as a program has more than one thread of control
-(an async I/O loop, a UI event handler, a server taking
-concurrent requests), a new family of bugs appears: bugs whose
-manifestation depends on the *interleaving* of the threads, not
-just on the input.
-
-A *race condition* is the canonical example. Two threads read
-and write a shared counter. The hardware may interleave their
-operations in dozens of different orders. Some interleavings
-produce the right count; some lose an increment. The function
-"is correct" most of the time and "is wrong" on the schedules
-the test happened not to exercise. Repeating the test does not
-help; the next run picks a different (or the same) interleaving.
-
-The remedy is *not* "more tests of the same kind." It is
-*controlling the scheduler*: choose interleavings deliberately,
-exhaustively, reproducibly. The second half of this module
-introduces the OCaml 5 tool that makes that control natural,
-*effect handlers*, and uses them to build a tiny concurrency
-library whose schedule we can pin down inside a unit test.
-
-:::slide
-
-## Concurrency adds a new failure mode
-
-- Sequential bugs: same input, same output, every run.
-- Concurrent bugs depend on *interleaving*, not just input.
-- A race condition can be "right" on 99 schedules and "wrong"
-  on the 100th.
-- Repeating the test does not catch it; controlling the
-  *scheduler* does.
-- L6-L7: effect handlers + fibers, with a deterministic
-  scheduler we can test against.
-
-:::
-
-The lesson generalises beyond races. *Any* time the runtime
-makes a non-deterministic choice (which thread runs next, which
-timer fires first, in what order I/O completions are delivered),
-sequential testing techniques degrade: a passing test no longer
-means "the code is right on this input"; it means "the code was
-right on this input *under this particular schedule*." Closing
-that gap is what L06's effect handlers and L07's deterministic
-scheduler will buy us.
-
-:::slide
-
-## Reproducibility, the harder challenge
-
-- Each scheduler decision is a hidden input to the test.
-- Two failure modes of concurrent test suites:
-  1. **Flaky tests**: passes today, fails tomorrow on a new
-     interleaving.
-  2. **Heisenbug**: only fails when you are NOT looking
-     (under a debugger, the timing changes).
-- Effect-handler schedulers let us *pin the schedule*: same
-  inputs + same scheduler = same outcome, every run.
-- That makes a failing concurrent test *debuggable*, not just
-  observable.
-
-:::
 
 ## What's next
 
-This module has eight lectures in two halves. Five on testing,
-two on concurrency, one tutorial that brings them together.
+This module has eight lectures: this one, two on deciding what
+and how to test, four on the tools that mechanize those
+decisions, and one tutorial that brings everything together on a
+single worked example.
 
-[Module 9 Lecture 2](M09-L02-unit-testing.html) gives you a
-concrete unit-testing tool: OUnit2. We will write tests for a
-small `Stack` module, integrate it into `dune`, and watch the
-test runner report a pass and a failure. That is the floor of
+[Lecture 2](M09-L02-specifications-invariants.html) is about
+*specifications*: the contract a function makes with its caller
+(what it requires, what it returns, what it raises), and, for
+data abstractions, the invariants an implementation must
+maintain. A test checks code against a spec; without the spec
+there is nothing to check.
+
+[Lecture 3](M09-L03-test-design.html) is about *choosing test
+cases*: black-box testing (boundaries and partitions of the
+input space, read off the specification) and glass-box testing
+(covering the paths through the implementation), plus the
+coverage tooling that measures how much of the code your suite
+actually exercises.
+
+[Lecture 4](M09-L04-unit-testing.html) gives you a concrete
+unit-testing tool: OUnit2. We will write tests for a small
+`Stack` module, integrate it into `dune`, and watch the test
+runner report a pass and a failure. That is the floor of
 practical testing; you should be able to use it on every piece
 of code you write from now on.
 
-[Lecture 3](M09-L03-property-based-testing.html) introduces
+[Lecture 5](M09-L05-property-based-testing.html) introduces
 property-based testing with QCheck. You will see why FP makes
 PBT natural, watch the shrinker minimise a failing input, and
 write your first generators.
 
-[Lecture 4](M09-L04-custom-generators-stateful.html) extends
+[Lecture 6](M09-L06-custom-generators-stateful.html) extends
 QCheck with custom generators (sorted lists, balanced trees,
 DAGs by construction) and shows how to stage a stateful test as
 a sequence of commands.
 
-[Lecture 5](M09-L05-model-based-testing.html) goes further on
+[Lecture 7](M09-L07-model-based-testing.html) goes further on
 the stateful side: testing a hash table or a queue against a
 simple reference implementation using random sequences of
 operations.
 
-[Lecture 6](M09-L06-effect-handlers.html) turns to OCaml 5's
-*effect handlers*: a user-defined non-local control-flow
-mechanism we will use both to implement and to test concurrent
-code.
-
-[Lecture 7](M09-L07-fibers-concurrency.html) builds a small
-Go-style fibers-and-channels library on top of the effect
-handler from L06, with a single deterministic scheduler that
-makes the library testable.
-
 [Lecture 8](M09-L08-tutorial.html) is the wrap-up tutorial:
-OUnit2 + QCheck on a function from earlier in the course, with
-a deliberately buggy implementation that QCheck finds in
-seconds, plus an effect-handler stub that lets us test a
-side-effecting evaluator in isolation.
+the full toolkit applied to an evaluator from earlier in the
+course, with a deliberately buggy implementation that QCheck
+finds in seconds.
 
 :::slide
 
 ## What's next: the eight lectures of M9
 
-Testing half:
+Deciding what to test:
 
-- L2: **OUnit2 unit testing.**
-- L3: **QCheck PBT.** Properties, shrinking, generators.
-- L4: **Custom generators, stateful PBT.** Sorted lists,
+- L2: **Specifications and invariants.** Contracts, preconditions,
+  rep invariants.
+- L3: **Designing test cases.** Black-box, glass-box, coverage.
+
+Mechanizing the checks:
+
+- L4: **OUnit2 unit testing.**
+- L5: **QCheck PBT.** Properties, shrinking, generators.
+- L6: **Custom generators, stateful PBT.** Sorted lists,
   balanced trees, command sequences.
-- L5: **Model-based testing.** Stateful data structures vs.
+- L7: **Model-based testing.** Stateful data structures vs.
   a reference implementation.
 
-Concurrency half:
+Bringing it together:
 
-- L6: **Effect handlers.** OCaml 5's mechanism for user-defined
-  effects and non-local control flow.
-- L7: **Fibers and lightweight concurrency.** Channels +
-  scheduler built from effect handlers.
-
-Bringing them together:
-
-- L8: **Tutorial.** OUnit2 + QCheck on an evaluator, plus
-  effect-handler stubs for side effects.
+- L8: **Tutorial.** The full toolkit on one evaluator.
 
 :::
 

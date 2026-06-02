@@ -386,7 +386,7 @@ MirageOS unikernel is something that, every second, logs the word
 looks like this. The `open Lwt.Infix` at the top brings the `>>=`
 operator into scope: `>>=` is Lwt's monadic bind, the same shape
 as the QCheck-generator `>>=` from
-[M09-L03](M09-L03-property-based-testing.html); read `e >>= fun x -> ...`
+[property-based testing](M09-L05-property-based-testing.html); read `e >>= fun x -> ...`
 as "wait for the Lwt computation `e`, then continue with its
 result bound to `x`."
 
@@ -578,7 +578,7 @@ language: literals, bindings, functions, pattern matching, modules.
 By the end of M08 you had a complete functional language and the
 discipline to use it well.
 
-In [Module 9](M09-L01-why-test.html) we said that types catch type
+In [Module 9](M09-L01-why-test-typed-code.html) we said that types catch type
 errors but not behaviour, and added testing; especially property-
 based testing, which works particularly well because pure functions
 are properties.

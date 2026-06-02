@@ -1,6 +1,6 @@
 ---
 title: "Custom generators and stateful property tests"
-lecture_no: 4
+lecture_no: 6
 week: 9
 duration_target_min: 22
 concepts: [custom generators, QCheck, sorted-list generator, BST generator, balanced BST, DAG generator, bundled arbitrary, custom shrinker, stateful PBT, command sequences]
@@ -24,13 +24,13 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Custom generators and stateful property tests</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 4</p>
+<p class="title-slide-label">Module 9 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-[Lecture 3](M09-L03-property-based-testing.html) gave us
+[Lecture 5](M09-L05-property-based-testing.html) gave us
 QCheck's core API: write a property as a pure function `'a ->
 bool`, hand it a generator, let the library try a thousand
 random inputs, and let the shrinker minimise any failure. That
@@ -59,7 +59,7 @@ the invariant we want, *bundle* generator + printer + shrinker
 into a reusable `arbitrary`, and then take the first step into
 *stateful PBT* by generating sequences of commands. The full
 treatment of stateful PBT against a reference implementation
-follows in [Lecture 5](M09-L05-model-based-testing.html).
+follows in [Lecture 7](M09-L07-model-based-testing.html).
 
 :::slide
 
@@ -625,7 +625,7 @@ What we *really* want is: "the stack behaves the same as a
 much simpler reference implementation."
 
 That comparison, applied step-by-step over the operation
-sequence, is the technique of [model-based testing](M09-L05-model-based-testing.html),
+sequence, is the technique of [model-based testing](M09-L07-model-based-testing.html),
 the topic of the next lecture. The pieces we built in this
 lecture (command type, command-list generator, default list
 shrinker) are exactly the pieces L05 will assemble into a
@@ -646,7 +646,7 @@ complete stateful test harness.
 
 ## Activity
 
-:::quiz mcq id=M09-L04-q1
+:::quiz mcq id=M09-L06-q1
 You are testing operations on a balanced binary search tree
 (BST). You have a trusted `insert : int -> tree -> tree` and
 want to test a new `delete : int -> tree -> tree`. The default
@@ -672,7 +672,7 @@ lecture; the recipe scales to any data structure with a
 non-trivial invariant.
 :::
 
-:::quiz mcq id=M09-L04-q2
+:::quiz mcq id=M09-L06-q2
 A QCheck `arbitrary` bundles three things:
 
 - a generator,
@@ -700,7 +700,7 @@ with the largest payoff: a five-line `to_string` function turns
 an unreadable failure into a debuggable one.
 :::
 
-:::quiz code id=M09-L04-q3
+:::quiz code id=M09-L06-q3
 Write a QCheck arbitrary that generates *non-empty* lists of
 positive integers. Call it `nonempty_pos_list_gen`.
 
@@ -790,7 +790,7 @@ coverage.
 
 ## What's next
 
-[Lecture 5](M09-L05-model-based-testing.html) completes the
+[Lecture 7](M09-L07-model-based-testing.html) completes the
 stateful-PBT story. We take the command-sequence generator
 we built here, point it at a real stateful API (a custom hash
 table), and *also* run it against a tiny reference

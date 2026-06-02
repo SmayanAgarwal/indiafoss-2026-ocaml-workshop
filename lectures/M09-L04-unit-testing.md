@@ -1,6 +1,6 @@
 ---
 title: "Unit testing in OCaml with OUnit2"
-lecture_no: 2
+lecture_no: 4
 week: 9
 duration_target_min: 25
 concepts: [unit testing, OUnit2, assert_equal, assert_raises, test fixtures, test suites, dune integration]
@@ -22,7 +22,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Unit testing in OCaml with OUnit2</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 2</p>
+<p class="title-slide-label">Module 9 &middot; Lecture 4</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -755,7 +755,7 @@ failures. It does not, on its own:
 
 - **Generate inputs.** Every case you write is a single
   hand-picked input. For random exploration of an input space,
-  see [Lecture 3](M09-L03-property-based-testing.html) and QCheck.
+  see [Lecture 5](M09-L05-property-based-testing.html) and QCheck.
 - **Measure code coverage.** "Did my tests touch every branch of
   the implementation?" is the job of a coverage tool like
   [`bisect_ppx`](https://github.com/aantron/bisect_ppx). OUnit2
@@ -837,7 +837,7 @@ Three cases for the price of one helper function.
 
 ## Activity
 
-:::quiz mcq id=M09-L02-q1
+:::quiz mcq id=M09-L04-q1
 You have a function `fact : int -> int` that computes factorial.
 You write `assert_equal 120 (fact 5)` in an OUnit2 case, and the
 test fails. The output reads:
@@ -865,7 +865,7 @@ correctness ("expected E, got A" reads sensibly only with
 which OUnit2 calls on both values to format the failure message.
 :::
 
-:::quiz mcq id=M09-L02-q2
+:::quiz mcq id=M09-L04-q2
 Which of the following is the correct way to assert that
 `List.hd []` raises `Failure "hd"` using OUnit2?
 
@@ -885,7 +885,7 @@ inspect). The `assert_bool` form would also crash, for the same
 reason: the exception is raised inside the boolean argument.
 :::
 
-:::quiz code id=M09-L02-q3
+:::quiz code id=M09-L04-q3
 Write an OUnit2 test case named `"push then pop on a fresh
 stack returns the pushed value"`. Use the value-oriented `Stack`
 shown in this lecture. The case should:
@@ -972,7 +972,7 @@ the private field looks like.
 
 ## What's next
 
-[Lecture 3](M09-L03-property-based-testing.html) takes the next
+[Lecture 5](M09-L05-property-based-testing.html) takes the next
 step: instead of hand-writing each input and its answer, we
 generate inputs randomly and check that a *property* holds over
 all of them. This is property-based testing with QCheck. We will
@@ -980,9 +980,9 @@ see how PBT complements unit tests, why functional programming
 makes properties especially natural to state, and watch the
 shrinker minimise a failing input to its smallest form.
 
-[Lecture 4](M09-L04-custom-generators-stateful.html) builds
+[Lecture 6](M09-L06-custom-generators-stateful.html) builds
 custom generators (sorted lists, valid BSTs, command
-sequences). [Lecture 5](M09-L05-model-based-testing.html)
+sequences). [Lecture 7](M09-L07-model-based-testing.html)
 extends PBT to stateful code with model-based testing against
 a reference. [L6-L7](M09-L06-effect-handlers.html) turn to
 *concurrency* via effect handlers. [Lecture 8](M09-L08-tutorial.html)

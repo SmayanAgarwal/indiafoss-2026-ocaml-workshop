@@ -1,6 +1,6 @@
 ---
 title: "Property-based testing with QCheck"
-lecture_no: 3
+lecture_no: 5
 week: 9
 duration_target_min: 35
 concepts: [property-based testing, QCheck, generators, shrinking, properties, invariants, equational reasoning, custom arbitraries, input space, balanced trees]
@@ -24,13 +24,13 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Property-based testing with QCheck</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 3</p>
+<p class="title-slide-label">Module 9 &middot; Lecture 5</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
-[Lecture 2](M09-L02-unit-testing.html) gave you OUnit2 and a habit
+[Lecture 4](M09-L04-unit-testing.html) gave you OUnit2 and a habit
 for it: pick an input, write down its expected output, compare,
 report. The hand-written assertions in `test_lifo_three` exercise
 a stack on three specific inputs out of the infinite number of
@@ -700,7 +700,7 @@ codebases, two pieces are still missing:
 - a way to test **stateful APIs** where a single call is not
   the unit of testing.
 
-Both are the topic of [Lecture 4](M09-L04-custom-generators-stateful.html).
+Both are the topic of [Lecture 6](M09-L06-custom-generators-stateful.html).
 The intuition for why this matters appears at the end of this
 lecture under "When PBT does not help"; the *how* lives in L04.
 
@@ -1033,7 +1033,7 @@ curiosity.
 
 ## Activity
 
-:::quiz mcq id=M09-L03-q1
+:::quiz mcq id=M09-L05-q1
 A colleague writes a `dedup : int list -> int list` and a single
 QCheck property:
 
@@ -1062,7 +1062,7 @@ duplicates in the output", and "every input element appears in
 the output" would together pin `dedup` down.
 :::
 
-:::quiz mcq id=M09-L03-q2
+:::quiz mcq id=M09-L05-q2
 QCheck runs a property on a buggy function and reports:
 
 ```
@@ -1092,7 +1092,7 @@ random failure is usually too noisy to debug; the shrunk
 witness is usually the bug in its purest form.
 :::
 
-:::quiz code id=M09-L03-q3
+:::quiz code id=M09-L05-q3
 Write a QCheck property that captures: *concatenating the empty
 list to any list yields the original list.* Use the generator
 `QCheck.(list int)`. Name the property `"empty is right identity
@@ -1187,13 +1187,13 @@ much of real software is stateful: a hash table you `add` to and
 data structure, where each operation depends on every operation
 that came before?
 
-[Lecture 4](M09-L04-custom-generators-stateful.html) builds the
+[Lecture 6](M09-L06-custom-generators-stateful.html) builds the
 generator toolkit: sorted lists, valid BSTs, DAGs, JSON
 matching a schema; how to bundle a generator, printer, and
 shrinker for a custom recursive type; and the first taste of
 testing stateful APIs by generating *sequences of commands*.
 
-[Lecture 5](M09-L05-model-based-testing.html) goes further with
+[Lecture 7](M09-L07-model-based-testing.html) goes further with
 *model-based testing*: test a sophisticated stateful
 implementation against a simple reference implementation, by
 generating random sequences of operations and asserting
