@@ -5,7 +5,7 @@ week: 9
 duration_target_min: 25
 concepts: [testing tutorial, specifications, test design, OUnit2, QCheck, properties, invariants, expression evaluator, debugging, differential testing]
 keywords: [OCaml, testing, OUnit2, QCheck, tutorial, expression evaluator, AST, property-based testing, debugging, shrinking, differential testing, simplifier]
-activity_question: "Take the arithmetic expr AST and its eval, and pretend the Sub case is buggy (swapped arguments). Which OUnit2 case catches this? Which QCheck property catches this most quickly, and what is the shrunk counterexample likely to look like?"
+activity_question: "Your simplifier gains the rewrite [e / e -> Num 1.0]. The differential property [eval (simplify e) = eval e] starts failing. What family of counterexamples is QCheck finding, and is the rewrite salvageable?"
 think_about_this: "If your QCheck property compares the OCaml-implemented eval against a hand-written reference (e.g. via float arithmetic in the property itself), what happens when the reference is also buggy? How do you avoid testing one bug against itself?"
 reading:
   - title: "Cornell CS3110, Testing and OUnit"
@@ -32,8 +32,9 @@ This tutorial puts the whole module to work on a single larger
 example, walking the full arc once, end to end: write the
 specification, design the cases, mechanise them with OUnit2,
 quantify them with QCheck, and finish with a differential test
-of an optimiser against the original. We take the
-[`expr` AST and `eval` function from the pattern-matching
+of an optimiser against the original. We take a small
+arithmetic `expr` AST and its `eval`, a float-valued cousin of
+[the interpreter you built in the pattern-matching
 tutorial](M05-L06-tutorial.html), give them a full test suite,
 deliberately break the implementation, and watch QCheck find
 the bug. By the end you should have a complete test file you
@@ -58,8 +59,8 @@ different.
 
 ## What this tutorial does
 
-- Take the `expr` evaluator from
-  [the pattern-matching tutorial](M05-L06-tutorial.html).
+- An arithmetic `expr` evaluator: a float cousin of
+  [the pattern-matching tutorial's interpreter](M05-L06-tutorial.html).
 - Write its **specification**; design **black-box cases** from
   it.
 - Mechanise the cases as an **OUnit2 suite**.
@@ -73,8 +74,10 @@ different.
 
 ## The function under test
 
-From [the pattern-matching tutorial](M05-L06-tutorial.html),
-restated:
+A five-constructor arithmetic AST over floats, in the mould of
+[the interpreter you built in the pattern-matching
+tutorial](M05-L06-tutorial.html) (which had integers, booleans,
+and variables; this one trades those for IEEE-754 floats):
 
 ```ocaml
 type expr =
@@ -249,7 +252,7 @@ let test_nested _ =
   assert_equal ~printer:string_of_float 10.5 (eval expr)
 ```
 
-This is the running example from the pattern-matching tutorial. It exercises the recursive
+This is the tutorial's running example. It exercises the recursive
 case for `Mul`, which has two sub-expressions, each of which is
 itself a binary node. If the recursion forgot to recurse (e.g.
 `Mul (a, _) -> eval a *. eval a`, a typical typo), this case
@@ -308,7 +311,7 @@ an `OK`.
 
 ## OUnit2 suite shape
 
-```ocaml
+```text
 let suite =
   "expr evaluator" >::: [
     "leaf" >:: test_num_leaf;
@@ -913,18 +916,31 @@ let rec gen_small depth =
 let arb_small = QCheck.make ~print:expr_str (gen_small 4)
 ```
 
+:::slide
+
+## A generator tuned for collisions
+
+```text
+val expr_str : expr -> string    (* "(0 * (1 / 0))" *)
+
+let rec gen_small depth = ...
+  (* leaves: Num of int_range (-3) 3, as floats;
+     nodes: Add / Sub / Mul / Div at depth - 1 *)
+
+let arb_small =
+  QCheck.make ~print:expr_str (gen_small 4)
+```
+
+- Integer-valued constants in -3..3: zeros and collisions
+  are *reachable*.
+  - `float_range` would almost never produce exactly `0.0`.
+- The input-space lesson from the QCheck lecture, paying rent.
+
+:::
+
 And the harness: one parametrised property, usable on every
 candidate optimiser we write. The only subtlety is NaN, which
 is not equal to itself; two NaNs count as agreement.
-
-```ocaml
-let preserves_value name simp =
-  QCheck.Test.make ~name ~count:1000 arb_small
-    (fun e ->
-       let v1 = eval e in
-       let v2 = eval (simp e) in
-       (Float.is_nan v1 && Float.is_nan v2) || v1 = v2)
-```
 
 :::slide
 
@@ -1128,6 +1144,13 @@ QCheck property that:
 
 The expected name of the property: `"0 * e = 0"`.
 
+(Part 6 showed why `0 * e -> 0` is unsound as a *rewrite*. As a
+*checked property* it fares better: under OCaml's `=`, the
+`-0.0` results still compare equal to `0.0`, so only the
+NaN/infinity cases remain, and the guard below handles those.
+Writing it is a good way to feel the difference between
+rewriting and checking.)
+
 Be careful: floating-point `0.0 *. nan` is `nan`, not `0.0`. The
 property as stated will trip on any `expr` whose evaluation
 yields NaN. You may add a `QCheck.assume (not (Float.is_nan
@@ -1324,8 +1347,10 @@ Next module: M10 on memory safety. Tests catch behaviour;
 ## Sources
 
 This tutorial's prose, worked examples, and quizzes are original
-to this course. The `expr` AST and `eval` function are reused
-from [the pattern-matching tutorial](M05-L06-tutorial.html), itself original. The
+to this course. The `expr` AST and `eval` function are this
+tutorial's own, a float-valued variant of
+[the pattern-matching tutorial's interpreter](M05-L06-tutorial.html),
+itself original. The
 deliberate-bug pattern (swapping operands of `Sub`) is folklore
 in the PBT community, presented here in our own words. Cornell
 CS3110's testing chapter is the conceptual antecedent for the

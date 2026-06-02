@@ -5,7 +5,7 @@ week: 9
 duration_target_min: 22
 concepts: [custom generators, QCheck, sorted-list generator, BST generator, balanced BST, DAG generator, bundled arbitrary, custom shrinker, stateful PBT, command sequences]
 keywords: [OCaml, QCheck, custom generator, invariant, sorted list, balanced BST, red-black tree, DAG, custom arbitrary, printer, shrinker, stateful testing, command sequence, frequency, choose]
-activity_question: "You have an [insert : int -> avl -> avl] you trust, and an [extract_min : avl -> (int * avl) option] you don't. How would you generate a stream of valid AVL trees to feed into [extract_min] without writing a "generate-from-scratch" balanced-tree generator?"
+activity_question: "Build a QCheck arbitrary that generates non-empty lists of positive integers, with the invariant built into the generator itself rather than enforced by [assume]. Which combinators do you reach for?"
 think_about_this: "If your generator is biased away from edge cases, your property runs 1000 times and passes, and your code still has a bug at the edge. PBT is a sieve. What shape are the holes in the sieve, and how do you adjust them?"
 reading:
   - title: "QCheck README and tutorial"
@@ -73,8 +73,8 @@ follows in [Lecture 7](M09-L07-model-based-testing.html).
   construction.
 - **Bundling**: generator + printer + shrinker into a single
   `arbitrary`.
-- **Stateful PBT**: generate *sequences of commands*; full
-  model-based version in L05.
+- **Stateful PBT**: generate *sequences of commands*
+  - the full model-based version is L7's topic.
 
 :::
 
@@ -300,6 +300,10 @@ the *operation-based generator* pattern, and it is the canonical
 way to generate values of a complex algebraic data structure
 with a non-trivial invariant.
 
+:::slide
+
+## Generator for a valid BST
+
 ```ocaml
 type tree = Leaf | Node of tree * int * tree
 
@@ -316,6 +320,10 @@ let bst_gen : tree QCheck.arbitrary =
     (fun xs -> List.fold_left insert Leaf xs)
     (list int))
 ```
+
+Use the data structure's *own* `insert` as the generator.
+
+:::
 
 A list of random integers folded with `insert` over the empty
 tree produces *exactly* the BSTs that `insert` itself can
@@ -356,16 +364,7 @@ technique.
 
 :::slide
 
-## Generator for a valid BST
-
-```ocaml
-let bst_gen : tree QCheck.arbitrary =
-  QCheck.(map
-    (fun xs -> List.fold_left insert Leaf xs)
-    (list int))
-```
-
-Use the data structure's *own* `insert` as the generator.
+## Why operation-based generation wins
 
 - Every output is a valid BST (because `insert` preserves the
   invariant).
@@ -387,16 +386,21 @@ no edge points backward in the vertex ordering.
 
 ```ocaml
 let dag_gen : (int * int) list QCheck.arbitrary =
-  let open QCheck in
-  small_int >>= fun n ->
-  let pairs = ref [] in
-  for i = 0 to n - 1 do
-    for j = i + 1 to n - 1 do
-      pairs := (i, j) :: !pairs
-    done
-  done;
-  list_of_size (Gen.int_range 0 (List.length !pairs)) (oneofl !pairs)
-  |> map (fun edges -> List.sort_uniq compare edges)
+  let open QCheck.Gen in
+  let gen =
+    let* n = int_range 2 8 in
+    let pairs = ref [] in
+    for i = 0 to n - 1 do
+      for j = i + 1 to n - 1 do
+        pairs := (i, j) :: !pairs
+      done
+    done;
+    let* edges =
+      list_size (int_range 0 (List.length !pairs)) (oneofl !pairs)
+    in
+    return (List.sort_uniq compare edges)
+  in
+  QCheck.make gen
 ```
 
 **Arithmetic expression with no zero divisor.** Recursively
@@ -521,6 +525,30 @@ often enough that the minimal counterexample matters.
 
 :::slide
 
+## Three helpers for a custom type
+
+```text
+type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+
+val tree_gen :
+  int -> 'a QCheck.Gen.t -> 'a tree QCheck.Gen.t
+  (* frequency: 1 Leaf for every 3 Nodes; depth-bounded *)
+
+val tree_to_string : ('a -> string) -> 'a tree -> string
+  (* recursive descent; failures become readable *)
+
+val tree_shrink :
+  'a QCheck.Shrink.t -> 'a tree QCheck.Shrink.t
+  (* try: a child; shrink the element; shrink a subtree *)
+```
+
+- Each is a short structural recursion (full code in the
+  chapter).
+
+:::
+
+:::slide
+
 ## Bundle generator + printer + shrinker
 
 ```ocaml
@@ -590,7 +618,8 @@ let command_list_gen : command list QCheck.arbitrary =
 A test using this generator picks a random *sequence* of stack
 operations. The property is then "run this sequence; check some
 invariant of the stack at the end" (or, more interestingly,
-"check the invariant at every step", which is what L05 does).
+"check the invariant at every step", which is what the next
+lecture does).
 
 A subtle design choice: **the key space is small (0..20)**, not
 the default `QCheck.int` range. If keys were uniformly random
@@ -650,8 +679,8 @@ into a complete stateful test harness.
 - "Did anything crash?" is too weak.
 - What we want: "the implementation behaves *the same as*
   a much simpler reference."
-- Step-by-step equivalence with a reference is L05's
-  technique.
+- Step-by-step equivalence with a reference is the next
+  lecture's technique.
 
 :::
 
@@ -821,8 +850,8 @@ counterexample, applied to one evaluator.
 - L7: **model-based testing.** Custom hash table vs list
   reference. The command-sequence harness we just built,
   plus an oracle.
-- L8: **wrap-up tutorial.** The full toolkit on the arithmetic
-  evaluator from the pattern-matching module.
+- L8: **wrap-up tutorial.** The full toolkit on a small
+  arithmetic evaluator.
 
 :::
 

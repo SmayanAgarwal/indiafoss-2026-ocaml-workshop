@@ -83,7 +83,7 @@ We have a function. We want to test it. The PBT recipe from L3
 says: generate a random input, run the function, check a
 property of the output. For `sort`, that is
 
-```ocaml
+```text
 QCheck.Test.make QCheck.(list int)
   (fun xs ->
      let ys = sort xs in
@@ -221,7 +221,7 @@ end = struct
 
   let hash k cap = (k mod cap + cap) mod cap
 
-  let resize t =
+  let rec resize t =
     let old = t.buckets in
     let new_cap = Array.length old * 2 in
     t.buckets <- Array.make new_cap Empty;
@@ -317,7 +317,7 @@ is something to test *against* the reference.
 
 ## Two implementations of the same interface
 
-```ocaml
+```text
 (* sophisticated, fast, possibly buggy *)
 module Ht : HASHTABLE = struct
   (* open addressing, linear probing, tombstones,
@@ -342,13 +342,31 @@ end
 
 ### Step 1: commands as data
 
+:::slide
+
+## Step 1: commands as data
+
 ```ocaml
 type command =
   | Add of int * string
   | Find of int
   | Remove of int
   | Size
+```
 
+- One constructor per public operation.
+- A test input is now a *value*: a `command list`
+  - generatable, printable, shrinkable.
+- `create` is not a command
+  - it is the fresh start of every test.
+
+:::
+
+A pretty-printer comes with it, because QCheck's failure
+messages will show command sequences, and `<opaque>` is not
+helpful:
+
+```ocaml
 let command_to_string = function
   | Add (k, v) -> Printf.sprintf "Add (%d, %S)" k v
   | Find k -> Printf.sprintf "Find %d" k
@@ -357,10 +375,7 @@ let command_to_string = function
 ```
 
 Each constructor mirrors one method of `HASHTABLE`. We carry
-the arguments inside the constructor. The `command_to_string`
-function pretty-prints commands for failure messages; this
-matters because QCheck's failure messages will show command
-sequences, and `<opaque>` is not helpful.
+the arguments inside the constructor.
 
 We deliberately do *not* model `create` as a command; that is
 the initial state. Each test starts with a freshly created
@@ -427,6 +442,12 @@ the shrinker has manageable work.
 let key_gen = QCheck.Gen.int_range 0 20  (* tiny key space! *)
 ```
 
+```text
+command_gen      : command QCheck.Gen.t   (oneof, four arms)
+command_list_gen : command list arbitrary (<= 50 commands,
+                                           printer attached)
+```
+
 - **Small key space**: forces collisions, makes Find/Remove hit
   existing keys.
 - **Uniform command distribution**: simple; tune by need.
@@ -445,19 +466,31 @@ The interpreters apply a single command to a piece of state and
 return an `observation`, which captures whatever the operation
 makes visible.
 
+:::slide
+
+## Interpreters return observations
+
 ```ocaml
 type observation =
-  | OUnit
-  | OInt of int
-  | OFound of string option
+  | OUnit | OInt of int | OFound of string option
 
-let run_real (t : Ht.t) (c : command) : observation =
-  match c with
+let run_real t = function
   | Add (k, v) -> Ht.add t k v; OUnit
   | Find k -> OFound (Ht.find t k)
   | Remove k -> Ht.remove t k; OUnit
   | Size -> OInt (Ht.size t)
+```
 
+- One observation per command, capturing every publicly
+  visible bit of behaviour.
+- `run_ref` mirrors the same four arms against `Ref`.
+- The property compares the two streams step by step.
+
+:::
+
+The reference's interpreter mirrors the same four arms:
+
+```ocaml
 let run_ref (t : Ref.t) (c : command) : observation =
   match c with
   | Add (k, v) -> Ref.add t k v; OUnit
@@ -478,30 +511,6 @@ checked "no exception was raised" would miss bugs that silently
 return wrong values from `Find`. By making every visible result
 an `observation`, we explicitly compare the parts of behaviour
 the user can see.
-
-:::slide
-
-## Interpreters return observations
-
-```ocaml
-type observation =
-  | OUnit
-  | OInt of int
-  | OFound of string option
-
-let run_real t = function
-  | Add (k, v) -> Ht.add t k v; OUnit
-  | Find k -> OFound (Ht.find t k)
-  | Remove k -> Ht.remove t k; OUnit
-  | Size -> OInt (Ht.size t)
-```
-
-- One observation per command, capturing every publicly
-  visible bit of behaviour.
-- `Add`/`Remove` -> `OUnit` (only visible later via Find/Size).
-- The property compares observations step by step.
-
-:::
 
 ### Step 4: the property
 
@@ -911,9 +920,10 @@ Some industrial cases worth knowing:
 - John Hughes's group at Quviq applied this technique to
   industrial codebases at AUTOSAR, Volvo Cars, and Ericsson;
   see the *Experiences with QuickCheck* paper in the Reading.
-- Jane Street uses property tests with derived generators
-  (`ppx_quickcheck`) for many of their financial data
-  structures; the RWO Testing chapter has a few examples.
+- Industrial OCaml codebases lean on property tests with
+  generators derived from type definitions
+  (`ppx_quickcheck`); the RWO Testing chapter shows the
+  pattern.
 - The OCaml 5 runtime's lock-free data structures are tested
   with `multicoretests` against a linearisability model.
 
@@ -943,7 +953,10 @@ Street (ppx_quickcheck); OCaml 5's multicoretests.
 
 To make the technique stick, let us walk through one more
 example with less code. A *two-stack queue* (Banker's queue
-without the lazy evaluation) is a classic data structure: it
+without the lazy evaluation) is a classic data structure, and
+one you have already built: it was the subject of
+[the modules tutorial](M07-L09-tutorial.html), as a functor.
+Here it returns as a *test subject*. It
 supports `enqueue` and `dequeue` in amortised O(1) by
 maintaining two stacks, `front` and `back`. Enqueue pushes onto
 `back`; dequeue pops from `front`, refilling `front` by
@@ -1071,7 +1084,7 @@ of the state after the call."
 
 ## Queue test: include observations of state
 
-```ocaml
+```text
 let run_real_q q c =
   match c with
   | Enq x -> q := enqueue x !q; OQUnit (to_list !q)
@@ -1265,8 +1278,9 @@ as the oracle. Garbage in, garbage out.
 
 [Lecture 8](M09-L08-tutorial.html) is the module's wrap-up
 tutorial: the whole toolkit, applied end to end to a single
-worked example. We take the arithmetic `expr` evaluator from
-the pattern-matching module's tutorial, write its specification,
+worked example. We take a small arithmetic `expr` evaluator (a
+float cousin of the pattern-matching tutorial's interpreter),
+write its specification,
 design black-box cases from it, mechanise them with OUnit2,
 add QCheck properties with a custom generator, and watch the
 shrinker corner a deliberately introduced bug.

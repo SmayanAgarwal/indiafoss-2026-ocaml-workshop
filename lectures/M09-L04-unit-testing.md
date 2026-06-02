@@ -309,7 +309,7 @@ value?"
 
 ```ocaml
 open OUnit2
-let _ = assert_equal 6 (1 + 2 + 3)
+let _ = assert_equal 6 (1 + 2 + 3)  (* = (): it passed *)
 ```
 
 The argument order is *expected first, actual second*. This matters
@@ -440,7 +440,7 @@ runs even if the body raises.
 
 ## Fixtures: keep each case independent
 
-```ocaml
+```text
 let fresh_stack () = Stack.create ()
 
 let test_peek_one _ =
@@ -515,7 +515,7 @@ module Stack = struct
 end
 ```
 
-A small change from M07-L08: instead of a single global stack, each
+A small change from [the module-basics Stack](M07-L06-module-basics.html): instead of a single global stack, each
 call to `Stack.create ()` returns a fresh stack value, and `push`/
 `pop`/`peek`/`is_empty` take that value as an argument. This is
 the standard "value-oriented" shape for a data structure, and it
@@ -1025,8 +1025,8 @@ toolkit to work on a real function from earlier in the course.
   shrinking, why FP makes PBT natural.
 - L6: **custom generators and stateful PBT**.
 - L7: **model-based testing**. Hash table vs reference.
-- L8: **tutorial**. The full toolkit on an evaluator from
-  earlier in the course.
+- L8: **tutorial**. The full toolkit on a small arithmetic
+  evaluator.
 
 :::
 

@@ -5,7 +5,7 @@ week: 9
 duration_target_min: 35
 concepts: [property-based testing, QCheck, generators, shrinking, properties, invariants, equational reasoning, custom arbitraries, input space, balanced trees]
 keywords: [OCaml, QCheck, property-based testing, PBT, QuickCheck, generators, shrinking, counterexample, sorted array, balanced BST, red-black tree, custom arbitrary, distribution, input space]
-activity_question: "Suppose someone tells you their implementation of List.rev passes the property [rev (rev xs) = xs] on 1000 random inputs. Is the implementation necessarily correct? What other properties would you want to check before you believe them?"
+activity_question: "A colleague's [dedup : int list -> int list] passes a single QCheck property on 1000 random inputs. Is the implementation necessarily correct? What other properties would you demand before you believe them?"
 think_about_this: "Why is property-based testing more useful in a functional language than in an imperative one? What is it about purity and equational reasoning that makes properties easier to *state*, never mind check?"
 reading:
   - title: "QCheck on GitHub (README, tutorial, API)"
@@ -227,8 +227,7 @@ Five pieces:
 To run the test:
 
 ```ocaml
-let _ = QCheck_runner.run_tests [test_rev_involutive]
-(* = 0 when the property holds on every generated input *)
+let _ = QCheck_runner.run_tests [test_rev_involutive]  (* = 0 *)
 ```
 
 That form works right here in the page's cells: the runner's
@@ -716,11 +715,13 @@ codebases, two pieces are still missing:
 
 Both are the topic of [Lecture 6](M09-L06-custom-generators-stateful.html).
 The intuition for why this matters appears at the end of this
-lecture under "When PBT does not help"; the *how* lives in L04.
+lecture under "When PBT does not help"; the *how* lives in the
+next lecture.
 
 ## The input-space problem (preview)
 
-Before we close out, one observation that motivates L04. When we
+Before we close out, one observation that motivates the next
+lecture. When we
 wrote
 
 ```ocaml
@@ -1217,7 +1218,8 @@ built in this lecture.
 
 [Lecture 8](M09-L08-tutorial.html) puts unit testing and
 property-based testing together on a single, larger example: a
-function from earlier in the course (the arithmetic evaluator from the pattern-matching tutorial),
+small arithmetic evaluator (a float cousin of the
+pattern-matching tutorial's interpreter),
 with a deliberately broken implementation that QCheck finds in
 seconds.
 

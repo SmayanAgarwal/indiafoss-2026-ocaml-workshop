@@ -740,9 +740,9 @@ simple reference implementation using random sequences of
 operations.
 
 [Lecture 8](M09-L08-tutorial.html) is the wrap-up tutorial:
-the full toolkit applied to an evaluator from earlier in the
-course, with a deliberately buggy implementation that QCheck
-finds in seconds.
+the full toolkit applied to a small arithmetic evaluator,
+with a deliberately buggy implementation that QCheck finds in
+seconds.
 
 :::slide
 

@@ -482,8 +482,7 @@ as rationals they are the same value, and `equal` (by
 cross-multiplication: `p1 * q2 = p2 * q1`) agrees:
 
 ```ocaml
-let _ = Rational.equal (Rational.make 1 2) (Rational.make 2 4)
-(* = true *)
+let _ = Rational.equal half (Rational.make 2 4)  (* = true *)
 ```
 
 The AF is *partial*. The pair `(3, 0)` maps to nothing; there is
@@ -605,8 +604,8 @@ implementation forgot to check). Watch `rep_ok` catch it:
 
 ```ocaml skip
 let zero = Rational.make 0 5
-let _ = Rational.div (Rational.make 1 2) zero
-(* Exception: Failure "RI violated" *)
+let half = Rational.make 1 2
+let _ = Rational.div half zero  (* Failure "RI violated" *)
 ```
 
 - The buggy `div` forgot its divide-by-zero check.
@@ -677,10 +676,9 @@ module Rational_canon : RATIONAL = struct
   let to_string (p, q) = string_of_int p ^ "/" ^ string_of_int q
 end
 
-let _ = Rational_canon.to_string (Rational_canon.make 2 4)
-(* = "1/2" *)
-let _ = Rational_canon.equal (Rational_canon.make 1 2)
-          (Rational_canon.make 2 4)  (* = true *)
+let c = Rational_canon.make 2 4
+let _ = Rational_canon.to_string c  (* = "1/2" *)
+let _ = Rational_canon.equal (Rational_canon.make 1 2) c  (* = true *)
 ```
 
 Look at what moved. The work migrated into `norm`, which every
@@ -743,8 +741,8 @@ end
   - `to_string (make 2 4) = "1/2"`.
 
 ```ocaml
-let _ = Rational_canon.to_string (Rational_canon.make 2 4)
-(* = "1/2" *)
+let c = Rational_canon.make 2 4
+let _ = Rational_canon.to_string c  (* = "1/2" *)
 ```
 
 - Same signature, same client-visible contract, different
