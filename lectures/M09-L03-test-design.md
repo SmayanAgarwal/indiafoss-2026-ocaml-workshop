@@ -488,9 +488,11 @@ starts in a ten-pin bowling scorer project whose library is
 already instrumentation-enabled. Run its suite under coverage
 and ask for the score:
 
-- `dune runtest --instrument-with bisect_ppx` (the first
-  instrumented build links the instrumentation tool itself, so
-  expect a minute or two; later runs are quick).
+- `dune runtest --instrument-with bisect_ppx` (this project's
+  instrumented build comes pre-built in the image, so expect
+  seconds; instrumenting a project from scratch, say `~/morse`,
+  also links the instrumentation tool itself, which takes a
+  minute or two).
 - `bisect-ppx-report summary`: what fraction of the scorer did
   the tests reach?
 

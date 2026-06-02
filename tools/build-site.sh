@@ -986,7 +986,7 @@ emit_playground() {
       <tr><td><code>dune exec ./hello.exe</code></td><td>run the executable</td></tr>
       <tr><td><code>cd ~/morse &amp;&amp; dune runtest</code></td><td>build a library and run its tests</td></tr>
       <tr><td><code>nano lib/morse.ml</code></td><td>edit code (Ctrl-O save, Ctrl-X exit), then rebuild</td></tr>
-      <tr><td><code>cd ~/bowling &amp;&amp; dune runtest --instrument-with bisect_ppx</code></td><td>run tests with coverage instrumentation (the first instrumented build takes a minute or two)</td></tr>
+      <tr><td><code>cd ~/bowling &amp;&amp; dune runtest --instrument-with bisect_ppx</code></td><td>run tests with coverage instrumentation (bowling comes pre-built; instrumenting a project from scratch takes a minute or two)</td></tr>
       <tr><td><code>bisect-ppx-report summary</code></td><td>how much did the tests cover?</td></tr>
       <tr><td><code>bisect-ppx-report html &amp;&amp; sync</code></td><td>then press the terminal's <em>coverage report</em> button to view it in a new tab</td></tr>
     </table>

@@ -39,11 +39,16 @@ subprocesses; browser WASI shims have none).
   download (9.0 MB zstd state + 2.4 MB engine + fs.json).
 - Plain dune: hello cold build 6.5 s; multi-module lib+bin+test
   cold 12-17 s; runtest 0.6 s; no-op 0.3 s; incremental 3.3 s.
-- Coverage: first `dune build --instrument-with bisect_ppx` ~90 s
-  (one-time per-project ppx driver link), then instrumented
-  runtest 2.4 s; `bisect-ppx-report summary` instant; the HTML
-  report can be pulled out of the VM by the host page via
-  `emulator.read_file()` and rendered in the browser.
+- Coverage: instrumenting a project from scratch is ~90 s, of
+  which 72 s is ONE ocamlc invocation linking the per-project
+  ppx driver against ppxlib (measured with dune --trace-file
+  inside the VM; running the instrumenter itself costs 0.6 s).
+  bowling's instrumented _build is pre-baked into the image
+  (v3), so the student's first instrumented run there is ~20 s
+  (digest re-checks over 9p) and later runs ~2 s.
+  `bisect-ppx-report summary` is instant; the HTML report is
+  lifted out of the VM via `emulator.read_file()` (the
+  terminal's "coverage report" button).
 - Downloads (cold cache): boot-only ~12 MB; running everything
   incl. coverage ~53 MB total. Chunk store on disk: 153 MB, of
   which untouched chunks are never downloaded. Biggest session
@@ -93,5 +98,5 @@ node tools/vm-image/run-workflow.mjs        # must end "workflow complete"
 
 Deployed data versions live in the
 `fplaunchpad/ocaml-browser-vm` repo (one immutable `vN/` per
-build; currently `v2`). After any rebuild here, push a NEW `vN/`
+build; currently `v3`). After any rebuild here, push a NEW `vN/`
 there and bump `DEFAULT_BASE` in `assets/vm/vm-terminal.js`.

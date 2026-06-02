@@ -73,6 +73,19 @@ RUN rm -f /root/.opam/ocaml-system/bin/dune
 # Sample dune projects for students to build.
 COPY projects/ /root/
 
+# Pre-bake bowling's INSTRUMENTED build: linking the per-project
+# ppx driver against ppxlib takes ~90 s inside the emulated VM,
+# which is a rough first experience for the L03 coverage loop.
+# With the artifacts in _build, the student's first
+# `dune runtest --instrument-with bisect_ppx` is incremental
+# (seconds). Drop the .coverage files the bake's test run wrote:
+# students should start from a clean slate. morse and hello stay
+# unbaked deliberately, so building a project from scratch (and
+# its honest cost) can still be experienced there.
+RUN . /etc/profile.d/opam.sh && cd /root/bowling && \
+    dune runtest --instrument-with bisect_ppx && \
+    rm -f bisect*.coverage
+
 # https://wiki.alpinelinux.org/wiki/Alpine_Linux_in_a_chroot#Preparing_init_services
 RUN for i in devfs dmesg mdev hwdrivers; do rc-update add $i sysinit; done
 RUN for i in hwclock modules sysctl hostname syslog bootmisc; do rc-update add $i boot; done
