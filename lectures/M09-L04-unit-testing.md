@@ -33,14 +33,21 @@ types and tests are complementary: types catch type errors on every
 build, tests catch behaviour on the inputs you choose. The example
 to keep in mind was a `sort` of type `'a list -> 'a list` that
 returned its input unchanged. The compiler was happy; the function
-was wrong; a test would have caught it.
+was wrong; a test would have caught it. Since then you have
+learned to write the [contract](M09-L02-specifications-invariants.html)
+a test checks against, and to [choose the inputs](M09-L03-test-design.html)
+worth checking: boundary cases read from the spec, paths read
+from the code. What those two lectures produced were case
+*tables*, executed as bare `assert`s.
 
 This lecture is the practical follow-up. We pick *one* unit-testing
 tool, [**OUnit2**](https://github.com/gildor478/ounit), and use it
-end to end. We integrate it into a `dune` project, we learn the
-small set of primitives the framework exposes (`assert_equal`,
-`assert_bool`, `assert_raises`), and we build a test suite for a
-real module, the `Stack` from [M07-L06](M07-L06-module-basics.html).
+end to end: the tool that turns a designed case table into a
+permanent, named, runnable suite. We integrate it into a `dune`
+project, we learn the small set of primitives the framework
+exposes (`assert_equal`, `assert_bool`, `assert_raises`), and we
+build a test suite for a real module, the
+`Stack` from [the modules material](M07-L06-module-basics.html).
 By the end you should be able to write a test file for any module
 you have written so far in the course.
 
@@ -62,10 +69,12 @@ you encounter them; the conceptual content carries over.
 ## What this lecture covers
 
 - One unit-testing tool: **OUnit2**.
+  - The designed case tables of L2-L3 get a runnable home.
 - The primitives: `assert_equal`, `assert_bool`, `assert_raises`.
 - Test organisation: `TestList`, `TestCase`, fixtures.
 - `dune` integration: how to wire tests into a project.
-- Worked example: a test suite for the `Stack` from M07-L08.
+- Worked example: a test suite for the modules material's
+  `Stack`.
 
 :::
 
@@ -216,6 +225,12 @@ let () = run_test_tt_main suite
 
 ## Wiring it into `dune`
 
+**Terminal, not browser.** The cells on this page run OUnit2
+directly in the browser (the suite's report lands in the cell's
+output pane). This section is the exception: project wiring needs
+`dune` and a shell, so treat it as a walkthrough to reproduce on
+your own machine.
+
 A real OCaml project has its tests in a separate `test/` directory
 with its own `dune` file. The minimal `dune` for an OUnit2 test is:
 
@@ -267,6 +282,20 @@ tests live in `test/`, the test file imports the library by its
 public module name. So if `lib/dune` has `(library (name stack))`,
 then `test/test_stack.ml` writes `open Stack` to bring its
 functions into scope. We will see this on a real example shortly.
+
+While you are in the `dune` manual, two relatives of the
+`(test ...)` stanza are worth knowing about, both from the
+*expect-test* family that Real World OCaml's testing chapter
+champions. An expect test records a program's *output* in the
+source file; on later runs, any difference between recorded and
+actual output is a failure, and `dune promote` updates the
+recording when the change was intended. Dune's built-in *cram
+tests* (`.t` files) apply the same record-and-diff idea to shell
+sessions, which makes them ideal for testing command-line tools.
+Neither replaces assertion-based suites; they shine where the
+interesting thing is "what did it print", and they reward the
+same design discipline this module teaches: deterministic
+output, boundaries first.
 
 ## The three primitive assertions
 
@@ -758,8 +787,9 @@ failures. It does not, on its own:
   see [Lecture 5](M09-L05-property-based-testing.html) and QCheck.
 - **Measure code coverage.** "Did my tests touch every branch of
   the implementation?" is the job of a coverage tool like
-  [`bisect_ppx`](https://github.com/aantron/bisect_ppx). OUnit2
-  has no built-in coverage view.
+  [`bisect_ppx`](https://github.com/aantron/bisect_ppx), whose
+  workflow the [test-design lecture](M09-L03-test-design.html)
+  walks through. OUnit2 has no built-in coverage view.
 - **Compare against snapshots.** "The output matched what I
   captured last time" is the realm of *expect tests*. OUnit2's
   `assert_equal` requires you to write down the expected value
@@ -984,22 +1014,19 @@ shrinker minimise a failing input to its smallest form.
 custom generators (sorted lists, valid BSTs, command
 sequences). [Lecture 7](M09-L07-model-based-testing.html)
 extends PBT to stateful code with model-based testing against
-a reference. [L6-L7](M09-L06-effect-handlers.html) turn to
-*concurrency* via effect handlers. [Lecture 8](M09-L08-tutorial.html)
-puts the testing tools to work on a real function from
-earlier in the course.
+a reference. [Lecture 8](M09-L08-tutorial.html) puts the whole
+toolkit to work on a real function from earlier in the course.
 
 :::slide
 
 ## What's next
 
-- L3: **property-based testing with QCheck**. Generators,
+- L5: **property-based testing with QCheck**. Generators,
   shrinking, why FP makes PBT natural.
-- L4: **custom generators and stateful PBT**.
-- L5: **model-based testing**. Hash table vs reference.
-- L6-L7: **concurrency** via effect handlers.
-- L8: **tutorial**. OUnit2 + QCheck + handler-stubs on the
-  M05-L06 evaluator.
+- L6: **custom generators and stateful PBT**.
+- L7: **model-based testing**. Hash table vs reference.
+- L8: **tutorial**. The full toolkit on an evaluator from
+  earlier in the course.
 
 :::
 

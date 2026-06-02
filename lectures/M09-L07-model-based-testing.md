@@ -496,8 +496,8 @@ let run_real t = function
   | Size -> OInt (Ht.size t)
 ```
 
-- One observation per command.
-- Captures every publicly visible bit of behaviour.
+- One observation per command, capturing every publicly
+  visible bit of behaviour.
 - `Add`/`Remove` -> `OUnit` (only visible later via Find/Size).
 - The property compares observations step by step.
 
@@ -884,6 +884,18 @@ but it is a *very strong* specification: any difference between
 the two on any operation sequence is, by definition, a bug in
 the optimised version.
 
+There is a classical name for the idea. An *equational
+specification* (or algebraic specification) defines a data
+abstraction by equations between its operations, with no
+implementation in sight: for a queue, laws like "`front` of
+`enqueue x` on an empty queue is `x`" and "`dequeue` then
+`enqueue` commutes with `enqueue` then `dequeue` on a non-empty
+queue". A reference implementation is those equations packaged
+as code: the simplest structure that satisfies all of them. When
+the test harness compares the optimised implementation against
+the reference on every operation sequence, it is checking the
+equations, wholesale, without ever writing them down one by one.
+
 This puts model-based testing into a productive middle ground.
 On one side, formal verification (Coq, Lean) gives mathematical
 certainty but costs months of effort per data structure. On the
@@ -912,6 +924,10 @@ Some industrial cases worth knowing:
 Model-based testing is the *executable spec* version of formal
 verification.
 
+- The reference implementation is an **equational
+  specification** packaged as code:
+  - the queue laws ("front of enqueue x on empty is x", ...)
+    checked wholesale, never written one by one.
 - **Formal proof (Coq, Lean)**: mathematical certainty, months
   of effort.
 - **Unit testing**: the cases you thought of.
@@ -1247,33 +1263,22 @@ as the oracle. Garbage in, garbage out.
 
 ## What's next
 
-The next two lectures take a sharp turn from data-structure
-testing into the second half of this module: concurrency. In
-[Lecture 6](M09-L06-effect-handlers.html) we introduce OCaml 5's
-*effect handlers*, the new control-flow mechanism that lets us
-intercept and re-route user-defined effects. In
-[Lecture 7](M09-L07-fibers-concurrency.html) we use effect
-handlers to build a small lightweight-concurrency library
-(fibers + channels) whose schedule is deterministic enough to
-test.
-
 [Lecture 8](M09-L08-tutorial.html) is the module's wrap-up
-tutorial: putting OUnit2 and QCheck side by side on a single
-worked example (the `expr` evaluator from M05-L06), watching
-QCheck catch a deliberately introduced bug, and stubbing
-side-effecting operations with effect handlers so the
-interpreter becomes testable in isolation.
+tutorial: the whole toolkit, applied end to end to a single
+worked example. We take the arithmetic `expr` evaluator from
+the pattern-matching module's tutorial, write its specification,
+design black-box cases from it, mechanise them with OUnit2,
+add QCheck properties with a custom generator, and watch the
+shrinker corner a deliberately introduced bug.
 
 :::slide
 
 ## What's next
 
-- L6: **effect handlers.** OCaml 5's mechanism for
-  user-defined effects and non-local control flow.
-- L7: **fibers and lightweight concurrency.** A small
-  scheduler built from effect handlers.
-- L8: **tutorial wrap-up.** OUnit2 + QCheck on the `expr`
-  evaluator, plus effect-handler stubs for side effects.
+- L8: **tutorial wrap-up.** The full toolkit on the `expr`
+  evaluator:
+  - spec → designed cases → OUnit2 suite → QCheck
+    properties → a planted bug, caught and shrunk.
 
 :::
 

@@ -250,14 +250,25 @@ your hands, not the framework's.
 
 :::slide
 
-## Sorted-list generators: two recipes
+## Sorted lists, recipe A1: generate, then sort
 
 ```ocaml
-(* Recipe A1: generate, then sort *)
 let sorted_a =
   QCheck.(map (fun xs -> List.sort compare xs) (list int))
+```
 
-(* Recipe A2: prefix-sum of non-negative increments *)
+- Transform arbitrary output into invariant-satisfying output.
+- Simple and cheap.
+- Biased toward random-shape distributions
+  - the sort erases any structure you wanted in the gaps.
+
+:::
+
+:::slide
+
+## Sorted lists, recipe A2: sorted by construction
+
+```ocaml
 let sorted_b =
   QCheck.(map
     (fun (start, gaps) ->
@@ -269,9 +280,9 @@ let sorted_b =
     (pair small_int (list small_nat)))
 ```
 
-- A1: simple, cheap, biased toward random-shape distributions.
-- A2: more control over gap distribution.
-- Both produce *only* sorted lists; no rejection.
+- A start plus non-negative gaps *is* a sorted list.
+- More control over the gap distribution.
+- Both recipes produce *only* sorted lists; no rejection.
 
 :::
 
@@ -606,8 +617,8 @@ let command_gen =
   ]
 
 let command_list_gen =
-  QCheck.make
-    (QCheck.Gen.list_size (QCheck.Gen.int_range 0 30) command_gen)
+  let open QCheck.Gen in
+  QCheck.make (list_size (int_range 0 30) command_gen)
 ```
 
 - One constructor per public operation.
@@ -628,8 +639,8 @@ That comparison, applied step-by-step over the operation
 sequence, is the technique of [model-based testing](M09-L07-model-based-testing.html),
 the topic of the next lecture. The pieces we built in this
 lecture (command type, command-list generator, default list
-shrinker) are exactly the pieces L05 will assemble into a
-complete stateful test harness.
+shrinker) are exactly the pieces the next lecture will assemble
+into a complete stateful test harness.
 
 :::slide
 
@@ -799,22 +810,19 @@ implementations agree on every observable step. When they
 disagree, QCheck shrinks the sequence to the smallest one that
 still diverges, and that shrunk sequence is the bug report.
 
-After that we leave testing for two lectures of *concurrency*
-(L06 effect handlers, L07 fibers and lightweight concurrency)
-before returning to testing in [L08](M09-L08-tutorial.html) for
-the wrap-up tutorial.
+After that, [the tutorial](M09-L08-tutorial.html) wraps the
+module up: the full toolkit, from specification to shrunk
+counterexample, applied to one evaluator.
 
 :::slide
 
 ## What's next
 
-- L5: **model-based testing.** Custom hash table vs list
+- L7: **model-based testing.** Custom hash table vs list
   reference. The command-sequence harness we just built,
   plus an oracle.
-- L6-L7: a turn to **concurrency**: effect handlers and a
-  small fibers library.
-- L8: **wrap-up tutorial.** OUnit2 + QCheck on the M05-L06
-  evaluator, plus effect-handler stubs.
+- L8: **wrap-up tutorial.** The full toolkit on the arithmetic
+  evaluator from the pattern-matching module.
 
 :::
 

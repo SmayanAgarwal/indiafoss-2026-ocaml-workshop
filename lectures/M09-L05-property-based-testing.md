@@ -41,9 +41,12 @@ of `int * int * int` values.
 
 That gap is the topic of this lecture. There is a fundamental
 limit to unit testing: *you can only check the cases you thought
-of.* A bug that only fires on an input you did not consider sits
-quietly in the code, passing your test suite, until a user finds
-it.
+of.* Even the disciplined version of "thinking of cases", the
+[boundary-and-partition design](M09-L03-test-design.html) you
+practised two lectures ago, still hand-picks one representative
+per region. A bug that only fires on an input you did not
+consider sits quietly in the code, passing your test suite,
+until a user finds it.
 
 Property-based testing closes that gap by inverting the
 relationship between the test author and the inputs. Instead of
@@ -1203,7 +1206,7 @@ built in this lecture.
 
 [Lecture 8](M09-L08-tutorial.html) puts unit testing and
 property-based testing together on a single, larger example: a
-function from earlier in the course (the M05-L06 evaluator),
+function from earlier in the course (the arithmetic evaluator from the pattern-matching tutorial),
 with a deliberately broken implementation that QCheck finds in
 seconds.
 
@@ -1211,13 +1214,14 @@ seconds.
 
 ## What's next
 
-- L4: **custom generators and stateful PBT.** Sorted lists,
+- L6: **custom generators and stateful PBT.** Sorted lists,
   valid BSTs, DAGs by construction; command-sequence
   generators.
-- L5: **model-based testing.** A custom hash table vs. a
+- L7: **model-based testing.** A custom hash table vs. a
   list-based reference.
-- L8: **tutorial.** OUnit2 + QCheck on the M05-L06 evaluator;
-  a deliberately buggy version found by the shrinker.
+- L8: **tutorial.** The full toolkit on the arithmetic
+  evaluator; a deliberately buggy version found by the
+  shrinker.
 
 :::
 
