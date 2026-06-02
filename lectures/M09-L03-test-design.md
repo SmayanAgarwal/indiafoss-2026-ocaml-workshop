@@ -439,8 +439,10 @@ never ran. This is mechanisable, and the OCaml tool for it is
 **Terminal, not browser.** Everything else in this lecture runs
 in this page's cells. Coverage is the exception: `bisect_ppx`
 works by *instrumenting your code at compile time*, so it needs
-a real `dune` project and a shell. The walkthrough below is for
-reproducing on your own machine.
+a real `dune` project and a shell. You can reproduce the
+walkthrough below on your own machine, or in the terminal
+embedded after it: a real Linux shell with `dune` and
+`bisect_ppx` preinstalled, running inside this page.
 
 The workflow has three steps. First, enable instrumentation for
 the executable under test in the `dune` file:
@@ -478,6 +480,30 @@ add that case, re-run. (Delete the old `.coverage` files
 between runs, or the report accumulates stale data.) Stop when
 the red that remains is code you *decided* not to test, rather
 than code you forgot.
+
+### Try it: coverage in your browser
+
+The terminal below boots a small Linux machine in this page and
+starts in a ten-pin bowling scorer project whose library is
+already instrumentation-enabled. Run its suite under coverage
+and ask for the score:
+
+- `dune runtest --instrument-with bisect_ppx` (the first
+  instrumented build links the instrumentation tool itself, so
+  expect a minute or two; later runs are quick).
+- `bisect-ppx-report summary`: what fraction of the scorer did
+  the tests reach?
+
+The uncovered expressions are the scorer's input-validation
+branches: the suite never feeds it an invalid game. That is
+exactly the glass-box to-do list this section is about: decide
+whether those branches deserve tests, write them in
+`test/test_bowling.ml`, and watch the percentage move. (This
+page has no `open` command for the HTML report; use the
+`summary` view here, and the HTML report on your own machine.)
+
+:::vm-terminal dir=/root/bowling
+:::
 
 :::slide
 

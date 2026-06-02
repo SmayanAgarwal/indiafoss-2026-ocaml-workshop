@@ -228,8 +228,10 @@ let () = run_test_tt_main suite
 **Terminal, not browser.** The cells on this page run OUnit2
 directly in the browser (the suite's report lands in the cell's
 output pane). This section is the exception: project wiring needs
-`dune` and a shell, so treat it as a walkthrough to reproduce on
-your own machine.
+`dune` and a shell. You can reproduce it on your own machine, or
+use the terminal embedded just below: a real Linux shell with
+the OCaml toolchain (and OUnit2) preinstalled, running inside
+this page.
 
 A real OCaml project has its tests in a separate `test/` directory
 with its own `dune` file. The minimal `dune` for an OUnit2 test is:
@@ -257,6 +259,27 @@ its output. If all tests pass, you see the summary line. If a test
 fails, `dune` exits non-zero, which is exactly the signal you want
 in CI: a failing test breaks the build, just like a type error
 does.
+
+### Try it: `dune runtest` in your browser
+
+The terminal below boots a small Linux machine inside this page;
+nothing is installed on your computer, and nothing runs on a
+server. (If you have used one of these terminals on another page,
+the download is already cached.) It starts in a project shaped
+exactly like the layout above: a Morse-code library in `lib/`, an
+executable in `bin/`, and an OUnit2 suite in `test/` written with
+the same `>::` / `>:::` / `assert_equal` vocabulary this lecture
+teaches:
+
+- `dune runtest` builds and runs the suite (the first build
+  fetches compiler files on demand, so it is the slow one).
+- `dune exec ./bin/main.exe` runs the program.
+- `nano test/test_morse.ml` (Ctrl-O saves, Ctrl-X exits): break
+  an expected string, re-run `dune runtest`, and read the failure
+  report; that non-zero exit is what CI keys on.
+
+:::vm-terminal dir=/root/morse
+:::
 
 :::slide
 

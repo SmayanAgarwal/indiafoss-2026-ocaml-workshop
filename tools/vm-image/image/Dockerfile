@@ -44,6 +44,9 @@ RUN opam pin add -y dune $(dune --version)
 # head commit. Swap to the official release when #448 merges.
 RUN opam pin add -y bisect_ppx \
     git+https://github.com/patricoferris/bisect_ppx.git#7061d643ff492b0045796357ee6917ded21fb1f0
+# Testing libraries used by module 9: OUnit2 for unit-test suites,
+# QCheck for property-based testing.
+RUN opam install -y ounit2 qcheck
 # Capture the opam environment as a static profile script BEFORE
 # trimming: `opam env` itself wants the repo index we delete below.
 RUN opam env > /etc/profile.d/opam.sh && \

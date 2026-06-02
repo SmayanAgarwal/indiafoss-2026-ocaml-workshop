@@ -89,3 +89,9 @@ node tools/vm-image/run-workflow.mjs        # must end "workflow complete"
 - bisect_ppx: pinned in the Dockerfile to upstream PR #448's head
   (OCaml 5.4 / ppxlib >= 0.36 port); swap to the opam release
   when it ships.
+- opam libraries: ounit2, qcheck (module 9's testing libraries).
+
+Deployed data versions live in the
+`fplaunchpad/ocaml-browser-vm` repo (one immutable `vN/` per
+build; currently `v2`). After any rebuild here, push a NEW `vN/`
+there and bump `DEFAULT_BASE` in `assets/vm/vm-terminal.js`.

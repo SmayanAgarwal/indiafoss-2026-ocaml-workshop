@@ -1,17 +1,30 @@
-let check msg b = if not b then (print_endline ("FAIL: " ^ msg); exit 1)
+open OUnit2
 
-let () =
-  check "sos" (Morse.encode "sos" = "... --- ...");
-  check "word split"
-    (Morse.encode "hello ocaml"
-    = ".... . .-.. .-.. --- / --- -.-. .- -- .-..");
-  check "decode" (Morse.decode "... --- ..." = "SOS");
-  (* round-trip: decoding an encoding recovers the (uppercased) input *)
-  check "round-trip sentence"
-    (Morse.decode (Morse.encode "hello ocaml") = "HELLO OCAML");
-  String.iter
-    (fun c ->
-      let s = String.make 1 c in
-      check s (Morse.decode (Morse.encode s) = s))
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  print_endline "All tests passed."
+let id s = s
+
+let tests =
+  "morse"
+  >::: [
+         ("sos" >:: fun _ ->
+           assert_equal ~printer:id "... --- ..." (Morse.encode "sos"));
+         ("decode" >:: fun _ ->
+           assert_equal ~printer:id "SOS" (Morse.decode "... --- ..."));
+         ("word split" >:: fun _ ->
+           assert_equal ~printer:id
+             ".... . .-.. .-.. --- / --- -.-. .- -- .-.."
+             (Morse.encode "hello ocaml"));
+         ("round-trip sentence" >:: fun _ ->
+           assert_equal ~printer:id "HELLO OCAML"
+             (Morse.decode (Morse.encode "hello ocaml")));
+         ("round-trip alphabet" >:: fun _ ->
+           String.iter
+             (fun c ->
+               let s = String.make 1 c in
+               assert_equal ~printer:id s (Morse.decode (Morse.encode s)))
+             "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+         ("unknown character" >:: fun _ ->
+           assert_raises (Invalid_argument "no Morse code for '?'")
+             (fun () -> Morse.encode "?"));
+       ]
+
+let () = run_test_tt_main tests
