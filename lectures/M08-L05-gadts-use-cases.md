@@ -392,8 +392,8 @@ let _ = rev v   (* = Cons (3, Cons (2, Cons (1, Nil))) *)
 - `snoc` adds one element (`n` to `n s`); `rev`'s type keeps the
   *same* length `n`.
 - But it is **O(n²)**: `snoc` is O(n), called n times.
-- The O(n) accumulator version needs *type-level addition*: it is in
-  the accompanying book, not here.
+- The O(n) accumulator version needs *type-level addition*; the
+  book aside on type-level arithmetic develops it.
 
 :::
 
@@ -403,52 +403,74 @@ put the *element types* there instead. Both are the same move:
 encode a structural invariant as a type index, and the compiler
 checks it for you.
 
-## Aside: tail-recursive reverse and type-level addition
+## Aside: type-level arithmetic
 
-This section is in the book but not the slides; skip it on a first
-read. The slides stop at the O(n²) `rev`. To recover the O(n)
-accumulator version *and* keep the length in the type, we have to
-teach the type system how to *add* two lengths. We cannot write
-`'m + 'n` directly, but we can encode addition as a relation
-witnessed by a value: a `('a, 'b, 'c) plus` is a *proof* that
-`'a + 'b = 'c`.
+This section is in the book, not the slides; skip it on a first
+read. The slides noted that operations which *change* a vector's
+length, an O(n) reverse, or appending two vectors, need the type
+system to *add* lengths. We cannot write `'m + 'n`, but we can
+encode addition as a relation witnessed by a value: a
+`('m, 'n, 'o) plus` is a *proof* that `'m + 'n = 'o`.
 
 ```ocaml
 type (_, _, _) plus =
-  | PlusZero  : (z, 'n, 'n) plus
-  | PlusShift : ('a, 'b s, 'c s) plus -> ('a s, 'b, 'c s) plus
+  | PlusZero : (z, 'n, 'n) plus                  (* 0 + n = n *)
+  | PlusSucc : ('m, 'n, 'o) plus -> ('m s, 'n, 'o s) plus
+                                  (* m+n=o, so (m+1)+n = o+1 *)
 ```
 
-`PlusZero` is the base fact `0 + n = n`. `PlusShift` takes a proof
-that `a + (b+1) = c+1` and returns one that `(a+1) + b = c+1`,
-shifting an `s` from the second summand to the first while keeping
-the sum. A value of this type *is* a proof: this is the Curry-Howard
-correspondence (propositions are types, proofs are values). The
-tail-recursive reverse then threads such a proof alongside the two
-vectors, so the result length `o` is justified at every step:
+A value of this type *is* a proof; this is the Curry-Howard
+correspondence (propositions are types, proofs are values).
+`PlusZero` is the base fact `0 + n = n`; `PlusSucc` adds one to the
+first summand and to the sum. With it, `append` can promise that the
+result length is exactly the sum of the inputs:
 
 ```ocaml
-let rec rev_acc :
-  type m n o. (m, n, o) plus -> ('a, m) vec -> ('a, n) vec
-            -> ('a, o) vec =
-  fun p l acc -> match p, l with
-  | PlusZero, Nil              -> acc
-  | PlusShift p', Cons (x, xs) -> rev_acc p' xs (Cons (x, acc))
+let rec append : type m n o.
+  (m, n, o) plus -> ('a, m) vec -> ('a, n) vec -> ('a, o) vec =
+  fun p l1 l2 -> match p, l1 with
+  | PlusZero, Nil             -> l2
+  | PlusSucc p', Cons (x, xs) -> Cons (x, append p' xs l2)
 
-(* reverse [1; 2; 3], with a proof that 3 + 0 = 3 *)
-let three_plus_zero : (z s s s, z, z s s s) plus =
-  PlusShift (PlusShift (PlusShift PlusZero))
-let _ = rev_acc three_plus_zero (Cons (1, Cons (2, Cons (3, Nil)))) Nil
+(* append [1; 2] [3; 4; 5], with a proof that 2 + 3 = 5 *)
+let two_plus_three : (z s s, z s s s, z s s s s s) plus =
+  PlusSucc (PlusSucc PlusZero)
+let _ = append two_plus_three
+          (Cons (1, Cons (2, Nil))) (Cons (3, Cons (4, Cons (5, Nil))))
 ```
 
-Each `Cons` moved from `l` onto `acc` is matched by one `PlusShift`
-peeled off the proof, so the lengths stay in lock-step and the two
-cases are exhaustive (the others are impossible and the compiler
-knows it). This is the O(n) reverse, with the type checking that it
-preserves length. The price: *you* supply the proof
-`three_plus_zero` by hand. Languages built for this (Agda, Idris,
-F\*) construct such proofs automatically; in OCaml it is manual, and
-this is as far down the dependent-types road as we go.
+Each `Cons` taken off `l1` is matched by one `PlusSucc` peeled off
+the proof, so the two cases are exhaustive and the result length is
+justified at every step. The same `plus` justifies an O(n)
+length-preserving reverse.
+
+The technique scales to other arithmetic. *Multiplication*,
+`('m, 'n, 'o) mult` meaning `m * n = o`, is built from `plus`,
+because `(m+1) * n = n + m*n`:
+
+```ocaml
+type (_, _, _) mult =
+  | MultZero : (z, 'n, z) mult                   (* 0 * n = 0 *)
+  | MultSucc : ('n, 'p, 'o) plus * ('m, 'n, 'p) mult -> ('m s, 'n, 'o) mult
+                                  (* m*n=p and n+p=o, so (m+1)*n = o *)
+```
+
+And *minimum*, `('m, 'n, 'o) min` meaning `min m n = o`, has three
+cases, mirroring a `zip` that stops at the shorter vector:
+
+```ocaml
+type (_, _, _) min =
+  | MinZero1 : (z, 'n, z) min                    (* min 0 n = 0 *)
+  | MinZero2 : ('m, z, z) min                    (* min m 0 = 0 *)
+  | MinSucc  : ('m, 'n, 'o) min -> ('m s, 'n s, 'o s) min
+```
+
+The price is the same throughout: *you* supply the proof by hand
+(`two_plus_three` above). Languages built for this (Agda, Idris,
+F\*) construct such proofs automatically; in OCaml it is manual. The
+[Module 8 practice](M08-L08-practice.html) puts these to work,
+implementing `append` (with `plus`), `cross` (with `mult`), and a
+length-matching `zip` (with `min`).
 
 ## Two more idioms, next lecture
 
