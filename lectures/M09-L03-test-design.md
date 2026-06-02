@@ -498,9 +498,12 @@ The uncovered expressions are the scorer's input-validation
 branches: the suite never feeds it an invalid game. That is
 exactly the glass-box to-do list this section is about: decide
 whether those branches deserve tests, write them in
-`test/test_bowling.ml`, and watch the percentage move. (This
-page has no `open` command for the HTML report; use the
-`summary` view here, and the HTML report on your own machine.)
+`test/test_bowling.ml`, and watch the percentage move. For the
+green-and-red view, run `bisect-ppx-report html && sync` and
+then press the terminal's *coverage report* button: the page
+lifts the report straight out of the VM's filesystem into a new
+browser tab (the `sync` makes sure the freshly written report
+has actually reached that filesystem).
 
 :::vm-terminal dir=/root/bowling
 :::

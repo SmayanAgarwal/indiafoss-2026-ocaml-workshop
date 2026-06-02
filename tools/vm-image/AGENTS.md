@@ -72,6 +72,12 @@ integration work: `PHASE2.md`.
 - **node libv86 reads chunks via fs, not HTTP**: a baseurl URL
   silently hangs the 9p filesystem in node; use a local directory
   path there. HTTP baseurl is for the browser.
+- **emulator.read_file cannot see freshly written guest files**:
+  the guest mounts 9p with cache=loose, so new files sit in the
+  guest page cache until writeback (default ~30 s). Run `sync` in
+  the guest before host-side reads (the coverage viewer's
+  documented command does), and the image sets fast writeback
+  sysctls (99-writeback.conf, from v3 data onward).
 - **node make-state.mjs appears to hang**: it is emulating a full
   kernel boot; ~20 s of silence is normal. Output goes through a
   serial listener; piped through `tail`, you see nothing until

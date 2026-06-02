@@ -78,5 +78,12 @@ RUN for i in devfs dmesg mdev hwdrivers; do rc-update add $i sysinit; done
 RUN for i in hwclock modules sysctl hostname syslog bootmisc; do rc-update add $i boot; done
 RUN rc-update add killprocs shutdown
 
+# Flush dirty pages promptly (~2 s instead of the default ~30 s).
+# The host page reads VM files via the 9p backend (the coverage
+# report viewer); with cache=loose, lazy writeback would make
+# freshly written files invisible to it for up to half a minute.
+RUN printf 'vm.dirty_expire_centisecs = 200\nvm.dirty_writeback_centisecs = 200\n' \
+      > /etc/sysctl.d/99-writeback.conf
+
 # Generate initramfs with 9p modules
 RUN mkinitfs -F "base virtio 9p" $(cat /usr/share/kernel/$KERNEL/kernel.release)

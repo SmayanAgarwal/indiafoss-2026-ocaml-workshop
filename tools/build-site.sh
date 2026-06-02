@@ -988,6 +988,7 @@ emit_playground() {
       <tr><td><code>nano lib/morse.ml</code></td><td>edit code (Ctrl-O save, Ctrl-X exit), then rebuild</td></tr>
       <tr><td><code>cd ~/bowling &amp;&amp; dune runtest --instrument-with bisect_ppx</code></td><td>run tests with coverage instrumentation (the first instrumented build takes a minute or two)</td></tr>
       <tr><td><code>bisect-ppx-report summary</code></td><td>how much did the tests cover?</td></tr>
+      <tr><td><code>bisect-ppx-report html &amp;&amp; sync</code></td><td>then press the terminal's <em>coverage report</em> button to view it in a new tab</td></tr>
     </table>
 
     <p style="margin-top: 2rem; font-size: 0.88rem; color: var(--muted);">

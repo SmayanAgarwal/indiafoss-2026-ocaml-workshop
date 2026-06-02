@@ -35,8 +35,13 @@
     ".vm-terminal button.vm-start:hover{background:#3a663a}",
     ".vm-terminal button.vm-start[disabled]{opacity:.5;cursor:default}",
     ".vm-terminal .vm-term{padding:.5rem .5rem 0 .5rem;display:none}",
-    ".vm-terminal .vm-status{font-size:.78rem;color:#8c8;padding:.35rem .8rem;",
-    "  border-top:1px solid #333;min-height:1.2em}",
+    ".vm-terminal .vm-statusbar{display:flex;align-items:center;gap:.8rem;",
+    "  border-top:1px solid #333;padding:.35rem .8rem}",
+    ".vm-terminal .vm-status{font-size:.78rem;color:#8c8;min-height:1.2em;flex:1}",
+    ".vm-terminal button.vm-coverage{font:inherit;font-size:.78rem;",
+    "  padding:.15rem .6rem;border-radius:5px;border:1px solid #577;",
+    "  background:#243b3b;color:#cee;cursor:pointer;white-space:nowrap}",
+    ".vm-terminal button.vm-coverage:hover{background:#2f4f4f}",
   ].join("\n");
 
   function injectOnce(id, make) {
@@ -58,6 +63,119 @@
   }
 
   function fmtMB(bytes) { return (bytes / 1048576).toFixed(1) + " MB"; }
+
+  /* ---- coverage-report viewer ------------------------------------
+   * bisect-ppx-report html writes a static report into the project's
+   * _coverage/ directory INSIDE the VM. The host page can read any
+   * VM file via emulator.read_file(), so we lift the whole report
+   * out, stitch index + per-file pages into ONE self-contained
+   * document (index links become #anchors), and open it in a new
+   * tab. The report's own JS is stripped (it only does syntax
+   * highlighting); the coverage colouring is pure CSS and survives.
+   * The tab must be opened synchronously in the click handler or
+   * popup blockers eat it; we fill it in once the reads finish. */
+
+  function stripScripts(html) {
+    return html.replace(/<script[\s\S]*?<\/script\s*>/gi, "")
+               .replace(/<link[^>]*>/gi, "");
+  }
+
+  function bodyOf(html) {
+    var m = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    return m ? m[1] : html;
+  }
+
+  function anchorOf(rel) {
+    return "cov-" + rel.replace(/[^a-zA-Z0-9]+/g, "-");
+  }
+
+  function openCoverage(root, emulator, setStatus) {
+    /* open synchronously: popup blockers allow it inside the click */
+    var w = window.open("", "_blank");
+    if (w) {
+      w.document.write(
+        '<title>coverage report</title><p style="font-family:monospace">' +
+        "reading the coverage report out of the VM ...</p>");
+    }
+    var fail = function (msg) {
+      if (w) w.close();
+      setStatus(msg);
+    };
+
+    var dec = new TextDecoder();
+    /* The guest's 9p mount is cache=loose: freshly written report
+     * files may still sit in the guest page cache where read_file
+     * cannot see them (hence the documented `&& sync`). Retry a
+     * little to absorb stragglers. */
+    var readText = function (p, attempts) {
+      attempts = attempts === undefined ? 3 : attempts;
+      return emulator.read_file(p).then(
+        function (u8) { return dec.decode(u8); },
+        function (e) {
+          if (attempts <= 1) throw e;
+          return new Promise(function (res) { setTimeout(res, 800); })
+            .then(function () { return readText(p, attempts - 1); });
+        });
+    };
+    var candidates = [];
+    if (root.dataset.dir) candidates.push(root.dataset.dir);
+    ["/root/bowling", "/root/morse", "/root/hello"].forEach(function (d) {
+      if (candidates.indexOf(d) < 0) candidates.push(d);
+    });
+
+    var assemble = function (reportRoot, indexHtml, css) {
+      /* per-file pages, as linked from the index */
+      var rels = [];
+      var re = /href="([^"#]+\.html)"/g;
+      var m;
+      while ((m = re.exec(indexHtml)) !== null) {
+        if (rels.indexOf(m[1]) < 0) rels.push(m[1]);
+      }
+      return Promise.all(rels.map(function (rel) {
+        return readText(reportRoot + "/" + rel).then(
+          function (h) { return { rel: rel, html: h }; },
+          function () { return null; });
+      })).then(function (pages) {
+        var indexBody = bodyOf(stripScripts(indexHtml));
+        pages = pages.filter(function (p) { return p; });
+        pages.forEach(function (p) {
+          indexBody = indexBody.split('href="' + p.rel + '"')
+            .join('href="#' + anchorOf(p.rel) + '"');
+        });
+        var sections = pages.map(function (p) {
+          var b = bodyOf(stripScripts(p.html))
+            /* back-links to the index become a jump to the top */
+            .replace(/href="[^"]*index\.html"/gi, 'href="#cov-top"');
+          return '<section id="' + anchorOf(p.rel) + '">' + b + "</section>";
+        }).join("\n<hr>\n");
+        var doc =
+          "<!doctype html><html><head><meta charset=\"utf-8\">" +
+          "<title>coverage: " + reportRoot + "</title>" +
+          "<style>" + css + "</style></head><body id=\"cov-top\">" +
+          indexBody + "<hr>" + sections + "</body></html>";
+        var blob = new Blob([doc], { type: "text/html" });
+        var url = URL.createObjectURL(blob);
+        if (w) w.location = url;
+        else window.open(url, "_blank");
+        setStatus("coverage report opened in a new tab");
+      });
+    };
+
+    var tryNext = function (i) {
+      if (i >= candidates.length) {
+        fail("no coverage report found; run: dune runtest " +
+             "--instrument-with bisect_ppx && bisect-ppx-report html && sync");
+        return;
+      }
+      var reportRoot = candidates[i] + "/_coverage";
+      Promise.all([readText(reportRoot + "/index.html"),
+                   readText(reportRoot + "/coverage.css")])
+        .then(function (rs) { return assemble(reportRoot, rs[0], rs[1]); },
+              function () { tryNext(i + 1); })
+        .catch(function (e) { fail("coverage viewer failed: " + e.message); });
+    };
+    tryNext(0);
+  }
 
   function downloadedBytes(base) {
     var total = 0;
@@ -127,6 +245,12 @@
         });
         root.vmEmulator = emulator; /* for tests and consoles */
 
+        var covBtn = root.querySelector("button.vm-coverage");
+        covBtn.hidden = false;
+        covBtn.addEventListener("click", function () {
+          openCoverage(root, emulator, setStatus);
+        });
+
         /* serial0 <-> xterm, with batched writes */
         var pending = [];
         var flushScheduled = false;
@@ -186,7 +310,10 @@
       "is all in your browser tab.</p>" +
       "</div>" +
       '<div class="vm-term"></div>' +
-      '<div class="vm-status"></div>';
+      '<div class="vm-statusbar"><div class="vm-status"></div>' +
+      '<button class="vm-coverage" type="button" hidden ' +
+      'title="Render _coverage/ from inside the VM (run bisect-ppx-report html first)">' +
+      "coverage report</button></div>";
 
     var btn = root.querySelector("button.vm-start");
     btn.addEventListener("click", function () {
