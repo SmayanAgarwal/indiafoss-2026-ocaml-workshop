@@ -645,41 +645,66 @@ expect.
 
 The alternative is to *strengthen* the RI to demand a canonical
 form: the fraction is always in lowest terms, and the
-denominator is always positive.
+denominator is always positive. Two helpers do the work. `norm`
+maps any pair with a nonzero denominator to its canonical
+representative; `canon_ok` is this representation's `rep_ok`,
+written outside the module so it fits beside `norm` on one
+slide:
+
+:::slide
+
+## Canonical form: `norm` does the work
+
+```ocaml
+let rec gcd a b = if b = 0 then a else gcd b (a mod b)
+
+let norm (p, q) =
+  let s = if q < 0 then -1 else 1 in
+  let g = gcd (abs p) (abs q) in
+  (s * p / g, s * q / g)
+
+let canon_ok ((p, q) as r) =
+  if q > 0 && gcd (abs p) q = 1 then r
+  else failwith "RI violated: not canonical"
+
+let _ = norm (2, 4)   (* = (1, 2) *)
+let _ = norm (1, -2)  (* = (-1, 2) *)
+```
+
+- Lowest terms via `gcd`; the sign migrates to the numerator.
+- `canon_ok` is `rep_ok` for the new, stronger invariant.
+
+:::
+
+The module itself then pipes every producer through
+`canon_ok (norm ...)`:
+
+:::slide
+
+## Canonical form: normalise at birth
 
 ```ocaml
 module Rational_canon : RATIONAL = struct
-  (* AF: (p, q) represents the rational number p/q.
-     RI: q > 0, and gcd (abs p) q = 1
-         (in lowest terms; the sign lives in p). *)
+  (* AF: (p, q) is p/q.  RI: q > 0, lowest terms. *)
   type t = int * int
-
-  let rec gcd a b = if b = 0 then a else gcd b (a mod b)
-
-  let norm (p, q) =
-    let s = if q < 0 then -1 else 1 in
-    let g = gcd (abs p) (abs q) in
-    (s * p / g, s * q / g)
-
-  let rep_ok ((p, q) as r) =
-    if q > 0 && gcd (abs p) q = 1 then r
-    else failwith "RI violated: not canonical"
-
   let make p q =
-    if q = 0 then invalid_arg "make: zero denominator"
-    else rep_ok (norm (p, q))
-
+    if q = 0 then invalid_arg "make"
+    else canon_ok (norm (p, q))
   let add (p1, q1) (p2, q2) =
-    rep_ok (norm ((p1 * q2) + (p2 * q1), q1 * q2))
-
+    canon_ok (norm ((p1 * q2) + (p2 * q1), q1 * q2))
   let div (p1, q1) (p2, q2) =
     if p2 = 0 then failwith "div: divide by zero"
-    else rep_ok (norm (p1 * q2, q1 * p2))
-
+    else canon_ok (norm (p1 * q2, q1 * p2))
   let equal (r1 : t) (r2 : t) = r1 = r2
-  let to_string (p, q) = string_of_int p ^ "/" ^ string_of_int q
+  let to_string (p, q) = Printf.sprintf "%d/%d" p q
 end
+```
 
+- Every producer pipes its result through `norm`.
+
+:::
+
+```ocaml
 let c = Rational_canon.make 2 4
 let _ = Rational_canon.to_string c  (* = "1/2" *)
 let _ = Rational_canon.equal (Rational_canon.make 1 2) c  (* = true *)
@@ -699,38 +724,6 @@ Neither choice is "right". The weak RI does less work per
 operation; the strong RI makes observation and comparison
 trivial. What is *not* optional is writing the choice down,
 because every operation in the module is written against it.
-
-:::slide
-
-## Canonical form: normalise at birth
-
-```text
-module Rational_canon : RATIONAL = struct
-  (* AF: (p, q) represents the rational number p/q.
-     RI: q > 0, and gcd (abs p) q = 1. *)
-  type t = int * int
-
-  let rec gcd a b = if b = 0 then a else gcd b (a mod b)
-
-  let norm (p, q) =
-    let s = if q < 0 then -1 else 1 in
-    let g = gcd (abs p) (abs q) in
-    (s * p / g, s * q / g)
-
-  let make p q =
-    if q = 0 then invalid_arg "make: zero denominator"
-    else rep_ok (norm (p, q))
-
-  (* add, div: as before, with [rep_ok (norm ...)] applied
-     to each result. *)
-
-  let equal (r1 : t) (r2 : t) = r1 = r2
-end
-```
-
-- Every producer pipes its result through `norm`.
-
-:::
 
 :::slide
 
