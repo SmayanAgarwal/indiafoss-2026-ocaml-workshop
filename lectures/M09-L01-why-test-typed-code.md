@@ -411,13 +411,16 @@ A *failure* is the observable violation of intended behaviour: the
 `sort` that returns `[3; 1; 2]` when it should return `[1; 2;
 3]`; the crashed program; the wrong invoice.
 
-Tests are the primary tool to turn *faults* into *failures*, so
-that we can observe them and then *debug*: track each failure
-backwards to the fault that caused it, and fix that fault. A test
-suite that "passes" does not say there are no faults; it says
-that for the inputs we tried, no fault produced a visible failure.
-Choosing inputs cleverly enough that the existing faults *do*
-fail is part of the craft.
+That pair gives the next two words one-line definitions.
+*Testing* is the craft of turning faults into failures: driving
+the program with inputs chosen so that the errors hiding in the
+source produce behaviour we can observe. *Debugging* is the
+reverse traversal: tracking an observed failure back to the
+fault that caused it, and fixing that fault. A test suite that
+"passes" does not say there are no faults; it says that for the
+inputs we tried, no fault produced a visible failure. Choosing
+inputs cleverly enough that the existing faults *do* fail is
+the whole craft.
 
 When a test does turn a fault into a failure, the remaining work
 is *debugging*: tracing the visible failure back to the fault
@@ -449,7 +452,9 @@ module. For now, the vocabulary is enough.
   even when the program "works".
 - **Failure**: the observable bad behaviour. The crash, the wrong
   output, the broken invariant.
-- Tests turn faults into failures, so we can find them.
+- **Testing**: turning faults into failures, so we can see them.
+- **Debugging**: tracing a failure back to the fault that caused
+  it, then fixing the fault.
 - A green test suite means "we didn't trigger any fault on the
   inputs we tried", not "there are no faults".
 
