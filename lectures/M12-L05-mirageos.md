@@ -260,7 +260,7 @@ fingerprint, bloom filters, adaptive radix trees, DIET trees),
 Security (x.509, ASN.1, TLS, SSH), and Crypto (hashes, ciphers, AEAD
 primitives, public-key, Fortuna); plus a side note that TLS uses
 "rigorous engineering" via Fiat-Crypto extracted from
-Coq.](/assets/m12/figures/slide-29-available-libraries.svg)
+Rocq.](/assets/m12/figures/slide-29-available-libraries.svg)
 
 Roughly catalogued, the available libraries are:
 
@@ -281,7 +281,8 @@ Roughly catalogued, the available libraries are:
 Almost all of this is **reimplemented in OCaml**. The few exceptions
 are performance-critical low-level routines (constant-time AES, for
 example) which are either written in carefully audited C, or
-extracted from formally verified Coq sources (we'll come to that in a
+extracted from formally verified Rocq (formerly Coq) sources
+(we'll come to that in a
 moment). For an application like a HTTPS web server, *every layer
 from the Ethernet frame parser up to the HTTP response writer is
 OCaml*. There is no `libssl`. There is no `libcurl`. There is no
@@ -332,12 +333,12 @@ Three properties stand out:
    production server, (b) generate test inputs, and (c) validate
    against recorded traces from other TLS stacks. The lack of
    side effects in the core makes this consolidation possible.
-2. **Cryptographic primitives use Fiat-Crypto, extracted from Coq
+2. **Cryptographic primitives use Fiat-Crypto, extracted from Rocq
    proofs.** The constant-time arithmetic that underpins
    elliptic-curve operations is notoriously fiddly: subtle
    side-channel leaks have produced multiple CVEs in mainstream
    implementations. Fiat-Crypto is a project that *proves*, in the
-   Coq proof assistant, that the C code implementing these
+   Rocq proof assistant, that the C code implementing these
    primitives matches a mathematical specification, and then
    *extracts* the verified C automatically. OCaml-TLS uses these
    extracted primitives. The trust story for the cryptographic
@@ -368,7 +369,7 @@ audit means something.
 
 - **Same pure OCaml code** drives the server, generates test
   oracles, and validates against real-world TLS traces.
-- **Cryptographic primitives extracted from Coq via Fiat-Crypto:
+- **Cryptographic primitives extracted from Rocq via Fiat-Crypto:
   machine-checked correctness for the constant-time arithmetic.**
 - **Variant types encode the protocol state machine; invalid
   transitions are unrepresentable.**
@@ -654,7 +655,7 @@ in a way that conventional TLS libraries typically are not?
 - [ ] It is written in a much smaller number of lines.
 - [x] The same pure OCaml code drives the server, generates test
   oracles, and validates against recorded TLS traces; the
-  cryptographic primitives are extracted from machine-checked Coq
+  cryptographic primitives are extracted from machine-checked Rocq
   proofs (Fiat-Crypto); and the protocol state machine is encoded
   in types so invalid transitions are unrepresentable.
 - [ ] It is written by a different vendor from OpenSSL.
@@ -679,7 +680,7 @@ TLS libraries are not.
 - `mirage configure -t hvt && make` produces a **statically-linked
   ELF** that runs as a **KVM VM via Solo5**.
 - OCaml-TLS's rigorous engineering: same pure code drives prod,
-  tests, and oracle; crypto from Coq; types encode the state
+  tests, and oracle; crypto from Rocq; types encode the state
   machine.
 
 :::
@@ -723,7 +724,7 @@ way they capture any container's stdout.
   <https://www.usenix.org/system/files/conference/usenixsecurity15/sec15-paper-kaloper-mersinjak.pdf>
 - **Robur**, a non-profit deploying MirageOS in production:
   <https://robur.coop/>
-- **Fiat-Crypto** (Coq-extracted cryptographic primitives):
+- **Fiat-Crypto** (Rocq-extracted cryptographic primitives):
   <https://github.com/mit-plv/fiat-crypto>
 - KC Sivaramakrishnan, *Securing the foundations* (CAIR / DRDO,
   Nov 2024), for the hardware-assisted-unikernels pointer.

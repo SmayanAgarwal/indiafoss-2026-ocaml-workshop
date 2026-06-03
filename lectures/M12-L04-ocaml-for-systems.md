@@ -439,7 +439,7 @@ For MirageOS, the unsafe core is the OCaml runtime (~30,000 lines
 of C, maintained by the upstream OCaml team) plus a small set of
 audited FFI calls into Solo5 (~5,000 lines of C, maintained by the
 Solo5 project) and into the cryptography library (a few hundred lines
-of carefully-audited C extracted from Coq, which we will see in
+of carefully-audited C extracted from Rocq, which we will see in
 [M12-L05](M12-L05-mirageos.html)). The C surface of a MirageOS
 unikernel is on the order of 40,000 lines, compared with Linux's
 30 million. Three orders of magnitude smaller. Same memory-safety
@@ -761,7 +761,7 @@ We have now seen the three ingredients separately. The last lecture,
 sum of library OS plus virtualisation plus OCaml, with a walk-through
 of the compiler pipeline (`config.ml` to `mirage configure` to `dune
 build` to a static ELF binary), the available libraries, the TLS
-story (Coq-extracted crypto, "rigorous engineering"), and a Hello
+story (Rocq-extracted crypto, "rigorous engineering"), and a Hello
 Unikernel code excerpt.
 
 :::slide

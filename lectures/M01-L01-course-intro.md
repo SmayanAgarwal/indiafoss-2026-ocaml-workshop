@@ -629,7 +629,7 @@ Languages*](https://www.cis.upenn.edu/~bcpierce/tapl/) is the
 standard reference, and
 [*Software Foundations*](https://softwarefoundations.cis.upenn.edu/)
 (Pierce et al., free online) takes you through the same material
-mechanised in Coq.
+mechanised in Rocq (formerly Coq).
 
 ## A quick checkpoint
 

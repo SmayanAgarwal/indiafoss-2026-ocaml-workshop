@@ -906,7 +906,7 @@ the reference on every operation sequence, it is checking the
 equations, wholesale, without ever writing them down one by one.
 
 This puts model-based testing into a productive middle ground.
-On one side, formal verification (Coq, Lean) gives mathematical
+On one side, formal verification (Rocq, Lean) gives mathematical
 certainty but costs months of effort per data structure. On the
 other side, unit testing gives the cases you thought of. Model-
 based PBT gives you, for one hour of harness writing,
@@ -938,7 +938,7 @@ verification.
   specification** packaged as code:
   - the queue laws ("front of enqueue x on empty is x", ...)
     checked wholesale, never written one by one.
-- **Formal proof (Coq, Lean)**: mathematical certainty, months
+- **Formal proof (Rocq, Lean)**: mathematical certainty, months
   of effort.
 - **Unit testing**: the cases you thought of.
 - **Model-based PBT**: a sampled refinement check against a

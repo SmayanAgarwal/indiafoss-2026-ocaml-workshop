@@ -351,7 +351,8 @@ content overlaps with unit tests once you have seen one.
 
 A fair question to ask, at this point, is: why test at all? If
 types are not enough, why not go all the way and *prove* the
-program correct? Tools like [Coq](https://coq.inria.fr/),
+program correct? Tools like
+[Rocq](https://rocq-prover.org/) (formerly Coq),
 [Lean](https://lean-lang.org/), and [Isabelle](https://isabelle.in.tum.de/)
 can in principle express, mechanically check, and force you to
 discharge a proof that `sort` permutes its input and produces a
@@ -392,7 +393,7 @@ practice; this module is the introduction.
 - And the **specification problem** is real either way: writing
   down what "correct" means is its own challenge.
 - This module: testing, the practical workhorse.
-- Out of scope: formal verification (Coq, Lean, Isabelle).
+- Out of scope: formal verification (Rocq, Lean, Isabelle).
 
 :::
 
