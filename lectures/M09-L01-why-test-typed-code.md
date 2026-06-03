@@ -505,14 +505,14 @@ You write fewer tests; the ones you write matter more.
 
 :::slide
 
-## Types shrink the test surface
+## What do types buy you, even with tests?
 
 - Dynamic-language suites are full of malformed-input tests:
   - wrong type, missing field, `None` where a list goes.
 - In OCaml the type checker rules those inputs out
   - so those tests simply do not exist.
-- Tests target *behaviour on well-typed input*: a smaller
-  surface.
+- Tests target *behaviour on well-typed input*
+  - type shrink the test surface.
 - Fewer tests, each more informative
   - RWO: types *raise* the value of every test you write.
 
@@ -546,6 +546,7 @@ let () =
 
 - Five specific cases. Each runs cheaply.
 - Each is informative: "this input maps to that output."
+- The tests give us confidence that `max3` is correct, but not proof.
 
 :::
 
@@ -581,7 +582,8 @@ failing case before reporting it.
 ## Activity: the well-typed sort
 
 :::quiz mcq id=M09-L01-q1
-A colleague gives you this implementation:
+A colleague gives you this implementation of `dedup`, which is
+meant to remove duplicate elements from a list:
 
 ```text
 let dedup (xs : 'a list) : 'a list = []
