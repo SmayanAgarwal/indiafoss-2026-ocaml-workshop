@@ -602,6 +602,10 @@ implementation forgot to check). Watch `rep_ok` catch it:
 
 ## A bug `rep_ok` catches early
 
+```text
+let div (p1, q1) (p2, q2) = rep_ok (p1 * q2, q1 * p2)
+```
+
 ```ocaml skip
 let zero = Rational.make 0 5
 let half = Rational.make 1 2
@@ -690,6 +694,17 @@ one-to-one. The same external contract, the `RATIONAL`
 signature, is satisfied by both modules; the client cannot tell
 which one they are using except by performance. That is
 abstraction doing its job.
+
+Notice the changed role of `rep_ok` here. A correct `norm`
+always emits a canonical pair, so `rep_ok (norm ...)` should
+never fire: it is a *sanity check*, an executable postcondition
+on `norm` itself. It earns its keep the day someone edits
+`norm`, or adds a producer that forgets to call it; the
+violation then explodes inside the operation that created the
+bad value, not three calls later. (In the weak-RI module,
+`rep_ok` did real work, catching the buggy `div` on a live
+input; here it is development-time insurance, exactly the kind
+Pitfall 5 below says to keep swappable rather than delete.)
 
 Neither choice is "right". The weak RI does less work per
 operation; the strong RI makes observation and comparison
