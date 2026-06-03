@@ -219,8 +219,23 @@
           fontSize: 14,
           theme: { background: "#1e1e1e" },
         });
+        /* Make the container visible and let layout settle BEFORE
+         * opening xterm. Opening onto a still-hidden / unsized
+         * element makes real Chrome's compositor cache zero
+         * dimensions and paint a blank pane until a later refresh
+         * (headless tolerates it). Open on the next frame, then
+         * force one refresh, so the prompt always shows. */
         termDiv.style.display = "block";
-        term.open(termDiv);
+        var opened = false;
+        var openTerm = function () {
+          if (opened) return;
+          opened = true;
+          term.open(termDiv);
+          requestAnimationFrame(function () {
+            try { term.refresh(0, term.rows - 1); } catch (e) {}
+          });
+        };
+        requestAnimationFrame(openTerm);
 
         setStatus("starting VM (downloading boot snapshot) ...");
         var emulator = new window.V86({
