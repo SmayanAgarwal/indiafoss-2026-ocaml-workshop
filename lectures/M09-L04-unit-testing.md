@@ -1,5 +1,5 @@
 ---
-title: "Running and organising tests"
+title: "Unit testing"
 lecture_no: 4
 week: 9
 duration_target_min: 18
@@ -14,17 +14,48 @@ reading:
     url: https://github.com/gildor478/ounit
 ---
 
-# Running and organising tests
+# Unit testing
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Running and organising tests</h2>
+<h2 class="title-slide-lecture">Unit testing</h2>
 <p class="title-slide-label">Module 9 &middot; Lecture 4</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
+
+:::
+
+A **unit test** checks one *unit* of code: a single function, or
+a single module, exercised in isolation against its
+specification. The check is small, fast, and repeatable: fixed
+inputs, an expected result, and a comparison between the two.
+**Unit testing** is the practice of writing many such checks and
+running them together. It is the most local level of testing: a
+unit test exercises one function on its own, as opposed to
+*integration* testing (do the functions work together?) and
+*system* testing (does the whole program meet its requirements?).
+Bugs are cheapest to find at the unit level, because a failing
+unit test points at one function, not at a whole pipeline.
+
+:::slide
+
+## Unit testing
+
+A **unit test** checks one *unit* in isolation: a single
+function or module, against its specification.
+
+- Small, fast, repeatable: fixed input, expected result, a
+  comparison.
+- **Unit testing** = many such checks, run together as a
+  **suite**.
+- The most local level of testing
+  - below *integration* (units together) and *system* (the whole
+    program) testing.
+- A failing unit test points at *one function*, not a whole
+  pipeline.
 
 :::
 
@@ -36,10 +67,10 @@ a handful on one page and unworkable for a real project: the first
 failed `assert` halts everything, tells you a line number and
 nothing else, and there is no way to run one suite among many.
 
-This lecture is about turning a case table into something a
-project can live with: a *suite* of named cases, run by a
-*runner* that reports which ones failed, wired into the build so
-the tests run on every change. The tool we use is
+This lecture turns a case table into something a project can live
+with: a *suite* of named unit tests, run by a *runner* that
+reports which ones failed, wired into the build so the tests run
+on every change. The tool we use is
 [OUnit2](https://github.com/gildor478/ounit); but the tool is
 incidental. The vocabulary (case, suite, fixture) and the ideas
 (independence, positive-and-negative, the build gate) transfer to
@@ -340,19 +371,29 @@ Suppose someone "refactors" `push` into a no-op:
 let push _ _ = ()        (* DELIBERATELY BROKEN *)
 ```
 
-A larger eight-case suite then prints:
+Re-run the two-case suite. The vanished pushes leave the stack
+empty, so `LIFO order`'s first `pop` now raises `Empty`; the
+`pop empty raises` case never pushes, so it is unaffected:
 
 ```text
-.FFFFFFF
-Ran: 8 tests in: 0.01 seconds.
-FAILED: 7 of 8 tests failed.
+E.
+==============================================================================
+Error: stack:0:LIFO order.
+  ...
+  Empty
+------------------------------------------------------------------------------
+Ran: 2 tests in: 0.00 seconds.
+FAILED: Cases: 2  Tried: 2  Errors: 1  Failures: 0  Skip: 0  Todo: 0
 ```
 
-Seven cases fail; the one that never pushes (`fresh stack is
-empty`) still passes. The report does not just say "something
-broke": its named cases point at the cluster that depends on
-`push`. That is the runner earning its keep, and the reason a
-named suite beats a wall of `assert`s.
+`E.` reads left to right: the first case errored, the second
+(`.`) passed. OUnit2 marks an unexpected exception `E` and a
+failed comparison `F`; either way the case is red, and the
+report *names* it (`stack:0:LIFO order`). The green case tells
+you the break is confined to the `push` path. That localisation
+is the runner earning its keep, and the reason a named suite
+beats a wall of `assert`s, where the first failure halts the
+rest.
 
 :::slide
 
@@ -361,16 +402,18 @@ named suite beats a wall of `assert`s.
 ```text
 let push _ _ = ()        (* DELIBERATELY BROKEN *)
 
-.FFFFFFF
-Ran: 8 tests in: 0.01 seconds.
-FAILED: 7 of 8 tests failed.
+E.
+Error: stack:0:LIFO order.   (* raised Empty *)
+Ran: 2 tests in: 0.00 seconds.
+FAILED: Cases: 2  Errors: 1  Failures: 0
 ```
 
-- The runner names *which* cases failed: the ones through
-  `push`.
-- One unrelated case still passes.
-- A named suite localises the break; a wall of `assert`s does
-  not.
+- `E.`: `LIFO order` (which pushes) errored; `pop empty raises`
+  passed.
+- The report *names* the broken case; the green one bounds the
+  damage.
+- A named suite localises the break; bare `assert`s halt at the
+  first.
 
 :::
 

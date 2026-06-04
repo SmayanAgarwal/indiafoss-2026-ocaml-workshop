@@ -336,17 +336,17 @@ M08-L07 (tutorial) is the heaviest at the 30-min ceiling.
 ### M09: Testing (8 lectures)
 
 Re-estimated 2026-06-04 after the L04 recast (the OUnit2 tool
-manual became the concept lecture "Running and organising
-tests": API tour, gotchas, and the L03-overlapping design
-heuristics cut; mechanise-a-case-table, the runner/report,
-fixtures, positive-and-negative cases, and the build gate kept,
-with the live `dune runtest` Morse VM terminal). L04 shrank
-16 -> 11 slides. This followed the L02/L03/L08 slide polish and
-the 2026-06-02 testing-only restructure (concurrency lectures
+manual became the concept lecture "Unit testing": API tour,
+gotchas, and the L03-overlapping design heuristics cut;
+mechanise-a-case-table, the runner/report, fixtures,
+positive-and-negative cases, and the build gate kept, with the
+live `dune runtest` Morse VM terminal). L04 shrank 16 -> 12
+slides. This followed the L02/L03/L08 slide polish and the
+2026-06-02 testing-only restructure (concurrency lectures
 removed; L02 specifications-and-invariants and L03 test-design
 inserted ahead of the tool lectures; tutorial's effect-handler
 part replaced by a differential-testing part). Module slide
-count moved 125 -> 138 (polish) -> 133 (L04 recast).
+count moved 125 -> 138 (polish) -> 134 (L04 recast).
 Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
@@ -354,12 +354,12 @@ Estimate uses slide_count x 1.5 min.
 | M09-L01 | Why test a type-safe program? | 15 | 3 | 0 | 23 | 32 |
 | M09-L02 | Specifications and invariants | 20 | 2 | 1 | 30 | 42 |
 | M09-L03 | Designing test cases: black-box and glass-box | 20 | 2 | 1 | 30 | 42 |
-| M09-L04 | Running and organising tests | 11 | 1 | 1 | 17 | 24 |
+| M09-L04 | Unit testing | 12 | 1 | 1 | 18 | 25 |
 | M09-L05 | Property-based testing with QCheck: basics and shrinking | 17 | 2 | 1 | 26 | 36 |
 | M09-L06 | Custom generators and stateful property tests | 16 | 2 | 1 | 24 | 34 |
 | M09-L07 | Model-based testing | 17 | 2 | 1 | 26 | 36 |
 | M09-L08 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 17 | 1 | 1 | 26 | 36 |
-| **M09 total** | | **133** | **15** | **7** | **202** | **282** |
+| **M09 total** | | **134** | **15** | **7** | **203** | **283** |
 | | | | | | **(3.4 h)** | **(4.7 h)** |
 
 L02 and L03 now top the module at 30 min each: L02 carries
@@ -507,9 +507,9 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1850 min (30.8 hours) across
+- **Final video**: 1851 min (30.8 hours) across
   78 lectures and 12 modules.
-- **Estimated recording time**: 2584 min (43.1 hours)
+- **Estimated recording time**: 2585 min (43.1 hours)
   at the 1.4x multiplier.
 
 The 30.8 hours of final video meets NPTEL's ~30 hr target
@@ -524,8 +524,8 @@ M09 slide polish (worked examples carried onto slides in L02 and
 L03, plus the embedded coverage terminal; M09 grew 125 -> 138
 slides, +19 video / +26 recording min, no new lectures) and the
 2026-06-04 L04 recast (the OUnit2 tool manual became the concept
-lecture "Running and organising tests"; L04 shrank 16 -> 11
-slides, M09 138 -> 133, -7 video / -10 recording min), the M10
+lecture "Unit testing"; L04 shrank 16 -> 12 slides, M09
+138 -> 134, -6 video / -9 recording min), the M10
 expansion (+1
 lecture, +36 video min for resource safety; M10 grew from 5 to
 6 lectures with L01/L03/L06 also growing), the 2026-05-25 M11
