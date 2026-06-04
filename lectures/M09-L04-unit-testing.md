@@ -225,13 +225,14 @@ let () = run_test_tt_main suite
 
 ## Wiring it into `dune`
 
-**Terminal, not browser.** The cells on this page run OUnit2
-directly in the browser (the suite's report lands in the cell's
-output pane). This section is the exception: project wiring needs
-`dune` and a shell. You can reproduce it on your own machine, or
-use the terminal embedded just below: a real Linux shell with
-the OCaml toolchain (and OUnit2) preinstalled, running inside
-this page.
+The cells on this page run OUnit2 directly in the browser (the
+suite's report lands in the cell's output pane). Project wiring
+is the exception: it needs `dune` and a shell, so this section
+embeds one. The terminal on the slide below is a real Linux
+machine booted inside this page, with the OCaml toolchain and
+OUnit2 preinstalled, sitting in a project with exactly the
+layout this section describes. (Everything reproduces verbatim
+on your own machine too.)
 
 A real OCaml project has its tests in a separate `test/` directory
 with its own `dune` file. The minimal `dune` for an OUnit2 test is:
@@ -260,16 +261,12 @@ fails, `dune` exits non-zero, which is exactly the signal you want
 in CI: a failing test breaks the build, just like a type error
 does.
 
-### Try it: `dune runtest` in your browser
-
-The terminal below boots a small Linux machine inside this page;
-nothing is installed on your computer, and nothing runs on a
-server. (If you have used one of these terminals on another page,
-the download is already cached.) It starts in a project shaped
-exactly like the layout above: a Morse-code library in `lib/`, an
-executable in `bin/`, and an OUnit2 suite in `test/` written with
-the same `>::` / `>:::` / `assert_equal` vocabulary this lecture
-teaches:
+The shell starts in `~/morse`: a Morse-code library in `lib/`,
+an executable in `bin/`, and an OUnit2 suite in `test/` written
+with the same `>::` / `>:::` / `assert_equal` vocabulary this
+lecture teaches. Nothing is installed on your computer and
+nothing runs on a server; the machine lives in the browser tab.
+Three things to try:
 
 - `dune runtest` builds and runs the suite (the first build
   fetches compiler files on demand, so it is the slow one).
@@ -278,7 +275,16 @@ teaches:
   an expected string, re-run `dune runtest`, and read the failure
   report; that non-zero exit is what CI keys on.
 
+:::slide
+
+## `dune runtest`, live: the Morse project
+
+- Boot it; then `dune runtest`, and break a test with
+  `nano test/test_morse.ml` to see a failure report.
+
 :::vm-terminal dir=/root/morse
+:::
+
 :::
 
 :::slide

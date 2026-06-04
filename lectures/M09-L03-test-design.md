@@ -489,111 +489,113 @@ twenty-module project and know which expressions your suite
 never ran. This is mechanisable, and the OCaml tool for it is
 [`bisect_ppx`](https://github.com/aantron/bisect_ppx).
 
-**Terminal, not browser.** Everything else in this lecture runs
-in this page's cells. Coverage is the exception: `bisect_ppx`
-works by *instrumenting your code at compile time*, so it needs
-a real `dune` project and a shell. You can reproduce the
-walkthrough below on your own machine, or in the terminal
-embedded after it: a real Linux shell with `dune` and
-`bisect_ppx` preinstalled, running inside this page.
+Coverage is the one part of this lecture that cannot run in the
+page's cells: `bisect_ppx` works by *instrumenting your code at
+compile time*, so it needs a real `dune` project and a shell.
+So this section brings the shell to you. The terminal on the
+slide below is a real Linux machine booted inside this page,
+with `dune` and `bisect_ppx` preinstalled, sitting in
+`~/bowling`: a ten-pin bowling scorer whose library is small
+but deliberately branchy, exactly the kind of code where paths
+hide. (Everything here reproduces verbatim on your own machine
+too.)
 
-The workflow has three steps. First, enable instrumentation for
-the executable under test in the `dune` file:
+The project enables instrumentation for its library in one
+`dune` stanza:
 
 ```text
-(executable
- (name test_streak)
+(library
+ (name bowling)
  (instrumentation (backend bisect_ppx)))
 ```
 
-Second, run the tests with instrumentation switched on. The
-instrumented program records, for every expression, whether it
-was ever evaluated, and dumps the record to a `.coverage` file
-on exit:
+The whole workflow is then two commands from the project root:
 
 ```text
-$ dune exec --instrument-with bisect_ppx ./test_streak.exe
-black-box suite passed
-$ ls
-... bisect0001.coverage ...
+$ dune runtest --force --instrument-with bisect_ppx
+All tests passed.
+$ bisect-ppx-report summary
+Coverage: 14/19 (73.68%)
 ```
 
-Third, render the report:
-
-```text
-$ bisect-ppx-report html
-$ open _coverage/index.html
-```
-
-The report shows your source with each expression coloured:
-green for "ran under the suite", red for "never ran". Red is a
-glass-box to-do list. The loop writes itself: run the suite,
-open the report, find red code, ask "what input reaches this?",
-add that case, re-run. (Delete the old `.coverage` files
-between runs, or the report accumulates stale data.) Stop when
-the red that remains is code you *decided* not to test, rather
-than code you forgot.
-
-### Try it: coverage in your browser
-
-The terminal below boots a small Linux machine in this page and
-starts in a ten-pin bowling scorer project whose library is
-already instrumentation-enabled. Run its suite under coverage
-and ask for the score:
-
-- `dune runtest --instrument-with bisect_ppx` (this project's
-  instrumented build comes pre-built in the image, so expect
-  seconds; instrumenting a project from scratch, say `~/morse`,
-  also links the instrumentation tool itself, which takes a
-  minute or two).
-- `bisect-ppx-report summary`: what fraction of the scorer did
-  the tests reach?
-
-The uncovered expressions are the scorer's input-validation
-branches: the suite never feeds it an invalid game. That is
-exactly the glass-box to-do list this section is about: decide
-whether those branches deserve tests, write them in
-`test/test_bowling.ml`, and watch the percentage move. For the
-green-and-red view, run `bisect-ppx-report html && sync` and
-then press the terminal's *coverage report* button: the page
-lifts the report straight out of the VM's filesystem into a new
-browser tab (the `sync` makes sure the freshly written report
-has actually reached that filesystem).
-
-:::vm-terminal dir=/root/bowling
-:::
+Two things deserve a sentence each. The `--force` matters:
+`dune` caches test runs, so without it a suite that has already
+passed is a no-op, no test executes, and no fresh coverage
+record is written (`bisect-ppx-report` then complains that
+there are no `*.coverage` files). And the mechanism: the
+instrumented test binary records, for every expression of the
+library, whether it was ever evaluated, and dumps the record
+into a `.coverage` file under `_build` on exit; the reporter
+reads those records.
 
 :::slide
 
 ## Measuring coverage: `bisect_ppx`
 
-- Terminal, not browser: instrumentation is a build step.
-
 ```text
-(executable
- (name test_streak)
+(library
+ (name bowling)
  (instrumentation (backend bisect_ppx)))
 
-$ dune exec --instrument-with bisect_ppx ./test_streak.exe
-$ bisect-ppx-report html
-$ open _coverage/index.html
+$ dune runtest --force --instrument-with bisect_ppx
+All tests passed.
+$ bisect-ppx-report summary
+Coverage: 14/19 (73.68%)
 ```
 
-- The report paints each expression:
-  - **green**: ran under the suite.
-  - **red**: never ran. A glass-box to-do list.
+- `--force`: dune caches test runs; force a fresh record.
+- `bisect-ppx-report html`: each expression **green** (ran)
+  or **red** (never ran). Red is a glass-box to-do list.
 
 :::
 
 :::slide
 
+## Coverage, live: the bowling scorer
+
+- Boot it, run the two commands; then `html && sync` and the
+  *coverage report* button.
+
+:::vm-terminal dir=/root/bowling
+:::
+
+:::
+
+So the suite reaches 14 of the scorer's 19 expressions. The
+five it never runs are the input-validation branches: the tests
+never feed the scorer an invalid game. That is exactly the
+glass-box to-do list this section is about. Decide whether
+those branches deserve tests; write them in
+`test/test_bowling.ml`; re-run the two commands and watch the
+percentage move.
+
+For the full view, `bisect-ppx-report html` renders the report:
+your source with each expression coloured green ("ran under the
+suite") or red ("never ran"). Red is the to-do list made
+visible. In the embedded terminal, run
+`bisect-ppx-report html && sync` and press the *coverage
+report* button on the terminal's status bar: the page lifts the
+report straight out of the VM's filesystem into a new browser
+tab (the `sync` makes sure the freshly written report has
+actually reached that filesystem). On your own machine,
+`open _coverage/index.html` does the same job.
+
+The loop writes itself: run the suite, open the report, find
+red code, ask "what input reaches this?", add that case,
+re-run. Stop when the red that remains is code you *decided*
+not to test, rather than code you forgot.
+
+:::slide
+
 ## The coverage loop
 
-1. Run the suite with instrumentation.
+1. Run the suite instrumented (`--force`: dune caches test
+   runs).
 2. Open the report; find **red** (unexecuted) code.
 3. Ask: "what input reaches this expression?"
    - That question *is* glass-box design.
-4. Add the case; delete old `.coverage` files; re-run.
+4. Add the case; re-run; the fresh record replaces the stale
+   one.
 5. Stop when the remaining red is a decision, not an
    accident.
 - Coverage is a **signal**, not a goal: 100% green proves
