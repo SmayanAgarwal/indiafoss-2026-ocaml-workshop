@@ -494,15 +494,40 @@ moment any path produces an illegal value.
   failing test.
 
 :::
-<!-- KC: wonder whether a slide to recall RI for Rational_canon would be worth it here. -->
 
 ## Measuring coverage: `bisect_ppx`
 
 Glass-box design promises "a test for every path", but on a
 real codebase, who keeps score? You cannot eyeball a
 twenty-module project and know which expressions your suite
-never ran. This is mechanisable, and the OCaml tool for it is
-[`bisect_ppx`](https://github.com/aantron/bisect_ppx).
+never ran. *Code coverage* is the measurement that answers the
+question, and the OCaml tool that performs it is
+[`bisect_ppx`](https://github.com/aantron/bisect_ppx). It works
+in three moves: it **instruments** your code at build time
+(inserting a counter at every expression), **records** which of
+those counters fired while the tests ran, and **reports** each
+expression as green (ran) or red (never ran). The red is the
+part of your code no test exercised.
+
+`max3` was small enough to read the paths by eye: four branches,
+four cases, done, and nothing left red. Real functions are
+rarely so kind. `longest_streak` has a branch the eye skips, and
+a plausible "I tested the basics" suite never reaches it.
+Coverage is how you find that out.
+
+:::slide
+
+## What coverage measures, and `bisect_ppx`
+
+- *Code coverage*: which expressions did the suite actually
+  run?
+  - on a real codebase you cannot eyeball it; measure it.
+- `bisect_ppx`, OCaml's coverage tool, in three moves:
+  - **instrument** the code at build time,
+  - **record** which expressions ran under the tests,
+  - **report** each as green (ran) or red (never ran).
+
+:::
 
 We can put it straight onto the example we just built.
 `longest_streak` is in a small project whose library enables
@@ -556,7 +581,7 @@ those records.
 
 :::slide
 
-## Measuring coverage: `bisect_ppx`
+## Coverage on `longest_streak`
 
 ```text
 (library
@@ -574,19 +599,39 @@ Coverage: 5/6 (83.33%)
 
 :::
 
-The branch went red because no *input* reached it, and the cure
-is a better-chosen input. That is the whole loop, and you can
-run it yourself: the terminal on the next slide is a real Linux
-machine booted inside this page, sitting in the `streak` project
-with `dune` and `bisect_ppx` preinstalled.
+A red expression is a question: *what input would reach it?*
+Answering that, in a cycle, is the coverage loop.
+
+:::slide
+
+## The coverage loop
+
+1. Run the suite instrumented (`--force`: dune caches test
+   runs).
+2. Open the report; find **red** (unexecuted) code.
+3. Ask: "what input reaches this expression?"
+   - That question *is* glass-box design.
+4. Add the case; re-run; the fresh record replaces the stale
+   one.
+5. Stop when the remaining red is a decision, not an
+   accident.
+
+- Coverage is a **signal**, not a goal: 100% green proves
+  every expression ran, not that any answer was right.
+
+:::
+
+Now run the loop yourself. The terminal on the next slide is a
+real Linux machine booted inside this page, sitting in the
+`streak` project with `dune` and `bisect_ppx` preinstalled; it
+ships the partial three-row suite.
 
 :::slide
 
 ## Coverage, live: `longest_streak`
 
-- Boot it (the project ships the partial 3-row suite); then
-  the two commands above show `5/6`. Add `[7; 7; 7]` to reach
-  `6/6`.
+- Boot it; the two commands show `5/6`; add `[7; 7; 7]` for
+  `6/6`; then `html && sync` and the *coverage report* button.
 
 :::vm-terminal dir=/root/streak
 :::
@@ -602,24 +647,6 @@ the page lifts the report straight out of the VM's filesystem
 into a new browser tab (the `sync` makes sure the freshly
 written report has actually reached that filesystem). On your
 own machine, `open _coverage/index.html` does the same job.
-
-:::slide
-
-## The coverage loop
-
-1. Run the suite instrumented (`--force`: dune caches test
-   runs).
-2. Open the report; find **red** (unexecuted) code.
-3. Ask: "what input reaches this expression?"
-   - That question *is* glass-box design.
-4. Add the case; re-run; the fresh record replaces the stale
-   one.
-5. Stop when the remaining red is a decision, not an
-   accident.
-- Coverage is a **signal**, not a goal: 100% green proves
-  every expression ran, not that any answer was right.
-
-:::
 
 The last bullet deserves its own sentence, because teams really
 do fall into this trap. Coverage measures *execution*, not
