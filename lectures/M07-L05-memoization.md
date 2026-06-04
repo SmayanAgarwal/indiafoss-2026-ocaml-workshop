@@ -523,6 +523,17 @@ let _ = time_it (fun () -> fib_memo 35)
 ## A dynamic-programming case: edit distance
 
 Memoization is the engine behind most of dynamic programming.
+The name "dynamic programming", by the way, means nothing: its
+inventor Richard Bellman admitted in his autobiography that he
+chose it at RAND in the 1950s because the Secretary of Defense,
+Charles Wilson, was openly hostile to "research", and Bellman
+needed a name "not even a Congressman could object to".
+"Dynamic" sounded impressive, "programming" meant planning, and
+the funding survived. The technique, as you are about to see, is
+just memoized recursion
+([Dreyfus's retelling](https://pubsonline.informs.org/doi/10.1287/opre.50.1.48.17791)
+has the full story).
+
 *Edit distance* (also known as
 [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance))
 between two strings is the minimum number of single-character

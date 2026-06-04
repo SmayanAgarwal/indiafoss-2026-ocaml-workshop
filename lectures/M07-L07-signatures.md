@@ -376,6 +376,20 @@ has a parameterised type called `t`, but does *not* say what `t`
 is. From outside, `Stack.t` is an *abstract type*: a token you
 can pass around but cannot look inside.
 
+Abstract types have a precise birthplace, and it is a security
+story. In the 1970s at Edinburgh, Robin Milner's team built the
+LCF theorem prover, and ML (OCaml's direct ancestor) was
+invented as its scripting language. The design hinged on one
+abstract type, `thm`: the only way to construct a value of type
+`thm` was through the module exposing the logic's inference
+rules. Any value of type `thm`, anywhere in the system, was
+therefore a *genuine theorem*; user code could script proof
+searches as wildly as it liked without ever being able to forge
+one. The type abstraction you just used to protect a stack
+representation was invented to protect mathematical truth
+([Gordon's history of LCF](https://www.cl.cam.ac.uk/archive/mjcg/papers/HolHistory.html)
+tells the story).
+
 :::slide
 
 ## Abstract types

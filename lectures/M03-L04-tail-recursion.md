@@ -82,6 +82,12 @@ take its result and add `n` to it. To do that addition, we have to
 remember `n` across the call. That memory has to live somewhere;
 the standard place is the stack.
 
+This crash is common enough to have named a landmark of the
+internet: the programming question-and-answer site
+[Stack Overflow](https://en.wikipedia.org/wiki/Stack_Overflow),
+founded in 2008, takes its name from exactly this failure. The
+rest of this lecture is about avoiding it.
+
 :::slide
 
 ## What a stack overflow looks like

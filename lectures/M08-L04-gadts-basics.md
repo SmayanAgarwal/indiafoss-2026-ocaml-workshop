@@ -363,6 +363,16 @@ them; the code that *does* need them needs them in a serious way.
 
 :::
 
+The Orbiter was not even the first famous unit victim. In 1983,
+Air Canada flight 143 ran out of fuel at 41,000 feet because the
+ground crew, mid-way through Canada's imperial-to-metric
+transition, computed the fuel load in pounds where the new 767
+expected kilograms; the aircraft, suddenly a 132-seat glider,
+dead-sticked onto a drag strip at Gimli with no fatalities
+([the Gimli Glider](https://en.wikipedia.org/wiki/Gimli_Glider)).
+Sixteen years apart, the same bug: a number travelled without
+its unit.
+
 That Mars Climate Orbiter loss is the motivating example: types can
 make a units mix-up impossible. We tag a `float` with its unit by
 declaring three *uninhabited* types, `kelvin`, `celsius`, and

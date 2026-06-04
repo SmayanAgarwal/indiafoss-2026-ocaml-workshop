@@ -49,6 +49,14 @@ named for), and it makes a useful trick available: *partial
 application*, supplying some of the arguments and getting back a
 function that wants the rest.
 
+Curry was generous about the name himself: the technique was
+published in 1924 by Moses Schönfinkel, six years before Curry's
+own work, so by the usual rule of priority we should arguably
+call it *schönfinkelisation*. Curry built the systematic theory
+and the catchier name stuck. It is a small lesson in how
+mathematics, like software, often credits the person who
+packaged an idea rather than the one who first had it.
+
 This is, in my experience, the idea from Module 3 that most surprises
 students arriving from C, Java, or Python. In those languages, a
 function with two arguments is two arguments, full stop; you cannot

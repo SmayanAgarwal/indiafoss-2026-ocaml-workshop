@@ -201,6 +201,29 @@ behaviour; you do not opt in, you opt out (if you must, with a
 catch-all wildcard). This single feature shifts a whole class of
 bugs (the "forgot a case" bug) from runtime to compile time.
 
+The stakes are not hypothetical. On 15 January 1990, a software
+update containing one misplaced `break` inside a C `switch`
+brought down AT&T's long-distance network: a single switching
+centre's recovery message crashed its neighbours, which crashed
+*their* neighbours, and for about nine hours half of the
+long-distance calls in the United States (tens of millions of
+them) could not connect. The
+[post-mortem](https://users.csc.calpoly.edu/~jdalbey/SWE/Papers/att_collapse.html)
+became a standard case study because the faulty branch structure
+compiled cleanly and had passed testing.
+
+The compiler's twin warning, for *unreachable* cases, has its
+own famous incident. In February 2014 Apple shipped the
+`goto fail` bug
+([CVE-2014-1266](https://nvd.nist.gov/vuln/detail/CVE-2014-1266)):
+a duplicated `goto fail;` line in the TLS code made the final
+certificate-verification step unreachable, so for well over a
+year a network attacker could impersonate any secure server to
+any Apple device. C compiled the dead code without a murmur.
+OCaml flags a match case that can never be reached (warning 11)
+the moment you write it; the same class of mistake announces
+itself at compile time.
+
 ## The big payoff: refactoring with the compiler
 
 The reason exhaustiveness pays for itself many times over is

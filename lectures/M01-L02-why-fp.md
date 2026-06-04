@@ -532,6 +532,19 @@ the costs). The payback is that you can read any function in
 isolation, and reasoning about a 100,000-line FP codebase decomposes
 into reasoning about 100,000 lines, one function at a time.
 
+This is not a fringe idea. In 1977, John Backus, the man who had
+led the creation of Fortran (the original imperative language)
+used his Turing Award lecture to attack the very style he had
+helped invent: its title was
+[*Can Programming Be Liberated from the von Neumann Style?*](https://dl.acm.org/doi/10.1145/359576.359579)
+Backus argued that programming was shackled to the
+assignment statement, shuttling values one word at a time
+between memory and processor, and that a language built from
+the composition of pure functions could be reasoned about with
+ordinary algebra instead. Almost fifty years on, the immutable
+defaults and expression-based style he called for are exactly
+what this course teaches.
+
 ## Immutability in practice
 
 The other half of the FP thesis is immutability. Here is what it

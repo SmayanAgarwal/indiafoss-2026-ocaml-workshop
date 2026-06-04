@@ -106,6 +106,19 @@ equational reasoning. We start with **state**.
 
 :::
 
+What "costs you equational reasoning" means at full scale: on
+1 August 2012, the trading firm Knight Capital deployed new code
+to seven of its eight servers. The eighth still ran an old code
+path guarded by a *reused* feature flag, and the new deployment
+flipped that flag on. Stale state plus live flag reactivated
+code that had been dead for years, and in 45 minutes the firm
+lost about 440 million dollars and nearly ceased to exist. The
+[SEC's account](https://www.sec.gov/litigation/admin/2013/34-70694.pdf)
+reads like a parable about mutable state: nothing in any one
+server's code was wrong; the *combination* of mutations across
+machines was. Pure values cannot disagree with each other;
+mutable state can, and at scale it eventually does.
+
 ## A ref is a mutable box
 
 ```ocaml

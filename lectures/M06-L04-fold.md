@@ -628,7 +628,18 @@ toolbox.)
 
 ## Beyond lists: fold any structure
 
-Fold generalises to anything recursive.
+Fold scales further than it looks. When Google needed ordinary
+engineers to process web-scale data across thousands of machines,
+the abstraction they reached for was
+[MapReduce](https://research.google/pubs/mapreduce-simplified-data-processing-on-large-clusters/)
+(2004), named outright after `map` and `reduce` (`reduce` being
+`fold`): map a function over the shards, then fold the partial
+results into one answer. The two combinators on this page are
+the same two that, scaled out, indexed the web. The reason it
+works is that a `fold` says only *how to combine*, not *in what
+order* the machine must walk the data.
+
+Fold also generalises to anything recursive.
 [Trees](M04-L04-recursive-types.html#a-binary-tree) are the
 next-most-common example:
 

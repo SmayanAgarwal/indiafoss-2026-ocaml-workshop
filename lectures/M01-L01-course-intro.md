@@ -245,7 +245,12 @@ through class hierarchies, which means a lot of "did you remember
 to handle this case?" lives at runtime instead of compile time.
 Rust is the closest sibling to OCaml in this respect, and a lot
 of Rust's design is directly inherited from ML (the family OCaml
-belongs to).
+belongs to). The name records that lineage: "OCaml" is *Objective
+Caml*, and "Caml" was the *Categorical Abstract Machine Language*,
+built at the French research institute INRIA in the 1980s on top
+of Robin Milner's ML. The "Objective" arrived in 1996 with an
+object system the course never uses; the functional core under
+the name is the part that matters.
 
 Second, OCaml is *practical*. It is used in production at
 [Jane Street](https://www.janestreet.com) (whose internal systems

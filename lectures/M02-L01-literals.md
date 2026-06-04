@@ -305,6 +305,22 @@ choice for performance. If you are doing arithmetic where overflow
 might happen and would matter, the discipline is the same as in C:
 use a wider type (`Int64`) or check explicitly.
 
+The stakes of "check explicitly" can be absolute. On 4 June
+1996, the maiden Ariane 5 rocket tore itself apart 37 seconds
+after launch, taking roughly 370 million dollars of vehicle and
+satellites with it. The guidance software, reused from Ariane 4,
+converted a 64-bit float (the horizontal velocity) into a 16-bit
+integer; on Ariane 5's faster trajectory the value no longer
+fit, and the range check had been *deliberately omitted* for
+performance, because analysis of the old rocket had shown the
+overflow could never happen. The conversion trapped, both
+redundant guidance units ran the same code and failed the same
+way, and the rocket veered and broke up. Numeric conversions are
+where two representations meet; the
+[inquiry report](https://en.wikipedia.org/wiki/Ariane_flight_V88)
+is a classic precisely because every ingredient was reasonable
+on its own.
+
 ## Floating-point numbers
 
 OCaml's `float` is exactly IEEE 754 double precision: 64 bits, with
@@ -460,6 +476,18 @@ representation, the classic short guide is
 Arithmetic*](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html);
 we will not need it again in this course, but it is worth knowing
 it exists.
+
+That `0.1` has no exact binary representation sounds like
+trivia until it accumulates. On 25 February 1991, during the
+Gulf War, a Patriot air-defence battery in Dhahran failed to
+intercept an incoming Scud missile; 28 soldiers died in the
+strike. The system counted time in tenths of a second, and each
+stored `0.1` carried a tiny binary representation error; after
+100 hours of continuous operation the clock had drifted by 0.34
+seconds, which at Scud speeds moved the tracking gate more than
+half a kilometre off the target. The
+[GAO investigation](https://www.gao.gov/products/imtec-92-26)
+traced the failure to exactly the arithmetic on this page.
 
 ## Booleans
 

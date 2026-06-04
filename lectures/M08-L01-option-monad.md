@@ -43,6 +43,18 @@ that let you chain computations of one shape cleanly. This lecture
 builds that pattern from a concrete pain point and lands on OCaml's
 `let*` syntax for it.
 
+The pattern has an unusually clean paper trail. Eugenio Moggi, a
+semanticist, showed in 1989 that a single categorical structure
+could describe computational effects (exceptions, state, I/O) in
+a uniform way. Philip Wadler read the mathematics and saw a
+programming technique: his 1992 paper
+[*The essence of functional programming*](https://dl.acm.org/doi/10.1145/143165.143169)
+showed working interpreters where adding error handling or state
+meant changing a few lines around an unchanged core, and monads
+jumped from category theory into Haskell, then into every
+functional language. What you will build in this lecture is
+Wadler's move, replayed on OCaml's `option`.
+
 :::slide
 
 ## Module 8 roadmap

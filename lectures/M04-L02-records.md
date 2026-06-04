@@ -447,6 +447,19 @@ says so unambiguously. A function that accepts `float * float` is
 ambiguous: it could be a point, a vector, a rectangle's
 dimensions, anything.
 
+The deeper habit a record encourages is giving data a *named,
+checkable type* rather than leaving it as a bare string or
+number. Geneticists learned this the expensive way. For years,
+spreadsheets silently turned gene symbols like `SEPT2` and
+`MARCH1` into dates (`2-Sep`, `1-Mar`), corrupting published
+data sets; a 2016 study found the error in hundreds of papers.
+The fix, in 2020, was not better discipline but a *type* change:
+the gene-naming committee
+[renamed the genes themselves](https://www.nature.com/articles/d41586-020-02875-4)
+(`SEPT2` became `SEPTIN2`) so the values could no longer be
+mistaken for something else. A field typed and named for what it
+holds is the programmer's version of the same defence.
+
 ## Records compare structurally
 
 Like all values in OCaml, records support the structural equality
