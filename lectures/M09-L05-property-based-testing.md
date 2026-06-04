@@ -134,7 +134,8 @@ let () =
   assert (rev [] = []);
   assert (rev [1] = [1]);
   assert (rev [1; 2] = [2; 1]);
-  assert (rev [1; 2; 3] = [3; 2; 1])
+  assert (rev [1; 2; 3] = [3; 2; 1]);
+  print_endline "four cases pass"
 ```
 
 - Four cases. All pass.
