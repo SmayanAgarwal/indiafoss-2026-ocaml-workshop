@@ -586,9 +586,12 @@ straight away, before you touch `dune`.
 
 ## Coverage on `longest_streak`
 
-- `summary` -> `5/6` (the `run + 1` branch is red); add
-  `[7; 7; 7]`, re-run, -> `6/6`; `html` + the *coverage
-  report* button.
+```text
+bisect-ppx-report summary                  # 5/6 (run+1 red)
+dune runtest --instrument-with bisect_ppx  # after adding [7;7;7]
+bisect-ppx-report summary                  # 6/6
+bisect-ppx-report html && sync             # then: coverage report
+```
 
 :::vm-terminal dir=/root/streak
 :::
