@@ -335,16 +335,18 @@ M08-L07 (tutorial) is the heaviest at the 30-min ceiling.
 
 ### M09: Testing (8 lectures)
 
-Re-estimated 2026-06-04 after the L02/L03/L08 slide polish on
-top of the 2026-06-02 testing-only restructure (concurrency
-lectures removed; L02 specifications-and-invariants and L03
-test-design inserted ahead of the tool lectures; tutorial's
-effect-handler part replaced by a differential-testing part).
-The polish carried the worked examples onto slides: L02 gained
-the AF/RI and canonical-form slides; L03 gained the black-box
-and glass-box definition slides, the worked-implementation
-slides, and the embedded coverage terminal (a live
-`longest_streak` VM). Module slide count grew 125 -> 138.
+Re-estimated 2026-06-04 after the L04 recast (the OUnit2 tool
+manual became the concept lecture "Running and organising
+tests": API tour, gotchas, and the L03-overlapping design
+heuristics cut; mechanise-a-case-table, the runner/report,
+fixtures, positive-and-negative cases, and the build gate kept,
+with the live `dune runtest` Morse VM terminal). L04 shrank
+16 -> 11 slides. This followed the L02/L03/L08 slide polish and
+the 2026-06-02 testing-only restructure (concurrency lectures
+removed; L02 specifications-and-invariants and L03 test-design
+inserted ahead of the tool lectures; tutorial's effect-handler
+part replaced by a differential-testing part). Module slide
+count moved 125 -> 138 (polish) -> 133 (L04 recast).
 Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
@@ -352,13 +354,13 @@ Estimate uses slide_count x 1.5 min.
 | M09-L01 | Why test a type-safe program? | 15 | 3 | 0 | 23 | 32 |
 | M09-L02 | Specifications and invariants | 20 | 2 | 1 | 30 | 42 |
 | M09-L03 | Designing test cases: black-box and glass-box | 20 | 2 | 1 | 30 | 42 |
-| M09-L04 | Unit testing in OCaml with OUnit2 | 16 | 2 | 1 | 24 | 34 |
+| M09-L04 | Running and organising tests | 11 | 1 | 1 | 17 | 24 |
 | M09-L05 | Property-based testing with QCheck: basics and shrinking | 17 | 2 | 1 | 26 | 36 |
 | M09-L06 | Custom generators and stateful property tests | 16 | 2 | 1 | 24 | 34 |
 | M09-L07 | Model-based testing | 17 | 2 | 1 | 26 | 36 |
 | M09-L08 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 17 | 1 | 1 | 26 | 36 |
-| **M09 total** | | **138** | **16** | **7** | **209** | **292** |
-| | | | | | **(3.5 h)** | **(4.9 h)** |
+| **M09 total** | | **133** | **15** | **7** | **202** | **282** |
+| | | | | | **(3.4 h)** | **(4.7 h)** |
 
 L02 and L03 now top the module at 30 min each: L02 carries
 both specifications and the AF/RI material, L03 carries
@@ -505,12 +507,12 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1857 min (31.0 hours) across
+- **Final video**: 1850 min (30.8 hours) across
   78 lectures and 12 modules.
-- **Estimated recording time**: 2594 min (43.2 hours)
+- **Estimated recording time**: 2584 min (43.1 hours)
   at the 1.4x multiplier.
 
-The 31.0 hours of final video meets NPTEL's ~30 hr target
+The 30.8 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
 min for effect-handler concurrency), the 2026-06-02 M09
 restructure (concurrency removed from the course entirely;
@@ -520,7 +522,10 @@ differential-testing tutorial part; net +13 video min vs the
 previous M09 estimate, lecture count unchanged), the 2026-06-04
 M09 slide polish (worked examples carried onto slides in L02 and
 L03, plus the embedded coverage terminal; M09 grew 125 -> 138
-slides, +19 video / +26 recording min, no new lectures), the M10
+slides, +19 video / +26 recording min, no new lectures) and the
+2026-06-04 L04 recast (the OUnit2 tool manual became the concept
+lecture "Running and organising tests"; L04 shrank 16 -> 11
+slides, M09 138 -> 133, -7 video / -10 recording min), the M10
 expansion (+1
 lecture, +36 video min for resource safety; M10 grew from 5 to
 6 lectures with L01/L03/L06 also growing), the 2026-05-25 M11
@@ -575,11 +580,11 @@ sessions:
 | M06 Higher-order programming | 3.4 | 0.8 |
 | M07 Side effects and modular programming | 5.9 | 1.4 |
 | M08 Monads and GADTs | 3.3 | 0.8 |
-| M09 Testing | 4.9 | 1.1 |
+| M09 Testing | 4.7 | 1.1 |
 | M10 Memory safety and security | 3.2 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 3.7 | 0.8 |
 | M12 Unikernels (MirageOS) | 2.9 | 0.7 |
-| **Total** | **43.2** | **10.1** |
+| **Total** | **43.1** | **10.0** |
 
 ## Caveats
 
