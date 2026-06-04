@@ -555,7 +555,7 @@ let () =
 Run that suite under coverage and ask for the score:
 
 ```text
-$ dune runtest --force --instrument-with bisect_ppx
+$ dune runtest --instrument-with bisect_ppx
 $ bisect-ppx-report summary
 Coverage: 5/6 (83.33%)
 ```
@@ -569,33 +569,29 @@ already wrote the fix: any row from the table with a real run,
 say `[7; 7; 7]`, exercises that branch and turns the report green
 at `6/6`.
 
-Two things deserve a sentence each. The `--force` matters:
-`dune` caches test runs, so without it a suite that has already
-passed is a no-op, no test executes, and no fresh coverage
-record is written (`bisect-ppx-report` then complains that there
-are no `*.coverage` files). And the mechanism: the instrumented
-test binary records, for every expression of the library,
-whether it was ever evaluated, and dumps the record into a
-`.coverage` file under `_build` on exit; the reporter reads
-those records.
+The mechanism, in one sentence: the instrumented test binary
+records, for every expression of the library, whether it was
+ever evaluated, and dumps the record into a `.coverage` file
+under `_build` on exit; `bisect-ppx-report summary` reads those
+records and prints the score.
+
+You can run this yourself. The terminal on the slide below is a
+real Linux machine booted inside this page, sitting in the
+`streak` project (the toolchain and the partial three-row suite
+are preinstalled). The project's suite was already run when the
+image was built, so `bisect-ppx-report summary` shows `5/6`
+straight away, before you touch `dune`.
 
 :::slide
 
 ## Coverage on `longest_streak`
 
-```text
-(library
- (name streak)
- (instrumentation (backend bisect_ppx)))
+- `summary` -> `5/6` (the `run + 1` branch is red); add
+  `[7; 7; 7]`, re-run, -> `6/6`; `html` + the *coverage
+  report* button.
 
-(* suite = first 3 rows of the table only *)
-$ dune runtest --force --instrument-with bisect_ppx
-$ bisect-ppx-report summary
-Coverage: 5/6 (83.33%)
-```
-
-- One red expression: the `run + 1` branch no input reached.
-- `--force`: dune caches test runs; force a fresh record.
+:::vm-terminal dir=/root/streak
+:::
 
 :::
 
@@ -606,35 +602,17 @@ Answering that, in a cycle, is the coverage loop.
 
 ## The coverage loop
 
-1. Run the suite instrumented (`--force`: dune caches test
-   runs).
+1. Run the suite instrumented.
 2. Open the report; find **red** (unexecuted) code.
 3. Ask: "what input reaches this expression?"
    - That question *is* glass-box design.
-4. Add the case; re-run; the fresh record replaces the stale
-   one.
+4. Change a test to reach it; `dune` re-runs the changed
+   suite; the report updates.
 5. Stop when the remaining red is a decision, not an
    accident.
 
 - Coverage is a **signal**, not a goal: 100% green proves
   every expression ran, not that any answer was right.
-
-:::
-
-Now run the loop yourself. The terminal on the next slide is a
-real Linux machine booted inside this page, sitting in the
-`streak` project with `dune` and `bisect_ppx` preinstalled; it
-ships the partial three-row suite.
-
-:::slide
-
-## Coverage, live: `longest_streak`
-
-- Boot it; the two commands show `5/6`; add `[7; 7; 7]` for
-  `6/6`; then `html && sync` and the *coverage report* button.
-
-:::vm-terminal dir=/root/streak
-:::
 
 :::
 

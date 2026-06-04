@@ -86,11 +86,15 @@ RUN . /etc/profile.d/opam.sh && cd /root/bowling && \
     dune runtest --instrument-with bisect_ppx && \
     rm -f bisect*.coverage
 
-# Same pre-bake for the streak project (the M09-L03 coverage demo:
-# longest_streak, the lecture's own glass-box example, shipped with
-# a deliberately partial test suite so the coverage report has red
-# to chase). The instrumented _build makes the student's first
-# `dune runtest --force --instrument-with bisect_ppx` incremental.
+# Pre-run the streak project's partial suite under instrumentation
+# (the M09-L03 coverage demo: longest_streak, the lecture's own
+# glass-box example, with a deliberately partial three-row suite so
+# the report has red to chase). dune writes the .coverage under
+# _build/default/test/, which the `rm bisect*.coverage` below does
+# NOT match, so the baked record survives: on boot the student runs
+# `bisect-ppx-report summary` and sees 5/6 immediately, no `dune`
+# and no `--force`. Adding a run-bearing row and re-running (dune
+# re-runs the changed suite) reaches 6/6.
 RUN . /etc/profile.d/opam.sh && cd /root/streak && \
     dune runtest --instrument-with bisect_ppx && \
     rm -f bisect*.coverage
