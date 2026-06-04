@@ -514,9 +514,10 @@ instrumentation in one `dune` stanza:
  (instrumentation (backend bisect_ppx)))
 ```
 
-Now suppose we got impatient and shipped only the *first three
-rows* of the black-box table above as the test suite: the empty
-list, the singleton, and the all-distinct list.
+Now suppose we got impatient and shipped only the first three
+rows of the `longest_streak` black-box table from earlier in
+this lecture as the test suite: the empty list (`[]`), the
+singleton (`[5]`), and the all-distinct list (`[1; 2; 3]`).
 
 ```text
 let () =
