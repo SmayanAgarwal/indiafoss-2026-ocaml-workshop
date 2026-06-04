@@ -7,8 +7,8 @@ client-side. No backend, static hosting only (GitHub Pages), OSS
 components only, packages baked into the image (no live
 `opam install`, no network inside the VM).
 
-Agents working in this directory: read `AGENTS.md`. The remaining
-site-integration work is specced in `PHASE2.md`.
+Agents working in this directory: read `AGENTS.md` (gotchas,
+rebuild discipline, and the standing KC policies).
 
 ## Design
 

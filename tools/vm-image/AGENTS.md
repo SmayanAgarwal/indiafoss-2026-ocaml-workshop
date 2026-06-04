@@ -1,8 +1,21 @@
 # Agent guidance for tools/vm-image
 
 Standing instructions for working on the in-browser dune VM.
-Background and design rationale: `README.md`. Remaining
-integration work: `PHASE2.md`.
+Background and design rationale: `README.md`.
+
+## Standing policies (KC decisions)
+
+- `:::vm-terminal` embeds live in module 9 ONLY (currently L03
+  and L04), at most one per lecture (the build enforces this);
+  embedding in any other module needs KC's sign-off.
+- The terminal exists as both the chapter embed and the
+  standalone playground page; both use the same component at
+  `assets/vm/vm-terminal.js`.
+- Student work is per-visit (reload = fresh snapshot). Accepted
+  future niceties, unscheduled: save/restore to IndexedDB via
+  `emulator.save_state()`, and a "download your work" button via
+  `emulator.read_file()` (the coverage-report button already
+  demonstrates the lift-out mechanism).
 
 ## Rebuild discipline
 
