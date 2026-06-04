@@ -335,36 +335,37 @@ M08-L07 (tutorial) is the heaviest at the 30-min ceiling.
 
 ### M09: Testing (8 lectures)
 
-Re-estimated 2026-06-02 after the testing-only restructure:
-the two concurrency lectures (effect handlers; fibers) were
-removed from the course, the module was renamed back to
-"Testing", and two new lectures were inserted ahead of the
-tool lectures: L02 (specifications and invariants: contracts,
-AF/RI, rep_ok) and L03 (designing test cases: black-box,
-glass-box, coverage). The former testing lectures renumbered
-to L04-L07; the tutorial lost its effect-handler part and
-gained a specification part and a differential-testing part
-(an expr optimiser vs eval as oracle). Estimate uses
-slide_count x 1.5 min.
+Re-estimated 2026-06-04 after the L02/L03/L08 slide polish on
+top of the 2026-06-02 testing-only restructure (concurrency
+lectures removed; L02 specifications-and-invariants and L03
+test-design inserted ahead of the tool lectures; tutorial's
+effect-handler part replaced by a differential-testing part).
+The polish carried the worked examples onto slides: L02 gained
+the AF/RI and canonical-form slides; L03 gained the black-box
+and glass-box definition slides, the worked-implementation
+slides, and the embedded coverage terminal (a live
+`longest_streak` VM). Module slide count grew 125 -> 138.
+Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M09-L01 | Why test a type-safe program? | 13 | 3 | 0 | 20 | 28 |
-| M09-L02 | Specifications and invariants | 19 | 2 | 1 | 29 | 41 |
-| M09-L03 | Designing test cases: black-box and glass-box | 15 | 2 | 1 | 23 | 32 |
-| M09-L04 | Unit testing in OCaml with OUnit2 | 15 | 2 | 1 | 23 | 32 |
+| M09-L01 | Why test a type-safe program? | 15 | 3 | 0 | 23 | 32 |
+| M09-L02 | Specifications and invariants | 20 | 2 | 1 | 30 | 42 |
+| M09-L03 | Designing test cases: black-box and glass-box | 20 | 2 | 1 | 30 | 42 |
+| M09-L04 | Unit testing in OCaml with OUnit2 | 16 | 2 | 1 | 24 | 34 |
 | M09-L05 | Property-based testing with QCheck: basics and shrinking | 17 | 2 | 1 | 26 | 36 |
-| M09-L06 | Custom generators and stateful property tests | 14 | 2 | 1 | 21 | 29 |
-| M09-L07 | Model-based testing | 16 | 2 | 1 | 24 | 34 |
-| M09-L08 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 16 | 1 | 1 | 24 | 34 |
-| **M09 total** | | **125** | **16** | **7** | **190** | **266** |
-| | | | | | **(3.2 h)** | **(4.4 h)** |
+| M09-L06 | Custom generators and stateful property tests | 16 | 2 | 1 | 24 | 34 |
+| M09-L07 | Model-based testing | 17 | 2 | 1 | 26 | 36 |
+| M09-L08 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 17 | 1 | 1 | 26 | 36 |
+| **M09 total** | | **138** | **16** | **7** | **209** | **292** |
+| | | | | | **(3.5 h)** | **(4.9 h)** |
 
-All M09 lectures land in the 20-29 min video band. L02 is the
-heaviest at 29 min (specifications AND invariants in one
-lecture); if a polish pass needs to cut, splitting L02 is the
-designed-in relief valve. L05 remains on the heavy side at 26
-min. L01 sits at the 20-min floor as the module opener.
+L02 and L03 now top the module at 30 min each: L02 carries
+both specifications and the AF/RI material, L03 carries
+black-box, glass-box, and a live coverage walkthrough. Each has
+a clean split point (L02: specs | invariants; L03: design |
+coverage) if a polish pass needs to bring them under the 30-min
+ceiling. L01 sits at 23 min as the module opener.
 
 ### M10: Memory safety and security (6 lectures)
 
@@ -504,19 +505,22 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1838 min (30.6 hours) across
+- **Final video**: 1857 min (31.0 hours) across
   78 lectures and 12 modules.
-- **Estimated recording time**: 2568 min (42.8 hours)
+- **Estimated recording time**: 2594 min (43.2 hours)
   at the 1.4x multiplier.
 
-The 30.6 hours of final video meets NPTEL's ~30 hr target
+The 31.0 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
 min for effect-handler concurrency), the 2026-06-02 M09
 restructure (concurrency removed from the course entirely;
 M09 became a pure 8-lecture testing module with new lectures
 on specifications/invariants and test-case design, and a
 differential-testing tutorial part; net +13 video min vs the
-previous M09 estimate, lecture count unchanged), the M10
+previous M09 estimate, lecture count unchanged), the 2026-06-04
+M09 slide polish (worked examples carried onto slides in L02 and
+L03, plus the embedded coverage terminal; M09 grew 125 -> 138
+slides, +19 video / +26 recording min, no new lectures), the M10
 expansion (+1
 lecture, +36 video min for resource safety; M10 grew from 5 to
 6 lectures with L01/L03/L06 also growing), the 2026-05-25 M11
@@ -571,11 +575,11 @@ sessions:
 | M06 Higher-order programming | 3.4 | 0.8 |
 | M07 Side effects and modular programming | 5.9 | 1.4 |
 | M08 Monads and GADTs | 3.3 | 0.8 |
-| M09 Testing | 4.4 | 1.0 |
+| M09 Testing | 4.9 | 1.1 |
 | M10 Memory safety and security | 3.2 | 0.7 |
 | M11 OxCaml: type-level extensions of safety | 3.7 | 0.8 |
 | M12 Unikernels (MirageOS) | 2.9 | 0.7 |
-| **Total** | **42.8** | **10.0** |
+| **Total** | **43.2** | **10.1** |
 
 ## Caveats
 
