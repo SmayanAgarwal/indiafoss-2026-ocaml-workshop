@@ -183,8 +183,8 @@ Reading the spec, not any code, here is a black-box case list:
 | --- | --- | --- |
 | empty (spec says!) | `[]` | `0` |
 | one element | `[5]` | `1` |
-| all equal | `[7; 7; 7]` | `3` |
 | all distinct | `[1; 2; 3]` | `1` |
+| all equal | `[7; 7; 7]` | `3` |
 | run at the start | `[5; 5; 1; 2]` | `2` |
 | run at the end | `[1; 2; 5; 5]` | `2` |
 | tied runs | `[3; 3; 8; 8]` | `2` |
@@ -234,8 +234,8 @@ And the whole table, row by row, as assertions:
 let () =
   assert (longest_streak [] = 0);
   assert (longest_streak [5] = 1);
-  assert (longest_streak [7; 7; 7] = 3);
   assert (longest_streak [1; 2; 3] = 1);
+  assert (longest_streak [7; 7; 7] = 3);
   assert (longest_streak [5; 5; 1; 2] = 2);
   assert (longest_streak [1; 2; 5; 5] = 2);
   assert (longest_streak [3; 3; 8; 8] = 2);
@@ -514,11 +514,11 @@ instrumentation in one `dune` stanza:
  (instrumentation (backend bisect_ppx)))
 ```
 
-Now suppose we got careless and picked, from the `longest_streak`
-black-box table earlier in this lecture, only the rows with *no
-adjacent repeat*: the empty list (`[]`), the singleton (`[5]`),
-and the all-distinct list (`[1; 2; 3]`). Every row with an actual
-run, `[7; 7; 7]` and the others, we left out.
+Now suppose we got impatient and shipped only the first three
+rows of the `longest_streak` black-box table earlier in this
+lecture as the test suite: the empty list (`[]`), the singleton
+(`[5]`), and the all-distinct list (`[1; 2; 3]`). Every row with
+an actual run, starting with `[7; 7; 7]`, we left out.
 
 ```text
 let () =
@@ -563,7 +563,7 @@ those records.
  (name streak)
  (instrumentation (backend bisect_ppx)))
 
-(* suite = the no-adjacent-repeat rows only *)
+(* suite = first 3 rows of the table only *)
 $ dune runtest --force --instrument-with bisect_ppx
 $ bisect-ppx-report summary
 Coverage: 5/6 (83.33%)
