@@ -143,6 +143,24 @@ implementer's mental picture was fuzziest: the empty list, the
 single element, the value exactly at a threshold, the input that
 makes the answer zero.
 
+:::slide
+
+## Black-box design
+
+Choose inputs from the **specification alone**; the
+implementation stays invisible.
+
+1. **Read the spec**, clause by clause.
+2. **Find the regions** each clause implies
+   - the partitions, and the boundaries between them.
+3. **Pick the cases**: one typical input per region, plus the
+   boundary cases.
+
+- Bugs concentrate at boundaries: empty, singleton, exactly at
+  a threshold, the input that makes the answer zero.
+
+:::
+
 Here is a worked example. Specification:
 
 ```text
@@ -319,8 +337,24 @@ on values from every producer path that can reach it.
 
 Now turn the box transparent. Glass-box testing reads the
 implementation and asks: which inputs would make execution flow
-down each *path* through the code? Recall `max3` from the
-opening lecture:
+down each *path* through the code?
+
+:::slide
+
+## Glass-box design
+
+Choose inputs from the **implementation**; aim execution down
+every path.
+
+1. **Read the code.**
+2. **Enumerate the paths**: every `if` branch, every `match`
+   arm, base and recursive cases, every raise point.
+3. **Pick one input per path.**
+   - A set that runs every path is *path-complete*.
+
+:::
+
+Recall `max3` from the opening lecture:
 
 ```ocaml
 let max3 x y z =
@@ -367,8 +401,7 @@ let max3 x y z =
   - `max3 5 3 8 = 8` (returns first `z`)
   - `max3 2 6 1 = 6` (returns `y`)
   - `max3 2 6 9 = 9` (returns second `z`)
-- The checklist: every `if` branch, every `match` arm, base +
-  recursive cases, every raise point.
+- All four ran: this set is path-complete for `max3`.
 
 :::
 
