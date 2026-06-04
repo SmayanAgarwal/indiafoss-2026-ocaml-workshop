@@ -514,10 +514,11 @@ instrumentation in one `dune` stanza:
  (instrumentation (backend bisect_ppx)))
 ```
 
-Now suppose we got impatient and shipped only the first three
-rows of the `longest_streak` black-box table from earlier in
-this lecture as the test suite: the empty list (`[]`), the
-singleton (`[5]`), and the all-distinct list (`[1; 2; 3]`).
+Now suppose we got careless and picked, from the `longest_streak`
+black-box table earlier in this lecture, only the rows with *no
+adjacent repeat*: the empty list (`[]`), the singleton (`[5]`),
+and the all-distinct list (`[1; 2; 3]`). Every row with an actual
+run, `[7; 7; 7]` and the others, we left out.
 
 ```text
 let () =
@@ -562,7 +563,7 @@ those records.
  (name streak)
  (instrumentation (backend bisect_ppx)))
 
-(* suite = first 3 rows of the table only *)
+(* suite = the no-adjacent-repeat rows only *)
 $ dune runtest --force --instrument-with bisect_ppx
 $ bisect-ppx-report summary
 Coverage: 5/6 (83.33%)
