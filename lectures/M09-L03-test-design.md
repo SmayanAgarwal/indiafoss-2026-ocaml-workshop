@@ -268,6 +268,18 @@ deserving a test. Consider:
 val pad : int -> char -> string -> string
 ```
 
+If this function feels familiar, it should: `pad` is the OCaml
+shape of JavaScript's `left-pad`, the eleven-line npm package
+whose removal in March 2016
+[broke builds across the JavaScript world](https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm)
+(Babel and thousands of other projects depended on it,
+transitively). The episode is usually told as a cautionary tale
+about dependency management. For this lecture the lesson is
+sharper: half the internet's build farms depended on somebody
+getting an eleven-line padding function *right*, and even eleven
+lines have a specification with paths and boundaries worth
+testing deliberately.
+
 Two conditions structure this spec: is `n` greater than the
 length of `s`, or not; and is `s` empty, or not. Two binary
 conditions give four "paths through the specification", and the
@@ -290,6 +302,8 @@ if it is already long enough. Requires: [n >= 0]."
 
 - Conditions in the spec **combine**; test the combinations.
 - The requires clause (`n >= 0`) marks inputs *not* to test.
+- npm's infamous `left-pad` (2016): eleven lines half the
+  internet's builds depended on.
 
 :::
 
