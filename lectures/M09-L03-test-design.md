@@ -184,8 +184,11 @@ word *adjacent* in the spec is load-bearing, and an implementer
 who skimmed it would count `[4; 1; 4; 1]` as a streak of two.
 
 The case list was designed without an implementation. Now any
-implementation must face it. Here is one, with the whole table
-as assertions:
+implementation must face it. Here is one:
+
+:::slide
+
+## Only now, an implementation
 
 ```ocaml
 let longest_streak xs =
@@ -196,7 +199,20 @@ let longest_streak xs =
         go (Some x) run (max best run) rest
   in
   go None 0 0 xs
+```
 
+- The table came first; this code came second.
+- The cases owe it nothing: they were read off the *spec*.
+
+:::
+
+And the whole table, row by row, as assertions:
+
+:::slide
+
+## The table faces the implementation
+
+```ocaml
 let () =
   assert (longest_streak [] = 0);
   assert (longest_streak [5] = 1);
@@ -208,6 +224,10 @@ let () =
   assert (longest_streak [4; 1; 4; 1] = 1);
   print_endline "black-box suite passed"
 ```
+
+- Eight rows, eight assertions, all green.
+
+:::
 
 A useful property of this suite: it survives a complete rewrite
 of `longest_streak`. The cases were derived from the contract,
