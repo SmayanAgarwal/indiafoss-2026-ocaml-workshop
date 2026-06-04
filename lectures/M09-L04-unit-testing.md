@@ -363,6 +363,24 @@ let test_pop_empty_raises _ =
 
 :::
 
+:::slide
+
+## Collecting them into a named suite
+
+```ocaml
+let suite =
+  "stack" >::: [
+    "LIFO order"        >:: test_lifo;
+    "pop empty raises"  >:: test_pop_empty_raises;
+  ]
+```
+
+- Each case gets a **name**; `>:::` collects them into the suite.
+- Those names (`LIFO order`, `pop empty raises`) are exactly what
+  the runner prints when a case fails, on the next slide.
+
+:::
+
 ## When a function breaks, the report points at it
 
 Suppose someone "refactors" `push` into a no-op:

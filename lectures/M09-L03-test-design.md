@@ -530,8 +530,11 @@ Coverage is how you find that out.
 :::
 
 We can put it straight onto the example we just built.
-`longest_streak` is in a small project whose library enables
-instrumentation in one `dune` stanza:
+`longest_streak` lives in a small project built with **dune**,
+OCaml's build system: each library or executable is described by
+a short `dune` stanza. Here the library's stanza carries one
+extra field, `instrumentation`, and that single line is what
+turns on `bisect_ppx` coverage for this library:
 
 ```text
 (library
