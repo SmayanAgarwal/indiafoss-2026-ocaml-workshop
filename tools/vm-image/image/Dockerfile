@@ -86,6 +86,15 @@ RUN . /etc/profile.d/opam.sh && cd /root/bowling && \
     dune runtest --instrument-with bisect_ppx && \
     rm -f bisect*.coverage
 
+# Same pre-bake for the streak project (the M09-L03 coverage demo:
+# longest_streak, the lecture's own glass-box example, shipped with
+# a deliberately partial test suite so the coverage report has red
+# to chase). The instrumented _build makes the student's first
+# `dune runtest --force --instrument-with bisect_ppx` incremental.
+RUN . /etc/profile.d/opam.sh && cd /root/streak && \
+    dune runtest --instrument-with bisect_ppx && \
+    rm -f bisect*.coverage
+
 # https://wiki.alpinelinux.org/wiki/Alpine_Linux_in_a_chroot#Preparing_init_services
 RUN for i in devfs dmesg mdev hwdrivers; do rc-update add $i sysinit; done
 RUN for i in hwclock modules sysctl hostname syslog bootmisc; do rc-update add $i boot; done

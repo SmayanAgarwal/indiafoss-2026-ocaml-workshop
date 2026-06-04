@@ -494,6 +494,7 @@ moment any path produces an illegal value.
   failing test.
 
 :::
+<!-- KC: wonder whether a slide to recall RI for Rational_canon would be worth it here. -->
 
 ## Measuring coverage: `bisect_ppx`
 
@@ -503,44 +504,53 @@ twenty-module project and know which expressions your suite
 never ran. This is mechanisable, and the OCaml tool for it is
 [`bisect_ppx`](https://github.com/aantron/bisect_ppx).
 
-Coverage is the one part of this lecture that cannot run in the
-page's cells: `bisect_ppx` works by *instrumenting your code at
-compile time*, so it needs a real `dune` project and a shell.
-So this section brings the shell to you. The terminal on the
-slide below is a real Linux machine booted inside this page,
-with `dune` and `bisect_ppx` preinstalled, sitting in
-`~/bowling`: a ten-pin bowling scorer whose library is small
-but deliberately branchy, exactly the kind of code where paths
-hide. (Everything here reproduces verbatim on your own machine
-too.)
-
-The project enables instrumentation for its library in one
-`dune` stanza:
+We can put it straight onto the example we just built.
+`longest_streak` is in a small project whose library enables
+instrumentation in one `dune` stanza:
 
 ```text
 (library
- (name bowling)
+ (name streak)
  (instrumentation (backend bisect_ppx)))
 ```
 
-The whole workflow is then two commands from the project root:
+Now suppose we got impatient and shipped only the *first three
+rows* of the black-box table above as the test suite: the empty
+list, the singleton, and the all-distinct list.
+
+```text
+let () =
+  assert (Streak.longest_streak [] = 0);
+  assert (Streak.longest_streak [5] = 1);
+  assert (Streak.longest_streak [1; 2; 3] = 1)
+```
+
+Run that suite under coverage and ask for the score:
 
 ```text
 $ dune runtest --force --instrument-with bisect_ppx
-All tests passed.
 $ bisect-ppx-report summary
-Coverage: 14/19 (73.68%)
+Coverage: 5/6 (83.33%)
 ```
+
+One expression out of six never ran. Which one? None of those
+three inputs has an *adjacent equal pair*, so the `run + 1`
+branch of `longest_streak` (the one that extends a streak) is
+never taken. The coverage report paints exactly that expression
+red. It is a glass-box to-do list of length one, and the lecture
+already wrote the fix: any row from the table with a real run,
+say `[7; 7; 7]`, exercises that branch and turns the report green
+at `6/6`.
 
 Two things deserve a sentence each. The `--force` matters:
 `dune` caches test runs, so without it a suite that has already
 passed is a no-op, no test executes, and no fresh coverage
-record is written (`bisect-ppx-report` then complains that
-there are no `*.coverage` files). And the mechanism: the
-instrumented test binary records, for every expression of the
-library, whether it was ever evaluated, and dumps the record
-into a `.coverage` file under `_build` on exit; the reporter
-reads those records.
+record is written (`bisect-ppx-report` then complains that there
+are no `*.coverage` files). And the mechanism: the instrumented
+test binary records, for every expression of the library,
+whether it was ever evaluated, and dumps the record into a
+`.coverage` file under `_build` on exit; the reporter reads
+those records.
 
 :::slide
 
@@ -548,56 +558,48 @@ reads those records.
 
 ```text
 (library
- (name bowling)
+ (name streak)
  (instrumentation (backend bisect_ppx)))
 
+(* suite = first 3 rows of the table only *)
 $ dune runtest --force --instrument-with bisect_ppx
-All tests passed.
 $ bisect-ppx-report summary
-Coverage: 14/19 (73.68%)
+Coverage: 5/6 (83.33%)
 ```
 
+- One red expression: the `run + 1` branch no input reached.
 - `--force`: dune caches test runs; force a fresh record.
-- `bisect-ppx-report html`: each expression **green** (ran)
-  or **red** (never ran). Red is a glass-box to-do list.
 
 :::
+
+The branch went red because no *input* reached it, and the cure
+is a better-chosen input. That is the whole loop, and you can
+run it yourself: the terminal on the next slide is a real Linux
+machine booted inside this page, sitting in the `streak` project
+with `dune` and `bisect_ppx` preinstalled.
 
 :::slide
 
-## Coverage, live: the bowling scorer
+## Coverage, live: `longest_streak`
 
-- Boot it, run the two commands; then `html && sync` and the
-  *coverage report* button.
+- Boot it (the project ships the partial 3-row suite); then
+  the two commands above show `5/6`. Add `[7; 7; 7]` to reach
+  `6/6`.
 
-:::vm-terminal dir=/root/bowling
+:::vm-terminal dir=/root/streak
 :::
 
 :::
 
-So the suite reaches 14 of the scorer's 19 expressions. The
-five it never runs are the input-validation branches: the tests
-never feed the scorer an invalid game. That is exactly the
-glass-box to-do list this section is about. Decide whether
-those branches deserve tests; write them in
-`test/test_bowling.ml`; re-run the two commands and watch the
-percentage move.
-
-For the full view, `bisect-ppx-report html` renders the report:
-your source with each expression coloured green ("ran under the
-suite") or red ("never ran"). Red is the to-do list made
-visible. In the embedded terminal, run
-`bisect-ppx-report html && sync` and press the *coverage
-report* button on the terminal's status bar: the page lifts the
-report straight out of the VM's filesystem into a new browser
-tab (the `sync` makes sure the freshly written report has
-actually reached that filesystem). On your own machine,
-`open _coverage/index.html` does the same job.
-
-The loop writes itself: run the suite, open the report, find
-red code, ask "what input reaches this?", add that case,
-re-run. Stop when the red that remains is code you *decided*
-not to test, rather than code you forgot.
+For the full green-and-red view, `bisect-ppx-report html`
+renders the report: your source with each expression coloured
+green ("ran under the suite") or red ("never ran"). In the
+embedded terminal, run `bisect-ppx-report html && sync` and
+press the *coverage report* button on the terminal's status bar;
+the page lifts the report straight out of the VM's filesystem
+into a new browser tab (the `sync` makes sure the freshly
+written report has actually reached that filesystem). On your
+own machine, `open _coverage/index.html` does the same job.
 
 :::slide
 

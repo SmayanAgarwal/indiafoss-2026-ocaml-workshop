@@ -17,7 +17,7 @@
 (function () {
   "use strict";
 
-  var DEFAULT_BASE = "https://fplaunchpad.org/ocaml-browser-vm/v3";
+  var DEFAULT_BASE = "https://fplaunchpad.org/ocaml-browser-vm/v4";
 
   /* Engine files (libv86.js, v86.wasm, bios, xterm.*) live next to
    * this script. */

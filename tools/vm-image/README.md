@@ -61,7 +61,9 @@ subprocesses; browser WASI shims have none).
   chosen by KC against the course's fresh-code and domain-overlap
   conventions: `hello/` (30-second first build), `morse/`
   (encoder/decoder, two modules, round-trip tests), `bowling/`
-  (ten-pin scorer, branchy; the coverage demo).
+  (ten-pin scorer, branchy), and `streak/` (the M09-L03 coverage
+  demo: `longest_streak` shipped with a deliberately partial
+  suite that leaves one branch red, `5/6`).
 - `image/build.sh`: Docker image -> rootfs tar -> fs.json +
   zstd chunk store.
 - `make-state.mjs`: headless boot, saves the resume snapshot.
@@ -98,5 +100,5 @@ node tools/vm-image/run-workflow.mjs        # must end "workflow complete"
 
 Deployed data versions live in the
 `fplaunchpad/ocaml-browser-vm` repo (one immutable `vN/` per
-build; currently `v3`). After any rebuild here, push a NEW `vN/`
+build; currently `v4`). After any rebuild here, push a NEW `vN/`
 there and bump `DEFAULT_BASE` in `assets/vm/vm-terminal.js`.
