@@ -69,17 +69,38 @@ $JSOO_LISTUNITS -o "$workdir/units.txt" \
 #    raise Sys_error("... file already exists") at load time, which
 #    aborts the remaining module initialisers (QCheck/OUnit2 then
 #    show up as interface-only: "Reference to undefined compilation
-#    unit"). Hover/type elaboration works off the auto-embedded
-#    copies.
+#    unit"). The cmis the toplevel needs to elaborate the loaded
+#    signatures (so hover/type queries resolve QCheck/OUnit2 names)
+#    are the auto-embedded copies.
+RAW="$workdir/portable_raw.js"
 $JSOO --toplevel --toplevel-extend --export="$workdir/units.txt" \
-  "$workdir/stub.byte" -o "$OUT"
+  "$workdir/stub.byte" -o "$RAW"
 
-# 4. Prepend a runtime shim. The vanilla worker runtime does not
-#    provide caml_unix_gethostname, but ounit2's OUnitUtils calls
-#    Unix.gethostname at module-init time; without the shim the
-#    extras load dies partway (TypeError) and OUnit2 never
-#    registers. Any hostname string will do.
-shim='// Prepended by tools/build-m09-extras.sh: the vanilla worker
+# 4. Assemble the final bundle from three prepended/wrapped pieces:
+#
+#    (a) A Unix-primitive shim. The vanilla worker runtime does not
+#        provide caml_unix_gethostname, but ounit2's OUnitUtils calls
+#        Unix.gethostname at module-init time; without the shim the
+#        extras load dies partway (TypeError) and OUnit2 never
+#        registers. Same for caml_unix_environment at run_test_tt_main.
+#        Any hostname string will do.
+#
+#    (b) A DLS-preserving harness around the bundle's IIFE. The bundle
+#        re-runs stdlib's module init when it loads, and
+#        Stdlib__Domain.DLS's `let key_counter = Atomic.make 0`
+#        re-allocates the DLS key counter from zero. The bundle's
+#        Format.stdbuf_key then lands at a low DLS index the host had
+#        already assigned to *its* Format.stdbuf_key, and DLS.set
+#        overwrites the host's entry in the shared caml_domain_dls
+#        array. The host's Format.flush_str_formatter then reads the
+#        bundle's empty buffer, so merlin's type-enclosing printer
+#        (which flushes through Format.str_formatter) returns "" for
+#        every query and hover-on-identifier tooltips come up blank.
+#        Snapshot the host's DLS array before the bundle runs and
+#        restore the host-owned slots afterwards; the bundle's new
+#        high-index slots are left alone. This mirrors the fix in
+#        x-ocaml's build_portable_js_extend.sh (oxcaml branch).
+unix_shim='// Prepended by tools/build-m09-extras.sh: the vanilla worker
 // runtime lacks a few Unix primitives that ounit2 calls:
 // gethostname at module init (OUnitUtils), environment when
 // run_test_tt_main starts (OUnitConf). Stub both so OUnit2 loads
@@ -94,6 +115,35 @@ shim='// Prepended by tools/build-m09-extras.sh: the vanilla worker
     r.caml_unix_environment = function () { return [0]; };
   }
 })(globalThis);'
-printf '%s\n' "$shim" | cat - "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+
+dls_pre='// DLS-preserving harness (see build-m09-extras.sh step 4b):
+// snapshot the host toplevel'\''s Domain.DLS slots before the bundle
+// re-runs stdlib init, so merlin'\''s Format.str_formatter survives.
+(function (globalThis) {
+  var rt = globalThis.jsoo_runtime;
+  var snapshot = null;
+  if (rt && rt.caml_domain_dls_get) {
+    var saved = rt.caml_domain_dls_get(0);
+    snapshot = [];
+    for (var i = 0; i < saved.length; i++) snapshot[i] = saved[i];
+  }
+  try {'
+
+dls_post='  } finally {
+    if (rt && rt.caml_domain_dls_get && snapshot) {
+      var cur = rt.caml_domain_dls_get(0);
+      for (var i = 0; i < snapshot.length; i++) {
+        if (snapshot[i] !== undefined) cur[i] = snapshot[i];
+      }
+    }
+  }
+}(globalThis));'
+
+{
+  printf '%s\n' "$unix_shim"
+  printf '%s\n' "$dls_pre"
+  cat "$RAW"
+  printf '%s\n' "$dls_post"
+} > "$OUT"
 
 ls -lh "$OUT"
