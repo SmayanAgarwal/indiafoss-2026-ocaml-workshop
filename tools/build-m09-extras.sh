@@ -85,21 +85,34 @@ $JSOO --toplevel --toplevel-extend --export="$workdir/units.txt" \
 #        registers. Same for caml_unix_environment at run_test_tt_main.
 #        Any hostname string will do.
 #
-#    (b) A DLS-preserving harness around the bundle's IIFE. The bundle
+#    (b) A DLS-isolating harness around the bundle's IIFE. The bundle
 #        re-runs stdlib's module init when it loads, and
 #        Stdlib__Domain.DLS's `let key_counter = Atomic.make 0`
-#        re-allocates the DLS key counter from zero. The bundle's
-#        Format.stdbuf_key then lands at a low DLS index the host had
-#        already assigned to *its* Format.stdbuf_key, and DLS.set
-#        overwrites the host's entry in the shared caml_domain_dls
-#        array. The host's Format.flush_str_formatter then reads the
-#        bundle's empty buffer, so merlin's type-enclosing printer
-#        (which flushes through Format.str_formatter) returns "" for
-#        every query and hover-on-identifier tooltips come up blank.
-#        Snapshot the host's DLS array before the bundle runs and
-#        restore the host-owned slots afterwards; the bundle's new
-#        high-index slots are left alone. This mirrors the fix in
-#        x-ocaml's build_portable_js_extend.sh (oxcaml branch).
+#        re-allocates DLS keys from zero, colliding with the host
+#        toplevel's key space in the shared caml_domain_dls array.
+#        Worse, the bundle's create_dls calls caml_domain_dls_set
+#        with a fresh sentinel-filled array, clobbering the host's
+#        array wholesale (that is what blanked merlin's hover
+#        tooltips: the host's Format.stdbuf slot was gone). An
+#        earlier snapshot/restore harness fixed hover but poisoned
+#        the BUNDLE's key space instead: restored host objects sat
+#        where the bundle's sentinels should be, so the bundle's
+#        lazily-materialised DLS values (Random's int64-bigarray
+#        state, first read inside QCheck_runner.run_tests via
+#        Random.self_init) came back as foreign host objects and
+#        threw "TypeError: ba.offset is not a function".
+#
+#        The fix is full isolation: give the bundle its own private
+#        DLS array. The bundle captures caml_domain_dls_get into a
+#        local once, in its var-preamble (rA=p.caml_domain_dls_get),
+#        so a proxy installed only around the IIFE is captured
+#        permanently. caml_domain_dls_set is only called at stdlib
+#        init (create_dls), inside the IIFE. compare_and_set is
+#        called dynamically (runtime.caml_...) at growth time by
+#        BOTH stdlib instances, so a dispatching wrapper stays
+#        installed: it handles the private array by identity and
+#        delegates anything else to the original. The host's array
+#        is never touched, so hover keeps working by construction.
 unix_shim='// Prepended by tools/build-m09-extras.sh: the vanilla worker
 // runtime lacks a few Unix primitives that ounit2 calls:
 // gethostname at module init (OUnitUtils), environment when
@@ -116,25 +129,42 @@ unix_shim='// Prepended by tools/build-m09-extras.sh: the vanilla worker
   }
 })(globalThis);'
 
-dls_pre='// DLS-preserving harness (see build-m09-extras.sh step 4b):
-// snapshot the host toplevel'\''s Domain.DLS slots before the bundle
-// re-runs stdlib init, so merlin'\''s Format.str_formatter survives.
+dls_pre='// DLS-isolating harness (see build-m09-extras.sh step 4b): give
+// the bundle'\''s stdlib instance its own private Domain.DLS array so
+// neither stdlib'\''s key space can poison the other'\''s.
 (function (globalThis) {
   var rt = globalThis.jsoo_runtime;
-  var snapshot = null;
-  if (rt && rt.caml_domain_dls_get) {
-    var saved = rt.caml_domain_dls_get(0);
-    snapshot = [];
-    for (var i = 0; i < saved.length; i++) snapshot[i] = saved[i];
+  var proxied = false;
+  var orig_get, orig_set, orig_cas;
+  if (rt && rt.caml_domain_dls_get && rt.caml_domain_dls_set
+         && rt.caml_domain_dls_compare_and_set) {
+    proxied = true;
+    orig_get = rt.caml_domain_dls_get;
+    orig_set = rt.caml_domain_dls_set;
+    orig_cas = rt.caml_domain_dls_compare_and_set;
+    var priv = [0];
+    // The bundle captures get into a local in its var-preamble, so
+    // this proxy is bound into the bundle permanently.
+    rt.caml_domain_dls_get = function (_unit) { return priv; };
+    // set is only called by create_dls during the bundle'\''s stdlib
+    // init, i.e. inside this try block.
+    rt.caml_domain_dls_set = function (a) { priv = a; return 0; };
+    // compare_and_set is looked up dynamically at call time by BOTH
+    // stdlib instances (maybe_grow), so this dispatching wrapper
+    // stays installed after load: private array by identity,
+    // everything else delegated to the host'\''s original.
+    rt.caml_domain_dls_compare_and_set = function (old, n) {
+      if (old === priv) { priv = n; return 1; }
+      return orig_cas(old, n);
+    };
   }
   try {'
 
 dls_post='  } finally {
-    if (rt && rt.caml_domain_dls_get && snapshot) {
-      var cur = rt.caml_domain_dls_get(0);
-      for (var i = 0; i < snapshot.length; i++) {
-        if (snapshot[i] !== undefined) cur[i] = snapshot[i];
-      }
+    if (proxied) {
+      rt.caml_domain_dls_get = orig_get;
+      rt.caml_domain_dls_set = orig_set;
+      // the dispatching compare_and_set wrapper stays (see above).
     }
   }
 }(globalThis));'
