@@ -707,8 +707,8 @@ help close that gap, but never fully.
 
 ## What's next
 
-This module has eight lectures: this one, two on deciding what
-and how to test, four on the tools that mechanize those
+This module has seven lectures: this one, two on deciding what
+and how to test, three on the tools that mechanize those
 decisions, and one tutorial that brings everything together on a
 single worked example.
 

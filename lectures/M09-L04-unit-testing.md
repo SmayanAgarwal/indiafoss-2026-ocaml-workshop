@@ -452,6 +452,16 @@ do, each handled elsewhere in this module:
   [test design](M09-L03-test-design.html); the runner just runs
   whatever you wrote.
 
+One sibling of the unit test is worth naming: the *expect test*.
+Instead of writing the expected value by hand, you run the case
+once, let the framework capture the actual output, read it, and
+keep the captured version; from then on, the case fails whenever
+the output changes. It is a unit test whose expected side is
+recorded rather than written, and it shines where the output is
+messy or evolving (pretty-printers, error reports, end-to-end
+transcripts). Real World OCaml's testing chapter shows the
+workflow with `ppx_expect`.
+
 :::slide
 
 ## A runner runs cases; it does not...
