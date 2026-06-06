@@ -3,9 +3,9 @@ title: "Tutorial: testing the expr evaluator with OUnit2 and QCheck"
 lecture_no: 7
 week: 9
 duration_target_min: 25
-concepts: [testing tutorial, specifications, test design, OUnit2, QCheck, properties, invariants, expression evaluator, debugging, differential testing]
-keywords: [OCaml, testing, OUnit2, QCheck, tutorial, expression evaluator, AST, property-based testing, debugging, shrinking, differential testing, simplifier]
-activity_question: "Your simplifier gains the rewrite [e / e -> Num 1.0]. The differential property [eval (simplify e) = eval e] starts failing. What family of counterexamples is QCheck finding, and is the rewrite salvageable?"
+concepts: [testing tutorial, specifications, test design, OUnit2, QCheck, properties, invariants, expression evaluator, debugging]
+keywords: [OCaml, testing, OUnit2, QCheck, tutorial, expression evaluator, AST, property-based testing, debugging, shrinking]
+activity_question: "Extend the [expr] AST with unary negation ([Neg of expr]): add the clause to [eval], add the constructor to [gen_expr], then write and run the anchored property: [eval (Neg e)] agrees with [-. (eval e)] under [same_float]."
 think_about_this: "If your QCheck property compares the OCaml-implemented eval against a hand-written reference (e.g. via float arithmetic in the property itself), what happens when the reference is also buggy? How do you avoid testing one bug against itself?"
 reading:
   - title: "Cornell CS3110, Testing and OUnit"
@@ -31,8 +31,7 @@ reading:
 This tutorial puts the whole module to work on a single larger
 example, walking the full arc once, end to end: write the
 specification, design the cases, mechanise them with OUnit2,
-quantify them with QCheck, and finish with a differential test
-of an optimiser against the original. We take a small
+and quantify them with QCheck. We take a small
 arithmetic `expr` AST and its `eval`, a float-valued cousin of
 [the interpreter you built in the pattern-matching
 tutorial](M05-L06-tutorial.html), give them a full test suite,
@@ -47,13 +46,12 @@ We chose it because it is small enough to fit on one screen,
 rich enough to have interesting properties, and from a part of
 the course that every student has already seen. Two
 alternatives would have worked: a
-`safe_div : int -> int -> int option` from the
-[option lecture](M04-L04-recursive-types.html) or a list
-reversal function. We chose `expr` because it gives
+`safe_div : int -> int -> int option` like the one you met in
+[the option-monad lecture](M08-L01-option-monad.html), or a
+list reversal function. We chose `expr` because it gives
 us *both* simple-case unit tests AND structural properties that
-exercise the recursive nature of the function. The other two
-are mentioned in passing where they would teach something
-different.
+exercise the recursive nature of the function. (`safe_div`
+returns in a quiz at the end.)
 
 :::slide
 
@@ -66,8 +64,6 @@ different.
 - Mechanise the cases as an **OUnit2 suite**.
 - Write **QCheck properties** for invariants.
 - Break one operation deliberately; watch QCheck find the bug.
-- Write a **simplifier** and test it *differentially* against
-  `eval`.
 - Walk away with a complete test file.
 
 :::
@@ -135,8 +131,11 @@ let rec eval = function
 ## Part 1: the specification
 
 The module's discipline says: before any tool, write the
-contract. For `eval` it is short, but two of its clauses take a
-real decision, and writing them down is what surfaces the
+contract. The clauses are the
+[specifications lecture's](M09-L02-specifications-invariants.html):
+a *returns* clause, a *raises* clause, an *examples* clause. For
+`eval` the whole contract is short, but two of its clauses take
+a real decision, and writing them down is what surfaces the
 decision.
 
 ```text
@@ -208,6 +207,24 @@ code), every test that does *any* arithmetic would also fail; but
 the failure would be hard to diagnose. This case isolates the
 leaf.
 
+:::slide
+
+## Case 1: a leaf
+
+```ocaml
+open OUnit2
+
+let test_num_leaf _ =
+  assert_equal ~printer:string_of_float 3.0 (eval (Num 3.0))
+```
+
+- The non-recursive base of the function, isolated.
+- A wrong leaf (`Num n -> 0.0`) would fail *every* arithmetic
+  test
+  - this case points at the leaf itself.
+
+:::
+
 ### Case 2: each binary operator
 
 Four small expressions, one per binary constructor:
@@ -237,6 +254,34 @@ node. The `Sub` case uses asymmetric inputs (`2.0 - 3.0`, not
 return `1.0` instead of `-1.0` and the case would catch it; a
 symmetric input like `3.0 - 3.0` would not distinguish the bug.
 
+:::slide
+
+## Case 2: each binary operator
+
+```ocaml
+let test_add _ =
+  assert_equal ~printer:string_of_float 5.0
+    (eval (Add (Num 2.0, Num 3.0)))
+
+let test_sub _ =
+  assert_equal ~printer:string_of_float (-1.0)
+    (eval (Sub (Num 2.0, Num 3.0)))
+
+let test_mul _ =
+  assert_equal ~printer:string_of_float 6.0
+    (eval (Mul (Num 2.0, Num 3.0)))
+
+let test_div _ =
+  assert_equal ~printer:string_of_float 0.5
+    (eval (Div (Num 1.0, Num 2.0)))
+```
+
+- The smallest expression per operator: two leaves, one node.
+- `Sub` gets *asymmetric* inputs: `2.0 - 3.0`, not `3.0 - 3.0`
+  - a swapped-arguments bug returns `1.0`, not `-1.0`.
+
+:::
+
 ### Case 3: nested expressions
 
 The recursion is its own thing to test. A two-level nested
@@ -257,6 +302,26 @@ case for `Mul`, which has two sub-expressions, each of which is
 itself a binary node. If the recursion forgot to recurse (e.g.
 `Mul (a, _) -> eval a *. eval a`, a typical typo), this case
 would catch it.
+
+:::slide
+
+## Case 3: nested expressions
+
+```ocaml
+let test_nested _ =
+  (* (1 + 2) * (4 - 0.5) = 3 * 3.5 = 10.5 *)
+  let expr =
+    Mul (Add (Num 1.0, Num 2.0),
+         Sub (Num 4.0, Num 0.5))
+  in
+  assert_equal ~printer:string_of_float 10.5 (eval expr)
+```
+
+- The recursion is its own thing to test.
+- Both sub-expressions are themselves binary nodes.
+- A forgot-to-recurse typo (`eval a *. eval a`) fails here.
+
+:::
 
 ### Case 4: division by zero
 
@@ -282,9 +347,26 @@ If you wanted the *option* shape (`int_eval` returning `int
 option`, raising on division by zero), you would replace this
 case with `assert_raises`. The choice depends on your contract.
 
+:::slide
+
+## Case 4: division by zero
+
+```ocaml
+let test_div_by_zero _ =
+  assert_equal ~printer:string_of_float infinity
+    (eval (Div (Num 1.0, Num 0.0)))
+```
+
+- The spec says: `infinity`, not an exception.
+- A future "raise on zero" guard makes this case fail
+  - the desired signal: someone changed the contract.
+- A raising contract would use `assert_raises` here instead.
+
+:::
+
 ### Assembling the OUnit2 suite
 
-```text
+```ocaml
 let suite =
   "expr evaluator" >::: [
     "leaf" >:: test_num_leaf;
@@ -300,36 +382,39 @@ let suite =
     ];
   ]
 
-let () = run_test_tt_main suite
+let _ = run_test_tt_main suite
 ```
 
-Seven cases, three named groups. Run with `dune runtest`. All
-pass on the correct implementation; the report is seven dots and
-an `OK`.
+Seven cases, three named groups. Run it right here (in a
+project, `dune runtest` does the same). All pass on the correct
+implementation; the report is seven dots and an `OK`. Note the
+suite is also *path-complete* in the test-design lecture's
+sense: `eval` has five match arms, and between the leaf case,
+the four operator cases, and the nested case, every arm runs.
 
 :::slide
 
 ## OUnit2 suite shape
 
-```text
+```ocaml
 let suite =
   "expr evaluator" >::: [
     "leaf" >:: test_num_leaf;
     "binary operators" >::: [
-      "add" >:: test_add;
-      "sub" >:: test_sub;
-      "mul" >:: test_mul;
-      "div" >:: test_div;
+      "add" >:: test_add; "sub" >:: test_sub;
+      "mul" >:: test_mul; "div" >:: test_div;
     ];
     "nested" >:: test_nested;
     "edges" >::: [
       "division by zero" >:: test_div_by_zero;
     ];
   ]
+
+let _ = run_test_tt_main suite
 ```
 
-One leaf case, one per binary operator with asymmetric inputs, one
-nested case to exercise recursion, one edge case (div-by-zero → ∞).
+- One case per region of the spec table.
+- Asymmetric inputs: a swapped-argument bug cannot hide.
 
 :::
 
@@ -343,26 +428,46 @@ properties almost write themselves.
 ### A generator for `expr`
 
 `expr` is not a built-in type, so QCheck does not have a generator
-out of the box. We have to build one. The recursive case is the
-interesting part: we need to limit recursion depth so we do not
-generate infinite trees.
+out of the box. We have to build one, and the first decision is
+the *leaves*. The spec names `infinity` and `nan` as defined
+behaviour, so the generator must actually visit them; a leaf
+drawn only from `float_range` never produces either, and every
+property below would silently test only the comfortable region.
+That is the distribution lesson from the PBT lecture, applied to
+floats:
+
+```ocaml
+let gen_leaf =
+  QCheck.Gen.(oneof_weighted [
+    (8, map (fun n -> Num n) (float_range (-100.0) 100.0));
+    (1, return (Num infinity));
+    (1, return (Num nan));
+  ])
+```
+
+`oneof_weighted` is `oneof` with weights: eight draws in ten a
+small in-range float, one in ten `infinity`, one in ten `nan`.
+The rest of the special-value family arises downstream
+(`Sub (Num 0., Num infinity)` is negative infinity, `0/0` more
+NaN), so two seeded specials are enough to flood the trees: more
+than half of the generated expressions evaluate to NaN.
+
+The recursive case is the other interesting part: we need to
+limit recursion depth so we do not generate infinite trees.
 
 ```ocaml
 let rec gen_expr depth =
   let open QCheck.Gen in
-  if depth <= 0 then
-    map (fun n -> Num n) (float_range (-100.0) 100.0)
+  if depth <= 0 then gen_leaf
   else
+    let sub = gen_expr (depth - 1) in
     oneof [
-      map  (fun n -> Num n) (float_range (-100.0) 100.0);
-      map2 (fun a b -> Add (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
-      map2 (fun a b -> Sub (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
-      map2 (fun a b -> Mul (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
-      map2 (fun a b -> Div (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
+      gen_leaf;
+      map2 (fun a b -> Add (a, b)) sub sub;
+      map2 (fun a b -> Sub (a, b)) sub sub;
+      map2 (fun a b -> Mul (a, b)) sub sub;
+      map2 (fun a b -> Div (a, b)) sub sub;
     ]
-
-let arb_expr =
-  QCheck.make ~print:(fun _ -> "<expr>") (gen_expr 4)
 ```
 
 The generator picks a depth (we hard-code 4 here), and at each
@@ -373,12 +478,53 @@ indefinitely, and the test would hang. Depth 4 is enough to
 exercise nontrivial trees but not so deep that float arithmetic
 loses precision.
 
-`QCheck.make ~print:... gen_expr 4` wraps the generator into a
-QCheck `arbitrary` so it can be used with `QCheck.Test.make`.
+Counterexamples need to be *readable*, so before wrapping the
+generator up we write a printer that renders an `expr` back as
+source. `QCheck.make` then turns the generator into an
+`arbitrary` (usable with `QCheck.Test.make`), with the printer
+attached for failure messages:
 
-A real `expr` test would write a slightly fancier printer (one
-that produces source-like output, useful in failure messages),
-but `<expr>` is enough to see the shape of the lecture.
+```ocaml
+let rec expr_str = function
+  | Num n -> Printf.sprintf "%g" n
+  | Add (a, b) -> "(" ^ expr_str a ^ " + " ^ expr_str b ^ ")"
+  | Sub (a, b) -> "(" ^ expr_str a ^ " - " ^ expr_str b ^ ")"
+  | Mul (a, b) -> "(" ^ expr_str a ^ " * " ^ expr_str b ^ ")"
+  | Div (a, b) -> "(" ^ expr_str a ^ " / " ^ expr_str b ^ ")"
+
+let _ = expr_str (Mul (Num 0.0, Div (Num 1.0, Num 0.0)))  (* = "(0 * (1 / 0))" *)
+
+let arb_expr = QCheck.make ~print:expr_str (gen_expr 4)
+```
+
+One thing we deliberately leave off: a `~shrink`. As the PBT
+lecture warned, a `QCheck.make` generator carries no shrinker
+unless you attach one, so a failing `expr` would be reported
+verbatim. The one custom shrinker this module writes is the
+model-based lecture's command-list shrinker; here we accept
+unshrunk trees, and the one property below that does fail
+generates float *pairs*, which carry built-in shrinkers.
+
+:::slide
+
+## Leaves include the corners
+
+```ocaml
+let gen_leaf =
+  QCheck.Gen.(oneof_weighted [
+    (8, map (fun n -> Num n) (float_range (-100.0) 100.0));
+    (1, return (Num infinity));
+    (1, return (Num nan));
+  ])
+```
+
+- The spec *names* `infinity` and `nan`
+  - so the generator must visit them: `float_range` never would.
+- `oneof_weighted`: `oneof` with weights, 8 : 1 : 1.
+- Negative infinity and more NaN arise downstream
+  - `Sub (Num 0., Num infinity)`, `0/0`.
+
+:::
 
 :::slide
 
@@ -387,20 +533,42 @@ but `<expr>` is enough to see the shape of the lecture.
 ```ocaml
 let rec gen_expr depth =
   let open QCheck.Gen in
-  if depth <= 0 then
-    map (fun n -> Num n) (float_range (-100.0) 100.0)
+  if depth <= 0 then gen_leaf
   else
+    let sub = gen_expr (depth - 1) in
     oneof [
-      map (fun n -> Num n) (float_range (-100.0) 100.0);
-      map2 (fun a b -> Add (a, b))
-        (gen_expr (depth - 1)) (gen_expr (depth - 1));
-      (* ... Sub, Mul, Div similarly ... *)
+      gen_leaf;
+      map2 (fun a b -> Add (a, b)) sub sub;
+      map2 (fun a b -> Sub (a, b)) sub sub;
+      map2 (fun a b -> Mul (a, b)) sub sub;
+      map2 (fun a b -> Div (a, b)) sub sub;
     ]
 ```
 
 - Depth bound prevents infinite recursion.
 - At each level: leaf or one of four binary nodes.
-- Wrap with `QCheck.make` for use with `QCheck.Test.make`.
+
+:::
+
+:::slide
+
+## Readable counterexamples
+
+```ocaml
+let rec expr_str = function
+  | Num n -> Printf.sprintf "%g" n
+  | Add (a, b) -> "(" ^ expr_str a ^ " + " ^ expr_str b ^ ")"
+  | Sub (a, b) -> "(" ^ expr_str a ^ " - " ^ expr_str b ^ ")"
+  | Mul (a, b) -> "(" ^ expr_str a ^ " * " ^ expr_str b ^ ")"
+  | Div (a, b) -> "(" ^ expr_str a ^ " / " ^ expr_str b ^ ")"
+
+let _ = expr_str (Mul (Num 0.0, Div (Num 1.0, Num 0.0)))  (* = "(0 * (1 / 0))" *)
+
+let arb_expr = QCheck.make ~print:expr_str (gen_expr 4)
+```
+
+- `~print`: failure messages show source, not `<opaque>`.
+- `QCheck.make` wraps the generator into an `arbitrary`.
 
 :::
 
@@ -415,10 +583,13 @@ which is a normal `float` value in IEEE-754, not an exception).
 let test_eval_terminates =
   QCheck.Test.make
     ~name:"eval returns a float on any expr"
+    ~count:1000
     arb_expr
     (fun e ->
        let _ : float = eval e in
        true)
+
+let _ = QCheck_runner.run_tests ~colors:false [test_eval_terminates]  (* = 0 *)
 ```
 
 A trivial body: ignore the result; return `true`. The point of
@@ -433,83 +604,84 @@ Many real-world bugs at the API boundary (unhandled NaN, stack
 overflow on deep recursion) get caught by exactly this style of
 property.
 
-### Property 2: `Add` is commutative
-
-A genuinely mathematical property. Floating-point addition is *not*
-exactly commutative for all inputs (associativity fails too), but
-within the bounds of our `float_range`, commutativity holds modulo
-floating-point ordering of operands. We will assert exact equality
-and see what happens:
-
-```ocaml
-let test_add_commutes =
-  QCheck.Test.make
-    ~name:"Add commutes"
-    QCheck.(pair arb_expr arb_expr)
-    (fun (a, b) ->
-       eval (Add (a, b)) = eval (Add (b, a)))
-```
-
-The property: for every pair of expressions `(a, b)`, evaluating
-`Add (a, b)` gives the same `float` as evaluating `Add (b, a)`.
-
-For most inputs this is true. But pure IEEE-754 `+.` of two
-distant magnitudes can produce slightly different results depending
-on the order, because rounding happens at the bit level. Running
-this property on enough inputs will likely turn up a counter-
-example, and QCheck will shrink it to a small pair where the
-order matters.
-
-This is one of the *educational* moments of PBT: a property you
-*thought* was self-evidently true turns out to have caveats once
-you let a fuzzer hammer at it. The counterexample is genuine: it
-exposes a subtlety of floating-point arithmetic the unit tests
-would never have surfaced.
-
-### Property 3: identity laws
+### Property 2: identity laws
 
 `Add (Num 0.0, e)` should evaluate to the same value as `e`.
 Similarly `Mul (Num 1.0, e)` should give `e`.
 
 ```ocaml
+let same_float a b =
+  (Float.is_nan a && Float.is_nan b) || a = b
+
 let test_add_identity =
   QCheck.Test.make
     ~name:"0 + e = e"
+    ~count:1000
     arb_expr
-    (fun e -> eval (Add (Num 0.0, e)) = eval e)
+    (fun e -> same_float (eval (Add (Num 0.0, e))) (eval e))
 
 let test_mul_identity =
   QCheck.Test.make
     ~name:"1 * e = e"
+    ~count:1000
     arb_expr
-    (fun e -> eval (Mul (Num 1.0, e)) = eval e)
+    (fun e -> same_float (eval (Mul (Num 1.0, e))) (eval e))
+
+let _ = QCheck_runner.run_tests ~colors:false
+          [test_add_identity; test_mul_identity]  (* = 0 *)
 ```
 
-Again, modulo floating-point edge cases (multiplying `1.0 *.
-infinity` is `infinity`, fine; `1.0 *. nan` is `nan`, but NaN is
-not equal to itself in IEEE-754, so `nan = nan` is `false`). For
-most generated `expr`s these will hold; for ones where `eval e`
-is `nan` the property will trip. That is again a useful signal:
-"my law holds *except* in the case where the sub-expression
-evaluated to NaN."
+Both rewrites are *exact* in IEEE-754: `0.0 +. v` and
+`1.0 *. v` return `v`'s value unchanged for every `v`,
+including infinities. The caveat is NaN: `1.0 *. nan` is `nan`,
+and NaN is not equal to itself, so `nan = nan` is `false`. With
+our NaN-seeding leaves, more than half the generated trees hit
+exactly that, and a bare `=` property would fail in its
+*comparison*, not its subject.
 
-### Property 4: distributivity (carefully)
+Why not skip those trees with the `QCheck.assume` the PBT
+lecture introduced? Because that lecture also gave the rule: a
+precondition that rejects most of what the generator makes is a
+sign to fix the generator or the property, not the filter. Here
+the property is the thing to fix: `same_float` says what
+agreement *means* for floats: two NaNs agree. It is the
+observation-equality move from the model-based lecture, shrunk
+to a single comparison, and it turns the NaN corner from
+something skipped into something genuinely tested: the property
+now asserts that `0 + e` is NaN *exactly when* `e` is.
+
+`same_float` patches NaN and inherits `=`'s one remaining blind
+spot: the sign of zero. With infinities in the trees, `eval e`
+can be `-0.0` (one route: `-1 / infinity`), and `0.0 +. -0.0`
+is `+0.0`; bit for bit, the addition changed the value, but `=`
+calls the two zeros equal. For this property that is the
+agreement we want; a bit-level comparison would be stricter
+than the spec promises.
+
+### Property 3: distributivity (carefully)
 
 `Mul (a, Add (b, c))` should equal `Add (Mul (a, b), Mul (a, c))`
-in mathematics. In IEEE-754, distributivity fails for many inputs
-(rounding accumulates differently in the two expansions). We can
-write the property as an *approximate* equality:
+in mathematics. Here, finally, float algebra genuinely breaks:
+addition and multiplication are individually exact-commutative
+in IEEE-754, but *distributing* a multiplication recomputes the
+same value along two differently-rounded routes, and the two
+results disagree for many inputs. So we write the property as
+an *approximate* equality:
 
 ```ocaml
 let test_distributes_approx =
   QCheck.Test.make
     ~name:"Mul distributes over Add (approx)"
+    ~count:1000
     QCheck.(triple arb_expr arb_expr arb_expr)
     (fun (a, b, c) ->
        let lhs = eval (Mul (a, Add (b, c))) in
        let rhs = eval (Add (Mul (a, b), Mul (a, c))) in
-       let denom = max (abs_float lhs) (abs_float rhs) in
-       abs_float (lhs -. rhs) <= 1e-6 *. denom +. 1e-9)
+       not (Float.is_finite lhs && Float.is_finite rhs)
+       || (let denom = max (abs_float lhs) (abs_float rhs) in
+           abs_float (lhs -. rhs) <= 1e-6 *. denom +. 1e-9))
+
+let _ = QCheck_runner.run_tests ~colors:false [test_distributes_approx]  (* = 0 *)
 ```
 
 The threshold (`1e-6` of the magnitude plus a small absolute
@@ -518,18 +690,84 @@ relative error is small *or* if both sides are small. This
 property captures "the algebra is right" in a way that tolerates
 the floating-point reality.
 
+The first line of the body restricts the property's *domain*,
+and the restriction is not cosmetic: distributivity genuinely
+fails outside the finite range. Take `a = Num infinity`,
+`b = Num 2.`, `c = Num (-1.)`: the left route is
+`infinity *. 1. = infinity`, while the expansion is
+`infinity +. neg_infinity = nan`. No tolerance rescues that; the
+honest property simply does not claim distributivity for
+infinite routes. Written as an implication
+(`not in-domain || claim`), the property is vacuously true off
+its domain, with no skipping involved. That makes three tools
+for partial claims, each with its place: `assume` skips a rare
+corner, `same_float` redefines agreement, and an implication
+restricts the domain.
+
 :::slide
 
-## Four QCheck properties
+## Property 1: the liveness floor
 
-1. **`eval` terminates**: a liveness floor.
-2. **`Add` commutes**: classical algebra; surfaces float caveats.
-3. **Identity laws**: `0 + e = e`, `1 * e = e`.
-4. **Distributivity (approx)**: `a * (b + c) ≈ a*b + a*c`, with a
-   float tolerance.
+```ocaml
+let test_eval_terminates =
+  QCheck.Test.make ~name:"eval returns a float on any expr"
+    ~count:1000 arb_expr (fun e -> let _ : float = eval e in true)
 
-Each is one line of OCaml. Each surfaces a different *class* of
-bug. Together: a sieve no incorrect `eval` will pass cleanly.
+let _ = QCheck_runner.run_tests ~colors:false [test_eval_terminates]  (* = 0 *)
+```
+
+- Fails only if `eval` *raises* on some generated tree.
+- The floor of correctness: the function makes progress.
+
+:::
+
+:::slide
+
+## Property 2: identity laws
+
+```ocaml
+let same_float a b =
+  (Float.is_nan a && Float.is_nan b) || a = b
+
+let test_add_identity =
+  QCheck.Test.make ~name:"0 + e = e" ~count:1000 arb_expr
+    (fun e -> same_float (eval (Add (Num 0.0, e))) (eval e))
+
+let test_mul_identity =
+  QCheck.Test.make ~name:"1 * e = e" ~count:1000 arb_expr
+    (fun e -> same_float (eval (Mul (Num 1.0, e))) (eval e))
+
+let _ = QCheck_runner.run_tests ~colors:false
+          [test_add_identity; test_mul_identity]  (* = 0 *)
+```
+
+- The trap: `nan = nan` is `false`, and half our trees are NaN.
+- `same_float`: two NaNs *agree*
+  - the corner is tested, not skipped.
+
+:::
+
+:::slide
+
+## Property 3: distributivity, approximately
+
+```ocaml
+let test_distributes_approx =
+  QCheck.Test.make
+    ~name:"Mul distributes over Add (approx)" ~count:1000
+    QCheck.(triple arb_expr arb_expr arb_expr)
+    (fun (a, b, c) ->
+       let lhs = eval (Mul (a, Add (b, c))) in
+       let rhs = eval (Add (Mul (a, b), Mul (a, c))) in
+       not (Float.is_finite lhs && Float.is_finite rhs)
+       || (let denom = max (abs_float lhs) (abs_float rhs) in
+           abs_float (lhs -. rhs) <= 1e-6 *. denom +. 1e-9))
+
+let _ = QCheck_runner.run_tests ~colors:false [test_distributes_approx]  (* = 0 *)
+```
+
+- Exact equality would fail: two differently-rounded routes.
+- The implication: finite routes only, false for infinities.
 
 :::
 
@@ -539,44 +777,64 @@ Now the dramatic part. Suppose someone "refactors" `eval` and
 introduces a bug. The classic version of this is: they confuse
 left and right operand in `Sub`:
 
-```text
+```ocaml
 let rec bad_eval = function
   | Num n      -> n
   | Add (a, b) -> bad_eval a +. bad_eval b
   | Sub (a, b) -> bad_eval b -. bad_eval a    (* SWAPPED! *)
   | Mul (a, b) -> bad_eval a *. bad_eval b
   | Div (a, b) -> bad_eval a /. bad_eval b
+
+let _ = bad_eval (Sub (Num 2.0, Num 3.0))  (* = 1., should be -1. *)
 ```
 
 A single character changed: `bad_eval b -. bad_eval a` instead of
 `bad_eval a -. bad_eval b`. The function still type-checks. All
 the leaves still work. `Add`, `Mul`, `Div` are unaffected. Only
-`Sub` is wrong.
+`Sub` is wrong. This is the opening lecture's well-typed-but-wrong
+function, met in the wild: the type `expr -> float` is satisfied;
+the specification is not.
 
 How does our test suite catch this?
 
-**The OUnit2 cases catch it on `test_sub`** specifically:
+**The OUnit2 cases catch it twice**: on `sub` itself, and on
+`nested`, whose tree contains a `Sub` node. Run against the
+buggy evaluator, the report reads (log-file lines elided):
 
+```text
+.F...F.
+==============================================================
+Error: expr evaluator:1:binary operators:1:sub.
+
+expected: -1. but got: 1.
+--------------------------------------------------------------
+==============================================================
+Error: expr evaluator:2:nested.
+
+expected: 10.5 but got: -10.5
+--------------------------------------------------------------
+Ran: 7 tests in: 0.11 seconds.
+FAILED: Cases: 7 Tried: 7 Errors: 0 Failures: 2 ...
 ```
-.F.....
-Test expr evaluator:binary operators:sub (...):
-  expected -1.0 but got 1.0
-FAILED: 1 of 7 tests failed.
-```
 
-One case fails out of seven. The failure message names the
-function (`Sub`) and the expected and actual values. The
-diagnosis is immediate: `Sub` is producing the negative of the
-right answer, so the arguments are probably swapped.
+The most specific failing case is where to look: `nested` fails
+only because it contains a `Sub`, while `sub` isolates the
+operator. The message names the expected and actual values, and
+the diagnosis is immediate: `Sub` is producing the negative of
+the right answer, so the arguments are probably swapped.
 
-**The QCheck properties catch it differently**: most of them
-*do not* catch this bug, because `Sub` is irrelevant to additive
-commutativity, multiplicative identity, and termination. The
-*distributivity* property catches it, because the right-hand side
-of distributivity uses `Mul`-of-`Sub` patterns implicitly via the
-generated expressions, and the bad subtraction leaks through.
+**The QCheck properties are all blind to it.** Run the three
+properties above with `bad_eval` in place of `eval`: all pass,
+ten thousand times over. Termination does not care what `Sub`
+returns. The identity laws never build a `Sub` node of their
+own, and inside the generated `e` the swap happens identically
+on both sides of the comparison. Distributivity compares two
+arrangements of the *same* evaluator against itself, so a bug
+that is consistent on both routes slips through. A property
+that never pins the result to something *outside* the function
+under test cannot see this bug.
 
-Suppose we *also* add a generator-aware Sub-specific property:
+Suppose we try a Sub-specific property:
 
 ```ocaml
 let test_sub_antisymmetric =
@@ -584,73 +842,86 @@ let test_sub_antisymmetric =
     ~name:"Sub (a, b) = -(Sub (b, a))"
     QCheck.(pair arb_expr arb_expr)
     (fun (a, b) ->
-       eval (Sub (a, b)) = -. (eval (Sub (b, a))))
+       same_float (bad_eval (Sub (a, b))) (-. (bad_eval (Sub (b, a)))))
+
+let _ = QCheck_runner.run_tests ~colors:false
+          [test_sub_antisymmetric]  (* = 0: it passes, on the BUGGY eval *)
 ```
 
-The mathematical fact: `a - b = -(b - a)`. The correct `eval`
-satisfies this. The buggy one does, too. Surprise: this property
-*does not catch the bug*, because the bug *swaps the operands of
-Sub*, which is an involutive transformation: the property is
-symmetric under it. This is a real and useful warning sign: a
-property whose *form* is symmetric in the inputs cannot catch a
-bug that swaps those inputs.
+The mathematical fact: `a - b = -(b - a)`. (The `same_float` is
+the usual NaN-aware agreement; the blindness we are about to see
+has nothing to do with NaN.) The correct `eval` satisfies this.
+The buggy one, as the cell above shows, does too. Surprise: this property *does not catch the bug*, because
+the bug *swaps the operands of Sub*, and the property is
+symmetric under exactly that swap. This is a real and useful
+warning sign: a property whose *form* is symmetric in the
+inputs cannot catch a bug that swaps those inputs.
 
-A better property:
-
-```ocaml
-let test_sub_eval_matches_minus =
-  QCheck.Test.make
-    ~name:"eval (Sub (Num a, Num b)) = a -. b"
-    QCheck.(pair (float_range (-100.0) 100.0) (float_range (-100.0) 100.0))
-    (fun (a, b) -> eval (Sub (Num a, Num b)) = a -. b)
-```
-
-This pins `eval` to a *reference*: the OCaml `-.` operator itself.
-The buggy `bad_eval` immediately fails. QCheck shrinks; the
-counterexample comes out as `(a, b)` with `a` something simple
-like `0.0` or `1.0` and `b` something nonzero, the smallest
-asymmetric pair the shrinker can find.
-
-Output:
-
-```
-random seed: 42
-Law eval (Sub (Num a, Num b)) = a -. b: FAIL (1 shrink step).
-Test failed on input: (0.0, 1.0).
-  expected: -1.0   (correct: a -. b  =  0.0 -. 1.0)
-  got:       1.0   (bad_eval: b -. a  =  1.0 -. 0.0)
-```
-
-Two-element pair. Bug is obvious. From a 4-element nested
-expression that the fuzzer originally found the failure on,
-shrinking reduced to "just a pair of two numbers, with subtract
-applied"; that is enough.
-
-:::slide
-
-## Watching QCheck catch the bug
-
-```text
-let rec bad_eval = function
-  | Sub (a, b) -> bad_eval b -. bad_eval a    (* SWAPPED *)
-  | ...
-```
+A better property *anchors* the result to a reference outside
+the evaluator: the OCaml `-.` operator itself. Aim it at the
+buggy evaluator and run it:
 
 ```ocaml
 let test_sub_matches_minus =
   QCheck.Test.make
-    QCheck.(pair (float_range (-100.0) 100.0)
-                 (float_range (-100.0) 100.0))
-    (fun (a, b) -> eval (Sub (Num a, Num b)) = a -. b)
+    ~name:"Sub (Num a, Num b) evaluates to a -. b"
+    QCheck.(pair (float_range (-100.0) 100.0) (float_range (-100.0) 100.0))
+    (fun (a, b) -> bad_eval (Sub (Num a, Num b)) = a -. b)
+
+let _ = QCheck_runner.run_tests ~colors:false
+          [test_sub_matches_minus]  (* = 1, it FAILS *)
 ```
 
-```text
-Test failed on input: (0.0, 1.0).
-expected: -1.0; got: 1.0
+The failure report names a shrunk pair, typically `(0., 1.)` or
+something equally minimal (the exact pair and the number of
+shrink steps vary with the seed): the smallest asymmetric pair
+the shrinker can find. Read it against the anchor: the property
+expected `0. -. 1. = -1.`; the buggy evaluator computed
+`1. -. 0. = 1.`. Two numbers and a subtract; the bug is
+obvious. In the final suite, the same property is written with
+`eval`, where it passes; here we aimed it at `bad_eval` to
+watch it work.
+
+:::slide
+
+## The planted bug
+
+```ocaml
+let rec bad_eval = function
+  | Num n      -> n
+  | Add (a, b) -> bad_eval a +. bad_eval b
+  | Sub (a, b) -> bad_eval b -. bad_eval a    (* SWAPPED! *)
+  | Mul (a, b) -> bad_eval a *. bad_eval b
+  | Div (a, b) -> bad_eval a /. bad_eval b
+
+let _ = bad_eval (Sub (Num 2.0, Num 3.0))  (* = 1., should be -1. *)
 ```
 
-- A *symmetric* property would NOT catch this (consider why).
-- An *anchored* property (pin to `-.`) does, in one shrink step.
+- Type-checks; only `Sub` is wrong.
+- OUnit2: `sub` and `nested` fail, five other cases pass.
+- All three QCheck properties pass: they never pin `Sub` to
+  anything outside the evaluator.
+
+:::
+
+:::slide
+
+## The anchored property catches it
+
+```ocaml
+let test_sub_matches_minus =
+  QCheck.Test.make ~name:"Sub (Num a, Num b) evaluates to a -. b"
+    QCheck.(pair (float_range (-100.0) 100.0) (float_range (-100.0) 100.0))
+    (fun (a, b) -> bad_eval (Sub (Num a, Num b)) = a -. b)
+
+let _ = QCheck_runner.run_tests ~colors:false
+          [test_sub_matches_minus]  (* = 1, it FAILS *)
+```
+
+- The *symmetric* `Sub (a, b) = -(Sub (b, a))` passes on the
+  buggy eval: blind under the very swap it should catch.
+- The *anchored* one (pin to `-.`) fails, shrunk to a pair
+  like `(0., 1.)`.
 
 :::
 
@@ -668,14 +939,21 @@ The general rule, and one of the deeper craft-skills of PBT:
 *each property should break some specific implementation that you
 care about ruling out.* A good test of a property is to ask, "what
 bug would this property catch?" If the answer is "any function
-satisfying the right type", the property is too weak.
+satisfying the right type", the property is too weak. (The PBT
+lecture called those *tautological*; the swapped-operand episode
+shows a property can also be tautological *relative to a
+particular bug* while looking substantive.)
 
 Properties anchored against an external reference (the
 `-.` operator, in our case) are the strongest. They are also the
 most demanding to write, because you have to have a reference at
 hand. For many functions you do: `List.length`, `( + )`, `( *. )`,
 `String.equal` are all in the standard library and serve as
-references for the things they implement.
+references for the things they implement. If this rings a bell,
+it should: anchoring is the model-based testing idea in
+miniature. There the reference was a whole module, a plain-list
+queue standing oracle for the two-list one; here it is a single
+stdlib operator. Same move, smaller scale.
 
 :::slide
 
@@ -685,6 +963,7 @@ references for the things they implement.
   the property will not catch the bug.
 - The strongest properties are *anchored*: pin to an external
   reference (`-.`, `( + )`, `List.length`, ...).
+  - the model-based lecture's reference idea, in miniature.
 - Ask: "what bug would this property catch?" If "none specific",
   the property is too weak.
 
@@ -751,20 +1030,37 @@ let ounit_suite =
   ]
 
 (* --- QCheck properties --- *)
+let gen_leaf =
+  QCheck.Gen.(oneof_weighted [
+    (8, map (fun n -> Num n) (float_range (-100.0) 100.0));
+    (1, return (Num infinity));
+    (1, return (Num nan));
+  ])
+
 let rec gen_expr depth =
   let open QCheck.Gen in
-  if depth <= 0 then
-    map (fun n -> Num n) (float_range (-100.0) 100.0)
+  if depth <= 0 then gen_leaf
   else
+    let sub = gen_expr (depth - 1) in
     oneof [
-      map  (fun n -> Num n) (float_range (-100.0) 100.0);
-      map2 (fun a b -> Add (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
-      map2 (fun a b -> Sub (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
-      map2 (fun a b -> Mul (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
-      map2 (fun a b -> Div (a, b)) (gen_expr (depth - 1)) (gen_expr (depth - 1));
+      gen_leaf;
+      map2 (fun a b -> Add (a, b)) sub sub;
+      map2 (fun a b -> Sub (a, b)) sub sub;
+      map2 (fun a b -> Mul (a, b)) sub sub;
+      map2 (fun a b -> Div (a, b)) sub sub;
     ]
 
-let arb_expr = QCheck.make ~print:(fun _ -> "<expr>") (gen_expr 4)
+let same_float a b =
+  (Float.is_nan a && Float.is_nan b) || a = b
+
+let rec expr_str = function
+  | Num n -> Printf.sprintf "%g" n
+  | Add (a, b) -> "(" ^ expr_str a ^ " + " ^ expr_str b ^ ")"
+  | Sub (a, b) -> "(" ^ expr_str a ^ " - " ^ expr_str b ^ ")"
+  | Mul (a, b) -> "(" ^ expr_str a ^ " * " ^ expr_str b ^ ")"
+  | Div (a, b) -> "(" ^ expr_str a ^ " / " ^ expr_str b ^ ")"
+
+let arb_expr = QCheck.make ~print:expr_str (gen_expr 4)
 
 let qcheck_tests = [
   QCheck.Test.make
@@ -775,7 +1071,7 @@ let qcheck_tests = [
   QCheck.Test.make
     ~name:"0 + e = e"
     arb_expr
-    (fun e -> eval (Add (Num 0.0, e)) = eval e);
+    (fun e -> same_float (eval (Add (Num 0.0, e))) (eval e));
 
   QCheck.Test.make
     ~name:"Sub matches -."
@@ -813,361 +1109,88 @@ And the corresponding `dune`:
 Two library dependencies, one test executable, one `dune runtest`
 that exercises everything.
 
-:::slide
-
-## The complete test file
-
-```dune
-(test
- (name test_expr)
- (libraries ounit2 qcheck))
-```
-
-- 7 OUnit2 cases for specific behaviours.
-- 3 QCheck properties (terminates, identity, anchored-Sub).
-- Single `dune runtest` runs the lot.
-- Bug in `eval`? `test_sub` catches it; `Sub matches -.`
-  catches it with a shrunk counterexample.
-
-:::
-
-## Part 6: differential testing, an optimiser vs `eval`
-
-The model-based lecture's central move was to test a clever
-implementation against a simple reference: the reference is an
-executable specification, and any disagreement is a bug. That
-idea is not reserved for stateful data structures. Whenever you
-have *two* routes to the same answer, each tests the other; the
-technique is called *differential testing*, and it is, among
-other things, how C compilers get fuzzed.
-
-We close the tutorial by applying it to a pure function. Suppose
-we want an optimiser for `expr`: a function
-`simplify : expr -> expr` that rewrites an expression into a
-cheaper one. Its specification is one sentence, and the sentence
-is a differential property:
-
-```text
-(** [simplify e] is an expression with the same value as [e]:
-    [eval (simplify e) = eval e]. *)
-val simplify : expr -> expr
-```
-
-The original `eval` is the oracle. We do not need to predict
-what any particular expression simplifies *to*; we only demand
-that whatever comes out evaluates to the same float. (This part
-is self-contained; in a project it would be its own test file
-alongside the one we just assembled.)
-
-:::slide
-
-## Differential testing: the original as oracle
-
-- Two routes to the same answer test each other.
-  - The model-based recipe, applied to a *pure* function.
-- The optimiser's whole spec is one equation:
-  - `eval (simplify e) = eval e`.
-- `eval` plays the reference; no expected outputs to write.
-- The same trick fuzzes C compilers: compile the same program
-  two ways, run both, compare.
-
-:::
-
-Two tools first. A printer, so counterexamples are readable
-(the "fancier printer" promised back in Part 3), and a
-generator tuned for this property:
-
-```ocaml
-let rec expr_str = function
-  | Num n -> Printf.sprintf "%g" n
-  | Add (a, b) -> "(" ^ expr_str a ^ " + " ^ expr_str b ^ ")"
-  | Sub (a, b) -> "(" ^ expr_str a ^ " - " ^ expr_str b ^ ")"
-  | Mul (a, b) -> "(" ^ expr_str a ^ " * " ^ expr_str b ^ ")"
-  | Div (a, b) -> "(" ^ expr_str a ^ " / " ^ expr_str b ^ ")"
-
-let _ = expr_str (Mul (Num 0.0, Div (Num 1.0, Num 0.0)))  (* = "(0 * (1 / 0))" *)
-```
-
-The generator choice matters more than it looks, and it is the
-input-space lesson from the QCheck lecture paying rent. The
-interesting failures of an arithmetic optimiser involve *exact
-zeros* in awkward places, and `float_range (-100.0) 100.0`
-essentially never produces the float `0.0` at random. So this
-generator draws small *integer-valued* constants instead: zeros,
-ones, and collisions galore.
-
-```ocaml
-let rec gen_small depth =
-  let open QCheck.Gen in
-  let leaf =
-    map (fun n -> Num (float_of_int n)) (int_range (-3) 3)
-  in
-  if depth <= 0 then leaf
-  else
-    oneof [
-      leaf;
-      map2 (fun a b -> Add (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
-      map2 (fun a b -> Sub (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
-      map2 (fun a b -> Mul (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
-      map2 (fun a b -> Div (a, b)) (gen_small (depth - 1)) (gen_small (depth - 1));
-    ]
-
-let arb_small = QCheck.make ~print:expr_str (gen_small 4)
-```
-
-:::slide
-
-## A generator tuned for collisions
-
-```text
-val expr_str : expr -> string    (* "(0 * (1 / 0))" *)
-
-let rec gen_small depth = ...
-  (* leaves: Num of int_range (-3) 3, as floats;
-     nodes: Add / Sub / Mul / Div at depth - 1 *)
-
-let arb_small =
-  QCheck.make ~print:expr_str (gen_small 4)
-```
-
-- Integer-valued constants in -3..3: zeros and collisions
-  are *reachable*.
-  - `float_range` would almost never produce exactly `0.0`.
-- The input-space lesson from the QCheck lecture, paying rent.
-
-:::
-
-And the harness: one parametrised property, usable on every
-candidate optimiser we write. The only subtlety is NaN, which
-is not equal to itself; two NaNs count as agreement.
-
-:::slide
-
-## The harness
-
-```ocaml
-let preserves_value name simp =
-  QCheck.Test.make ~name ~count:1000 arb_small
-    (fun e ->
-       let v1 = eval e in
-       let v2 = eval (simp e) in
-       (Float.is_nan v1 && Float.is_nan v2) || v1 = v2)
-```
-
-- `arb_small`: integer-valued leaves in -3..3.
-  - Exact zeros must be *reachable*; `float_range` would
-    almost never produce one.
-- Two NaNs count as agreement (`nan <> nan` in IEEE-754).
-- Parametrised by `simp`: every candidate gets the same exam.
-
-:::
-
-### Round 1: constant folding
-
-The safest optimisation there is: wherever both operands are
-literals, do the arithmetic now.
-
-```ocaml
-let rec fold_consts = function
-  | Num n -> Num n
-  | Add (a, b) -> (match (fold_consts a, fold_consts b) with
-      | Num x, Num y -> Num (x +. y) | a, b -> Add (a, b))
-  | Sub (a, b) -> (match (fold_consts a, fold_consts b) with
-      | Num x, Num y -> Num (x -. y) | a, b -> Sub (a, b))
-  | Mul (a, b) -> (match (fold_consts a, fold_consts b) with
-      | Num x, Num y -> Num (x *. y) | a, b -> Mul (a, b))
-  | Div (a, b) -> (match (fold_consts a, fold_consts b) with
-      | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
-
-let _ = QCheck_runner.run_tests ~colors:false
-          [ preserves_value "fold_consts" fold_consts ]  (* = 0 *)
-```
-
-It passes, and it deserves to: folding performs *exactly the
-operation* `eval` would have performed, just earlier. Even
-`Div (Num 1.0, Num 0.0)` folds honestly, to `Num infinity`.
-
-### Round 2: four tempting identities
-
-Folding alone leaves money on the table. Every algebra student
-knows four more rewrites: `0 + e = e`, `e - 0 = e`,
-`1 * e = e`, `0 * e = 0`. Add them:
-
-```ocaml
-let rec simplify = function
-  | Num n -> Num n
-  | Add (a, b) -> (match (simplify a, simplify b) with
-      | Num 0.0, e | e, Num 0.0 -> e
-      | Num x, Num y -> Num (x +. y) | a, b -> Add (a, b))
-  | Sub (a, b) -> (match (simplify a, simplify b) with
-      | e, Num 0.0 -> e
-      | Num x, Num y -> Num (x -. y) | a, b -> Sub (a, b))
-  | Mul (a, b) -> (match (simplify a, simplify b) with
-      | Num 1.0, e | e, Num 1.0 -> e
-      | Num 0.0, _ | _, Num 0.0 -> Num 0.0
-      | Num x, Num y -> Num (x *. y) | a, b -> Mul (a, b))
-  | Div (a, b) -> (match (simplify a, simplify b) with
-      | e, Num 1.0 -> e
-      | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
-
-let _ = QCheck_runner.run_tests ~colors:false
-          [ preserves_value "simplify" simplify ]  (* = 1, it FAILS *)
-```
-
-Run it (the exact counterexample varies with the random seed):
-
-```text
---- Failure -----------------------------------------------
-
-Test simplify failed:
-
-(2 / ((0 * -3) / (1 / -3)))
-```
-
-Read the counterexample inside out, with the oracle on one
-shoulder. `eval` says: `0 * -3` is `-0.0` (IEEE-754 zero
-carries a *sign*, and positive times negative is negative).
-Then `-0.0 / (1 / -3)` is `+0.0`, and `2 / +0.0` is
-`+infinity`. The simplifier said instead: `0 * -3` rewrites to
-`Num 0.0` by the new rule, the sign is gone, and the same
-pipeline now ends at `-infinity`. The two routes disagree.
-
-The failure is genuinely informative, in a way no hand-written
-case would have been. Two of our four identities are unsound
-in float arithmetic:
-
-- **`0 * e = 0` is wrong twice over.** If `e` evaluates to
-  `infinity` or `nan`, the true value is `nan`, not `0`. And if
-  `e` is merely *negative*, the true value is `-0.0`: equal to
-  `0.0` under `=`, but observably different the moment anything
-  divides by it.
-- **`0 + e = e` is wrong about signed zero too**: if `e`
-  evaluates to `-0.0`, then `0.0 +. -0.0` is `+0.0`, not the
-  `-0.0` the rewrite preserves.
-
-The other two survive scrutiny: `1 *. v` and `v -. 0.0` are
-exact in IEEE-754 for every `v`, including infinities, NaN, and
-both zeros.
-
-:::slide
-
-## Round 2: four tempting identities
-
-`0 + e = e`, `e - 0 = e`, `1 * e = e`, `0 * e = 0`. Added.
-
-```text
---- Failure -----------------------------------------------
-Test simplify failed:
-
-(2 / ((0 * -3) / (1 / -3)))
-```
-
-- The oracle: `0 * -3` is `-0.0`; signs flow on; result
-  `+infinity`.
-- The rewrite: `0 * -3` becomes `0.0`; result `-infinity`.
-- Unsound in floats: `0 * e` (loses NaN, infinity, *and* the
-  zero's sign) and `0 + e` (loses the sign of `-0.0`).
-- Sound: `1 * e` and `e - 0` are exact for every float.
-
-:::
-
-### Round 3: keep the sound two
-
-```ocaml
-let rec simplify_sound = function
-  | Num n -> Num n
-  | Add (a, b) -> (match (simplify_sound a, simplify_sound b) with
-      | Num x, Num y -> Num (x +. y) | a, b -> Add (a, b))
-  | Sub (a, b) -> (match (simplify_sound a, simplify_sound b) with
-      | e, Num 0.0 -> e
-      | Num x, Num y -> Num (x -. y) | a, b -> Sub (a, b))
-  | Mul (a, b) -> (match (simplify_sound a, simplify_sound b) with
-      | Num 1.0, e | e, Num 1.0 -> e
-      | Num x, Num y -> Num (x *. y) | a, b -> Mul (a, b))
-  | Div (a, b) -> (match (simplify_sound a, simplify_sound b) with
-      | e, Num 1.0 -> e
-      | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
-
-let _ = QCheck_runner.run_tests ~colors:false
-          [ preserves_value "simplify_sound" simplify_sound ]  (* = 0 *)
-```
-
-One thousand cases, no disagreement (we ran ten thousand while
-preparing this lecture; same answer). Note what just happened:
-we did not become IEEE-754 experts before writing the
-optimiser. We wrote the algebra we believed, and the
-differential property *taught us* the float semantics by
-counterexample, twice. The reference implementation knew more
-than we did, and the harness transferred that knowledge at the
-cost of one equation.
-
-One honest caveat, which is this module's recurring theme in
-miniature: the oracle is only as good as the reference. If
-`eval` itself were wrong, `simplify` would be tested against
-the wrong standard (the think-about-this question below picks
-this up). Differential testing tells you the two routes
-*agree*; choosing which one to believe is still your job.
-
-:::slide
-
-## Round 3: keep the sound two
-
-```ocaml
-let _ = QCheck_runner.run_tests ~colors:false
-          [ preserves_value "simplify_sound" simplify_sound ]  (* = 0 *)
-```
-
-- We wrote the algebra we *believed*;
-  - the oracle taught us IEEE-754 by counterexample, twice.
-- Differential testing transfers the reference's knowledge
-  for the price of one equation.
-- Caveat: the oracle is only as good as the reference.
-  - Agreement is symmetric; belief is not.
-
-:::
-
 ## Activity
 
 :::quiz code id=M09-L07-q1
-The `eval` function above does not have an explicit property
-asserting that *multiplication by zero gives zero*. Write a
-QCheck property that:
+Extend the AST with unary negation. The cell below is
+self-contained (it redefines `expr`, so everything the property
+needs is rebound here). Three steps:
 
-- takes an arbitrary `expr` (use `arb_expr`),
-- evaluates `Mul (Num 0.0, e)`,
-- and checks the result equals `0.0`.
+1. Add the missing `Neg` clause to `eval`.
+2. Add a `Neg` case to `gen_expr`, so random trees contain
+   negations: one `map` over the `sub` generator.
+3. Write the anchored property `test_neg_anchored`: for every
+   generated `e`, `eval (Neg e)` agrees with `-. (eval e)`.
+   Compare with `same_float` (NaN trees are common), and build
+   the `arbitrary` with `QCheck.make (gen_expr 4)`.
 
-The expected name of the property: `"0 * e = 0"`.
-
-(Part 6 showed why `0 * e -> 0` is unsound as a *rewrite*. As a
-*checked property* it fares better: under OCaml's `=`, the
-`-0.0` results still compare equal to `0.0`, so only the
-NaN/infinity cases remain, and the guard below handles those.
-Writing it is a good way to feel the difference between
-rewriting and checking.)
-
-Be careful: floating-point `0.0 *. nan` is `nan`, not `0.0`. The
-property as stated will trip on any `expr` whose evaluation
-yields NaN. You may add a `QCheck.assume (not (Float.is_nan
-(eval e)))` precondition if you wish; or leave it and treat the
-resulting failure as a feature, not a bug, of strict floating-
-point semantics.
+The anchor is OCaml's own `-.`, the same move that caught the
+swapped `Sub`. Negation is *exact* in IEEE-754 (it just flips
+the sign bit, even on NaN), so agreement should hold on every
+generated tree, the special values included.
 
 ```ocaml
-let test_mul_zero =
-  failwith "not implemented"
+type expr =
+  | Num of float
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Div of expr * expr
+  | Neg of expr                                  (* new *)
+
+let rec eval = function
+  | Num n      -> n
+  | Add (a, b) -> eval a +. eval b
+  | Sub (a, b) -> eval a -. eval b
+  | Mul (a, b) -> eval a *. eval b
+  | Div (a, b) -> eval a /. eval b
+  | Neg e      -> failwith "TODO"
+
+let gen_leaf =
+  QCheck.Gen.(oneof_weighted [
+    (8, map (fun n -> Num n) (float_range (-100.0) 100.0));
+    (1, return (Num infinity));
+    (1, return (Num nan));
+  ])
+
+let rec gen_expr depth =
+  let open QCheck.Gen in
+  if depth <= 0 then gen_leaf
+  else
+    let sub = gen_expr (depth - 1) in
+    oneof [
+      gen_leaf;
+      map2 (fun a b -> Add (a, b)) sub sub;
+      map2 (fun a b -> Sub (a, b)) sub sub;
+      map2 (fun a b -> Mul (a, b)) sub sub;
+      map2 (fun a b -> Div (a, b)) sub sub;
+      (* TODO: a Neg case *)
+    ]
+
+let same_float a b =
+  (Float.is_nan a && Float.is_nan b) || a = b
+
+let test_neg_anchored =
+  failwith "TODO: same_float (eval (Neg e)) (-. (eval e))"
 ```
 
 ```ocaml skip
+let rec contains_neg = function
+  | Num _ -> false
+  | Neg _ -> true
+  | Add (a, b) | Sub (a, b) | Mul (a, b) | Div (a, b) ->
+    contains_neg a || contains_neg b
+
 let () =
-  (* Pretend the student's property has been threaded into
-     QCheck and run.  The point of this check cell is to
-     verify the *property formula* is correct on a handful of
-     non-NaN inputs. *)
-  let prop e = eval (Mul (Num 0.0, e)) = 0.0 in
-  assert (prop (Num 5.0));
-  assert (prop (Add (Num 1.0, Num 2.0)));
-  assert (prop (Sub (Num 3.0, Num 1.0)));
+  assert (eval (Neg (Num 3.0)) = -3.0);
+  assert (eval (Neg (Neg (Num 2.5))) = 2.5);
+  assert (eval (Add (Num 1.0, Neg (Num 4.0))) = -3.0);
+  (* the generator must actually produce Neg nodes *)
+  let samples = QCheck.Gen.generate ~n:100 (gen_expr 4) in
+  assert (List.exists contains_neg samples);
+  (* and the anchored property must pass *)
+  let errs = QCheck_runner.run_tests ~colors:false [test_neg_anchored] in
+  assert (errs = 0);
   print_endline "all tests passed"
 ```
 :::
@@ -1177,17 +1200,64 @@ let () =
 Reference solution:
 
 ```ocaml
-let test_mul_zero =
+type expr =
+  | Num of float
+  | Add of expr * expr
+  | Sub of expr * expr
+  | Mul of expr * expr
+  | Div of expr * expr
+  | Neg of expr
+
+let rec eval = function
+  | Num n      -> n
+  | Add (a, b) -> eval a +. eval b
+  | Sub (a, b) -> eval a -. eval b
+  | Mul (a, b) -> eval a *. eval b
+  | Div (a, b) -> eval a /. eval b
+  | Neg e      -> -. (eval e)
+
+let gen_leaf =
+  QCheck.Gen.(oneof_weighted [
+    (8, map (fun n -> Num n) (float_range (-100.0) 100.0));
+    (1, return (Num infinity));
+    (1, return (Num nan));
+  ])
+
+let rec gen_expr depth =
+  let open QCheck.Gen in
+  if depth <= 0 then gen_leaf
+  else
+    let sub = gen_expr (depth - 1) in
+    oneof [
+      gen_leaf;
+      map2 (fun a b -> Add (a, b)) sub sub;
+      map2 (fun a b -> Sub (a, b)) sub sub;
+      map2 (fun a b -> Mul (a, b)) sub sub;
+      map2 (fun a b -> Div (a, b)) sub sub;
+      map  (fun e -> Neg e) sub;
+    ]
+
+let same_float a b =
+  (Float.is_nan a && Float.is_nan b) || a = b
+
+let test_neg_anchored =
   QCheck.Test.make
-    ~name:"0 * e = 0"
-    arb_expr
-    (fun e ->
-       QCheck.assume (not (Float.is_nan (eval e)));
-       eval (Mul (Num 0.0, e)) = 0.0)
+    ~name:"eval (Neg e) = -. (eval e)"
+    ~count:1000
+    (QCheck.make (gen_expr 4))
+    (fun e -> same_float (eval (Neg e)) (-. (eval e)))
+
+let _ = QCheck_runner.run_tests ~colors:false [test_neg_anchored]  (* = 0 *)
 ```
 
-Four lines (counting the `assume`): a property whose formal
-statement is just one equation, plus a NaN guard.
+Three small additions, each in the mould the tutorial built:
+one clause in the evaluator (`Neg` has a single sub-expression,
+so no left/right to confuse), one unary case in the generator
+(only one `sub`, against the binary cases' two), and one
+anchored property. Negation in IEEE-754 just flips the sign
+bit, exactly, even on NaN; with `same_float` saying that two
+NaNs agree, the property holds on every generated tree, special
+values included.
 
 :::
 
@@ -1254,23 +1324,6 @@ implies it.
 when OUnit2 and QCheck agree, you have *not* proved the function
 correct. You have a strong sample. Trust it; do not deify it.
 
-:::slide
-
-## Common pitfalls
-
-1. **Properties invariant under the bug**: anchor properties
-   against an external reference.
-2. **Float equality**: use approximate comparison, or restrict
-   to ints.
-3. **Trivial-input generators**: balance leaves and internal
-   nodes.
-4. **Missing specific cases**: unit tests for *known* behaviours,
-   PBT for *invariants*.
-5. **Strong sample, not a proof**: testing is evidence, not
-   verification.
-
-:::
-
 ## What you should be able to do now
 
 After this module:
@@ -1296,8 +1349,8 @@ After this module:
 - Build a generator for a recursive type of your own, with a
   depth bound and a `QCheck.make` wrap (this lecture).
 - Combine the toolkit on a real function: spec-derived cases,
-  a deliberately introduced bug caught and shrunk, and a
-  differential test against an oracle (this lecture).
+  an anchored property, and a deliberately introduced bug
+  caught and shrunk (this lecture).
 
 The next module, [Memory safety and security](M10-L01-ub-and-the-zoo.html),
 moves in the other direction: from what tests catch to what
@@ -1316,8 +1369,8 @@ context of memory safety, with security as the application.
 - Write OUnit2 unit tests (L4).
 - Write QCheck properties for invariants (L5).
 - Apply model-based testing to stateful code (L6).
-- Combine the toolkit, plus a custom generator and differential
-  testing, on a real function (this lecture).
+- Combine the toolkit, plus a custom generator and an anchored
+  property, on a real function (this lecture).
 
 Next module: M10 on memory safety. Tests catch behaviour;
 *types and the runtime* catch the next layer.
