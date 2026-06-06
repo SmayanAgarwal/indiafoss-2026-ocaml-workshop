@@ -461,7 +461,7 @@ let command_gen : command QCheck.Gen.t =
 
 :::slide
 
-## Step 2: wrap into an `arbitrary`
+## Step 2: shrinking commands
 
 ```ocaml
 let command_shrink (c : command) : command QCheck.Iter.t =
@@ -469,7 +469,23 @@ let command_shrink (c : command) : command QCheck.Iter.t =
   | Enqueue x ->
     QCheck.Iter.map (fun x' -> Enqueue x') (QCheck.Shrink.int x)
   | Dequeue | Size -> QCheck.Iter.empty
+```
 
+- The custom shrinker the PBT lecture promised you would write.
+- A shrinker maps a failing value to *smaller candidates*
+  - a stream (`QCheck.Iter.t`) of values to try in its place.
+- `Enqueue x`: `Shrink.int` walks `x` toward `0`
+  - `Iter.map` wraps each shrunk int back into `Enqueue`.
+- `Dequeue` and `Size` carry nothing to shrink
+  - `Iter.empty`: no candidates.
+
+:::
+
+:::slide
+
+## Step 2: wrap into an `arbitrary`
+
+```ocaml
 let command_list_gen : command list QCheck.arbitrary =
   QCheck.make
     ~print:(fun cs ->
@@ -478,7 +494,11 @@ let command_list_gen : command list QCheck.arbitrary =
     (QCheck.Gen.list_size (QCheck.Gen.int_range 0 30) command_gen)
 ```
 
-- ≤ 30 commands; `QCheck.make` has **no defaults**: attach both.
+- `QCheck.make` turns the generator into an `arbitrary`
+  - for a custom type it has **no defaults**: attach both.
+- `~print`: failures print readable command lists, not `<opaque>`.
+- `~shrink`: `Shrink.list` drops commands, `command_shrink` shrinks each.
+- `list_size (int_range 0 30)`: at most 30 commands, fast to shrink.
 
 :::
 
@@ -490,7 +510,7 @@ makes visible.
 
 :::slide
 
-## Interpreters return observations
+## Step 3: interpreters return observations
 
 ```ocaml
 type observation =
@@ -585,7 +605,7 @@ counterexample. We will watch that happen in a moment.
 
 :::slide
 
-## The property
+## Step 4: the property
 
 ```ocaml
 let test_q_matches_ref =
@@ -613,8 +633,8 @@ let _ = QCheck_runner.run_tests ~colors:false [test_q_matches_ref]  (* = 0 *)
 ### Step 5: what shrinking does to operation sequences
 
 The list shrinker we attached in step 2 is exactly what we
-want. When the property fails on, say, a 23-command sequence,
-the shrinker:
+want. When the property fails on a long sequence, the
+shrinker:
 
 1. Tries dropping a single command. Re-runs both interpreters
    on the shorter sequence. Does the divergence still happen?
@@ -637,8 +657,8 @@ Test failed on input:
   [Enqueue 0; Dequeue; Dequeue]
 ```
 
-Three commands. A 23-command sequence with random distractors
-would be unreadable. The three-command shrunk witness reads
+Three commands. A long failing sequence with random
+distractors would be unreadable. The three-command shrunk witness reads
 itself: "enqueue one element, dequeue it, dequeue again.
 The two implementations disagree on what comes out." Now you
 know exactly where to look: the moment `dequeue` crosses from
@@ -646,9 +666,9 @@ a drained `front` into `back`.
 
 :::slide
 
-## Shrinking an operation sequence
+## Step 5: shrinking the failing sequence
 
-A 23-command failing sequence shrinks to:
+A long failing sequence shrinks to:
 
 ```
 [Enqueue 0; Dequeue; Dequeue]
@@ -1145,12 +1165,16 @@ frequently hit keys that are actually present.
 
 ## Common pitfalls
 
-**Pitfall 1: the reference has a bug too.** If the reference
+**Pitfall 1: the reference is wrong too.** If the reference
 implementation contains the same bug as the system under test,
-the test passes despite both being wrong. *Keep the reference
-trivial*. The whole point is that it is so simple that any
-reader can convince themselves it is right. If the reference
+or quietly implements different semantics, the test passes
+despite both being wrong. Two defences. *Keep the reference
+trivial*: the whole point is that it is so simple that any
+reader can convince themselves it is right; if the reference
 is more complex than 30-50 lines, you have lost the property.
+And *check the reference against the actual specification
+once*, by hand or with a few unit tests, before using it as
+the oracle. Garbage in, garbage out.
 
 **Pitfall 2: incomplete observations.** Comparing only
 `Dequeue` results misses bugs where the internal state has gone
@@ -1180,23 +1204,18 @@ or any concurrency), the equality check breaks. Either seed the
 randomness explicitly so the test is reproducible, or compare
 equivalence classes rather than raw observations.
 
-**Pitfall 6: the reference is not the spec.** Sometimes you
-inherit a "reference" implementation that itself has subtle bugs
-or different semantics. Check the reference against the *actual
-specification* once, by hand or by unit tests, before using it
-as the oracle. Garbage in, garbage out.
-
 :::slide
 
 ## Common pitfalls
 
-1. **The reference itself has a bug.** Keep it under 50 lines.
+1. **The reference itself is wrong.** Keep it under 50 lines
+   - and sanity-check it against the spec once, by hand.
 2. **Observations too narrow.** Compare more than just return
-   values; include cheap state observations.
+   values
+   - include cheap state observations like `Size`.
 3. **Distribution misses collisions.** Small key space.
 4. **Sequences too short.** 30-50 commands per test.
 5. **Non-determinism.** Seed it or compare equivalence classes.
-6. **The reference is not the spec.** Sanity-check it by hand.
 
 :::
 
