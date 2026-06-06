@@ -284,7 +284,6 @@ let _ = QCheck_runner.run_tests ~colors:false [test_rev_involutive]  (* = 0 *)
 - Generator: `QCheck.(list int)` produces random `int list`s.
 - Property: a function `'a -> bool`. Returns `true` if the input
   satisfies the law.
-- In a `dune` test file: `run_tests_main` (parses flags, exits).
 
 :::
 

@@ -352,8 +352,23 @@ why-shrinking slides. This followed the 2026-06-04 L04 recast
 (16 -> 13 slides), the L02/L03/L08 slide polish, and the
 2026-06-02 testing-only restructure. Module slide count moved
 125 -> 138 (polish) -> 135 (L04 recast) -> 124 (depth trim,
-net of the new L03/L05 slides). Estimate uses
-slide_count x 1.5 min.
+net of the new L03/L05 slides). Re-counted 2026-06-06 after the
+L07 trim: differential testing (the optimiser-vs-eval part) was
+dropped from the tutorial (a tutorial should not introduce a new
+technique), the four QCheck properties became three (the Add
+commutativity property was factually wrong: IEEE-754 addition
+commutes exactly), the activity became a Neg-extension exercise
+on the expr generator, and the suite/property cells went live
+in-browser. The cut paid for per-case slides (the four OUnit2
+cases), per-property live-cell slides, and a
+planted-bug/anchored-property pair; the dune-stanza slide was
+dropped. A follow-up pass (same day) made the generator's leaves
+include `infinity` and `nan` (the spec names them; KC), switched
+the comparisons to NaN-aware `same_float` agreement, and made
+distributivity a finite-domain conditional, adding a
+leaf-distribution slide; the common-pitfalls slide was dropped
+(the chapter section stays). L07: 17 -> 19 slides; module
+126 -> 128. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
@@ -363,9 +378,9 @@ slide_count x 1.5 min.
 | M09-L04 | Unit testing | 13 | 1 | 1 | 20 | 28 |
 | M09-L05 | Property-based testing with QCheck: basics and shrinking | 19 | 2 | 1 | 29 | 41 |
 | M09-L06 | Model-based testing | 19 | 2 | 1 | 29 | 41 |
-| M09-L07 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 17 | 1 | 1 | 26 | 36 |
-| **M09 total** | | **126** | **13** | **6** | **192** | **269** |
-| | | | | | **(3.2 h)** | **(4.5 h)** |
+| M09-L07 | Tutorial: testing the expr evaluator with OUnit2 and QCheck | 19 | 1 | 1 | 29 | 41 |
+| **M09 total** | | **128** | **13** | **6** | **195** | **274** |
+| | | | | | **(3.3 h)** | **(4.6 h)** |
 
 L02 and L03 now top the module at 30 min each: L02 carries
 both specifications and the AF/RI material, L03 carries
