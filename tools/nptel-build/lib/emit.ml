@@ -372,14 +372,51 @@ let runtime_script ~asset_root =
     }
 
     // ---------- Per-cell edit persistence via localStorage ----------
-    // Key: nptel-cell:<pathname>#<cellIndex>. We track the index by
-    // position among <x-ocaml> elements at load. Edits are saved with
-    // a small debounce on every CodeMirror mutation; reset clears the
-    // entry; identical-to-source content is also cleared so we never
-    // store useless duplicates.
+    // Key: nptel-cell:<pathname>#<hash(data-source)>:<ordinal>.
+    // Keying by content rather than by position keeps a saved edit
+    // attached to the cell it came from when a lecture update inserts
+    // or removes cells (position-keyed edits used to reattach to
+    // whichever cell inherited the index). If the cell's own source
+    // changed in a republish, the stale edit is dropped, which is
+    // what a republish should do. <ordinal> disambiguates twin cells
+    // that share a source (a chapter cell and its slide mirror).
+    // Edits are saved with a small debounce on every CodeMirror
+    // mutation; reset clears the entry; identical-to-source content
+    // is also cleared so we never store useless duplicates.
     const STORAGE_PREFIX = 'nptel-cell:' + location.pathname + '#';
-    const storageKey = i => STORAGE_PREFIX + i;
-    function cellIndex(cell) { return allCells().indexOf(cell); }
+    // djb2 over the source, in hex. Tiny and stable; collisions among
+    // the handful of cells on one page are not a realistic concern.
+    function srcHash(s) {
+      let h = 5381;
+      for (let i = 0; i < s.length; i++) {
+        h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+      }
+      return h.toString(16);
+    }
+    const cellKeys = new Map(); // cell -> full localStorage key
+    function storageKey(cell) {
+      if (!cellKeys.has(cell)) {
+        const ords = new Map(); // hash -> next ordinal
+        for (const c of allCells()) {
+          const h = srcHash(c.getAttribute('data-source') ?? '');
+          const ord = ords.get(h) ?? 0;
+          ords.set(h, ord + 1);
+          cellKeys.set(c, STORAGE_PREFIX + h + ':' + ord);
+        }
+      }
+      return cellKeys.get(cell);
+    }
+    // Drop entries no current cell owns: edits orphaned by a lecture
+    // update, plus keys from the old index-based scheme.
+    function gcPersistedCells() {
+      const live = new Set(allCells().map(storageKey));
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(STORAGE_PREFIX) && !live.has(k)) {
+          localStorage.removeItem(k);
+        }
+      }
+    }
     // Read the editor's typed source by collecting [.cm-line] text only,
     // so output widgets that x-ocaml injects into the editor are not
     // mistaken for user input.
@@ -396,16 +433,15 @@ let runtime_script ~asset_root =
         : null;
     }
     function persistCell(cell) {
-      const idx = cellIndex(cell);
       const src = cell.getAttribute('data-source') ?? '';
       const cur = cellEditorText(cell);
       if (cur == null) return;
       const btn = dirtyButton(cell);
       if (cur.trim() === src.trim()) {
-        localStorage.removeItem(storageKey(idx));
+        localStorage.removeItem(storageKey(cell));
         btn?.classList.remove('dirty');
       } else {
-        localStorage.setItem(storageKey(idx), cur);
+        localStorage.setItem(storageKey(cell), cur);
         btn?.classList.add('dirty');
       }
     }
@@ -452,8 +488,9 @@ let runtime_script ~asset_root =
       if (document.visibilityState === 'hidden') flushPendingPersists();
     });
     function restorePersistedCells() {
+      gcPersistedCells();
       for (const cell of allCells()) {
-        const saved = localStorage.getItem(storageKey(cellIndex(cell)));
+        const saved = localStorage.getItem(storageKey(cell));
         if (saved !== null && saved !== cell.getAttribute('data-source')) {
           cell.textContent = saved;
           dirtyButton(cell)?.classList.add('dirty');
@@ -469,7 +506,7 @@ let runtime_script ~asset_root =
       const src = cell.getAttribute('data-source');
       if (src === null) return;
       cell.textContent = src;
-      localStorage.removeItem(storageKey(cellIndex(cell)));
+      localStorage.removeItem(storageKey(cell));
       dirtyButton(cell)?.classList.remove('dirty');
     }
     function resetAll() {
