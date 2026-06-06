@@ -36,12 +36,12 @@ HARNESS_NAMES = {"check", "main", "ans", "result", "tests"}
 # "same pattern, different ADT" extensions rather than literal
 # duplicates. Reviewed by hand.
 ALLOWLIST = {
-    # Chapter walks `command_to_string` through for a hashtable
+    # Chapter walks `command_to_string` through for the queue
     # model. Activity asks the student to write a parallel
-    # `command_to_string` for a stack -- different ADT, same
-    # model-based-testing pattern. Natural extension per
+    # `command_to_string` for a hash table -- different ADT,
+    # same model-based-testing pattern. Natural extension per
     # feedback-activity-fresh-code.
-    ("M09-L07-model-based-testing.md", "command_to_string"),
+    ("M09-L06-model-based-testing.md", "command_to_string"),
     # Chapter walks `rep_ok` through for the Rational module
     # (predicate: nonzero denominator). Activity asks for a
     # `rep_ok` for an interval record (predicate: lo <= hi,

@@ -1,11 +1,11 @@
 ---
 title: "Model-based testing of stateful data structures"
-lecture_no: 7
+lecture_no: 6
 week: 9
 duration_target_min: 25
-concepts: [model-based testing, stateful testing, reference implementation, command sequences, observable equivalence, hash table, PBT for state]
-keywords: [OCaml, QCheck, model-based testing, reference implementation, command, stateful, hash table, queue, association list, observable equivalence]
-activity_question: "Suppose you have implemented a queue with O(1) amortised enqueue/dequeue (two stacks, the Banker's queue trick). What is the simplest reference implementation you could test it against? Why is a `list` a better reference than another queue implementation?"
+concepts: [model-based testing, stateful testing, reference implementation, command sequences, observable equivalence, queue, PBT for state]
+keywords: [OCaml, QCheck, model-based testing, reference implementation, command, stateful, queue, hash table, association list, observable equivalence]
+activity_question: "You are handed a hash table module with [add : t -> int -> string -> unit], [find : t -> int -> string option], [remove : t -> int -> unit], and [size : t -> int]. Sketch the model-based harness: the [command] type, the reference implementation, and the observations. Why is an association list the right reference?"
 think_about_this: "If your reference implementation is the *spec* (because it is so simple it is obviously correct), what kind of property are you actually checking? Is model-based testing a form of refinement checking? What is the relationship to formal specifications?"
 reading:
   - title: "QCheck-STM: stateful model-based testing"
@@ -24,7 +24,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Model-based testing of stateful data structures</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 7</p>
+<p class="title-slide-label">Module 9 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -32,19 +32,19 @@ reading:
 
 [Lecture 5](M09-L05-property-based-testing.html) developed
 property-based testing on *pure* functions: a list reversal, a
-sort, an expression evaluator. The properties were statements
+sort. The properties were statements
 about a single function call: "for every input `xs`, `rev (rev
 xs) = xs`." No state. No mutation. No sequence of calls. Just
 input goes in, output comes out, property holds.
 
-Most of real software is not like that. A hash table is
-*stateful*: you `add` to it, you `find` in it, you `remove`
-from it, and the result of `find` depends on every previous
-`add` and `remove`. A queue is stateful: dequeue order depends
-on enqueue order. A file handle is stateful. A database is
-stateful. The entire OS is stateful. And the property "for
-every input, the output is correct" no longer obviously
-applies, because there is no single input; there is a *history*.
+Most of real software is not like that. A queue is *stateful*:
+what `dequeue` returns depends on every `enqueue` and `dequeue`
+that came before it. A hash table is stateful: the result of
+`find` depends on every previous `add` and `remove`. A file
+handle is stateful. A database is stateful. The entire OS is
+stateful. And the property "for every input, the output is
+correct" no longer obviously applies, because there is no
+single input; there is a *history*.
 
 This lecture shows how to extend PBT to stateful code. The
 technique is *model-based testing*: write a simple, obviously-
@@ -68,8 +68,8 @@ you need to debug it.
   PBT for pure code.
 - **Model-based testing**: test a sophisticated impl against a
   simple reference, on random sequences of operations.
-- A worked example: a custom hash table tested against a list-
-  based reference.
+- A worked example: a mutable two-list queue tested against a
+  plain-list reference.
 - The shrinker: how QCheck minimises *operation sequences*, not
   just data.
 - When this scales: stateful libraries, parallel algorithms,
@@ -79,7 +79,8 @@ you need to debug it.
 
 ## The state problem
 
-We have a function. We want to test it. The PBT recipe from L3
+We have a function. We want to test it. The
+[property-based testing recipe](M09-L05-property-based-testing.html)
 says: generate a random input, run the function, check a
 property of the output. For `sort`, that is
 
@@ -87,32 +88,30 @@ property of the output. For `sort`, that is
 QCheck.Test.make QCheck.(list int)
   (fun xs ->
      let ys = sort xs in
-     is_sorted ys && same_multiset xs ys)
+     is_sorted ys && same_elements xs ys)
 ```
 
 One generated input, one call, one property. Done.
 
-Now we have a hash table:
+Now we have a queue of `int`s, with this interface:
 
-```ocaml
-module type HASHTABLE = sig
-  type ('k, 'v) t
-  val create : unit -> ('k, 'v) t
-  val add : ('k, 'v) t -> 'k -> 'v -> unit
-  val find : ('k, 'v) t -> 'k -> 'v option
-  val remove : ('k, 'v) t -> 'k -> unit
-  val size : ('k, 'v) t -> int
-end
+```text
+create  : unit -> queue
+enqueue : queue -> int -> unit
+dequeue : queue -> int option
+size    : queue -> int
 ```
 
-What is the *input* we generate? A single call to `add` does
-not test much; the interesting behaviour is in the *interaction*
-between `add`, `find`, and `remove` over a sequence of calls.
+What is the *input* we generate? A single call to `enqueue`
+does not test much; the interesting behaviour is in the
+*interaction* between `enqueue` and `dequeue` over a sequence
+of calls: what comes out, and in what order, depends on
+everything that went in.
 
-What is the *property*? "The hash table is correct" is not a
+What is the *property*? "The queue is correct" is not a
 property; it is a paragraph. We need something concrete. And
-the natural concrete thing is: *the hash table behaves the same
-as a much simpler, obviously-correct implementation of the same
+the natural concrete thing is: *the queue behaves the same as a
+much simpler, obviously-correct implementation of the same
 interface*.
 
 The PBT shape stays the same: generate a random "input" (now a
@@ -126,15 +125,17 @@ higher level.
 ## The state problem
 
 A pure function:
-```
+
+```text
 input -> output -> check property
 ```
 
 A stateful API:
-```
-sequence of operations -> sequence of outputs
-                      -> check equivalence with reference
-                         at each step
+
+```text
+   sequence of operations
+-> sequence of outputs
+-> check equivalence with reference at each step
 ```
 
 Same PBT shape, lifted to sequences and references.
@@ -147,27 +148,27 @@ Model-based testing has a fixed structure. The five pieces:
 
 1. **A representation of operations as data.** Define a
    variant type `command` whose constructors mirror the
-   public API of the data structure under test. `Add of int
-   * string`, `Remove of int`, `Find of int`, `Size`.
+   public API of the data structure under test. `Enqueue of
+   int`, `Dequeue`, `Size`.
 
 2. **A generator for `command list`.** Use QCheck combinators
-   to produce random sequences of commands. Bias toward
-   sequences that are likely to be interesting (e.g. occasional
-   `Add` of a key we have already added, so `Add`-collisions
-   get exercised).
+   to produce random sequences of commands. Make sure the mix
+   is interesting (e.g. enough `Dequeue`s that the queue
+   sometimes drains empty, enough `Enqueue`s that it sometimes
+   grows long).
 
-3. **Two interpreters.** A function `run_real : t -> command ->
-   observation` and `run_ref : t_ref -> command -> observation`.
+3. **Two interpreters.** A function `run_real : queue -> command
+   -> observation` and `run_ref : model -> command -> observation`.
    Each takes the (possibly mutable) state, applies the
    command, and returns whatever the operation observably
-   produced (the result of `find`, the new size, ...).
+   produced (the result of `dequeue`, the new size, ...).
 
 4. **A property.** Given a `command list`, run it through both
    interpreters in lockstep; check that at every step, both
    produce the same observation. If any step diverges, the
    property fails and that sequence is the bug.
 
-5. **A shrinker.** Use QCheck's default list shrinker on the
+5. **A shrinker.** Attach QCheck's list shrinker to the
    command list. When a failing sequence is found, the
    shrinker tries to delete commands, simplify their arguments,
    and find the *smallest* sequence that still diverges.
@@ -187,127 +188,74 @@ you have them, the test is one line.
 
 :::
 
-## A worked example: int -> string hash table
+## A worked example: a two-list queue
 
-Concretely: we test a custom hash table for `int -> string`
-mappings against a reference implementation built from an
-association list `(int * string) list`. The reference is *obvious*
-to anyone reading it (an association list is the simplest
-finite-map data structure); the custom hash table is more
-sophisticated and could plausibly have a bug.
+Concretely: we test a *two-list queue* against a reference
+implementation built from a single `int list`. The two-list
+queue is a classic: you met its persistent cousin in
+[the modules tutorial](M07-L09-tutorial.html), as a functor.
+Here it returns in mutable clothing, as a *test subject*.
 
-### Under test: the custom hash table
+### Under test: the two-list queue
 
-We write a small open-addressing hash table. The
-implementation is not the point of this lecture, but here it
-is for concreteness:
-
-```ocaml
-module Ht : sig
-  type t
-  val create : unit -> t
-  val add : t -> int -> string -> unit
-  val find : t -> int -> string option
-  val remove : t -> int -> unit
-  val size : t -> int
-end = struct
-  type entry = Empty | Tombstone | Live of int * string
-  type t = {
-    mutable buckets : entry array;
-    mutable count : int;
-  }
-
-  let create () = { buckets = Array.make 8 Empty; count = 0 }
-
-  let hash k cap = (k mod cap + cap) mod cap
-
-  let rec resize t =
-    let old = t.buckets in
-    let new_cap = Array.length old * 2 in
-    t.buckets <- Array.make new_cap Empty;
-    t.count <- 0;
-    Array.iter (function
-      | Live (k, v) -> add_inner t k v
-      | _ -> ()) old
-
-  and add_inner t k v =
-    let cap = Array.length t.buckets in
-    let rec scan i =
-      match t.buckets.(i) with
-      | Empty | Tombstone ->
-        t.buckets.(i) <- Live (k, v); t.count <- t.count + 1
-      | Live (k', _) when k' = k ->
-        t.buckets.(i) <- Live (k, v)
-      | Live _ ->
-        scan ((i + 1) mod cap)
-    in
-    scan (hash k cap)
-
-  let add t k v =
-    if t.count * 2 >= Array.length t.buckets then resize t;
-    add_inner t k v
-
-  let find t k =
-    let cap = Array.length t.buckets in
-    let rec scan i =
-      match t.buckets.(i) with
-      | Empty -> None
-      | Tombstone -> scan ((i + 1) mod cap)
-      | Live (k', v) when k' = k -> Some v
-      | Live _ -> scan ((i + 1) mod cap)
-    in
-    scan (hash k cap)
-
-  let remove t k =
-    let cap = Array.length t.buckets in
-    let rec scan i =
-      match t.buckets.(i) with
-      | Empty -> ()
-      | Tombstone -> scan ((i + 1) mod cap)
-      | Live (k', _) when k' = k ->
-        t.buckets.(i) <- Tombstone; t.count <- t.count - 1
-      | Live _ -> scan ((i + 1) mod cap)
-    in
-    scan (hash k cap)
-
-  let size t = t.count
-end
-```
-
-Eighty lines of mutable state, array indexing, linear probing,
-tombstones, and resize. Many places a bug could live. The
-*reference* implementation looks like this:
+The idea: keep two lists in mutable fields. `front` holds the
+elements about to leave, oldest at the head; `back` holds the
+recent arrivals, newest at the head. `enqueue` conses onto
+`back` (constant time). `dequeue` takes the head of `front`;
+when `front` runs dry, it *reverses* `back` into `front` and
+clears `back`. Each element is moved at most once, so the cost
+is constant amortised.
 
 ```ocaml
-module Ref : sig
-  type t
-  val create : unit -> t
-  val add : t -> int -> string -> unit
-  val find : t -> int -> string option
-  val remove : t -> int -> unit
-  val size : t -> int
-end = struct
-  type t = (int * string) list ref
+type queue = {
+  mutable front : int list;   (* next to leave, oldest first *)
+  mutable back : int list;    (* arrivals, newest first *)
+}
 
-  let create () = ref []
+let create () = { front = []; back = [] }
 
-  let add t k v =
-    t := (k, v) :: List.filter (fun (k', _) -> k' <> k) !t
+let enqueue q x = q.back <- x :: q.back
 
-  let find t k = List.assoc_opt k !t
+let dequeue q =
+  match q.front with
+  | x :: rest -> q.front <- rest; Some x
+  | [] ->
+    match List.rev q.back with
+    | [] -> None
+    | x :: rest ->
+      q.front <- rest;
+      q.back <- [];
+      Some x
 
-  let remove t k =
-    t := List.filter (fun (k', _) -> k' <> k) !t
-
-  let size t = List.length !t
-end
+let size q = List.length q.front + List.length q.back
 ```
 
-Fifteen lines. Each operation is one line of code. *Obviously*
-correct (modulo type-checks and the `assoc_opt` semantics
-matching what we want). The reference does not need to be fast,
-it does not need to scale, it only needs to be unambiguously
-correct.
+Twenty lines of mutable state with one delicate moment: the
+refill, where `dequeue` must reverse `back`, install the tail
+as the new `front`, clear `back`, and hand out the head, all in
+the right order. Plenty of room for a bug. The *reference*
+implementation (`m_` for *model*) looks like this:
+
+```ocaml
+type model = int list ref   (* head of the list = front of the queue *)
+
+let m_create () : model = ref []
+
+let m_enqueue q x = q := !q @ [x]
+
+let m_dequeue q =
+  match !q with
+  | [] -> None
+  | x :: rest -> q := rest; Some x
+
+let m_size q = List.length !q
+```
+
+Eight lines of substance. The queue *is* a list; `m_enqueue`
+appends at the far end, `m_dequeue` takes the head. *Obviously*
+correct, at the price of `m_enqueue` walking the whole list. The
+reference does not need to be fast, it does not need to scale,
+it only needs to be unambiguously correct.
 
 This is the heart of model-based testing: the reference is the
 spec, written in code. Anything more complex than the reference
@@ -315,27 +263,64 @@ is something to test *against* the reference.
 
 :::slide
 
-## Two implementations of the same interface
+## Under test: the two-list queue
 
-```text
-(* sophisticated, fast, possibly buggy *)
-module Ht : HASHTABLE = struct
-  (* open addressing, linear probing, tombstones,
-     resize on load factor *)
-  ...
-end
+```ocaml
+type queue = {
+  mutable front : int list;   (* next to leave *)
+  mutable back : int list;    (* newest first *)
+}
 
-(* simple, slow, obviously correct *)
-module Ref : HASHTABLE = struct
-  type t = (int * string) list ref
-  let add t k v = t := (k, v) :: List.filter ((<>) k % fst) !t
-  let find t k = List.assoc_opt k !t
-  ...
-end
+let create () = { front = []; back = [] }
+let enqueue q x = q.back <- x :: q.back
+let size q = List.length q.front + List.length q.back
 ```
 
-- The reference is the spec.
-- The complex impl is what we want to ship.
+- `enqueue` conses onto `back`: constant time.
+- `dequeue` (next slide) serves from `front`.
+
+:::
+
+:::slide
+
+## `dequeue` and the refill
+
+```ocaml
+let dequeue q =
+  match q.front with
+  | x :: rest -> q.front <- rest; Some x
+  | [] ->
+    match List.rev q.back with
+    | [] -> None
+    | x :: rest ->
+      q.front <- rest;
+      q.back <- [];
+      Some x
+```
+
+- `front` empty: reverse `back` into `front`, clear `back`.
+- The delicate moment; plenty of room for a bug.
+
+:::
+
+:::slide
+
+## The reference: the queue *is* a list
+
+```ocaml
+type model = int list ref   (* head = front of the queue *)
+
+let m_create () : model = ref []
+let m_enqueue q x = q := !q @ [x]
+let m_dequeue q =
+  match !q with
+  | [] -> None
+  | x :: rest -> q := rest; Some x
+let m_size q = List.length !q
+```
+
+- Slow (`m_enqueue` walks the whole list), obviously correct.
+- The reference is the spec; the fast impl is what we ship.
 - Bug => divergence under some operation sequence.
 
 :::
@@ -348,15 +333,20 @@ end
 
 ```ocaml
 type command =
-  | Add of int * string
-  | Find of int
-  | Remove of int
+  | Enqueue of int
+  | Dequeue
   | Size
+
+let command_to_string = function
+  | Enqueue x -> Printf.sprintf "Enqueue %d" x
+  | Dequeue -> "Dequeue"
+  | Size -> "Size"
 ```
 
 - One constructor per public operation.
 - A test input is now a *value*: a `command list`
   - generatable, printable, shrinkable.
+- The printer feeds failure messages.
 - `create` is not a command
   - it is the fresh start of every test.
 
@@ -368,95 +358,127 @@ helpful:
 
 ```ocaml
 let command_to_string = function
-  | Add (k, v) -> Printf.sprintf "Add (%d, %S)" k v
-  | Find k -> Printf.sprintf "Find %d" k
-  | Remove k -> Printf.sprintf "Remove %d" k
+  | Enqueue x -> Printf.sprintf "Enqueue %d" x
+  | Dequeue -> "Dequeue"
   | Size -> "Size"
 ```
 
-Each constructor mirrors one method of `HASHTABLE`. We carry
-the arguments inside the constructor.
+Each constructor mirrors one operation of the queue API. We carry the
+arguments inside the constructor.
 
 We deliberately do *not* model `create` as a command; that is
 the initial state. Each test starts with a freshly created
-table and applies a sequence of `command`s to it.
+queue and applies a sequence of `command`s to it.
 
 ### Step 2: a generator for `command list`
 
 ```ocaml
-let key_gen = QCheck.Gen.int_range 0 20
-(* Small key space => collisions, lookups of present keys *)
-
-let value_gen = QCheck.Gen.string_size (QCheck.Gen.int_range 0 5)
-
 let command_gen : command QCheck.Gen.t =
   let open QCheck.Gen in
   oneof [
-    (let* k = key_gen in
-     let* v = value_gen in
-     return (Add (k, v)));
-    (let* k = key_gen in return (Find k));
-    (let* k = key_gen in return (Remove k));
+    map (fun x -> Enqueue x) (int_range 0 9);
+    return Dequeue;
     return Size;
   ]
+
+let command_shrink (c : command) : command QCheck.Iter.t =
+  match c with
+  | Enqueue x -> QCheck.Iter.map (fun x' -> Enqueue x') (QCheck.Shrink.int x)
+  | Dequeue | Size -> QCheck.Iter.empty
 
 let command_list_gen : command list QCheck.arbitrary =
   QCheck.make
     ~print:(fun cs ->
       "[" ^ String.concat "; " (List.map command_to_string cs) ^ "]")
-    (QCheck.Gen.list_size (QCheck.Gen.int_range 0 50) command_gen)
+    ~shrink:(QCheck.Shrink.list ~shrink:command_shrink)
+    (QCheck.Gen.list_size (QCheck.Gen.int_range 0 30) command_gen)
 ```
 
-The `let*` is QCheck's monadic let-binding for `Gen.t`: it draws
-one random value from a generator and binds it to a name (same
-shape as the monadic `let*` from
-[the option monad](M08-L01-option-monad.html)).
+`Gen.oneof` picks one of the listed generators uniformly;
+`Gen.map` builds an `Enqueue` around a random small int;
+`Gen.return` is the generator that always produces exactly its
+argument (the same `return` idea as in the monads module).
+`QCheck.make` wraps the generator into an `arbitrary`; `~print`
+attaches our pretty-printer so failure messages show readable
+command lists.
+
+The `~shrink` argument deserves a note; it is the one custom
+shrinker the
+[PBT lecture](M09-L05-property-based-testing.html) promised you
+would write. For built-in types, `QCheck.(list int)` comes with
+a shrinker; for a custom type, `QCheck.make` cannot guess one,
+and without it a failing 30-command sequence is reported *as
+is*. A shrinker maps a failing value to a stream
+(`QCheck.Iter.t`) of smaller candidates to try in its place. We
+attach `Shrink.list`, which drops commands from the list, and
+give it a per-command shrinker: `Shrink.int` walks an
+`Enqueue`'s argument toward zero (`Iter.map` wraps each shrunk
+int back into the constructor), while `Dequeue` and `Size`
+carry nothing to shrink (`Iter.empty`).
 
 Three observations on the generator:
 
-**The key space is small (0 to 20).** This is the most
-important design choice. A random `int` covers ~10^19 distinct
-values, so two `Add`s would almost never hit the same key, and
-no `Find` would ever locate anything we added. By restricting
-keys to 0-20, we get frequent collisions, frequent `Find`-hits,
-frequent `Remove`-of-present-key. The interesting behaviours
-(collision resolution, removal, tombstone handling) are
-exercised by every test.
+**The enqueued values are small (0 to 9).** For a queue, the
+*values* never steer control flow, so they only need to be
+readable in counterexamples; single digits are perfect. (For a
+*keyed* structure, a map or a hash table, the analogous choice
+is the most important one in the harness: a small key space
+forces operations to collide on the same keys, which is where
+keyed bugs live. The activity takes this up.)
 
-**The command distribution is roughly uniform.** We use
-`oneof` to pick among the four constructors with equal
-probability. In practice you might want `Add` to fire more
-often than `Size` (each `Add` is more informative than each
-`Size`), but uniform is a fine default.
+**The command mix is uniform.** `oneof` picks each constructor
+with equal probability, so `Dequeue` fires about as often as
+`Enqueue`: the queue repeatedly drains to empty (exercising the
+refill) and `Dequeue`-on-empty happens regularly too.
 
-**The list length is bounded.** `list_size (int_range 0 50)`
-caps sequences at 50 commands. Long enough to fill the table
-and trigger resizes; short enough that each test is fast and
+**The list length is bounded.** `list_size (int_range 0 30)`
+caps sequences at 30 commands: long enough for several
+fill-and-drain cycles, short enough that each test is fast and
 the shrinker has manageable work.
 
 :::slide
 
-## Generator design choices
+## Step 2: generating commands
 
 ```ocaml
-let key_gen = QCheck.Gen.int_range 0 20  (* tiny key space! *)
+let command_gen : command QCheck.Gen.t =
+  let open QCheck.Gen in
+  oneof [
+    map (fun x -> Enqueue x) (int_range 0 9);
+    return Dequeue;
+    return Size;
+  ]
 ```
 
-```text
-command_gen      : command QCheck.Gen.t   (oneof, four arms)
-command_list_gen : command list arbitrary (<= 50 commands,
-                                           printer attached)
+- **Uniform mix**: `Dequeue` as often as `Enqueue`
+  - the queue drains to empty regularly; the refill runs in
+    almost every test.
+- **Small values** (`0..9`): values never steer the queue.
+  - keyed structures differ: there a small *key* space is the
+    crucial choice (it forces collisions).
+
+:::
+
+:::slide
+
+## Step 2: wrap into an `arbitrary`
+
+```ocaml
+let command_shrink (c : command) : command QCheck.Iter.t =
+  match c with
+  | Enqueue x ->
+    QCheck.Iter.map (fun x' -> Enqueue x') (QCheck.Shrink.int x)
+  | Dequeue | Size -> QCheck.Iter.empty
+
+let command_list_gen : command list QCheck.arbitrary =
+  QCheck.make
+    ~print:(fun cs ->
+      "[" ^ String.concat "; " (List.map command_to_string cs) ^ "]")
+    ~shrink:(QCheck.Shrink.list ~shrink:command_shrink)
+    (QCheck.Gen.list_size (QCheck.Gen.int_range 0 30) command_gen)
 ```
 
-- **Small key space**: forces collisions, makes Find/Remove hit
-  existing keys.
-- **Uniform command distribution**: simple; tune by need.
-- **Bounded sequence length**: long enough to trigger resizes,
-  short enough to keep tests fast.
-
-The default `QCheck.int` keys would give zero collisions in
-practice. Test the *behaviour* you care about; control the
-distribution.
+- ≤ 30 commands; `QCheck.make` has **no defaults**: attach both.
 
 :::
 
@@ -472,99 +494,113 @@ makes visible.
 
 ```ocaml
 type observation =
-  | OUnit | OInt of int | OFound of string option
+  | OUnit | OInt of int | ODeq of int option
 
-let run_real t = function
-  | Add (k, v) -> Ht.add t k v; OUnit
-  | Find k -> OFound (Ht.find t k)
-  | Remove k -> Ht.remove t k; OUnit
-  | Size -> OInt (Ht.size t)
+let run_real q = function
+  | Enqueue x -> enqueue q x; OUnit
+  | Dequeue -> ODeq (dequeue q)
+  | Size -> OInt (size q)
+
+let run_ref q = function
+  | Enqueue x -> m_enqueue q x; OUnit
+  | Dequeue -> ODeq (m_dequeue q)
+  | Size -> OInt (m_size q)
 ```
 
-- One observation per command, capturing every publicly
-  visible bit of behaviour.
-- `run_ref` mirrors the same four arms against `Ref`.
-- The property compares the two streams step by step.
+- The property compares the two observation streams step by step.
 
 :::
 
-The reference's interpreter mirrors the same four arms:
+The reference's interpreter mirrors the same three arms against
+the model:
 
 ```ocaml
-let run_ref (t : Ref.t) (c : command) : observation =
+let run_ref (q : model) (c : command) : observation =
   match c with
-  | Add (k, v) -> Ref.add t k v; OUnit
-  | Find k -> OFound (Ref.find t k)
-  | Remove k -> Ref.remove t k; OUnit
-  | Size -> OInt (Ref.size t)
+  | Enqueue x -> m_enqueue q x; OUnit
+  | Dequeue -> ODeq (m_dequeue q)
+  | Size -> OInt (m_size q)
 ```
 
 The observations are exactly the parts of each call's result
-that are publicly visible. `Add` and `Remove` return `unit`, so
-their observation is `OUnit` (they pass trivially); `Find`
-returns a `string option`, observed as `OFound`; `Size` returns
-an `int`, observed as `OInt`.
+that are publicly visible. `Enqueue` returns `unit`, so its
+observation is `OUnit` (it passes trivially); `Dequeue` returns
+an `int option`, observed as `ODeq`; `Size` returns an `int`,
+observed as `OInt`.
 
 Why an `observation` type at all? Because the property has to
 compare the *observable* output of each call. A test that just
 checked "no exception was raised" would miss bugs that silently
-return wrong values from `Find`. By making every visible result
-an `observation`, we explicitly compare the parts of behaviour
-the user can see.
+return wrong values from `Dequeue`. By making every visible
+result an `observation`, we explicitly compare the parts of
+behaviour the user can see. And the cheap `Size` observation
+earns its keep: it can expose a corrupted internal state right
+after the operation that corrupted it, before any `Dequeue`
+gets around to revealing it.
 
 ### Step 4: the property
 
 ```ocaml
-let test_ht_matches_ref =
+let test_q_matches_ref =
   QCheck.Test.make
-    ~name:"hash table matches reference"
+    ~name:"queue matches reference"
     ~count:1000
     command_list_gen
     (fun cs ->
-       let real = Ht.create () in
-       let ref_t = Ref.create () in
+       let real = create () in
+       let model = m_create () in
        List.for_all
          (fun c ->
-            let or_ = run_real real c in
-            let oref = run_ref ref_t c in
-            or_ = oref)
+            let o_real = run_real real c in
+            let o_model = run_ref model c in
+            o_real = o_model)
          cs)
 ```
 
 Five lines of property. Read them carefully because they encode
 the entire model-based-testing idea:
 
-- Create both a real table and a reference table, fresh.
+- Create both a real queue and a reference queue, fresh.
 - Walk the command list. At each step, apply the same command
   to both. Compute their observations.
 - The step *passes* if the observations are equal. The step
   *fails* if they differ.
 - The property is `true` iff *every* step passes.
 
-If the hash table is correct, both implementations produce the
-same observation for every command, the equality holds for
-every step, and the test passes. If the hash table has a bug,
-some operation eventually produces a different observation
+Run it against our (correct) two-list queue:
+
+```ocaml
+let _ = QCheck_runner.run_tests ~colors:false [test_q_matches_ref]  (* = 0 *)
+```
+
+If the queue is correct, both implementations produce the same
+observation for every command, the equality holds for every
+step, and the test passes, as it just did: a thousand random
+operation sequences, every step agreeing. If the queue has a
+bug, some operation eventually produces a different observation
 than the reference, the equality fails, the step returns
 `false`, and `List.for_all` short-circuits to `false`. The
 property fails and QCheck reports the operation sequence as a
-counterexample.
+counterexample. We will watch that happen in a moment.
 
 :::slide
 
 ## The property
 
 ```ocaml
-let test_ht_matches_ref =
+let test_q_matches_ref =
   QCheck.Test.make
-    ~name:"hash table matches reference"
+    ~name:"queue matches reference"
+    ~count:1000
     command_list_gen
     (fun cs ->
-       let real = Ht.create () in
-       let ref_t = Ref.create () in
+       let real = create () in
+       let model = m_create () in
        List.for_all
-         (fun c -> run_real real c = run_ref ref_t c)
+         (fun c -> run_real real c = run_ref model c)
          cs)
+
+let _ = QCheck_runner.run_tests ~colors:false [test_q_matches_ref]  (* = 0 *)
 ```
 
 - Both impls start fresh.
@@ -576,8 +612,9 @@ let test_ht_matches_ref =
 
 ### Step 5: what shrinking does to operation sequences
 
-The default `list` shrinker is exactly what we want. When the
-property fails on, say, a 23-command sequence, the shrinker:
+The list shrinker we attached in step 2 is exactly what we
+want. When the property fails on, say, a 23-command sequence,
+the shrinker:
 
 1. Tries dropping a single command. Re-runs both interpreters
    on the shorter sequence. Does the divergence still happen?
@@ -585,29 +622,27 @@ property fails on, say, a 23-command sequence, the shrinker:
 2. If dropping any single command makes the divergence go
    away, the shrinker tries dropping pairs, then halves.
 3. Eventually the shrinker arrives at a minimum-length
-   sequence that still triggers the bug. For most hash-table
-   bugs, this is 2-4 commands.
+   sequence that still triggers the bug. For most queue bugs,
+   this is 2-4 commands.
 4. Once the length is minimal, the shrinker tries to simplify
-   the arguments inside each command (smaller integers, shorter
-   strings). The key in `Add (17, "asdf")` shrinks to `Add (0,
-   "")` if the smaller version still triggers the bug.
+   the arguments inside each command (integers toward zero).
+   `Enqueue 7` shrinks to `Enqueue 0` if the smaller version
+   still triggers the bug.
 
-The shrunk sequence is *the bug report*. For a typical hash
-table off-by-one, the shrinker might end up reporting:
+The shrunk sequence is *the bug report*. For a typical refill
+bug, the shrinker might end up reporting:
 
 ```
 Test failed on input:
-  [Add (0, ""); Remove 0; Add (0, "a"); Find 0]
-Expected: OFound (Some "a"); got: OFound None
+  [Enqueue 0; Dequeue; Dequeue]
 ```
 
-Four commands, three of which are needed to exercise the
-"remove-then-add at the same key" pattern that triggers the
-bug. A 23-command sequence with random distractors would be
-unreadable. The four-command shrunk witness reads itself: "add
-key 0, remove it, add it again with a new value, look it up.
-Expected the new value; got nothing." Now you know exactly where
-to look in your `Ht.remove` / `Ht.add` interaction.
+Three commands. A 23-command sequence with random distractors
+would be unreadable. The three-command shrunk witness reads
+itself: "enqueue one element, dequeue it, dequeue again.
+The two implementations disagree on what comes out." Now you
+know exactly where to look: the moment `dequeue` crosses from
+a drained `front` into `back`.
 
 :::slide
 
@@ -616,188 +651,214 @@ to look in your `Ht.remove` / `Ht.add` interaction.
 A 23-command failing sequence shrinks to:
 
 ```
-[Add (0, ""); Remove 0; Add (0, "a"); Find 0]
+[Enqueue 0; Dequeue; Dequeue]
 ```
 
 - Drop commands one by one.
-- Then simplify arguments (integers toward 0, strings to "").
-- The default list shrinker (from L3) does all this.
-- Four commands = a readable bug report.
+- Then simplify arguments (integers toward 0).
+- The attached list shrinker does all this.
+- Three commands = a readable bug report.
 
 :::
 
 ## The full test, end to end
 
 Putting the pieces together (this is the complete file you
-would put in `test/test_ht.ml`):
+would put in `test/test_queue.ml`, below the queue and model
+definitions):
 
 ```text
 type command =
-  | Add of int * string
-  | Find of int
-  | Remove of int
+  | Enqueue of int
+  | Dequeue
   | Size
 
 let command_to_string = function
-  | Add (k, v) -> Printf.sprintf "Add (%d, %S)" k v
-  | Find k -> Printf.sprintf "Find %d" k
-  | Remove k -> Printf.sprintf "Remove %d" k
+  | Enqueue x -> Printf.sprintf "Enqueue %d" x
+  | Dequeue -> "Dequeue"
   | Size -> "Size"
 
 type observation =
   | OUnit
   | OInt of int
-  | OFound of string option
+  | ODeq of int option
 
-let run_real (t : Ht.t) = function
-  | Add (k, v) -> Ht.add t k v; OUnit
-  | Find k -> OFound (Ht.find t k)
-  | Remove k -> Ht.remove t k; OUnit
-  | Size -> OInt (Ht.size t)
+let run_real (q : queue) = function
+  | Enqueue x -> enqueue q x; OUnit
+  | Dequeue -> ODeq (dequeue q)
+  | Size -> OInt (size q)
 
-let run_ref (t : Ref.t) = function
-  | Add (k, v) -> Ref.add t k v; OUnit
-  | Find k -> OFound (Ref.find t k)
-  | Remove k -> Ref.remove t k; OUnit
-  | Size -> OInt (Ref.size t)
-
-let key_gen = QCheck.Gen.int_range 0 20
-let value_gen = QCheck.Gen.string_size (QCheck.Gen.int_range 0 5)
+let run_ref (q : model) = function
+  | Enqueue x -> m_enqueue q x; OUnit
+  | Dequeue -> ODeq (m_dequeue q)
+  | Size -> OInt (m_size q)
 
 let command_gen : command QCheck.Gen.t =
   let open QCheck.Gen in
   oneof [
-    (let* k = key_gen in
-     let* v = value_gen in
-     return (Add (k, v)));
-    (let* k = key_gen in return (Find k));
-    (let* k = key_gen in return (Remove k));
+    map (fun x -> Enqueue x) (int_range 0 9);
+    return Dequeue;
     return Size;
   ]
+
+let command_shrink (c : command) : command QCheck.Iter.t =
+  match c with
+  | Enqueue x -> QCheck.Iter.map (fun x' -> Enqueue x') (QCheck.Shrink.int x)
+  | Dequeue | Size -> QCheck.Iter.empty
 
 let command_list_gen : command list QCheck.arbitrary =
   QCheck.make
     ~print:(fun cs ->
       "[" ^ String.concat "; " (List.map command_to_string cs) ^ "]")
-    (QCheck.Gen.list_size (QCheck.Gen.int_range 0 50) command_gen)
+    ~shrink:(QCheck.Shrink.list ~shrink:command_shrink)
+    (QCheck.Gen.list_size (QCheck.Gen.int_range 0 30) command_gen)
 
-let test_ht_matches_ref =
+let test_q_matches_ref =
   QCheck.Test.make
-    ~name:"hash table matches reference on all command sequences"
+    ~name:"queue matches reference on all command sequences"
     ~count:1000
     command_list_gen
     (fun cs ->
-       let real = Ht.create () in
-       let ref_t = Ref.create () in
+       let real = create () in
+       let model = m_create () in
        List.for_all
-         (fun c -> run_real real c = run_ref ref_t c)
+         (fun c -> run_real real c = run_ref model c)
          cs)
 
-let () = QCheck_runner.run_tests_main [test_ht_matches_ref]
+let () = QCheck_runner.run_tests_main [test_q_matches_ref]
 ```
 
-Sixty lines for a complete stateful test. The `dune`:
+Some fifty lines for a complete stateful test. The `dune`:
 
 ```dune
 (test
- (name test_ht)
+ (name test_queue)
  (libraries qcheck))
 ```
 
 One test executable, one `dune runtest`, 1000 random operation
 sequences per run, automatic shrinking on failure.
 
-:::slide
-
-## The complete file
-
-```dune
-(test
- (name test_ht)
- (libraries qcheck))
-```
-
-- 60 lines of OCaml.
-- 1000 sequences per `dune runtest`.
-- Automatic shrinking on failure.
-- Catches off-by-one in Remove, tombstone bugs, resize bugs,
-  hash-collision bugs, ...
-
-The hash-table-vs-list-reference pattern is the canonical
-worked example for model-based PBT.
-
-:::
-
 ## Watching it catch a real bug
 
-To make this concrete: suppose someone "optimises" `Ht.remove`
-and gets the tombstone logic slightly wrong. They write:
+To make this concrete: suppose someone writes the refill in
+`dequeue` and forgets one assignment. The reverse happens, the
+new `front` is installed, but `back` is never cleared. The
+type and the other operations are untouched; only `dequeue`
+changes:
 
-```text
-let remove t k =
-  let cap = Array.length t.buckets in
-  let rec scan i =
-    match t.buckets.(i) with
-    | Empty -> ()
-    | Tombstone -> scan ((i + 1) mod cap)
-    | Live (k', _) when k' = k ->
-      (* BUG: set to Empty instead of Tombstone *)
-      t.buckets.(i) <- Empty;
-      t.count <- t.count - 1
-    | Live _ -> scan ((i + 1) mod cap)
-  in
-  scan (hash k cap)
+```ocaml
+let bad_dequeue q =
+  match q.front with
+  | x :: rest -> q.front <- rest; Some x
+  | [] ->
+    match List.rev q.back with
+    | [] -> None
+    | x :: rest ->
+      q.front <- rest;
+      (* BUG: forgot   q.back <- [];   *)
+      Some x
 ```
 
-The subtle bug: `Empty` instead of `Tombstone`. This breaks the
-"a `Find` that walks past the removed entry can still find
-subsequent entries that collided with it" invariant of open
-addressing. Concretely, if keys `7` and `15` both hash to the
-same bucket and end up at consecutive positions (linear
-probing), removing `7` and then looking up `15` will fail:
-the `find` scan hits `Empty` at the first position and
-returns `None`, missing `15`.
+The consequence: every element that was in `back` at refill
+time stays there, and the *next* refill delivers all of them a
+second time. The queue duplicates elements. But notice how
+quiet the bug is: the refill itself returns the right element,
+and every `dequeue` before the next refill is right too.
 
-QCheck finds this. The random generator produces, eventually, a
-sequence that triggers the failure. The shrinker minimises. The
-output is something like:
+Point the same harness at the bad `dequeue` (the interpreter
+reuses `enqueue` and `size`; only the `Dequeue` arm changes):
+
+```ocaml
+let run_buggy (q : queue) = function
+  | Enqueue x -> enqueue q x; OUnit
+  | Dequeue -> ODeq (bad_dequeue q)
+  | Size -> OInt (size q)
+
+let test_buggy =
+  QCheck.Test.make
+    ~name:"buggy queue matches reference"
+    ~count:1000
+    command_list_gen
+    (fun cs ->
+       let real = create () in
+       let model = m_create () in
+       List.for_all
+         (fun c -> run_buggy real c = run_ref model c)
+         cs)
+
+let _ = QCheck_runner.run_tests ~colors:false [test_buggy]  (* = 1 *)
+```
+
+QCheck finds a diverging sequence almost immediately and
+shrinks it. The minimal witness is three commands, in one of
+two equivalent shapes (which one you get varies with the seed):
 
 ```
-random seed: 42
-Test failed on input:
-  [Add (0, ""); Add (8, ""); Remove 0; Find 8]
-Expected: OFound (Some ""); got: OFound None
+Test buggy queue matches reference failed (... shrink steps):
+
+[Enqueue 0; Dequeue; Size]
 ```
 
-(The `0` and `8` are the smallest pair of integers in our `0..20`
-key range that hash to the same bucket modulo 8, the initial
-capacity.) Four commands, immediately legible. A unit-test
-suite would need to *think* of this scenario; the model-based
-test *generates* it.
+Read it: enqueue one element, dequeue it (this refill leaves
+the element stranded in `back`), then ask for the size. The
+real queue says `1`, the reference says `0`. The other shape,
+`[Enqueue 0; Dequeue; Dequeue]`, catches the duplicate
+directly: the second `Dequeue` returns `Some 0` instead of
+`None`. Either way the witness is immediately legible. A
+unit-test suite would need to *think* of this scenario; the
+model-based test *generates* it.
 
 This is the value proposition: writing the reference plus the
-five-step harness costs maybe an hour. The harness then catches
-every off-by-one, every tombstone bug, every resize bug, every
-hash-collision bug, every thing the random sequence happens to
+five-step harness costs maybe half an hour. The harness then
+catches every refill bug, every ordering bug, every lost or
+duplicated element, every thing the random sequences happen to
 trip over. The cost is bounded; the coverage is unbounded.
+
+:::slide
+
+## Seed a bug in the refill
+
+```ocaml
+let bad_dequeue q =
+  match q.front with
+  | x :: rest -> q.front <- rest; Some x
+  | [] ->
+    match List.rev q.back with
+    | [] -> None
+    | x :: rest ->
+      q.front <- rest;
+      (* BUG: forgot   q.back <- [];   *)
+      Some x
+```
+
+- Every refill re-delivers the old contents of `back`.
+- Quiet: nothing visibly wrong until the *next* refill.
+
+:::
 
 :::slide
 
 ## A bug found
 
-A buggy `Remove` clears the bucket to `Empty` instead of
-`Tombstone`. Open-addressing relies on tombstones to keep
-collision chains intact.
+```ocaml
+let run_buggy q = function
+  | Enqueue x -> enqueue q x; OUnit
+  | Dequeue -> ODeq (bad_dequeue q)
+  | Size -> OInt (size q)
 
-```
-Test failed on input:
-  [Add (0, ""); Add (8, ""); Remove 0; Find 8]
-Expected: OFound (Some ""); got: OFound None
+let test_buggy =
+  QCheck.Test.make ~name:"buggy queue matches reference"
+    command_list_gen
+    (fun cs ->
+       let real = create () in
+       let model = m_create () in
+       List.for_all (fun c -> run_buggy real c = run_ref model c) cs)
+
+let _ = QCheck_runner.run_tests ~colors:false [test_buggy]  (* = 1 *)
 ```
 
-- `0` and `8` collide modulo the initial capacity.
-- Tombstone bug breaks the lookup of `8` after `0` is removed.
-- The shrunk sequence makes the bug immediate.
+- Shrunk witness `[Enqueue 0; Dequeue; Size]`: size 1 vs 0. Caught.
 
 :::
 
@@ -806,8 +867,9 @@ Expected: OFound (Some ""); got: OFound None
 Model-based testing scales beautifully to any data structure
 with a clean interface. Some examples:
 
-**Queues.** Reference: a `list`. Test: an `O(1)` queue
-(banker's queue, batched queue, real-time queue).
+**Hash tables.** Reference: an association list
+`(key * value) list`. Test: open addressing, chaining,
+resizing. (This is the activity.)
 
 **Stacks.** Reference: a `list` (head = top). Test: any stack
 implementation (array-backed, linked, persistent).
@@ -873,6 +935,7 @@ worth knowing exists.
 | Structure | Reference |
 | --- | --- |
 | Queue, stack | `list` |
+| Hash table | association list |
 | Priority queue | sorted `list` |
 | Map, set | association list |
 | LRU cache | list + recency counter |
@@ -949,161 +1012,9 @@ Street (ppx_quickcheck); OCaml 5's multicoretests.
 
 :::
 
-## A subtler example: testing a queue
-
-To make the technique stick, let us walk through one more
-example with less code. A *two-stack queue* (Banker's queue
-without the lazy evaluation) is a classic data structure, and
-one you have already built: it was the subject of
-[the modules tutorial](M07-L09-tutorial.html), as a functor.
-Here it returns as a *test subject*. It
-supports `enqueue` and `dequeue` in amortised O(1) by
-maintaining two stacks, `front` and `back`. Enqueue pushes onto
-`back`; dequeue pops from `front`, refilling `front` by
-reversing `back` when `front` is empty.
-
-```ocaml
-module Queue2 : sig
-  type 'a t
-  val empty : 'a t
-  val enqueue : 'a -> 'a t -> 'a t
-  val dequeue : 'a t -> ('a * 'a t) option
-  val to_list : 'a t -> 'a list
-end = struct
-  type 'a t = { front : 'a list; back : 'a list }
-  let empty = { front = []; back = [] }
-  let enqueue x q = { q with back = x :: q.back }
-  let rec dequeue = function
-    | { front = []; back = [] } -> None
-    | { front = []; back } ->
-      dequeue { front = List.rev back; back = [] }
-    | { front = x :: xs; back } -> Some (x, { front = xs; back })
-  let to_list q = q.front @ List.rev q.back
-end
-```
-
-Reference: just a `list`. Enqueue is `xs @ [x]` (or `x ::` from
-the back); dequeue is "head and tail". Twelve lines vs. our
-two-stack twelve lines, but the reference is dead obvious.
-
-```ocaml
-module Qref : sig
-  type 'a t
-  val empty : 'a t
-  val enqueue : 'a -> 'a t -> 'a t
-  val dequeue : 'a t -> ('a * 'a t) option
-  val to_list : 'a t -> 'a list
-end = struct
-  type 'a t = 'a list
-  let empty = []
-  let enqueue x q = q @ [x]
-  let dequeue = function [] -> None | x :: xs -> Some (x, xs)
-  let to_list q = q
-end
-```
-
-Now the model-based test, in compressed form:
-
-```ocaml
-type qcommand =
-  | Enq of int
-  | Deq
-  | ToList
-
-let qcmd_gen : qcommand QCheck.Gen.t =
-  QCheck.Gen.(oneof [
-    map (fun x -> Enq x) small_int;
-    return Deq;
-    return ToList;
-  ])
-
-let qcmd_list_gen =
-  QCheck.make
-    (QCheck.Gen.list_size (QCheck.Gen.int_range 0 30) qcmd_gen)
-
-type qobs =
-  | OQUnit of int list      (* the queue as a list, for observation *)
-  | OQDeq of int option
-
-let run_real_q (q : int Queue2.t ref) c =
-  match c with
-  | Enq x -> q := Queue2.enqueue x !q; OQUnit (Queue2.to_list !q)
-  | Deq ->
-    (match Queue2.dequeue !q with
-     | None -> OQDeq None
-     | Some (x, q') -> q := q'; OQDeq (Some x))
-  | ToList -> OQUnit (Queue2.to_list !q)
-
-let run_ref_q (q : int Qref.t ref) c =
-  match c with
-  | Enq x -> q := Qref.enqueue x !q; OQUnit (Qref.to_list !q)
-  | Deq ->
-    (match Qref.dequeue !q with
-     | None -> OQDeq None
-     | Some (x, q') -> q := q'; OQDeq (Some x))
-  | ToList -> OQUnit (Qref.to_list !q)
-
-let test_q =
-  QCheck.Test.make
-    ~name:"queue matches list reference"
-    qcmd_list_gen
-    (fun cs ->
-       let qr = ref Queue2.empty in
-       let qf = ref Qref.empty in
-       List.for_all
-         (fun c -> run_real_q qr c = run_ref_q qf c)
-         cs)
-```
-
-Note the design choice: we wrap the persistent `Queue2` in a
-`ref` to give it a stateful API matching the hash table's. This
-is mostly a notational convenience for keeping the interpreters
-uniform; you could equally well thread the queue value through
-explicitly.
-
-The `OQUnit (Queue2.to_list !q)` observation is the trick that
-makes the queue test more thorough than just "dequeue results
-agree." By including the *list representation* of the queue in
-the observation after each `enqueue`, we catch bugs where the
-queue's internal structure has gone wrong but the dequeue
-result happens to be right anyway. If the front and back
-stacks ever get out of sync in `Queue2`, `to_list` will return
-the wrong list, the observation will diverge, and the test
-will fail. Without observing the full queue state, those bugs
-would go undetected until they later manifested in a `dequeue`.
-
-This is a craft skill of model-based testing: *what should the
-observation include?* The minimum is the literal return value of
-each operation. The maximum is the entire visible state (here,
-`to_list`). The maximum catches more bugs but at the cost of
-more work; the minimum is cheap but lets some bugs hide. A
-reasonable default is "return value plus any cheap observation
-of the state after the call."
-
-:::slide
-
-## Queue test: include observations of state
-
-```text
-let run_real_q q c =
-  match c with
-  | Enq x -> q := enqueue x !q; OQUnit (to_list !q)
-  | Deq -> (match dequeue !q with ...)
-  | ToList -> OQUnit (to_list !q)
-```
-
-- Observe the *whole queue* after each enqueue, not just the
-  dequeue result.
-- Catches "front/back out of sync" bugs that dequeue alone
-  would miss.
-- The richer the observation, the more bugs the property
-  catches.
-
-:::
-
 ## Activity
 
-:::quiz mcq id=M09-L07-q1
+:::quiz mcq id=M09-L06-q1
 You are testing a custom red-black tree implementation using
 model-based PBT against an association-list reference. The
 default `command_gen` produces `Add k v`, `Remove k`, and
@@ -1132,32 +1043,33 @@ catch this?
 space means random commands almost never collide. `Remove k`
 on a key not in the tree is a no-op for both implementations,
 so observations agree trivially. The interesting case (remove
-a present key) almost never happens. The fix is the same fix
-as the hash-table example in the lecture: use a small key
-space so that random commands frequently target existing keys
-and exercise the algorithm's interesting branches.
+a present key) almost never happens. The fix is the keyed-
+structure version of the lecture's generator-design lesson:
+use a small key space so that random commands frequently
+target existing keys and exercise the algorithm's interesting
+branches.
 :::
 
-:::quiz mcq id=M09-L07-q2
-In the hash-table example, the property compares observations
+:::quiz mcq id=M09-L06-q2
+In the worked example, the property compares observations
 step-by-step:
 
 ```text
-List.for_all (fun c -> run_real real c = run_ref ref_t c) cs
+List.for_all (fun c -> run_real real c = run_ref model c) cs
 ```
 
 Why is step-by-step equivalence important? Why not just compare
-the *final* state of the two tables after running all commands?
+the *final* state of the two queues after running all commands?
 
 - [ ] OCaml's `=` does not work on mutable state.
 - [ ] Step-by-step is faster.
 - [x] A divergence might happen in the middle of the sequence
-  but be "fixed up" by a later command (e.g. a `Remove` that
+  but be "fixed up" by a later command (e.g. a `Dequeue` that
   brings the two impls back into agreement by coincidence).
   Step-by-step equivalence catches the bug at the exact step
   where it occurred and gives a smaller, more readable
   counterexample after shrinking.
-- [ ] Final-state comparison is impossible because the table is
+- [ ] Final-state comparison is impossible because the queue is
   mutable.
 
 **Why:** if two impls diverge at step 7 and then reconverge at
@@ -1166,16 +1078,19 @@ asserting equivalence at every step, the test fires at the
 *earliest* step where the divergence occurs. Combined with
 shrinking, this gives you the smallest possible bug reproducer:
 "the first time these two implementations disagree is on a
-4-command sequence ending in this `Find`."
+3-command sequence ending in this `Dequeue`."
 :::
 
-:::quiz code id=M09-L07-q3
-Write a `command` variant type for a *stack* with three
-operations: `push : int -> unit`, `pop : unit -> int option`,
-and `top : unit -> int option`. (Each operation takes only the
-stack itself as state; `push` also takes an `int`.) Then write
-a `command_to_string` function that pretty-prints each command
-for failure messages.
+:::quiz code id=M09-L06-q3
+Take the hash table from the activity question: `add : t -> int
+-> string -> unit`, `find : t -> int -> string option`,
+`remove : t -> int -> unit`, and `size : t -> int`. (The right
+reference is an association list `(int * string) list`: it is
+the simplest finite-map structure, and each operation is one
+line.) Write the harness's `command` variant type, one
+constructor per operation, and a `command_to_string` function
+that pretty-prints each command for failure messages. (`%S` in
+a `Printf` format prints a string with quotes and escapes.)
 
 ```ocaml
 type command =
@@ -1187,12 +1102,14 @@ let command_to_string = function
 
 ```ocaml skip
 let () =
-  let s = command_to_string (Push 3) in
-  assert (s = "Push 3");
-  let s = command_to_string Pop in
-  assert (s = "Pop");
-  let s = command_to_string Top in
-  assert (s = "Top");
+  let s = command_to_string (Add (3, "x")) in
+  assert (s = "Add (3, \"x\")");
+  let s = command_to_string (Find 7) in
+  assert (s = "Find 7");
+  let s = command_to_string (Remove 0) in
+  assert (s = "Remove 0");
+  let s = command_to_string Size in
+  assert (s = "Size");
   print_endline "all tests passed"
 ```
 :::
@@ -1203,19 +1120,26 @@ Reference solution:
 
 ```ocaml
 type command =
-  | Push of int
-  | Pop
-  | Top
+  | Add of int * string
+  | Find of int
+  | Remove of int
+  | Size
 
 let command_to_string = function
-  | Push x -> Printf.sprintf "Push %d" x
-  | Pop -> "Pop"
-  | Top -> "Top"
+  | Add (k, v) -> Printf.sprintf "Add (%d, %S)" k v
+  | Find k -> Printf.sprintf "Find %d" k
+  | Remove k -> Printf.sprintf "Remove %d" k
+  | Size -> "Size"
 ```
 
-Three constructors mirroring the three stack operations, plus a
-printer that uses `Printf.sprintf` for the parameterised case.
-The same shape generalises to any stateful API.
+Four constructors mirroring the four operations, plus a printer
+that uses `Printf.sprintf` for the parameterised cases (`%S`
+prints the string quoted and escaped). The rest of the harness
+follows the lecture's recipe: an association-list reference,
+interpreters returning `OUnit` / `OFound of string option` /
+`OInt of int` observations, and one crucial generator choice:
+draw the keys from a *small* range, so `Find` and `Remove`
+frequently hit keys that are actually present.
 
 :::
 
@@ -1228,22 +1152,24 @@ trivial*. The whole point is that it is so simple that any
 reader can convince themselves it is right. If the reference
 is more complex than 30-50 lines, you have lost the property.
 
-**Pitfall 2: incomplete observations.** Comparing only `Find`
-results misses bugs where the internal state has gone wrong but
-the next `Find` happens to be on a key not affected. Include
+**Pitfall 2: incomplete observations.** Comparing only
+`Dequeue` results misses bugs where the internal state has gone
+wrong but the divergence has not yet reached the front of the
+queue (our seeded bug was exactly this kind of quiet). Include
 enough observations to make any state divergence visible: at
 minimum, compare the size after every operation; ideally,
 compare the full visible state.
 
 **Pitfall 3: distribution that misses interesting cases.** The
-canonical mistake: use the default `QCheck.int` for keys. The
-test passes vacuously because no two random commands ever
-operate on the same key. Force collisions with a small key
-range.
+canonical mistake in a *keyed* structure: use the default
+`QCheck.int` for keys. The test passes vacuously because no two
+random commands ever operate on the same key. Force collisions
+with a small key range.
 
 **Pitfall 4: not enough commands.** A bug that only fires after
-several resizes needs sequences long enough to trigger them. If
-your tests are too short, you miss bugs that emerge from
+several drain-and-refill cycles (or, for a growing structure,
+several resizes) needs sequences long enough to trigger them.
+If your tests are too short, you miss bugs that emerge from
 interactions between many operations. Bound sequences at 30-50
 commands by default; experiment with longer for data structures
 that grow.
@@ -1276,7 +1202,7 @@ as the oracle. Garbage in, garbage out.
 
 ## What's next
 
-[Lecture 8](M09-L08-tutorial.html) is the module's wrap-up
+[Lecture 7](M09-L07-tutorial.html) is the module's wrap-up
 tutorial: the whole toolkit, applied end to end to a single
 worked example. We take a small arithmetic `expr` evaluator (a
 float cousin of the pattern-matching tutorial's interpreter),
@@ -1289,7 +1215,7 @@ shrinker corner a deliberately introduced bug.
 
 ## What's next
 
-- L8: **tutorial wrap-up.** The full toolkit on the `expr`
+- L7: **tutorial wrap-up.** The full toolkit on the `expr`
   evaluator:
   - spec → designed cases → OUnit2 suite → QCheck
     properties → a planted bug, caught and shrunk.

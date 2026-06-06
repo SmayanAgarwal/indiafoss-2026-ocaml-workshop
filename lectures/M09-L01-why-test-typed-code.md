@@ -555,7 +555,8 @@ against a specific case. We run them; they all pass; we believe
 the function. (This is the CS3110 textbook's `max3` example, a
 stock teaching function; it returns in the
 [test-design lecture](M09-L03-test-design.html) as the glass-box
-specimen whose four paths we cover deliberately.)
+specimen whose four paths we cover deliberately, and where these
+five tests turn out to miss one of those paths entirely.)
 
 But notice the limit of what these five assertions can tell us.
 We have only checked the function on five specific inputs out of
@@ -737,24 +738,19 @@ property-based testing with QCheck. You will see why FP makes
 PBT natural, watch the shrinker minimise a failing input, and
 write your first generators.
 
-[Lecture 6](M09-L06-custom-generators-stateful.html) extends
-QCheck with custom generators (sorted lists, balanced trees,
-DAGs by construction) and shows how to stage a stateful test as
-a sequence of commands.
+[Lecture 6](M09-L06-model-based-testing.html) takes testing to
+*stateful* code: a mutable queue is tested against a simple
+reference implementation by generating random sequences of
+operations and checking that the two agree.
 
-[Lecture 7](M09-L07-model-based-testing.html) goes further on
-the stateful side: testing a hash table or a queue against a
-simple reference implementation using random sequences of
-operations.
-
-[Lecture 8](M09-L08-tutorial.html) is the wrap-up tutorial:
+[Lecture 7](M09-L07-tutorial.html) is the wrap-up tutorial:
 the full toolkit applied to a small arithmetic evaluator,
 with a deliberately buggy implementation that QCheck finds in
 seconds.
 
 :::slide
 
-## What's next: the eight lectures of M9
+## What's next: the seven lectures of M9
 
 Deciding what to test:
 
@@ -766,14 +762,12 @@ Mechanizing the checks:
 
 - L4: **OUnit2 unit testing.**
 - L5: **QCheck PBT.** Properties, shrinking, generators.
-- L6: **Custom generators, stateful PBT.** Sorted lists,
-  balanced trees, command sequences.
-- L7: **Model-based testing.** Stateful data structures vs.
+- L6: **Model-based testing.** Stateful data structures vs.
   a reference implementation.
 
 Bringing it together:
 
-- L8: **Tutorial.** The full toolkit on one evaluator.
+- L7: **Tutorial.** The full toolkit on one evaluator.
 
 :::
 

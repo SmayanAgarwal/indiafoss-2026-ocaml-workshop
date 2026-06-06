@@ -540,11 +540,9 @@ testing with QCheck: you will see why functional code makes
 properties natural to state, and watch the shrinker cut a
 failing input down to its smallest form.
 
-[Lecture 6](M09-L06-custom-generators-stateful.html) builds
-custom generators; [Lecture 7](M09-L07-model-based-testing.html)
-tests stateful code against a reference;
-[Lecture 8](M09-L08-tutorial.html) puts the whole toolkit on one
-worked example.
+[Lecture 6](M09-L06-model-based-testing.html) tests stateful
+code against a reference; [Lecture 7](M09-L07-tutorial.html)
+puts the whole toolkit on one worked example.
 
 :::slide
 
@@ -552,9 +550,8 @@ worked example.
 
 - L5: **property-based testing with QCheck**. Generate inputs;
   check a property; shrink failures.
-- L6: **custom generators and stateful PBT**.
-- L7: **model-based testing**. A structure vs a reference.
-- L8: **tutorial**. The full toolkit on one evaluator.
+- L6: **model-based testing**. A structure vs a reference.
+- L7: **tutorial**. The full toolkit on one evaluator.
 
 :::
 

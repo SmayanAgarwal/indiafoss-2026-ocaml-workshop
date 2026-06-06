@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: testing the expr evaluator with OUnit2 and QCheck"
-lecture_no: 8
+lecture_no: 7
 week: 9
 duration_target_min: 25
 concepts: [testing tutorial, specifications, test design, OUnit2, QCheck, properties, invariants, expression evaluator, debugging, differential testing]
@@ -22,7 +22,7 @@ reading:
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
 <h2 class="title-slide-lecture">Tutorial: testing the expr evaluator with OUnit2 and QCheck</h2>
-<p class="title-slide-label">Module 9 &middot; Lecture 8</p>
+<p class="title-slide-label">Module 9 &middot; Lecture 7</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
@@ -885,8 +885,7 @@ let rec expr_str = function
   | Mul (a, b) -> "(" ^ expr_str a ^ " * " ^ expr_str b ^ ")"
   | Div (a, b) -> "(" ^ expr_str a ^ " / " ^ expr_str b ^ ")"
 
-let _ = expr_str (Mul (Num 0.0, Div (Num 1.0, Num 0.0)))
-(* = "(0 * (1 / 0))" *)
+let _ = expr_str (Mul (Num 0.0, Div (Num 1.0, Num 0.0)))  (* = "(0 * (1 / 0))" *)
 ```
 
 The generator choice matters more than it looks, and it is the
@@ -980,9 +979,8 @@ let rec fold_consts = function
   | Div (a, b) -> (match (fold_consts a, fold_consts b) with
       | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
 
-let _ = QCheck_runner.run_tests
-          [ preserves_value "fold_consts" fold_consts ]
-(* = 0  (all tests pass) *)
+let _ = QCheck_runner.run_tests ~colors:false
+          [ preserves_value "fold_consts" fold_consts ]  (* = 0 *)
 ```
 
 It passes, and it deserves to: folding performs *exactly the
@@ -1012,9 +1010,8 @@ let rec simplify = function
       | e, Num 1.0 -> e
       | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
 
-let _ = QCheck_runner.run_tests
-          [ preserves_value "simplify" simplify ]
-(* = 1  (the property FAILS; see below) *)
+let _ = QCheck_runner.run_tests ~colors:false
+          [ preserves_value "simplify" simplify ]  (* = 1, it FAILS *)
 ```
 
 Run it (the exact counterexample varies with the random seed):
@@ -1091,9 +1088,8 @@ let rec simplify_sound = function
       | e, Num 1.0 -> e
       | Num x, Num y -> Num (x /. y) | a, b -> Div (a, b))
 
-let _ = QCheck_runner.run_tests
-          [ preserves_value "simplify_sound" simplify_sound ]
-(* = 0  (all tests pass) *)
+let _ = QCheck_runner.run_tests ~colors:false
+          [ preserves_value "simplify_sound" simplify_sound ]  (* = 0 *)
 ```
 
 One thousand cases, no disagreement (we ran ten thousand while
@@ -1117,9 +1113,8 @@ this up). Differential testing tells you the two routes
 ## Round 3: keep the sound two
 
 ```ocaml
-let _ = QCheck_runner.run_tests
-          [ preserves_value "simplify_sound" simplify_sound ]
-(* = 0  (all tests pass) *)
+let _ = QCheck_runner.run_tests ~colors:false
+          [ preserves_value "simplify_sound" simplify_sound ]  (* = 0 *)
 ```
 
 - We wrote the algebra we *believed*;
@@ -1133,7 +1128,7 @@ let _ = QCheck_runner.run_tests
 
 ## Activity
 
-:::quiz code id=M09-L08-q1
+:::quiz code id=M09-L07-q1
 The `eval` function above does not have an explicit property
 asserting that *multiplication by zero gives zero*. Write a
 QCheck property that:
@@ -1196,7 +1191,7 @@ statement is just one equation, plus a NaN guard.
 
 :::
 
-:::quiz mcq id=M09-L08-q2
+:::quiz mcq id=M09-L07-q2
 A colleague writes a single QCheck property for an option-returning
 `safe_div : int -> int -> int option`:
 
@@ -1293,14 +1288,13 @@ After this module:
   `assert_equal`, `assert_raises`, `>::`, `TestList`, `dune`
   integration ([L04](M09-L04-unit-testing.html)).
 - Write QCheck properties for invariants of a function:
-  generators, properties, shrinking, statistics
+  generators, properties, shrinking
   ([L05](M09-L05-property-based-testing.html)).
-- Build custom generators (sorted lists, valid BSTs, DAGs)
-  by construction, and bundle generator + printer + shrinker
-  into an `arbitrary` ([L06](M09-L06-custom-generators-stateful.html)).
 - Test stateful data structures against a reference
   implementation using sequences of operations
-  ([L07](M09-L07-model-based-testing.html)).
+  ([L06](M09-L06-model-based-testing.html)).
+- Build a generator for a recursive type of your own, with a
+  depth bound and a `QCheck.make` wrap (this lecture).
 - Combine the toolkit on a real function: spec-derived cases,
   a deliberately introduced bug caught and shrunk, and a
   differential test against an oracle (this lecture).
@@ -1321,10 +1315,9 @@ context of memory safety, with security as the application.
   coverage (L3).
 - Write OUnit2 unit tests (L4).
 - Write QCheck properties for invariants (L5).
-- Build custom generators and stateful PBT harnesses (L6).
-- Apply model-based testing to stateful code (L7).
-- Combine the toolkit, plus differential testing, on a real
-  function (this lecture).
+- Apply model-based testing to stateful code (L6).
+- Combine the toolkit, plus a custom generator and differential
+  testing, on a real function (this lecture).
 
 Next module: M10 on memory safety. Tests catch behaviour;
 *types and the runtime* catch the next layer.
