@@ -379,7 +379,116 @@ let max3 x y z =
 ```
 
 Two nested conditionals; four ways through; each way returns a
-different expression. Four representative inputs, one per path:
+different expression: `x > y, x > z` returns `x`;
+`x > y, x <= z` returns the first `z`; `x <= y, y > z` returns
+`y`; `x <= y, y <= z` returns the second `z`.
+
+:::slide
+
+## `max3` has four paths
+
+```ocaml
+let max3 x y z =
+  if x > y then
+    if x > z then x else z
+  else
+    if y > z then y else z
+```
+
+- Two nested `if`s; four ways through:
+  - `x > y, x > z`: returns `x`
+  - `x > y, x <= z`: returns the first `z`
+  - `x <= y, y > z`: returns `y`
+  - `x <= y, y <= z`: returns the second `z`
+
+:::
+
+Before writing fresh inputs, the path list gives us a way to
+*audit* the suite we already have. The opening lecture's five
+tests looked varied: ascending, descending, middle-largest,
+all-equal, all-negative. Trace each one through the
+conditionals:
+
+| test | path taken |
+|------|------------|
+| `max3 1 2 3` | `x <= y, y <= z` |
+| `max3 3 2 1` | `x > y, x > z` |
+| `max3 2 3 1` | `x <= y, y > z` |
+| `max3 5 5 5` | `x <= y, y <= z` |
+| `max3 (-1) (-2) (-3)` | `x > y, x > z` |
+
+Five tests, three paths. The path `x > y, x <= z`, taken when
+`x` beats `y` but not `z`, never runs. Whatever expression sits
+in that `else` position, the suite cannot see it; the
+"confidence" the opening lecture's suite gave us had a
+structural hole, and we only had to enumerate four paths to
+find it.
+
+:::slide
+
+## Audit the opening lecture's five tests
+
+| test | path taken |
+|------|------------|
+| `max3 1 2 3` | `x <= y, y <= z` |
+| `max3 3 2 1` | `x > y, x > z` |
+| `max3 2 3 1` | `x <= y, y > z` |
+| `max3 5 5 5` | `x <= y, y <= z` |
+| `max3 (-1) (-2) (-3)` | `x > y, x > z` |
+
+- Five varied-looking tests, but only **three** of the four
+  paths.
+- `x > y, x <= z` (`x` beats `y` but not `z`) never runs.
+
+:::
+
+To see the hole, seed a deliberate bug on the unvisited path
+and run the five tests against the mutant:
+
+```ocaml
+let max3_mutant x y z =
+  if x > y then
+    if x > z then x else 50  (* seeded bug *)
+  else
+    if y > z then y else z
+
+let () =
+  assert (max3_mutant 1 2 3 = 3);
+  assert (max3_mutant 3 2 1 = 3);
+  assert (max3_mutant 2 3 1 = 3);
+  assert (max3_mutant 5 5 5 = 5);
+  assert (max3_mutant (-1) (-2) (-3) = -1);
+  print_endline "all five tests pass on the mutant"
+```
+
+Green suite, absurd function:
+
+```ocaml
+let _ = max3_mutant 2 1 3  (* = 50, and no test notices *)
+```
+
+:::slide
+
+## A bug on the unvisited path survives
+
+```ocaml
+let max3_mutant x y z =
+  if x > y then
+    if x > z then x else 50  (* seeded bug *)
+  else
+    if y > z then y else z
+```
+
+- All five opening-lecture tests **pass** on the mutant.
+- `max3_mutant 2 1 3` is `50`
+  - and no test notices.
+
+:::
+
+Glass-box design repairs the hole mechanically: one
+representative input per path. The second line below is the
+input the opening lecture's suite never supplied, and it is the
+one that kills the mutant.
 
 ```ocaml
 let () =
@@ -402,20 +511,14 @@ every point that can raise.
 
 ## Glass-box: cover the implementation's paths
 
-```ocaml
-let max3 x y z =
-  if x > y then
-    if x > z then x else z
-  else
-    if y > z then y else z
-```
-
 - Four paths; one representative input each:
   - `max3 9 4 2 = 9` (returns `x`)
   - `max3 5 3 8 = 8` (returns first `z`)
   - `max3 2 6 1 = 6` (returns `y`)
   - `max3 2 6 9 = 9` (returns second `z`)
 - All four ran: this set is path-complete for `max3`.
+- `5 3 8` is the input the five tests never had
+  - it kills the mutant.
 
 :::
 
