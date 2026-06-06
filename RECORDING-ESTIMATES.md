@@ -304,34 +304,37 @@ doubly-linked list, `MakeSet`/`MakeDict`, a functional heap) is
 drawn from CS3100's mutability-and-modules and monads assignments
 plus the `Set.Make`/`Map.Make` shape; Parts 1 and 3 are original.
 
-### M08: Monads and GADTs (7 lectures)
+### M08: Monads and GADTs (7 lectures + practice sheet)
 
-Re-estimated 2026-05-31 by `grep -c '^:::slide'` of the current
-M08 drafts. M08 was **compressed from 10 back to 7 lectures**
-(6 lectures + 1 tutorial), merging the repetitive monad half
-(option+sequencing -> L01; laws+list+result -> L02; state+
-parameterised -> L03) and renumbering the GADT half + tutorial to
-L04-L07. Estimate uses slide_count x 1.5 min; the merged lectures
-carry more chapter prose per slide than the originals, so the
-video figures are a floor and real recording trends toward the
-~3 h target.
+Re-estimated 2026-06-06 by `grep -c '^:::slide'` of the current
+M08 drafts; the post-compression polish passes (notably the
+2026-06-02 L05 type-level aside and growth across L01-L05) had
+drifted the 2026-05-31 numbers. M08 was **compressed from 10
+back to 7 lectures** (6 lectures + 1 tutorial), merging the
+repetitive monad half (option+sequencing -> L01;
+laws+list+result -> L02; state+parameterised -> L03) and
+renumbering the GADT half + tutorial to L04-L07. The 2026-06-02
+M08-L08 practice sheet (state-monad refs, length-indexed lists,
+typed interpreter) is deliberately slide-free and book-only, so
+it adds no video or recording time and is excluded from the
+table. Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M08-L01 | The option monad and `let*` | 11 | 2 | 1 | 17 | 24 |
-| M08-L02 | Monad laws, the list monad, the result monad | 12 | 2 | 1 | 18 | 25 |
-| M08-L03 | The state monad and parameterised state | 15 | 2 | 1 | 23 | 32 |
-| M08-L04 | GADTs: basics | 14 | 2 | 1 | 21 | 29 |
-| M08-L05 | GADTs: use cases | 9 | 2 | 1 | 14 | 20 |
-| M08-L06 | GADTs: hlists, witnesses, and `printf` | 15 | 2 | 1 | 23 | 32 |
-| M08-L07 | Tutorial: a tiny well-typed evaluator | 16 | 2 | 1 | 24 | 34 |
-| **M08 total** | | **92** | **14** | **7** | **140** | **196** |
-| | | | | | **(2.3 h)** | **(3.2 h)** |
+| M08-L01 | The option monad and `let*` | 15 | 2 | 1 | 23 | 32 |
+| M08-L02 | Monad laws, the list monad, the result monad | 16 | 2 | 1 | 24 | 34 |
+| M08-L03 | The state monad and parameterised state | 22 | 2 | 1 | 33 | 46 |
+| M08-L04 | GADTs: basics | 17 | 2 | 1 | 26 | 36 |
+| M08-L05 | GADTs: use cases | 19 | 2 | 1 | 29 | 41 |
+| M08-L06 | GADTs: hlists, witnesses, and `printf` | 14 | 2 | 1 | 21 | 29 |
+| M08-L07 | Tutorial: a tiny well-typed evaluator | 17 | 2 | 1 | 26 | 36 |
+| **M08 total** | | **120** | **14** | **7** | **182** | **254** |
+| | | | | | **(3.0 h)** | **(4.2 h)** |
 
-M08-L02 and M08-L05 sit near the 20-min floor by raw slide count,
-but both are dense merges (laws+list+result; pretty-printers+
-builders) whose chapter prose pushes the real running time up.
-M08-L07 (tutorial) is the heaviest at the 30-min ceiling.
+M08-L03 now tops the module at 33 min, just over the NPTEL
+30-min ceiling; a natural cut point if the recorded delivery
+overshoots is the parameterised-state half. M08-L06 sits
+nearest the 20-min floor.
 
 ### M09: Testing (7 lectures)
 
@@ -509,12 +512,13 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1840 min (30.7 hours) across
-  77 lectures and 12 modules.
-- **Estimated recording time**: 2571 min (42.9 hours)
+- **Final video**: 1882 min (31.4 hours) across
+  79 lectures and 12 modules (plus the slide-free M08 practice
+  sheet, which has no video).
+- **Estimated recording time**: 2629 min (43.8 hours)
   at the 1.4x multiplier.
 
-The 30.6 hours of final video meets NPTEL's ~30 hr target
+The 31.4 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
 min for effect-handler concurrency), the 2026-06-02 M09
 restructure (concurrency removed from the course entirely;
@@ -546,7 +550,9 @@ monads-and-GADTs module was expanded to 10 lectures on
 2026-05-25 and then **re-compressed to 7** on 2026-05-31
 (6 lectures + 1 tutorial), merging the repetitive monad half
 and curating to a ~3 h budget; this removed ~2 h of recording
-time. Numbers reflect
+time, though the post-compression polish (and the 2026-06-02
+L05 type-level material) grew it back to 3.0 h video by the
+2026-06-06 re-count. Numbers reflect
 the
 2026-05-22 re-estimate for M02, M03, and M04 (slide_count x
 1.5), the 2026-05-23 addition of M07-L04 and M07-L05, the
