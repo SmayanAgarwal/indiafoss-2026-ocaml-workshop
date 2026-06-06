@@ -4,7 +4,7 @@ lecture_no: 5
 week: 9
 duration_target_min: 35
 concepts: [property-based testing, QCheck, generators, shrinking, properties, invariants, equational reasoning, custom arbitraries, input space, balanced trees]
-keywords: [OCaml, QCheck, property-based testing, PBT, QuickCheck, generators, shrinking, counterexample, sorted array, balanced BST, red-black tree, custom arbitrary, distribution, input space]
+keywords: [OCaml, QCheck, property-based testing, PBT, QuickCheck, generators, shrinking, counterexample, sorted array, balanced BST, red-black tree, custom arbitrary, input space]
 activity_question: "A colleague's [dedup : int list -> int list] passes a single QCheck property on 1000 random inputs. Is the implementation necessarily correct? What other properties would you demand before you believe them?"
 think_about_this: "Why is property-based testing more useful in a functional language than in an imperative one? What is it about purity and equational reasoning that makes properties easier to *state*, never mind check?"
 reading:
@@ -32,12 +32,14 @@ reading:
 
 [Lecture 4](M09-L04-unit-testing.html) gave you OUnit2 and a habit
 for it: pick an input, write down its expected output, compare,
-report. The hand-written assertions in `test_lifo_three` exercise
+report. The hand-written assertions in `test_lifo` exercise
 a stack on three specific inputs out of the infinite number of
 ways someone might use a stack. The five `max3` assertions in
-[L1](M09-L01-why-test-typed-code.html#a-small-concrete-demonstration)
+[the opening lecture](M09-L01-why-test-typed-code.html#a-small-concrete-demonstration)
 exercise the function on five specific triples out of the trillions
-of `int * int * int` values.
+of `int * int * int` values; the
+[test-design audit](M09-L03-test-design.html) showed that those
+five miss one of the function's four paths entirely.
 
 That gap is the topic of this lecture. There is a fundamental
 limit to unit testing: *you can only check the cases you thought
@@ -69,7 +71,7 @@ idea: the [QCheck](https://github.com/c-cube/qcheck) library.
 - **Property-based testing (PBT)**: write a property, let the
   library generate inputs.
 - **QCheck**, OCaml's PBT library: generators, properties,
-  shrinking, statistics.
+  shrinking.
 - Worked examples on **`List.rev`** and **`List.sort`**.
 - Why **functional programming and PBT fit together** especially
   well.
@@ -84,9 +86,12 @@ module and via `fold` in the higher-order module; here it
 returns as a *test subject*:
 
 ```ocaml
-let rec rev = function
-  | [] -> []
-  | x :: xs -> rev xs @ [x]
+let rev xs =
+  let rec go acc = function
+    | [] -> acc
+    | x :: rest -> go (x :: acc) rest
+  in
+  go [] xs
 ```
 
 We write a unit-test suite for it:
@@ -228,14 +233,17 @@ Five pieces:
 To run the test:
 
 ```ocaml
-let _ = QCheck_runner.run_tests [test_rev_involutive]  (* = 0 *)
+let _ = QCheck_runner.run_tests ~colors:false [test_rev_involutive]  (* = 0 *)
 ```
 
 That form works right here in the page's cells: the runner's
 report lands in the cell's output pane, and the call returns `0`
-when everything passed. In a `dune` project you would instead end
-the test file with the variant below, which additionally parses
-command-line flags and exits with the right status code:
+when everything passed. (`~colors:false` because the output pane
+is not a terminal: without it the report arrives wrapped in the
+ANSI colour codes meant for one, and they render as garbage.) In
+a `dune` project you would instead end the test file with the
+variant below, which additionally parses command-line flags and
+exits with the right status code:
 
 ```text
 let () =
@@ -269,7 +277,7 @@ let test_rev_involutive =
     QCheck.(list int)
     (fun xs -> rev (rev xs) = xs)
 
-let _ = QCheck_runner.run_tests [test_rev_involutive]  (* = 0 *)
+let _ = QCheck_runner.run_tests ~colors:false [test_rev_involutive]  (* = 0 *)
 ```
 
 - `QCheck.Test.make` constructs the test.
@@ -277,6 +285,73 @@ let _ = QCheck_runner.run_tests [test_rev_involutive]  (* = 0 *)
 - Property: a function `'a -> bool`. Returns `true` if the input
   satisfies the law.
 - In a `dune` test file: `run_tests_main` (parses flags, exits).
+
+:::
+
+## When a property fails
+
+A passing report is only half the story; the reason PBT earns its
+keep is what happens when the property is *false*. Let us assert
+a false belief on purpose: that every list is already sorted.
+
+```ocaml
+let test_all_sorted =
+  QCheck.Test.make
+    ~name:"every list is already sorted"
+    ~count:1000
+    QCheck.(list int)
+    (fun xs -> xs = List.sort compare xs)
+```
+
+```ocaml
+let _ = QCheck_runner.run_tests ~colors:false [test_all_sorted]  (* = 1 *)
+```
+
+Run it. QCheck needs only a handful of draws to find a list that
+is not sorted, and the report names the offender (the exact
+values vary with the random seed):
+
+```
+--- Failure ------------------------------------------------------
+
+Test every list is already sorted failed (66 shrink steps):
+
+[0; -1]
+
+failure (1 tests failed, 0 tests errored, ran 1 tests)
+```
+
+Two things deserve attention. First, the failing input is
+printed, which is why a generator carries a *printer* alongside
+the random producer. Second, look how *small* it is: the first
+unsorted list QCheck stumbled on was almost certainly dozens of
+elements long, but after "66 shrink steps" it reported a
+two-element list, the smallest list that is not sorted. That
+minimisation step is called *shrinking*, and it has its own
+section later in this lecture.
+The return value `1` is the number of failed tests, which is what
+makes the `dune` exit-code wiring work.
+
+:::slide
+
+## When a property fails
+
+```ocaml
+let test_all_sorted =
+  QCheck.Test.make
+    ~name:"every list is already sorted"
+    ~count:1000
+    QCheck.(list int)
+    (fun xs -> xs = List.sort compare xs)
+
+let _ = QCheck_runner.run_tests ~colors:false [test_all_sorted]  (* = 1 *)
+```
+
+- A deliberately *false* property: QCheck catches it in a few
+  draws.
+- The report prints the failing input, already minimised: `[0; -1]`.
+  - How it got that small: *shrinking*, later in this lecture.
+- `run_tests` returns the number of failed tests.
 
 :::
 
@@ -379,6 +454,58 @@ mutation. Here, the property reads exactly like the textbook law.
 
 :::
 
+## Negative properties: preconditions
+
+Sometimes a property only holds for *some* inputs, not all. For
+example, "the head of a list equals its first element" is true
+only for non-empty lists. QCheck supports this with
+*preconditions* via `QCheck.assume`:
+
+```ocaml
+let test_hd_first =
+  QCheck.Test.make
+    ~name:"hd returns first element"
+    QCheck.(list int)
+    (fun xs ->
+       QCheck.assume (xs <> []);
+       List.hd xs = List.nth xs 0)
+```
+
+```ocaml
+let _ = QCheck_runner.run_tests ~colors:false [test_hd_first]  (* = 0 *)
+```
+
+When the generated input fails the precondition, QCheck *skips*
+that input and generates another. The case still counts as
+checked but does not exercise the property; the run above
+passes with every empty list silently discarded. If too many
+inputs fail the precondition (because the generator produces
+them rarely), QCheck gives up and warns you. That is your
+signal to write a *custom* generator that produces only inputs
+in the precondition's range, rather than rejecting most of what
+the default generator makes.
+
+:::slide
+
+## Preconditions
+
+```ocaml
+let test_hd_first =
+  QCheck.Test.make ~name:"hd returns first"
+    QCheck.(list int)
+    (fun xs ->
+       QCheck.assume (xs <> []);
+       List.hd xs = List.nth xs 0)
+
+let _ = QCheck_runner.run_tests ~colors:false [test_hd_first]  (* = 0 *)
+```
+
+- `QCheck.assume` skips inputs that fail the precondition.
+- If too many skips, QCheck warns: write a custom generator
+  instead.
+
+:::
+
 ## A second example: `List.sort`
 
 The sort property is richer because "sorted" by itself is too weak
@@ -395,8 +522,10 @@ let is_sorted xs =
   in
   go xs
 
-let same_multiset xs ys =
-  List.sort compare xs = List.sort compare ys
+let same_elements xs ys =
+  let count x l = List.length (List.filter (( = ) x) l) in
+  List.length xs = List.length ys &&
+  List.for_all (fun x -> count x xs = count x ys) xs
 
 let test_sort_sorted =
   QCheck.Test.make
@@ -407,8 +536,8 @@ let test_sort_sorted =
 let test_sort_permutation =
   QCheck.Test.make
     ~name:"sort preserves the multiset"
-    QCheck.(list int)
-    (fun xs -> same_multiset (List.sort compare xs) xs)
+    QCheck.(list_small int)
+    (fun xs -> same_elements (List.sort compare xs) xs)
 
 let test_sort_length =
   QCheck.Test.make
@@ -416,6 +545,18 @@ let test_sort_length =
     QCheck.(list int)
     (fun xs -> List.length (List.sort compare xs) = List.length xs)
 ```
+
+`same_elements` checks multiset equality by *counting*: the two
+lists have the same length, and every element of the first occurs
+the same number of times in both. Counting keeps the checker
+independent of the function under test. (The tempting shortcut,
+sort both lists and compare, uses a sort to specify sort; fine
+when the yardstick sort is one you already trust, but the
+count-based checker dodges the question entirely.) The checker is
+quadratic, so the permutation test draws its inputs from
+`QCheck.(list_small int)`, a variant of `list` that keeps the
+generated lists modest; `QCheck.(list int)` happily produces
+lists thousands of elements long.
 
 Three properties. Each one would be satisfied by some wrong
 function, but a function that satisfies *all three* is genuinely
@@ -427,32 +568,84 @@ hard to write incorrectly.
 - "preserves length" by itself is satisfied by *many* functions
   (the identity, `rev`, ...).
 
-Together, only sort-like functions survive.
+Together, only sort-like functions survive. All three pass
+against `List.sort`:
+
+```ocaml
+let _ = QCheck_runner.run_tests ~colors:false
+    [test_sort_sorted; test_sort_permutation; test_sort_length]  (* = 0 *)
+```
 
 :::slide
 
-## `List.sort`: three properties together
+## Sort property 1: the output is sorted
 
 ```ocaml
+let is_sorted xs =
+  let rec go = function
+    | [] | [_] -> true
+    | a :: b :: rest -> a <= b && go (b :: rest)
+  in
+  go xs
+
 let test_sort_sorted =
   QCheck.Test.make ~name:"sorted"
     QCheck.(list int)
     (fun xs -> is_sorted (List.sort compare xs))
+```
+
+- `is_sorted`: every adjacent pair is in order.
+- Alone, this test cannot reject every wrong sort:
+  - `fun _ -> []` passes it; the empty list is sorted.
+
+:::
+
+:::slide
+
+## Sort property 2: the output is a permutation
+
+```ocaml
+let same_elements xs ys =
+  let count x l = List.length (List.filter (( = ) x) l) in
+  List.length xs = List.length ys &&
+  List.for_all (fun x -> count x xs = count x ys) xs
 
 let test_sort_permutation =
   QCheck.Test.make ~name:"permutation"
-    QCheck.(list int)
-    (fun xs -> same_multiset (List.sort compare xs) xs)
+    QCheck.(list_small int)
+    (fun xs -> same_elements (List.sort compare xs) xs)
+```
 
+- `same_elements`: same length, every element occurs equally
+  often in both
+  - counting keeps the checker independent of the sort under
+    test.
+  - quadratic, so generate with `list_small`.
+- Alone, this test cannot reject every wrong sort:
+  - the identity `fun xs -> xs` passes it; any list is a
+    permutation of itself.
+
+:::
+
+:::slide
+
+## Sort property 3: the length is preserved
+
+```ocaml
 let test_sort_length =
   QCheck.Test.make ~name:"length"
     QCheck.(list int)
     (fun xs -> List.length (List.sort compare xs) = List.length xs)
+
+let _ = QCheck_runner.run_tests ~colors:false
+    [test_sort_sorted; test_sort_permutation; test_sort_length]  (* = 0 *)
 ```
 
-- "sorted" alone is satisfied by `fun _ -> []`.
-- "permutation" alone is satisfied by `fun xs -> xs`.
-- Together: nearly pin down sort.
+- Alone, this test passes many wrong sorts (the identity,
+  `rev`, ...).
+- **Together**, the three properties reject them all:
+  - sorted + permutation + length: only sort-like functions
+    survive.
 
 :::
 
@@ -476,10 +669,16 @@ typically a one or two element list, which is far easier to
 debug.
 
 Let us see this in action with a *deliberately buggy* sort. A
-common rookie mistake: forgetting the singleton case in a
-merge-sort-like implementation.
+common rookie mistake: forgetting the singleton case in a merge
+sort. (`merge`, combining two sorted lists into one sorted list,
+is the standard helper.)
 
-```text
+```ocaml
+let rec merge xs ys = match xs, ys with
+  | [], l | l, [] -> l
+  | x :: xs', y :: ys' ->
+    if x <= y then x :: merge xs' ys else y :: merge xs ys'
+
 let rec bad_sort = function
   | [] -> []
   (* missing case: | [x] -> [x] *)
@@ -494,21 +693,22 @@ If `xs` has length 1, then `n = 0`, `left = []`, `right = xs`. So
 `bad_sort [x]` calls `bad_sort []` (returns `[]`) and `bad_sort
 [x]` (recurses), forever. Stack overflow on any non-empty input.
 
-We give QCheck the same three properties as before, pointed at
-`bad_sort`:
+We point the "sorted" property from before at `bad_sort`:
 
-```text
+```ocaml
 let test_bad_sort_sorted =
   QCheck.Test.make
     ~name:"bad_sort produces a sorted list"
     QCheck.(list int)
     (fun xs -> is_sorted (bad_sort xs))
+
+let _ = QCheck_runner.run_tests ~colors:false [test_bad_sort_sorted]  (* = 1 *)
 ```
 
 Run it. QCheck explores random lists. Some are empty (returns
 empty, trivially sorted). Most are non-empty. The first non-empty
 list it generates causes a stack overflow. QCheck catches the
-exception, marks the test failed, and starts shrinking.
+exception, marks the test errored, and starts shrinking.
 
 Shrinking proceeds roughly as follows:
 
@@ -519,54 +719,87 @@ Shrinking proceeds roughly as follows:
 3. Drop another. Try `[0; 17; 42]`. Fails. Keep going.
 4. Down to `[17; 42]`. Fails. Smaller.
 5. Down to `[42]`. Fails. Smaller still.
-6. Down to `[]`. *Passes* (bad_sort handles the empty case). So
-   `[]` is not a counterexample. The shrinker stops here and
-   reports `[42]`, or whatever single-element list it converged
-   on, as the minimal counterexample.
+6. Down to `[]`. *Passes* (`bad_sort` handles the empty case). So
+   `[]` is not a counterexample: some one-element list is the
+   minimum. The shrinker also shrinks the surviving *element*
+   towards zero, and reports `[0]`.
 
-The output looks something like:
+The output looks something like (the seed and the step count
+vary from run to run):
 
 ```
-random seed: 42
-Law bad_sort produces a sorted list: ERROR (5 shrink steps).
-Test bad_sort produces a sorted list failed on input: [42].
-Uncaught exception: Stack_overflow.
+random seed: 449586813
+
+=== Error ======================================================
+
+Test bad_sort produces a sorted list errored on (68 shrink steps):
+
+[0]
+
+exception Stack overflow
+
+================================================================
+failure (0 tests failed, 1 tests errored, ran 1 tests)
 ```
 
-Eight characters of input. The bug is *obvious* now: "a single-
+Three characters of input. The bug is *obvious* now: "a single-
 element list overflows the stack." Without shrinking, the original
-failing input would have been 17 elements wide, and the bug would
-have been buried in irrelevant noise. The shrinker is what makes
-PBT *debuggable*.
+failing input would have been dozens of elements wide, and the bug
+would have been buried in irrelevant noise. The shrinker is what
+makes PBT *debuggable*.
+
+:::slide
+
+## A deliberately buggy sort
+
+```ocaml
+let rec merge xs ys = match xs, ys with
+  | [], l | l, [] -> l
+  | x :: xs', y :: ys' ->
+    if x <= y then x :: merge xs' ys else y :: merge xs ys'
+
+let rec bad_sort = function
+  | [] -> []
+  (* missing case: | [x] -> [x] *)
+  | xs ->
+    let n = List.length xs / 2 in
+    let left = List.filteri (fun i _ -> i < n) xs in
+    let right = List.filteri (fun i _ -> i >= n) xs in
+    merge (bad_sort left) (bad_sort right)
+```
+
+- The `[x]` case is missing: `left = []`, `right = [x]`
+  - so `bad_sort [x]` recurses on `[x]` forever.
+- Stack overflow on any non-empty input.
+
+:::
 
 :::slide
 
 ## Shrinking finds the minimal counterexample
 
-A deliberately buggy `bad_sort` forgets the `[x]` case. On any
-single-element list it loops forever.
+```ocaml
+let test_bad_sort_sorted =
+  QCheck.Test.make
+    ~name:"bad_sort produces a sorted list"
+    QCheck.(list int)
+    (fun xs -> is_sorted (bad_sort xs))
 
-QCheck on it:
-
-```
-random seed: 42
-Law sort is sorted: ERROR (5 shrink steps).
-Test sort is sorted failed on input: [42].
-Uncaught exception: Stack_overflow.
+let _ = QCheck_runner.run_tests ~colors:false [test_bad_sort_sorted]  (* = 1 *)
 ```
 
-- Random input that triggered the bug was 5+ elements wide.
+- Random input that triggered the bug was dozens of elements wide.
 - Shrinker repeatedly minimises until further reduction passes.
-- Reported counterexample: `[42]`. Bug is obvious.
+- Reported counterexample: `[0]`. Bug is obvious.
 
 :::
 
 The shrinker is built into the library's generators. When you use
 `QCheck.(list int)`, the resulting `arbitrary` value carries a
 shrinking strategy: drop elements, replace elements with smaller
-ones. If you write a custom generator (`QCheck.map` over an int,
-or `QCheck.make` with a custom random function), you can supply
-a custom shrinker; if you do not, QCheck has a sensible default.
+ones. (A custom generator built with `QCheck.make` is the
+exception: it carries *no* shrinker unless you pass one. A note
+on that later in the lecture.)
 
 For the level of this lecture, you almost never need to write a
 shrinker by hand. The built-in generators come with reasonable
@@ -576,50 +809,11 @@ output *actionable*, but the day-to-day reality is "use the
 default shrinker, point at your property, watch QCheck do the
 work."
 
-## Statistics and distributions
-
-A subtle question: how do you know QCheck is exploring inputs
-*usefully*? If 90 percent of the lists it generates are length 0,
-it has not tested very much.
-
-QCheck addresses this with statistics. Every generator can be
-profiled with `QCheck.Print` (printers) and `QCheck.Stats`
-(distribution annotations). The flag `-s` to the runner reports
-the distribution of generated inputs:
-
-```
-random seed: 42
-collect:
-  length 0:    87 cases (8.7%)
-  length 1-5: 423 cases (42.3%)
-  length 6-15: 367 cases (36.7%)
-  length 16-50: 123 cases (12.3%)
-Law rev is involutive: OK (passed 1000 tests).
-```
-
-This gives you a sanity check on coverage. If you discover all
-1000 generated lists were length 0, that is a signal to tweak the
-generator. (For `QCheck.list int` the default is reasonable; for
-custom generators, watch this.)
-
-:::slide
-
-## Statistics: are we testing usefully?
-
-```
-collect:
-  length 0:    87 cases (8.7%)
-  length 1-5: 423 cases (42.3%)
-  length 6-15: 367 cases (36.7%)
-  length 16-50: 123 cases (12.3%)
-```
-
-- QCheck reports the distribution of generated inputs.
-- Sanity check: are we actually testing what we think?
-- For built-in generators the distribution is sensible; watch
-  this when you build custom ones.
-
-:::
+A question to keep in the back of your mind: how do you know
+QCheck is exploring inputs *usefully*? If 90 percent of the
+lists it generated were length 0, a passing run would mean very
+little. We return to this later in the lecture, under
+"Beyond the built-in generators".
 
 ## Equational reasoning gives properties for free
 
@@ -656,129 +850,34 @@ the FP world than elsewhere. The language gives you a vocabulary
 of pure functions, and the testing library hands that vocabulary
 straight to a fuzzer.
 
-## Negative properties: preconditions
-
-Sometimes a property only holds for *some* inputs, not all. For
-example, "the head of a list equals its first element" is true
-only for non-empty lists. QCheck supports this with
-*preconditions* via `QCheck.assume`:
-
-```ocaml
-let test_hd_first =
-  QCheck.Test.make
-    ~name:"hd returns first element"
-    QCheck.(list int)
-    (fun xs ->
-       QCheck.assume (xs <> []);
-       List.hd xs = List.nth xs 0)
-```
-
-When the generated input fails the precondition, QCheck *skips*
-that input and generates another. The case still counts as
-checked but does not exercise the property. If too many inputs
-fail the precondition (because the generator produces them rarely),
-QCheck gives up and warns you. That is your signal to write a
-*custom* generator that produces only inputs in the precondition's
-range, rather than rejecting most of what the default generator
-makes.
-
-:::slide
-
-## Preconditions
-
-```ocaml
-let test_hd_first =
-  QCheck.Test.make ~name:"hd returns first"
-    QCheck.(list int)
-    (fun xs ->
-       QCheck.assume (xs <> []);
-       List.hd xs = List.nth xs 0)
-```
-
-- `QCheck.assume` skips inputs that fail the precondition.
-- If too many skips, QCheck warns: write a custom generator
-  instead.
-
-:::
-
-## A note on what comes next
+## Beyond the built-in generators
 
 What we have so far is enough to write *interesting* properties
 for any pure function whose input fits one of QCheck's built-in
-generators (lists of ints, strings, pairs, options). For real
-codebases, two pieces are still missing:
+generators (lists of ints, strings, pairs, options). Two pieces
+lie beyond this lecture.
 
-- a way to **bias the input distribution** so the interesting
-  region of the input space gets exercised (sorted lists, valid
-  BSTs, schema-conformant JSON);
-- a way to test **stateful APIs** where a single call is not
-  the unit of testing.
+First, **steering the distribution**. "1000 random lists" hides
+an important question: *which* 1000? For a sorter, the telling
+inputs are the already-sorted list, the reverse-sorted list,
+lists full of ties, the empty and one-element lists; a uniformly
+random `(list int)` visits all of these rarely, so a boundary
+bug can survive 1000 trials. When the bugs you care about live
+in a corner of the input space, you build a generator that
+visits that corner on purpose, out of the `QCheck.Gen`
+combinators, and you check your work with `QCheck.collect`,
+which reports the distribution a generator actually produces.
+The [tutorial](M09-L07-tutorial.html) builds one such generator
+for a recursive expression type; the QCheck documentation
+covers the rest of that toolkit.
 
-Both are the topic of [Lecture 6](M09-L06-custom-generators-stateful.html).
-The intuition for why this matters appears at the end of this
-lecture under "When PBT does not help"; the *how* lives in the
-next lecture.
+Second, **state**. Everything we tested today is a pure
+function. Much of real software is a stateful API: a queue you
+enqueue to and dequeue from, where each operation's behaviour
+depends on everything that came before. Writing properties for
+that needs one more idea, and it is the topic of the
+[next lecture](M09-L06-model-based-testing.html).
 
-## The input-space problem (preview)
-
-Before we close out, one observation that motivates the next
-lecture. When we
-wrote
-
-```ocaml
-QCheck.Test.make ~count:1000 QCheck.(list int)
-  (fun xs -> rev (rev xs) = xs)
-```
-
-we said "QCheck generates 1000 random `int list`s." That sentence
-hides the most important question in PBT: *which* 1000 random
-lists? Out of the infinitely many possible inputs, the library
-picks a sample; the quality of the test depends entirely on
-whether that sample is representative of the inputs that
-actually exercise the function.
-
-Take a function that sorts. A list with three random integers,
-generated independently, is *almost certainly* not sorted. The
-sorter has to do something. But the *interesting* sorting bugs
-fire on inputs the default generator visits rarely:
-
-- the *already-sorted* list (does the sorter detect this and
-  short-circuit, or perform redundant work?);
-- the *reverse-sorted* list (worst case for many algorithms);
-- a list with many duplicates (does the comparison handle ties?);
-- a list of length 0, 1, 2 (boundary conditions);
-- a list near `min_int` or `max_int` (overflow-adjacent).
-
-A uniformly random `(list int)` of length 7 visits the random
-*permutation* region of the input space densely and the boundary
-regions sparsely. The bug at the boundary may go undetected for
-1000 trials and then surface in production, on a customer's
-already-sorted input.
-
-This is *the* distribution problem. Random does not mean
-"uniformly explores the interesting cases." Random means "uniform
-in some specific way, often a way that misses interesting cases."
-
-:::slide
-
-## The input-space problem
-
-```ocaml
-QCheck.(list int)  (* what does this actually generate? *)
-```
-
-For `List.sort`, the *interesting* cases are at boundaries:
-
-- already-sorted, reverse-sorted
-- many duplicates
-- length 0, 1, 2
-- near `min_int` / `max_int`
-
-The default generator visits the *permutation* region densely
-and the boundary regions rarely. PBT can pass 1000 trials and
-still miss a boundary bug.
-
-:::
 ## Shrinking, in depth
 
 We introduced shrinking informally with the `bad_sort` example: a
@@ -807,6 +906,22 @@ while preserving the failure. It is a search procedure:
 
 The result is a *local minimum* of "things that still fail."
 Not necessarily the globally smallest, but small enough.
+
+:::slide
+
+## Why shrinking matters
+
+- The witness the generator finds is almost never minimal:
+  - `[42; -17; 0; 3; 99; -2; 8]` fails; the bug is just `[3]`.
+- Shrinking searches for a smaller witness:
+  1. Propose a smaller candidate (drop an element, halve a
+     number).
+  2. Re-run the property on the candidate.
+  3. Candidate fails: recurse from it. Passes: try another cut.
+  4. Stop when no reduction still fails.
+- Result: a *local minimum*, small enough to read at a glance.
+
+:::
 
 ### How QCheck shrinks each type
 
@@ -861,7 +976,9 @@ all by minimising at each level.
 | `('a, 'b) result` | `Error _`, then shrink |
 | pairs, tuples | each component independently |
 
-The shrinkers compose recursively for compound types.
+The shrinkers compose recursively for compound types. (Custom
+`QCheck.make` generators carry **no** shrinker unless you pass
+`~shrink`.)
 
 :::
 
@@ -893,78 +1010,18 @@ local minimum is usually small enough to debug.
 
 ### When you need a custom shrinker
 
-If you build a custom generator with `QCheck.make` and do not
-pass a shrinker, the resulting arbitrary has *no* shrinking.
-QCheck reports the original failing input verbatim. For
-toy properties this is fine; for nontrivial ones the failure
-message becomes hard to read.
-
-You supply a custom shrinker by providing the optional `~shrink`
-argument to `QCheck.make`:
-
-```ocaml
-type point = { x : int; y : int }
-
-let point_shrink : point -> point QCheck.Iter.t =
-  fun p ->
-    let open QCheck.Iter in
-    let shrink_int = QCheck.Shrink.int in
-    (shrink_int p.x >|= fun x -> { p with x }) <+>
-    (shrink_int p.y >|= fun y -> { p with y })
-
-let point_gen : point QCheck.arbitrary =
-  let open QCheck in
-  make ~shrink:point_shrink
-    Gen.(pair small_int small_int >|= fun (x, y) -> { x; y })
-```
-
-Read this carefully because the types are subtle:
-
-- `QCheck.Iter.t` is QCheck's stream type for shrink candidates.
-  A shrinker takes a value `'a` and returns an `'a QCheck.Iter.t`
-  containing all "one-step-smaller" candidates.
-- `QCheck.Shrink.int` is the integer shrinker: `int -> int Iter.t`.
-  Calling it on `42` gives a stream of `[0; 21; 32; 37; 40; 41]`,
-  in roughly that order.
-- `>|=` lifts a transformation over an `Iter.t`. Applied to the
-  result of `shrink_int p.x`, we get a stream of new `point`s
-  with `x` shrunk and `y` left alone.
-- `<+>` concatenates two `Iter.t`s: first try shrinking `x`, then
-  try shrinking `y`. The shrinker explores both axes.
-
-When QCheck finds a failing `point`, it walks this `Iter.t`,
-re-running the property on each candidate. The minimal failing
-point in the stream becomes the new witness, and the process
-recurses.
-
-For most code you do *not* write custom shrinkers; the built-in
-ones for `int`, `list`, `string`, etc., handle nearly every
-case. The above example is what you do when you have a custom
-record type and want a small failure message instead of "
-{ x = -83729; y = 47119 }
-".
-
-:::slide
-
-## Custom shrinker (when you need one)
-
-```ocaml
-let point_shrink p =
-  let open QCheck.Iter in
-  (QCheck.Shrink.int p.x >|= fun x -> { p with x }) <+>
-  (QCheck.Shrink.int p.y >|= fun y -> { p with y })
-
-let point_gen =
-  QCheck.make ~shrink:point_shrink (* ... *)
-```
-
-- `QCheck.Iter.t` is the stream of one-step-smaller candidates.
-- `<+>` concatenates two streams.
-- For built-in types, you almost never need to write this.
-- For custom records / variants, write it once; QCheck does the
-  rest.
-
-:::
+One caveat to carry forward. If you build a custom generator
+with `QCheck.make` and do not pass a shrinker, the resulting
+arbitrary has *no* shrinking: QCheck reports the original
+failing input verbatim, however large. The optional `~shrink`
+argument fixes that; it takes a function from a failing value to
+the candidates to try in its place, usually a few lines built
+from the `QCheck.Shrink` helpers. You will write exactly one in
+this module, in the
+[model-based testing lecture](M09-L06-model-based-testing.html),
+where the failing input is a list of commands of a custom
+variant type. Beyond that, the built-in shrinkers for `int`,
+`list`, `string`, and friends handle nearly every case.
 
 ### Why "smallest failure" is more useful than "first failure"
 
@@ -1203,21 +1260,14 @@ much of real software is stateful: a hash table you `add` to and
 data structure, where each operation depends on every operation
 that came before?
 
-[Lecture 6](M09-L06-custom-generators-stateful.html) builds the
-generator toolkit: sorted lists, valid BSTs, DAGs, JSON
-matching a schema; how to bundle a generator, printer, and
-shrinker for a custom recursive type; and the first taste of
-testing stateful APIs by generating *sequences of commands*.
+[Lecture 6](M09-L06-model-based-testing.html) answers with
+*model-based testing*: test a stateful implementation against a
+simple reference implementation, by generating random sequences
+of operations and asserting observable equivalence at each
+step. It is the canonical PBT pattern for stateful code, and it
+cleanly extends what we have built in this lecture.
 
-[Lecture 7](M09-L07-model-based-testing.html) goes further with
-*model-based testing*: test a sophisticated stateful
-implementation against a simple reference implementation, by
-generating random sequences of operations and asserting
-observable equivalence at each step. It is the canonical PBT
-pattern for stateful code, and it cleanly extends what we have
-built in this lecture.
-
-[Lecture 8](M09-L08-tutorial.html) puts unit testing and
+[Lecture 7](M09-L07-tutorial.html) puts unit testing and
 property-based testing together on a single, larger example: a
 small arithmetic evaluator (a float cousin of the
 pattern-matching tutorial's interpreter),
@@ -1228,12 +1278,9 @@ seconds.
 
 ## What's next
 
-- L6: **custom generators and stateful PBT.** Sorted lists,
-  valid BSTs, DAGs by construction; command-sequence
-  generators.
-- L7: **model-based testing.** A custom hash table vs. a
+- L6: **model-based testing.** A mutable queue vs. a
   list-based reference.
-- L8: **tutorial.** The full toolkit on the arithmetic
+- L7: **tutorial.** The full toolkit on the arithmetic
   evaluator; a deliberately buggy version found by the
   shrinker.
 
