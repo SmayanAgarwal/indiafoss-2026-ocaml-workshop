@@ -402,15 +402,15 @@ timings trend to the upper end of each estimate.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M10-L01 | What memory safety is, and why it is a security story | 18 | 3 | 0 | 27 | 38 |
+| M10-L01 | What memory safety is, and why it is a security story | 20 | 3 | 0 | 30 | 42 |
 | M10-L02 | Memory safety by construction | 14 | 2 | 1 | 21 | 29 |
 | M10-L03 | Data races are undefined behaviour | 11 | 3 | 1 | 17 | 24 |
-| M10-L04 | Where OCaml itself has UB | 19 | 4 | 1 | 29 | 40 |
+| M10-L04 | Where OCaml itself has UB | 19 | 4 | 1 | 29 | 41 |
 | M10-L05 | Tutorial: walking Heartbleed end to end | 16 | 2 | 1 | 24 | 34 |
-| **M10 total** | | **78** | **14** | **4** | **118** | **165** |
+| **M10 total** | | **80** | **14** | **4** | **121** | **170** |
 | | | | | | **(2.0 h)** | **(2.8 h)** |
 
-The module sits just under the ~2 h video budget set for the
+The module sits right at the ~2 h video budget set for the
 rewrite. L03 (17 min by the slide proxy) is the deliberately short
 data-race lecture; its figure- and transcript-dense slides run
 closer to 20 min in practice. L03 was deepened on 2026-06-07
@@ -428,38 +428,39 @@ the slides now carry the OpenSSL handler, the full OCaml
 `handle_heartbeat` (with a live `Bytes.sub` bounds-check raise), and
 the "why this keeps happening" thesis, which had been chapter-only.
 
-### M11: OxCaml: type-level extensions of safety (7 lectures)
+### M11: OxCaml: type-level extensions of safety (6 lectures)
 
-Re-estimated 2026-06-07 after the M11 reorder and live-cell
-pass: the lectures now run locality, uniqueness, linearity,
-portability, contention (the two concurrency axes adjacent, per
-KC); every `text` fence became a live cell against the new
-x-oxcaml bundle (worker + 4 MB `portable.js` extension, so
-`Domain.Safe.spawn`, `Portable.Atomic` and the capsule API run
-in-browser); L04 linearity was re-titled *use at most once* and
-its leak claim corrected (a dropped `once` value compiles); L07
-gained a "where is uniqueness?" design-note slide. Slide deltas
-vs the 2026-05-25 estimate: L07 15 to 16; the rest unchanged.
+Re-estimated 2026-06-08 after dropping the standalone modes-intro
+lecture (KC: it was an all-preview tour, no teaching). The old
+M11-L01 *Modes as the type-level continuation of safety* is gone;
+its only durable content (what OxCaml and a mode are) survives as
+three intro slides folded onto the front of the locality lecture,
+which is now the module opener. No upfront enumeration of the five
+axes: each axis is introduced where it is taught. The module now
+runs locality, uniqueness, linearity, portability, contention,
+tutorial (concurrency axes adjacent, per KC). Every code block is a
+live cell against the x-oxcaml bundle (worker + 4 MB `portable.js`
+extension, so `Domain.Safe.spawn`, `Portable.Atomic` and the
+capsule API run in-browser); linearity is titled *use at most once*
+with the leak claim corrected (a dropped `once` value compiles);
+the tutorial carries a "where is uniqueness?" design-note slide.
 Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M11-L01 | Modes as the type-level continuation of safety | 14 | 2 | 0 | 21 | 29 |
-| M11-L02 | Locality: safe stack allocation | 13 | 2 | 0 | 20 | 28 |
-| M11-L03 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
-| M11-L04 | Linearity: use at most once | 13 | 2 | 0 | 20 | 28 |
-| M11-L05 | Portability: data-race freedom across domains | 15 | 2 | 0 | 23 | 32 |
-| M11-L06 | Contention: synchronisation at compile time | 17 | 2 | 0 | 26 | 36 |
-| M11-L07 | Tutorial: a resource-management API | 16 | 2 | 1 | 24 | 33 |
-| **M11 total** | | **104** | **14** | **1** | **158** | **220** |
-| | | | | | **(2.6 h)** | **(3.7 h)** |
+| M11-L01 | Locality: safe stack allocation (opens with OxCaml/modes intro) | 15 | 2 | 0 | 23 | 32 |
+| M11-L02 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
+| M11-L03 | Linearity: use at most once | 13 | 2 | 0 | 20 | 28 |
+| M11-L04 | Portability: data-race freedom across domains | 15 | 2 | 0 | 23 | 32 |
+| M11-L05 | Contention: synchronisation at compile time | 17 | 2 | 0 | 26 | 36 |
+| M11-L06 | Tutorial: a resource-management API | 16 | 2 | 1 | 24 | 33 |
+| **M11 total** | | **92** | **12** | **1** | **140** | **195** |
+| | | | | | **(2.3 h)** | **(3.3 h)** |
 
-All M11 lectures now land in the 20-30 min NPTEL band; the
-expansion added 64 video min and 2 lectures (no thin
-sub-20-min outliers remain). The two new lectures bring the
-concurrency-safety story (portability + contention) into the
-module proper, where it previously had to be hand-waved away
-in M11-L01.
+All six M11 lectures land in the 20-30 min NPTEL band. Dropping the
+modes-intro lecture removed ~21 min of preview video; the OxCaml
+and modes framing now lives where the audience first needs it, at
+the top of locality.
 
 ### M12: Unikernels (MirageOS) (6 lectures)
 
@@ -603,7 +604,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **42.5 hours of recording / 4.3 hours per day = ~9.9 studio days.**
+- **42.7 hours of recording / 4.3 hours per day = ~9.9 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -620,9 +621,9 @@ sessions:
 | M08 Monads and GADTs | 3.3 | 0.8 |
 | M09 Testing | 4.8 | 1.1 |
 | M10 Memory safety and security | 3.2 | 0.7 |
-| M11 OxCaml: type-level extensions of safety | 3.7 | 0.8 |
+| M11 OxCaml: type-level extensions of safety | 3.3 | 0.7 |
 | M12 Unikernels (MirageOS) | 2.9 | 0.7 |
-| **Total** | **43.1** | **10.0** |
+| **Total** | **42.7** | **9.9** |
 
 ## Caveats
 
