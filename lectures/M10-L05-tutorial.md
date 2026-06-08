@@ -188,26 +188,29 @@ actually carried that many:
 ```c
 unsigned char *receive_heartbeat(unsigned char *request, int received,
                                  int *resp_len) {
-  int payload_len = n2s(request + 1);     /* attacker-controlled */
-  unsigned char *payload = request + 3;
+  unsigned char *server_mem = malloc(64);
+  memcpy(server_mem, request, received);              /* the request */
+  strcpy((char *)server_mem + 16, "TLS-PRIVATE-KEY"); /* server's secret, nearby */
+
+  int payload_len = n2s(server_mem + 1);   /* attacker-controlled */
   /* THE BUG: payload_len is never checked against `received`. */
-  (void)received;
   unsigned char *response = malloc(payload_len);
-  memcpy(response, payload, payload_len); /* copies past the payload */
+  memcpy(response, server_mem + 3, payload_len); /* reads past the request */
   *resp_len = payload_len;
   return response;
 }
 ```
 
-The caller builds a request with one real payload byte (`'h'`) but a
-length field claiming 48, with a secret sitting just past the payload
-in the same buffer. `memcpy` copies all 48 claimed bytes: the one
-real byte, then whatever lives next door. `response`, sent back to
-the attacker, now carries the secret. This is Heartbleed in one
-buffer; the real bug read up to 64 KB across whatever the allocator
-had placed nearby. The bytes after the payload are arbitrary server
-memory; here they happen to spell a secret, but the point is that
-*whatever* is adjacent is transmitted. Run it:
+The attacker sends a tiny request: a type byte, a length field
+claiming 48, and one real payload byte (`'h'`). The secret is not in
+the request; it lives in the *server's* memory, next to where the
+request landed. `memcpy` copies all 48 claimed bytes: the one real
+byte, then whatever sits next to it on the server. `response`, sent
+back to the attacker, now carries the secret. The real bug read up to
+64 KB across whatever the allocator had placed nearby; the bytes
+after the payload are arbitrary server memory, and here they happen
+to spell a secret, but the point is that *whatever* is adjacent is
+transmitted. Run it:
 
 ```text
 ocaml-vm:~/m10# make heartbleed && ./heartbleed_mini
