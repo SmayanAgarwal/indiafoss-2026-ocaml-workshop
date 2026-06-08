@@ -1,0 +1,27 @@
+% Memory-safety bugs as a share of severe bugs, four vendor studies.
+% Horizontal bars. Used in M10-L01.
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage{tikz}
+\input{_m10-styles.texinput}
+\begin{document}
+\begin{tikzpicture}[m10, x=1mm, y=-1mm, font=\large]
+  \def\barmax{110}
+  \foreach \y/\pct/\lbl in {
+      0/70/{Microsoft (MSRC)},
+      18/70/{Chrome},
+      36/90/{Android (native)},
+      54/80/{0-days in the wild}} {
+    \node[note, anchor=east, font=\large] at (-4,\y+7) {\lbl};
+    \draw[draw=labelgrey!30, line width=0.4pt, fill=white]
+      (0,\y) rectangle (\barmax,\y+14);
+    \fill[secfill, draw=secedge, line width=0.6pt]
+      (0,\y) rectangle ({\pct/100*\barmax},\y+14);
+    \node[note, anchor=west, font=\Large\bfseries, text=secedge!75!black]
+      at ({\pct/100*\barmax + 3},\y+7) {\pct\%};
+  }
+  \node[note, anchor=north west, font=\large\itshape] at (-46,76)
+    {Share of severe bugs that are memory-safety bugs.};
+  \node[note, anchor=north west, font=\large\itshape] at (-46,86)
+    {Roughly two-thirds, flat for over a decade.};
+\end{tikzpicture}
+\end{document}

@@ -5,9 +5,15 @@ Background and design rationale: `README.md`.
 
 ## Standing policies (KC decisions)
 
-- `:::vm-terminal` embeds live in module 9 ONLY (currently L03
-  and L04), at most one per lecture (the build enforces this);
-  embedding in any other module needs KC's sign-off.
+- `:::vm-terminal` embeds live in module 9 (L03, L04) and
+  module 10 (the C memory-safety demos in `/root/m10`), at most
+  one per lecture (the build enforces this); embedding in any
+  other module needs KC's sign-off.
+- Deployed data is a single `current/` directory in the
+  `fplaunchpad/ocaml-browser-vm` repo, overwritten per build; git
+  history is the rollback path (the old immutable-`vN/` scheme is
+  retired). `DEFAULT_BASE` in `assets/vm/vm-terminal.js` points at
+  `current/` and does not change per build.
 - The terminal exists as both the chapter embed and the
   standalone playground page; both use the same component at
   `assets/vm/vm-terminal.js`.

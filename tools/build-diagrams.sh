@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Compile every assets/diagrams/*.tex into a sibling .svg using
-# pdflatex + pdftocairo. Skip when the .svg is newer than its .tex.
+# pdflatex + pdftocairo. Skip when the .svg is newer than its .tex
+# (and newer than every shared *.texinput style file, which figures
+# may pull in via \input).
 #
 # Requires:
 #   - pdflatex (TeX Live)
@@ -19,18 +21,33 @@ trap 'rm -rf "$TMP_ROOT"' EXIT
 
 [ -d "$DIA_DIR" ] || { echo "no diagrams dir at $DIA_DIR"; exit 0; }
 
+# Newest shared style file (if any); editing one invalidates every
+# figure, since the skip check below cannot see which figures \input it.
+newest_styles=""
+for sty in "$DIA_DIR"/*.texinput; do
+  [ -f "$sty" ] || continue
+  if [ -z "$newest_styles" ] || [ "$sty" -nt "$newest_styles" ]; then
+    newest_styles="$sty"
+  fi
+done
+
 for tex in "$DIA_DIR"/*.tex; do
   [ -f "$tex" ] || continue
   base=$(basename "$tex" .tex)
   out="$DIA_DIR/$base.svg"
-  # Skip if up-to-date.
-  if [ -f "$out" ] && [ "$out" -nt "$tex" ]; then
+  # Skip if up-to-date (vs the .tex and the newest shared style file).
+  if [ -f "$out" ] && [ "$out" -nt "$tex" ] \
+     && { [ -z "$newest_styles" ] || [ "$out" -nt "$newest_styles" ]; }; then
     printf 'skip  %s.svg (up to date)\n' "$base"
     continue
   fi
   tmp="$TMP_ROOT/$base"
   mkdir -p "$tmp"
   cp "$tex" "$tmp/$base.tex"
+  # Shared style files must be visible to \input in the build dir.
+  for sty in "$DIA_DIR"/*.texinput; do
+    [ -f "$sty" ] && cp "$sty" "$tmp/"
+  done
   printf 'build %s.svg\n' "$base"
   (cd "$tmp" && pdflatex -interaction=batchmode "$base.tex" >/dev/null 2>&1) || {
     echo "pdflatex failed for $base; see $tmp/$base.log"; exit 1;

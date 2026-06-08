@@ -98,7 +98,9 @@ node tools/vm-image/run-workflow.mjs        # must end "workflow complete"
   when it ships.
 - opam libraries: ounit2, qcheck (module 9's testing libraries).
 
-Deployed data versions live in the
-`fplaunchpad/ocaml-browser-vm` repo (one immutable `vN/` per
-build; currently `v4`). After any rebuild here, push a NEW `vN/`
-there and bump `DEFAULT_BASE` in `assets/vm/vm-terminal.js`.
+Deployed data lives in a single `current/` directory in the
+`fplaunchpad/ocaml-browser-vm` repo, overwritten per build (git
+history is the rollback path; the old immutable-`vN/` scheme is
+retired). After any rebuild here, overwrite `current/` there and
+commit. `DEFAULT_BASE` in `assets/vm/vm-terminal.js` already points
+at `current/` and does not change per build.

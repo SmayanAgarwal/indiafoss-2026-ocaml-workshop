@@ -389,58 +389,69 @@ a clean split point (L02: specs | invariants; L03: design |
 coverage) if a polish pass needs to bring them under the 30-min
 ceiling. L01 sits at 23 min as the module opener.
 
-### M10: Memory safety and security (6 lectures)
+### M10: Memory safety and security (5 lectures)
 
-Re-estimated 2026-05-25 after the M10 expansion: L01 grew from 8
-to 13 slides (Rust comparison, expanded zoo, worked UAF
-example); L03 grew from 13 to 15 slides (GC vs borrow checker,
-moving-GC tagging); a new L05 "Resource safety: file
-descriptors, sockets, and buffers" was inserted; the old L05
-tutorial was renumbered L06 and grew from 11 to 14 slides
-(leaks-vs-corruption, FFI + Ctypes, modes forward pointer).
-Estimate uses slide_count x 1.5 min.
+Rewritten 2026-06-06 to a 5-lecture structure with live C demos
+(in-browser VM, `/root/m10`) and TikZ figures. The old L01 (UB
+zoo) and L02 (security incidents) fused into one motivation
+lecture; a new short L03 covers data races as UB; the old L04
+(escape hatches) and L05 (resource safety) fused into one; the
+tutorial is now L05. Estimate uses slide_count x 1.5 min. M10's
+slides are unusually dense (figures, code, live demos), so real
+timings trend to the upper end of each estimate.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M10-L01 | Undefined behaviour and the C memory-safety zoo | 13 | 2 | 0 | 20 | 28 |
-| M10-L02 | Memory bugs as security incidents | 17 | 2 | 0 | 26 | 36 |
-| M10-L03 | How OCaml rules them out by construction | 15 | 2 | 1 | 23 | 32 |
-| M10-L04 | Where OCaml itself has UB | 15 | 2 | 0 | 23 | 32 |
-| M10-L05 | Resource safety: file descriptors, sockets, and buffers | 15 | 2 | 1 | 23 | 32 |
-| M10-L06 | Tutorial: walking Heartbleed end to end | 14 | 2 | 1 | 21 | 29 |
-| **M10 total** | | **89** | **12** | **3** | **136** | **189** |
-| | | | | | **(2.2 h)** | **(3.1 h)** |
+| M10-L01 | What memory safety is, and why it is a security story | 18 | 3 | 0 | 27 | 38 |
+| M10-L02 | Memory safety by construction | 14 | 2 | 1 | 21 | 29 |
+| M10-L03 | Data races are undefined behaviour | 11 | 3 | 1 | 17 | 24 |
+| M10-L04 | Where OCaml itself has UB | 19 | 4 | 1 | 29 | 40 |
+| M10-L05 | Tutorial: walking Heartbleed end to end | 16 | 2 | 1 | 24 | 34 |
+| **M10 total** | | **78** | **14** | **4** | **118** | **165** |
+| | | | | | **(2.0 h)** | **(2.8 h)** |
 
-All M10 lectures now land in the 20-30 min NPTEL band; the
-expansion added 36 video min and 1 lecture (no thin
-sub-20-min outliers remain).
+The module sits just under the ~2 h video budget set for the
+rewrite. L03 (17 min by the slide proxy) is the deliberately short
+data-race lecture; its figure- and transcript-dense slides run
+closer to 20 min in practice. L03 was deepened on 2026-06-07
+(precise race definition; the memory model's local-DRF /
+bounded-in-space-and-time story; a third MCQ) and again on
+2026-06-08 (a dedicated sequential-consistency / DRF-SC slide
+ahead of the comparison table). L04 grew on 2026-06-08 from 15 to
+19 slides: the resource-safety story now runs as live mock-handle
+cells (open / use / close by hand, the `Fun.protect` combinator, an
+example use, and a global-ref leak that motivates a stronger type
+system) rather than two static slides; at 29 min it now sits at the
+NPTEL upper bound and is a candidate for a split if recorded
+delivery overruns. L05 grew on 2026-06-08 from 13 to 16 slides:
+the slides now carry the OpenSSL handler, the full OCaml
+`handle_heartbeat` (with a live `Bytes.sub` bounds-check raise), and
+the "why this keeps happening" thesis, which had been chapter-only.
 
 ### M11: OxCaml: type-level extensions of safety (7 lectures)
 
-Re-estimated 2026-05-25 after the M11 expansion: L01 grew from
-10 to 14 slides (all five mode axes introduced upfront with
-forward pointers); a new L03 *Portability: data-race freedom
-across domains* was inserted (15 slides); L03 uniqueness was
-renumbered L04 and grew from 14 to 16 slides (file-descriptor
-protocol slide and unique `File_descr` worked example); L04
-linearity was renumbered L05 and grew from 11 to 13 slides
-(send-once channel, no-aliasing-vs-no-dropping contrast); a new
-L06 *Contention: synchronisation at compile time* was inserted
-(17 slides); the old L05 tutorial was renumbered L07 and grew
-from 13 to 15 slides (portability+contention integration into
-the API; closing-thoughts slide forward-pointing to M12).
+Re-estimated 2026-06-07 after the M11 reorder and live-cell
+pass: the lectures now run locality, uniqueness, linearity,
+portability, contention (the two concurrency axes adjacent, per
+KC); every `text` fence became a live cell against the new
+x-oxcaml bundle (worker + 4 MB `portable.js` extension, so
+`Domain.Safe.spawn`, `Portable.Atomic` and the capsule API run
+in-browser); L04 linearity was re-titled *use at most once* and
+its leak claim corrected (a dropped `once` value compiles); L07
+gained a "where is uniqueness?" design-note slide. Slide deltas
+vs the 2026-05-25 estimate: L07 15 to 16; the rest unchanged.
 Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
 | M11-L01 | Modes as the type-level continuation of safety | 14 | 2 | 0 | 21 | 29 |
 | M11-L02 | Locality: safe stack allocation | 13 | 2 | 0 | 20 | 28 |
-| M11-L03 | Portability: data-race freedom across domains | 15 | 2 | 0 | 23 | 32 |
-| M11-L04 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
-| M11-L05 | Linearity: use exactly once | 13 | 2 | 0 | 20 | 28 |
+| M11-L03 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
+| M11-L04 | Linearity: use at most once | 13 | 2 | 0 | 20 | 28 |
+| M11-L05 | Portability: data-race freedom across domains | 15 | 2 | 0 | 23 | 32 |
 | M11-L06 | Contention: synchronisation at compile time | 17 | 2 | 0 | 26 | 36 |
-| M11-L07 | Tutorial: a resource-management API | 15 | 2 | 1 | 23 | 32 |
-| **M11 total** | | **103** | **14** | **1** | **157** | **219** |
+| M11-L07 | Tutorial: a resource-management API | 16 | 2 | 1 | 24 | 33 |
+| **M11 total** | | **104** | **14** | **1** | **158** | **220** |
 | | | | | | **(2.6 h)** | **(3.7 h)** |
 
 All M11 lectures now land in the 20-30 min NPTEL band; the
@@ -527,13 +538,13 @@ polish time per module.
 
 ## Course totals
 
-- **Final video**: 1882 min (31.4 hours) across
+- **Final video**: 1879 min (31.3 hours) across
   79 lectures and 12 modules (plus the slide-free M08 practice
   sheet, which has no video).
-- **Estimated recording time**: 2629 min (43.8 hours)
+- **Estimated recording time**: 2624 min (43.7 hours)
   at the 1.4x multiplier.
 
-The 31.4 hours of final video meets NPTEL's ~30 hr target
+The 31.3 hours of final video meets NPTEL's ~30 hr target
 after the 2026-05-25 M09 restructure (+3 lectures, +61 video
 min for effect-handler concurrency), the 2026-06-02 M09
 restructure (concurrency removed from the course entirely;
