@@ -54,10 +54,16 @@ let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
      composes additively with the worker's Stdlib.
 
      M11 (OxCaml) uses an entirely different worker: the x-oxcaml
-     bundle at [assets/x-oxcaml/], built against OCaml 5.2.0+ox, so
-     locality / uniqueness / linearity mode syntax compiles in the
-     cells. No [src-load] is needed: the OxCaml worker already has the
-     mode system built into the compiler. *)
+     bundle at [assets/x-oxcaml/], built against OCaml 5.2.0+ox (the
+     effects=cps toplevel from the oxcaml branch of kayceesrk/x-ocaml),
+     so locality / uniqueness / linearity mode syntax compiles in the
+     cells. It additionally loads [portable.js] via [src-load]: the
+     ~4 MB cross-cma-DCE extension bundle (basement + capsule0 +
+     capsule + await + portable) built by the fork's
+     build_portable_js_extend.sh, which brings [Portable.Atomic],
+     [Domain.Safe.spawn] clients and the capsule API into the
+     toplevel. See the 2026-05-10 kcsrk.info post "Shrinking the
+     OxCaml js_of_ocaml bundle" for the recipe. *)
   let bundle_dir, src_load_attr =
     match fm.week with
     | Some 9 ->
@@ -66,7 +72,12 @@ let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
           Printf.sprintf
             "\n    src-load=\"%s/assets/x-ocaml/m09-extras.js?v=%s\""
             asset_root v )
-    | Some 11 -> ("x-oxcaml", "")
+    | Some 11 ->
+        let v = bundle_hash "assets/x-oxcaml/portable.js" in
+        ( "x-oxcaml",
+          Printf.sprintf
+            "\n    src-load=\"%s/assets/x-oxcaml/portable.js?v=%s\""
+            asset_root v )
     | _ -> ("x-ocaml", "")
   in
   let main_v = bundle_hash (Printf.sprintf "assets/%s/x-ocaml.js" bundle_dir) in

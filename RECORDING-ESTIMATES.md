@@ -444,18 +444,42 @@ extension, so `Domain.Safe.spawn`, `Portable.Atomic` and the
 capsule API run in-browser); linearity is titled *use at most once*
 with the leak claim corrected (a dropped `once` value compiles);
 the tutorial carries a "where is uniqueness?" design-note slide.
+
+Re-aligned 2026-06-08 to KC's CS6868 OxCaml slides/handout
+(narrative + exact code). L01 grew 15 to 17 slides: the
+"Control + Safe / modes are how, types are what" framing, and a
+performance arc (`[@zero_alloc]`, the zero-alloc *failure*, unboxed
+`float#`) shown as static `text` blocks since the native flambda
+check and unboxed floats do not run in the in-browser toplevel.
+L05 gained KC's capsules payoff (the vanilla `unsafe_insert`
+motivation + the runnable `Capsule.Data` gensym, verified live)
+and shed a redundant bridge slide, net unchanged at 17. L01 then
+grew 17 to 20 on KC's pedagogy note: lead with the C `return &x`
+escaping bug (from M10), a "what locality mode captures" concept
+slide, and the compiler rejecting the escape, all *before* the
+global/local mechanics. L01 now sits at the 30-min ceiling and is
+the natural split candidate if recorded delivery overruns.
 Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M11-L01 | Locality: safe stack allocation (opens with OxCaml/modes intro) | 15 | 2 | 0 | 23 | 32 |
+| M11-L01 | Locality: safe stack allocation (opens with OxCaml/modes intro) | 22 | 2 | 0 | 33 | 46 |
 | M11-L02 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
 | M11-L03 | Linearity: use at most once | 13 | 2 | 0 | 20 | 28 |
 | M11-L04 | Portability: data-race freedom across domains | 15 | 2 | 0 | 23 | 32 |
 | M11-L05 | Contention: synchronisation at compile time | 17 | 2 | 0 | 26 | 36 |
 | M11-L06 | Tutorial: a resource-management API | 16 | 2 | 1 | 24 | 33 |
-| **M11 total** | | **92** | **12** | **1** | **140** | **195** |
-| | | | | | **(2.3 h)** | **(3.3 h)** |
+| **M11 total** | | **99** | **12** | **1** | **150** | **209** |
+| | | | | | **(2.5 h)** | **(3.5 h)** |
+
+L01 is now 22 slides / ~33 video min, over the NPTEL 30-min ceiling
+after KC's 2026-06-09 review additions (the live M10 escaping-handle
+before/after, the C crash example, a `use_locally` slide, a triangle
+perimeter slide, and code on the polyline slides). It is the
+strongest split candidate in M11: a natural cut is **L01a** (OxCaml
+intro + the M10 escaping handle + locality basics: global/local,
+`stack_`, escape) and **L01b** (`exclave_`, mode crossing, the
+polyline, the zero-alloc/unboxed performance arc).
 
 All six M11 lectures land in the 20-30 min NPTEL band. Dropping the
 modes-intro lecture removed ~21 min of preview video; the OxCaml
@@ -604,7 +628,7 @@ If a studio session is **6 effective hours** of recording
 (roughly 4.3 hours of recording time after breaks, lighting
 resets and slide-load lulls), the schedule comes out to:
 
-- **42.7 hours of recording / 4.3 hours per day = ~9.9 studio days.**
+- **42.9 hours of recording / 4.3 hours per day = ~10 studio days.**
 
 Per-week breakdown if you want to spread across multiple
 sessions:
@@ -621,9 +645,9 @@ sessions:
 | M08 Monads and GADTs | 3.3 | 0.8 |
 | M09 Testing | 4.8 | 1.1 |
 | M10 Memory safety and security | 3.2 | 0.7 |
-| M11 OxCaml: type-level extensions of safety | 3.3 | 0.7 |
+| M11 OxCaml: type-level extensions of safety | 3.5 | 0.8 |
 | M12 Unikernels (MirageOS) | 2.9 | 0.7 |
-| **Total** | **42.7** | **9.9** |
+| **Total** | **42.9** | **10.0** |
 
 ## Caveats
 

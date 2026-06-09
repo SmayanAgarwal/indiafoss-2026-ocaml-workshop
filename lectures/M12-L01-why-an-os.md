@@ -525,8 +525,10 @@ fundamental security argument is that the TCB is what your security
 depends on; if any line of it is buggy in a way an attacker can
 exploit, the whole system can be compromised. Around 70 percent of
 CVEs in major C/C++ codebases are memory-safety bugs (we cover this
-properly in [M10-L02](M10-L02-memory-bugs-as-security.html) and in
-[M12-L04](M12-L04-ocaml-for-systems.html)). A bigger TCB written in an
+properly in
+[the memory-safety module](M10-L01-memory-safety-and-security.html)
+and [later in this module](M12-L04-ocaml-for-systems.html)). A bigger
+TCB written in an
 unsafe language means more places for those bugs to live.
 :::
 

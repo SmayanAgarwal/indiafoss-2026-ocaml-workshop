@@ -972,7 +972,7 @@ needed. Third, immutable data is a perfect fit for *concurrency*:
 two threads (or two domains, or two distant cores) can read the
 same value at once without locks, because there is nothing to
 race over. We will return to that point in
-[Module 10](M10-L01-data-race-freedom.html).
+[Module 10](M10-L03-data-races-are-ub.html).
 
 The recommendation, then, is the same one OCaml itself follows:
 use immutable data structures by default, and reach for mutation

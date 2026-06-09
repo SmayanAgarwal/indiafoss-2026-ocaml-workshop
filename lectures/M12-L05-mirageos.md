@@ -584,17 +584,19 @@ errors but not behaviour, and added testing; especially property-
 based testing, which works particularly well because pure functions
 are properties.
 
-In [Module 10](M10-L01-ub-and-the-zoo.html) we made the
+In [Module 10](M10-L01-memory-safety-and-security.html) we made the
 *memory-safety* claim precise. Use-after-free, buffer overflow,
 uninitialised reads, double-frees: all ruled out by construction.
 The numbers (70 percent of CVEs are memory-safety bugs) made the
 argument concrete.
 
-In [Module 11](M11-L01-modes-as-safety.html) we pushed safety into
+In [Module 11](M11-L01-locality.html) we pushed safety into
 new territory with OxCaml's modes: locality made stack allocation
-safe; uniqueness ruled out use-after-free at the type level; linearity
-forced resources to be used exactly once. Types tracking *how* a
-value is used, not just *what* it is.
+safe; uniqueness ruled out use-after-free at the type level;
+linearity made a second use of a consumed handle unwritable; and
+portability with contention delivered compile-time data-race
+freedom. Types tracking *how* a value is used, not just *what*
+it is.
 
 In Module 12 we have taken the whole apparatus and pushed it down
 into the operating system itself. MirageOS is what the safety
@@ -620,7 +622,7 @@ language seriously.
 - M10: memory safety as a property of the language. Categories of
   CVEs OCaml rules out.
 - M11: modes track *how* values are used. Locality, uniqueness,
-  linearity.
+  linearity, portability, contention.
 - **M12: the OS itself, in OCaml.** Safety, all the way down.
 
 :::

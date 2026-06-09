@@ -235,13 +235,13 @@ if (!tun) return POLLERR;       // dead code per the compiler
 return POLLIN;
 ```
 
+- From the **Linux kernel** `tun` driver (CVE-2009-1897).
 - Deref on line 2 is UB if `tun` is null.
 - Compiler deduces `tun` cannot be null, so the check cannot fire.
-- Compiler **deletes the check** (CVE-2009-1897).
+- Compiler **deletes the check**.
 - The bug is in the source, not the compiler.
 
 :::
-<!-- KC: say that this is in the Linux Kernel -->
 
 :::slide
 

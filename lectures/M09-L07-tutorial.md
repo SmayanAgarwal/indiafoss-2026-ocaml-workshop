@@ -1352,7 +1352,7 @@ After this module:
   an anchored property, and a deliberately introduced bug
   caught and shrunk (this lecture).
 
-The next module, [Memory safety and security](M10-L01-ub-and-the-zoo.html),
+The next module, [Memory safety and security](M10-L01-memory-safety-and-security.html),
 moves in the other direction: from what tests catch to what
 *types and the runtime* catch. We have argued that types and tests
 are complementary; M10 makes the type side precise in the

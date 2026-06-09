@@ -135,10 +135,10 @@ the C memory bugs (use-after-free, buffer overflow, uninitialised
 read, double-free), shows how they become CVEs (the now-famous
 Microsoft 70%, Android 90%, Fish-in-a-Barrel 80% statistics and
 the [White House February 2024
-memorandum](M10-L02-memory-bugs-as-security.html) on memory-safe
+memorandum](M10-L01-memory-safety-and-security.html) on memory-safe
 languages), and shows how OCaml rules each one out by construction.
 We also walk a [Heartbleed-style
-example](M10-L06-tutorial.html) end to end. Module 11 picks up
+example](M10-L05-tutorial.html) end to end. Module 11 picks up
 where the vanilla type system stops:
 [OxCaml](https://oxcaml.org), a research branch of OCaml maintained
 by Jane Street, adds a *mode system* on top of the language we will
@@ -214,10 +214,10 @@ limit (a well-typed function can still compute the wrong answer),
 unit tests and property-based tests, as the complement that catches
 behaviour. Where vanilla OCaml's types reach *their* limit (stack
 allocation, manually managed resources), [Module
-11](M11-L01-modes-as-safety.html) introduces OxCaml's mode system,
+11](M11-L01-locality.html) introduces OxCaml's mode system,
 which extends the types to track *how* a value may be used, not just
 *what* it is. In between, [Module
-10](M10-L01-ub-and-the-zoo.html) makes the memory-safety claim
+10](M10-L01-memory-safety-and-security.html) makes the memory-safety claim
 precise: you will see what *defined* and *undefined* behaviour mean,
 the C bug classes the GC plus types rule out, and where the OCaml
 runtime itself draws the line.

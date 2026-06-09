@@ -3,17 +3,15 @@ title: "Where OCaml itself has UB"
 lecture_no: 4
 week: 10
 duration_target_min: 24
-concepts: [Obj.magic, Marshal, FFI, unsafe fragment, escape hatch, resource safety, file descriptor, Fun.protect, finalisers]
-keywords: [OCaml, Obj.magic, Marshal, FFI, external, Ctypes, unsafe, resource safety, file descriptor, with_open_text, Fun.protect, finaliser]
-activity_question: "Critique a Marshal-from-disk read; identify which construct is not in the safe fragment; the Fun.protect guarantee; why the GC is not the fd-leak defence; and write save_and_restore_ref with Fun.protect."
+concepts: [Obj.magic, Marshal, FFI, unsafe fragment, escape hatch, resource safety, file descriptor, fun_protect, finalisers]
+keywords: [OCaml, Obj.magic, Marshal, FFI, external, Ctypes, unsafe, resource safety, file descriptor, with_open_text, fun_protect, finaliser]
+activity_question: "Critique a Marshal-from-disk read; identify which construct is not in the safe fragment; the fun_protect cleanup guarantee; why the GC is not the fd-leak defence; and write save_and_restore_ref with fun_protect."
 think_about_this: "If the safe fragment rules out the four memory bugs, why does the language ship Obj.magic at all, and why does the garbage collector not just close your leaked file descriptors for you?"
 reading:
   - title: "OCaml manual, Module Obj"
     url: https://v2.ocaml.org/api/Obj.html
   - title: "OCaml manual, Module Marshal"
     url: https://v2.ocaml.org/api/Marshal.html
-  - title: "OCaml manual, Fun.protect"
-    url: https://v2.ocaml.org/api/Fun.html
   - title: "Real World OCaml, Foreign Function Interface"
     url: https://dev.realworldocaml.org/foreign-function-interface.html
 ---
@@ -442,36 +440,56 @@ let () =
 ## The combinator
 
 OCaml's idiom for resources is *higher-order-function scoping*:
-instead of handing you `open` and `close` separately, the library
-gives a *combinator* that opens the resource, runs your callback,
-and closes on the way out. The stdlib's `In_channel.with_open_text`
-is exactly this, built from the more primitive `Fun.protect`. Here
-it is over our handle:
+instead of handing you `open` and `close` separately, you wrap the
+acquire / use / release in a *combinator*. The building block is a
+function that runs some `work`, then runs a `finally` cleanup on
+the way out, whether `work` returns or raises. We can define it
+ourselves in three lines, with `match ... with exception`:
+
+```ocaml
+let fun_protect finally work =
+  match work () with
+  | x -> finally (); x
+  | exception e -> finally (); raise e
+```
+
+The `| x ->` arm runs after a normal return; the `| exception e ->`
+arm runs if `work ()` raised, running the cleanup and re-raising.
+Either way `finally` runs *exactly once*. Now `with_handle` is a
+one-liner: open, hand the handle to `f`, and let `fun_protect`
+close it on every exit path.
 
 ```ocaml
 let with_handle f =
   let h = my_open () in
-  Fun.protect ~finally:(fun () -> my_close h) (fun () -> f h)
+  fun_protect (fun () -> my_close h) (fun () -> f h)
 ```
 
-`Fun.protect ~finally work` runs `work ()`, then runs `finally ()`
-*exactly once*, on a normal return and on an exception (re-raising
-the exception after). So `my_close` runs for you, on every exit
-path, exactly once; and the handle is named only inside `f`.
+The handle is named only inside `f`, and `my_close` runs exactly
+once, on both the normal and the exceptional path. (The standard
+library ships this same combinator; `In_channel.with_open_text`
+is the file-specific version, opening a channel and closing it on
+the way out.)
 
 :::slide
 
 ## The combinator
 
 ```ocaml
+let fun_protect finally work =
+  match work () with
+  | x -> finally (); x
+  | exception e -> finally (); raise e
+
 let with_handle f =
   let h = my_open () in
-  Fun.protect ~finally:(fun () -> my_close h) (fun () -> f h)
+  fun_protect (fun () -> my_close h) (fun () -> f h)
 ```
 
-- `Fun.protect ~finally work`: runs `finally` *exactly once*.
-  - on a normal return, and on an exception (then re-raises).
-- Open here, hand the handle to `f`, close on the way out.
+- `fun_protect` runs `finally` *exactly once*: on a normal return,
+  and on an exception (then re-raises).
+- `with_handle`: open, run `f`, close on every exit path.
+- The handle is named only inside `f`.
 
 :::
 
@@ -648,20 +666,20 @@ pure traversal.
 :::
 
 :::quiz mcq id=M10-L04-q3
-Given `val protect : finally:(unit -> unit) -> (unit -> 'a) -> 'a`,
-what is guaranteed about `finally`?
+Given `fun_protect finally work` as defined above, what is
+guaranteed about `finally`?
 
-- [ ] It runs only when the work thunk returns normally.
-- [ ] It runs only when the work thunk raises.
-- [x] It runs exactly once: on normal return *and* when the work
+- [ ] It runs only when `work` returns normally.
+- [ ] It runs only when `work` raises.
+- [x] It runs exactly once: on normal return *and* when `work`
   raises (after which the exception is re-raised).
-- [ ] It runs zero times if the work loops forever.
+- [ ] It runs zero times if `work` loops forever.
 
 **Why:** "exactly once, on either exit" is the whole point of
-`Fun.protect`. On normal return it runs `finally` and returns the
-result; on an exception it runs `finally` and re-raises. (If the work
-never returns, no exit happens, so no cleanup happens, but that is a
-different bug.)
+`fun_protect`. The `| x ->` arm runs `finally` and returns the
+result; the `| exception e ->` arm runs `finally` and re-raises.
+(If `work` never returns, no exit happens, so no cleanup happens,
+but that is a different bug.)
 :::
 
 :::quiz mcq id=M10-L04-q4
@@ -686,7 +704,7 @@ discipline is the combinator.
 Implement `save_and_restore_ref : 'a ref -> (unit -> 'b) -> 'b` that
 snapshots `r`, calls `f ()`, and unconditionally restores the
 snapshot to `r` before returning, whether `f` returned or raised.
-Use `Fun.protect`.
+Use the `fun_protect` combinator from earlier in this lecture.
 
 ```ocaml
 let save_and_restore_ref r f =
@@ -718,12 +736,12 @@ A reference solution snapshots the value, then restores it in the
 ```ocaml
 let save_and_restore_ref r f =
   let saved = !r in
-  Fun.protect ~finally:(fun () -> r := saved) (fun () -> f ())
+  fun_protect (fun () -> r := saved) f
 ```
 
-The snapshot is taken before `Fun.protect` registers the cleanup; on
-either exit the `finally` fires and `r` is restored. No path through
-the body forgets to restore. This is the same shape as `with_handle`:
+The snapshot is taken before `fun_protect` runs the body; on either
+exit the cleanup fires and `r` is restored. No path through the body
+forgets to restore. This is the same shape as `with_handle`:
 snapshot, work that may raise, undo on the way out.
 
 :::
@@ -751,7 +769,6 @@ one concrete case.
 - **OCaml manual**, *Module `Obj`*: <https://v2.ocaml.org/api/Obj.html>
 - **OCaml manual**, *Module `Marshal`*:
   <https://v2.ocaml.org/api/Marshal.html>
-- **OCaml manual**, *`Fun.protect`*: <https://v2.ocaml.org/api/Fun.html>
 - **Real World OCaml**, *Foreign Function Interface*:
   <https://dev.realworldocaml.org/foreign-function-interface.html>
 - **OCaml manual**, *Interfacing C with OCaml*:
@@ -761,8 +778,9 @@ one concrete case.
 
 This lecture's prose, worked examples, and quizzes are original to
 this course. The descriptions of `Obj.magic`, `Marshal`, the FFI,
-`In_channel`, and `Fun.protect` follow the relevant chapters of the
-OCaml manual and Real World OCaml; we summarise the safety-relevant
-subset. See
+and `In_channel` follow the relevant chapters of the OCaml manual
+and Real World OCaml; we summarise the safety-relevant subset. The
+`fun_protect` combinator is our own three-line definition of the
+standard resource-cleanup pattern. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

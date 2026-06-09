@@ -801,7 +801,7 @@ it. GC and immutability fit well together: GC makes immutability
 cheap, and immutability makes GC's job easier (no in-place updates
 means no need for write barriers in the common case). The full GC
 story comes back in
-[Module 10](M10-L03-how-ocaml-rules-them-out.html) when we look at
+[Module 10](M10-L02-memory-safety-by-construction.html) when we look at
 how OCaml rules out the memory-safety bugs that haunt C.
 
 ## A small code challenge

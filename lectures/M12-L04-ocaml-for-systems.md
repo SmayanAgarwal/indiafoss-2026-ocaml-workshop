@@ -124,10 +124,10 @@ revisiting:
   across the period was 87 of 108 exploited 0-days.
 
 We covered these numbers carefully in
-[M10-L02](M10-L02-memory-bugs-as-security.html), and the four
+[M10-L02](M10-L01-memory-safety-and-security.html), and the four
 canonical bugs that drive them (use-after-free, buffer overflow,
 uninitialised read, double-free) in
-[M10-L01](M10-L01-ub-and-the-zoo.html). The reason to re-encounter
+[M10-L01](M10-L01-memory-safety-and-security.html). The reason to re-encounter
 them here is that they are *the* argument for the third ingredient
 of MirageOS. If your TCB is mostly C, your TCB will keep producing
 memory-safety CVEs no matter how well-managed it is. The only
@@ -168,14 +168,15 @@ relevant national governments are telling everybody to do.
 
 ## What "memory-safe" buys you
 
-We covered this in [M10-L03](M10-L03-how-ocaml-rules-them-out.html)
+We covered this in
+[the memory-safety lecture](M10-L02-memory-safety-by-construction.html)
 but it is worth re-anchoring the four pieces here.
 
 **Garbage collection eliminates lifetime questions.** There is no
 `free` in OCaml. The garbage collector reclaims memory only after
 every reference to it has gone out of scope. Use-after-free is not
 just unlikely; it is a category-error in the language. We saw in
-[M10-L01](M10-L01-ub-and-the-zoo.html) that use-after-free is the
+[M10-L01](M10-L01-memory-safety-and-security.html) that use-after-free is the
 single most common source of high-severity browser CVEs.
 
 **Types eliminate aliasing-via-cast.** OCaml's type system is sound:
@@ -553,19 +554,20 @@ make the safety argument concrete. It is worth pointing forward
 to them explicitly, because their machinery is what gives
 MirageOS its safety budget:
 
-- [Module 10 (Memory safety and security)](M10-L01-ub-and-the-zoo.html)
+- [Module 10 (Memory safety and security)](M10-L01-memory-safety-and-security.html)
   takes the four categories of memory-safety bug (UAF, buffer
   overflow, uninit read, double free) and argues each is ruled
   out *by construction* in OCaml. That is the empirical floor we
   cited above (70 percent of CVEs are these four bugs); MirageOS
   is what you build once that floor is gone.
-- [Module 11 (OxCaml modes)](M11-L01-modes-as-safety.html) goes
-  further: uniqueness modes prevent use-after-free at the type
-  level (no GC reachability needed); linearity forces resources
-  to be used exactly once; portability is a compile-time
-  guarantee that a value can move safely between domains. Each
-  of these gives MirageOS a way to express invariants that
-  ordinary OCaml has to enforce dynamically.
+- [Module 11 (OxCaml modes)](M11-L01-locality.html) goes
+  further along the same line: uniqueness modes prevent
+  use-after-free at the type level (no GC reachability needed);
+  linearity makes a second use of a consumed handle unwritable;
+  portability is a compile-time guarantee that a value can move
+  safely between domains. MirageOS itself is built on safe
+  vanilla OCaml; the modes are where the same
+  protocol-as-type idea is heading.
 
 The intuition to carry from M10 and M11 is that the safety story
 keeps tightening: OCaml rules out most of the C CVE zoo; OxCaml
@@ -576,11 +578,11 @@ that safety budget when you spend it on the OS itself.
 
 ## Forward pointers to M10 and M11
 
-- [**M10**](M10-L01-ub-and-the-zoo.html): the four C memory
+- [**M10**](M10-L01-memory-safety-and-security.html): the four C memory
   bugs (UAF, BOF, uninit, double-free) ruled out by
   construction. MirageOS is what you build once the floor is
   gone.
-- [**M11**](M11-L01-modes-as-safety.html): uniqueness modes
+- [**M11**](M11-L01-locality.html): uniqueness modes
   prevent UAF at the *type* level; linearity forces exactly-once
   use; portability is compile-time data-race freedom.
 - MirageOS spends the M10 + M11 safety budget at the OS layer.
@@ -804,6 +806,6 @@ talk *Towards smaller, safer, bespoke OSes with Unikernels*, slides
 19 to 26. The memory-safety statistics are drawn from public
 industry reports (Microsoft 2019, Chromium 2020, Android, Fish in
 a Barrel) that we covered with citations in
-[M10-L02](M10-L02-memory-bugs-as-security.html). See
+[M10-L02](M10-L01-memory-safety-and-security.html). See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.
