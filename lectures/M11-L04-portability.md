@@ -243,8 +243,8 @@ because the program does not compile.
 ## `Domain.Safe.spawn`'s signature
 
 ```ocaml
-let spawn_recap = Domain.Safe.spawn
-(* val spawn_recap : (unit -> 'a) @ once portable -> 'a Domain.t *)
+let spawn = Domain.Safe.spawn
+(* val spawn : (unit -> 'a) @ once portable -> 'a Domain.t *)
 ```
 
 - The thunk must be `portable` (and `once`: run at most one time).
@@ -362,7 +362,7 @@ a separate axis.
 ## Atomics alone are not enough
 
 ```ocaml
-let gensym_atomic_recap =
+let gensym_atomic =
   let count = Atomic.make 0 in
   fun prefix ->
     let n = Atomic.fetch_and_add count 1 in
@@ -430,7 +430,7 @@ dance is not necessary.
 ## The fix
 
 ```ocaml
-module Gen_recap = struct
+module Gen = struct
   open Portable
   let count = Atomic.make 0
   let gensym prefix =
@@ -588,28 +588,26 @@ state from the closure's point of view). The fix is
 `Portable.Atomic`, which mode-crosses both axes.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
-
-Q1: a closure capturing a `Buffer.t`. Q2: stdlib `Atomic.t`
-versus `Portable.Atomic`.
+Q1 is rejected: the closure captures a mutable `Buffer.t` and writes
+to it inside the body, so it cannot be `@ portable` (its mutable
+capture is off-limits across domains).
 
 ```ocaml
-(* Q1 recap: rejected. Run it. *)
-let (f_recap @ portable) =
+(* Q1: rejected. Run it. *)
+let (f @ portable) =
   let log = Buffer.create 16 in
   fun x ->
     Buffer.add_string log (string_of_int x ^ "; ");
     x + 1
 ```
 
-- Portability is about **captures**: they must be portable, and
-  their mutable parts are off-limits inside the body.
-- Stdlib `Atomic.t` mode-crosses contention but not portability.
-  `Portable.Atomic` mode-crosses both.
-- The two axes are independent. Fixing the runtime race
-  (atomics) is not the same as making the function portable.
+Q2: swapping the `ref` for a stdlib `Atomic.t` fixes the runtime race
+but not portability: stdlib `Atomic.t` mode-crosses contention, not
+portability, so the closure is still nonportable. `Portable.Atomic`
+mode-crosses both. The two axes are independent: fixing the race is
+not the same as making the closure portable.
 
 :::
 

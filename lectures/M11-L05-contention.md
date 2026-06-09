@@ -594,19 +594,15 @@ read the counter from multiple domains, the right type is
 same point made in M11-L02 from the portability side.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: reading the *immutable* field of a `contended` value is fine;
+reading or writing its *mutable* field is rejected (a `contended`
+value may be shared with other domains, so its mutable parts are
+off-limits without synchronisation).
 
-Q1: a record with one mutable and one immutable field, accessed
-under different contention modes. Q2: stdlib `Atomic.t` vs
-`Portable.Atomic.t`.
-
-- Reads of *immutable* fields on contended values: fine.
-- Reads or writes of *mutable* fields on contended values:
-  rejected.
-- Mode crossing is per-axis. Stdlib `Atomic.t` crosses
-  contention; `Portable.Atomic.t` crosses both.
+Q2: mode crossing is per-axis. Stdlib `Atomic.t` crosses contention
+but not portability; `Portable.Atomic.t` crosses both.
 
 :::
 

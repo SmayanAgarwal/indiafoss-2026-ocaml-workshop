@@ -151,7 +151,7 @@ ends the chain.
 ## The signature
 
 ```ocaml
-module type Handle_sig_recap = sig
+module type Handle = sig
   type t
   val open_ : string -> t @ once local
   val read  : t @ once local
@@ -264,7 +264,7 @@ pattern `{ Modes.Global.global = s }` unwraps it, and from there
 ## Correct usage
 
 ```ocaml
-let example_recap () =
+let example () =
   let t = Handle.open_ "scratch.txt" in
   let t = Handle.write t "hello" in
   let { Modes.Global.global = s }, t = Handle.read t 5 in
@@ -272,7 +272,7 @@ let example_recap () =
   s
 ```
 
-- Handle never escapes `example_recap`.
+- Handle never escapes `example`.
 - Each step consumes and rebinds the handle.
 - `close` ends the chain.
   - the string rides out via `Modes.Global.t`.
@@ -411,12 +411,11 @@ ignores the return value of `fclose` (most programs do) gets no
 benefit. And none of it catches the use-after-close pattern, which
 is the most dangerous of the three.
 
-Compare with the OxCaml signature (this is the same `Handle`
-module type we wrote above; rebinding it under a fresh name lets
-us put the signature side by side with the C prototypes):
+Compare with the OxCaml signature (the same `Handle` module type
+from above, repeated here side by side with the C prototypes):
 
 ```ocaml
-module type Handle_recap = sig
+module type Handle = sig
   type t
   val open_ : string -> t @ once local
   val read  : t @ once local
@@ -535,7 +534,7 @@ whether the handle may leak. The compiler enforces each piece.
 ## A cross-domain-aware connection pool
 
 ```ocaml
-module type Conn_recap = sig
+module type Conn = sig
   type t
   type pool
   val pool   : pool @@ portable
@@ -794,7 +793,7 @@ locality error.
 ## The intended buffer signature
 
 ```ocaml
-module type Buffer_recap = sig
+module type Buffer = sig
   type t
   val alloc : int -> t @ once local
   val read  : t @ once local -> int -> char * t @ once local

@@ -216,7 +216,7 @@ past aliasing), but the *programming model* is the same.
 ## File-handle protocol as a type
 
 ```ocaml
-module type Handle_recap = sig
+module type Handle = sig
   type t
   val open_ : string -> t @ once
   val read  : t @ once -> int -> string * t @ once
@@ -287,7 +287,7 @@ a "once" protocol, and each fits the same mode signature.
 ## A send-once channel
 
 ```ocaml
-module type Send_once_recap = sig
+module type Send_once = sig
   type 'a t
   val make  : unit -> 'a t @ once
   val send  : 'a t @ once -> 'a -> unit
@@ -698,26 +698,25 @@ position, side effects, and return types do not by themselves
 force `once`.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: C is rejected. B threads the handle correctly (the ownership-chain
+shape). A *compiles* (the discarded final handle is a silent leak;
+at-most-once has no opinion on zero uses). C reads the *original* `t`
+twice: the first `read t` consumes `t`, so the second is a second use
+of a once-handle.
 
-Q1: which `Handle` client fails to type-check?
 ```ocaml
 (* C: rejected; the original t is read twice. Run it. *)
-let c_recap () =
+let c () =
   let t = Handle.open_ "f" in
   let s1, _ = Handle.read t 10 in
   let s2, _ = Handle.read t 10 in
   s1, s2
 ```
-Q2: why `f` ends up `once` without an annotation.
 
-- B threads the handle correctly: the `Unique_ref` ownership
-  chain shape.
-- A *compiles*: the discarded final handle is a silent leak;
-  at-most-once has no opinion on zero uses.
-- Q2: a closure capturing a `once` value becomes `once`.
+Q2: a closure that captures a `once` value itself becomes `once`;
+capturing is enough to downgrade it.
 
 :::
 

@@ -209,7 +209,7 @@ for `free`) a fresh unique reference is returned to chain through.
 ## The `Unique_ref` signature
 
 ```ocaml
-module type Unique_ref_recap = sig
+module type Unique_ref = sig
   type 'a t
   val alloc : 'a -> 'a t @ unique
   val free  : 'a t @ unique -> unit
@@ -237,7 +237,7 @@ the whole story; the `open M` at its end brings `alloc`, `get`,
 ## The implementation
 
 ```ocaml
-module M : Unique_ref_recap = struct
+module M : Unique_ref = struct
   type 'a t = { mutable value : 'a }
   let alloc x = { value = x }
   let free _t = ()                       (* deallocation elided *)
@@ -319,7 +319,7 @@ is possible because there is nothing left to use.
 ## Correct usage shadows through
 
 ```ocaml
-let okay_slide (r : int t @ unique) =
+let okay (r : int t @ unique) =
   let _v, r = get r in
   let r = set r 20 in
   free r
@@ -427,7 +427,7 @@ has the full set of cases.
 ## Ownership chains, conceptually
 
 ```ocaml
-let chain_recap (r0 : int t @ unique) =
+let chain (r0 : int t @ unique) =
   let _v, r1 = get r0 in  (* ownership: r0 -> r1, plus a value *)
   let r2 = set r1 20 in   (* r1 -> r2 *)
   free r2                 (* r2 consumed; no live owner *)
@@ -490,7 +490,7 @@ downgrades the closure's linearity to `once`.
 ## The closure-capture pitfall
 
 ```ocaml
-let wat_recap () =
+let wat () =
   let t = alloc 42 in
   let f () = free t in
   f ();
@@ -554,11 +554,11 @@ useful life.
 ## Aliasing destroys the uniqueness privilege
 
 ```ocaml
-let dup_recap r = (r, r)
+let dup r = (r, r)
 
 let oops_alias () =
   let r = alloc 42 in      (* r : int t @ unique *)
-  let a, _b = dup_recap r in (* coerced to aliased *)
+  let a, _b = dup r in (* coerced to aliased *)
   free a                   (* error: aliased, expected unique *)
 ```
 
@@ -623,7 +623,7 @@ appropriate axis.
 ## Uniqueness vs linearity, modularly
 
 ```ocaml
-module type Free_unique_slide = sig
+module type Free_unique = sig
   type 'a t
   val free : 'a t @ unique -> unit
 end
@@ -631,7 +631,7 @@ end
 → Safe from the signature alone. Modular reasoning.
 
 ```ocaml
-module type Free_once_slide = sig
+module type Free_once = sig
   type 'a t
   val free : 'a t @ once -> unit
 end
@@ -764,7 +764,7 @@ runtime, only now it does it at compile time.
 ## A unique `File_descr` module
 
 ```ocaml
-module type File_descr_recap = sig
+module type File_descr = sig
   type t
   val open_     : string -> t @ unique
   val read_line : t @ unique -> string Modes.Aliased.t * t @ unique
@@ -870,29 +870,29 @@ caller's pattern. The second call is rejected because `f` is
 consumption, but it is enough to downgrade the closure.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: C is rejected. `a_ok` and `b_ok` thread the unique binding
+correctly; `c_bad` calls `get r` (which consumes `r` and returns a
+fresh handle), then underscores that fresh handle and calls `free r`
+on the already-consumed original.
 
-Q1: which of A/B/C fails to type-check?
 ```ocaml
 let a_ok (r : int t @ unique) =
   let _v, r = get r in let _v, _r = get r in ()
 let b_ok (r : int t @ unique) =
   let r = set r 100 in free r
 ```
+
 ```ocaml
 (* C: rejected. Run it. *)
 let c_bad (r : int t @ unique) =
   let _v, _r = get r in free r
 ```
-Q2: a closure that captures (not consumes) a unique reference.
 
-- Each unique operation must thread the binding correctly. An
-  underscored shadow drops the new handle and leaves the original
-  consumed.
-- Capture of a unique value into a closure forces the closure to
-  be `once`. That is the bridge into the next lecture.
+Q2: capturing (not consuming) a unique reference in a closure forces
+the closure to `once`; capture alone downgrades it. That is the
+bridge into the next lecture.
 
 :::
 
