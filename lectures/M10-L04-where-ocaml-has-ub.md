@@ -567,7 +567,6 @@ let () =
 - The combinator still closed it.
   - so now we use an already-closed handle.
 - Runtime scoping cannot stop this.
-  - a stronger *type system* can.
 
 :::
 
@@ -589,37 +588,22 @@ descriptors but few bytes hits the limit first), run in *unspecified
 order*, and *cannot fail meaningfully* (a failing `close` has nowhere
 to report). They are a net, not the discipline.
 
+The common case is closed at *runtime*; the cases it cannot (escaping
+handles, complex lifetimes, shared buffers) are exactly the ones a
+later module addresses by lifting this discipline into the *type
+system*, so the compiler enforces what the programmer today must
+remember to wrap.
+
 :::slide
 
 ## Where it breaks down
-
-<img src="/assets/diagrams/M10-escaping-handle.svg" alt="A handle escaping its with_ scope is already closed" style="height: 400px;">
 
 - The escape above is one shape; sockets, shared buffers, and
   cross-call locks are others.
 - The GC is not the fix: finalisers are not prompt, unordered, and
   cannot report errors.
-
-:::
-
-## A forward pointer
-
-The combinator closes the common case at *runtime*. The cases it
-cannot (escaping handles, complex lifetimes, shared buffers) are
-exactly the ones a later module addresses by lifting this discipline
-into the *type system*, so the compiler enforces what the programmer
-today must remember to wrap. The combinator we wrote is the
-value-level shape of that idea.
-
-:::slide
-
-## A forward pointer
-
-- HOF scoping enforces the discipline at runtime, for the common
-  case.
-- The hard cases (escape, complex lifetimes, sharing) motivate a
-  later module.
-  - it lifts this discipline into the type checker.
+- A later module lifts this discipline into the *type system*.
+  - the compiler enforces what you must remember to wrap today.
 
 :::
 

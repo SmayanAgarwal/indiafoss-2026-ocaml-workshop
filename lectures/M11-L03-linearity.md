@@ -618,8 +618,8 @@ OxCaml ships.
 
 ## Where linearity comes from
 
-- **Girard, 1987**: linear logic. Drop contraction; every
-  proposition used once.
+- **Girard, 1987**: linear logic.
+  - drop contraction: every proposition used once.
 - **Wadler, 1990s**: linear types in programming.
 - **OxCaml, 2024+**: linearity as one of five mode axes,
   cooperating with the rest.

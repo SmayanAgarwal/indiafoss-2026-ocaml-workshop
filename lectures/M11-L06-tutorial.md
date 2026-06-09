@@ -274,8 +274,8 @@ let example_recap () =
 
 - Handle never escapes `example_recap`.
 - Each step consumes and rebinds the handle.
-- `close` ends the chain; the string rides out via
-  `Modes.Global.t`.
+- `close` ends the chain.
+  - the string rides out via `Modes.Global.t`.
 
 :::
 

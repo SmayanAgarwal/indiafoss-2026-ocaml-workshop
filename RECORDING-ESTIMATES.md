@@ -405,9 +405,9 @@ timings trend to the upper end of each estimate.
 | M10-L01 | What memory safety is, and why it is a security story | 20 | 3 | 0 | 30 | 42 |
 | M10-L02 | Memory safety by construction | 14 | 2 | 1 | 21 | 29 |
 | M10-L03 | Data races are undefined behaviour | 11 | 3 | 1 | 17 | 24 |
-| M10-L04 | Where OCaml itself has UB | 19 | 4 | 1 | 29 | 41 |
+| M10-L04 | Where OCaml itself has UB | 18 | 4 | 1 | 27 | 38 |
 | M10-L05 | Tutorial: walking Heartbleed end to end | 16 | 2 | 1 | 24 | 34 |
-| **M10 total** | | **80** | **14** | **4** | **121** | **170** |
+| **M10 total** | | **79** | **14** | **4** | **119** | **167** |
 | | | | | | **(2.0 h)** | **(2.8 h)** |
 
 The module sits right at the ~2 h video budget set for the
@@ -417,13 +417,14 @@ closer to 20 min in practice. L03 was deepened on 2026-06-07
 (precise race definition; the memory model's local-DRF /
 bounded-in-space-and-time story; a third MCQ) and again on
 2026-06-08 (a dedicated sequential-consistency / DRF-SC slide
-ahead of the comparison table). L04 grew on 2026-06-08 from 15 to
-19 slides: the resource-safety story now runs as live mock-handle
-cells (open / use / close by hand, the `Fun.protect` combinator, an
-example use, and a global-ref leak that motivates a stronger type
-system) rather than two static slides; at 29 min it now sits at the
-NPTEL upper bound and is a candidate for a split if recorded
-delivery overruns. L05 grew on 2026-06-08 from 13 to 16 slides:
+ahead of the comparison table). L04 was reworked on 2026-06-08:
+the resource-safety story runs as live mock-handle cells (open /
+use / close by hand, the `Fun.protect` combinator, an example use,
+and a global-ref leak that motivates a stronger type system) rather
+than two static slides; it grew to 19 slides, then trimmed to 18 by
+dropping the escaping-handle figure (redundant with the live leak
+demo) and folding the forward-pointer slide into "Where it breaks
+down". L05 grew on 2026-06-08 from 13 to 16 slides:
 the slides now carry the OpenSSL handler, the full OCaml
 `handle_heartbeat` (with a live `Bytes.sub` bounds-check raise), and
 the "why this keeps happening" thesis, which had been chapter-only.
@@ -475,11 +476,12 @@ Estimate uses slide_count x 1.5 min.
 L01 is now 22 slides / ~33 video min, over the NPTEL 30-min ceiling
 after KC's 2026-06-09 review additions (the live M10 escaping-handle
 before/after, the C crash example, a `use_locally` slide, a triangle
-perimeter slide, and code on the polyline slides). It is the
-strongest split candidate in M11: a natural cut is **L01a** (OxCaml
-intro + the M10 escaping handle + locality basics: global/local,
-`stack_`, escape) and **L01b** (`exclave_`, mode crossing, the
-polyline, the zero-alloc/unboxed performance arc).
+perimeter slide, and code on the polyline slides). **KC decision
+(2026-06-09): leave as one lecture**, over-ceiling is acceptable
+here. (If a future split is ever wanted, the natural cut is **L01a**
+OxCaml intro + the M10 escaping handle + locality basics
+(global/local, `stack_`, escape) and **L01b** `exclave_`, mode
+crossing, the polyline, the zero-alloc/unboxed performance arc.)
 
 All six M11 lectures land in the 20-30 min NPTEL band. Dropping the
 modes-intro lecture removed ~21 min of preview video; the OxCaml

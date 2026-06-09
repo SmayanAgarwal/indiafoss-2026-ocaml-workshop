@@ -458,7 +458,8 @@ let unsafe_insert k v =
   Hashtbl.add shared_table k v   (* DATA RACE; compiles fine *)
 ```
 
-- Atomics cover counters/flags; richer state needs a mutex.
+- Atomics cover counters/flags.
+  - richer state needs a mutex.
 - "Lock before you touch it" is a *convention*.
 - Vanilla OCaml accepts `unsafe_insert`. The compiler cannot see
   the missing lock.
@@ -540,8 +541,8 @@ let gensym =
 
 - `Capsule.Mutex.t` (brand) + `Capsule.Data.t` (same brand) +
   `access` token.
-- The `ref` lives *inside* the capsule; unreachable without a
-  matching `access`.
+- The `ref` lives *inside* the capsule.
+  - unreachable without a matching `access`.
 - `access` is granted only inside `with_lock`. Forgetting the
   lock is unwritable.
 

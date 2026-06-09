@@ -311,8 +311,8 @@ compiler is refusing to permit.
 - Captures must be portable values, and are treated as shared
   with other domains inside the body.
 - Capture an immutable value: fine (nothing mutable to race on).
-- Capture a `ref` and **mutate it**: rejected; the compiler
-  points at the offending capture.
+- Capture a `ref` and **mutate it**: rejected.
+  - the compiler points at the offending capture.
 
 `gensym` captures and mutates `count : int ref`. Therefore
 nonportable. Therefore cannot be spawned.
@@ -441,7 +441,8 @@ end
 
 - Swap stdlib `Atomic` for `Portable.Atomic`: it mode-crosses
   both portability and contention.
-- Wrap in a module; inference marks it `@@ portable`.
+- Wrap in a module.
+  - inference marks it `@@ portable`.
   - A bare toplevel `let` would read back as nonportable.
 
 Then `Domain.Safe.spawn` accepts the closure.

@@ -69,3 +69,6 @@ LICENSING_AUDIT.md
 # Editorial review notes produced by per-module sweep agents. Working
 # scratch for polish decisions, not part of the course content.
 _reviews/
+
+# Local-only working handoff notes
+HANDOFF-*.md
