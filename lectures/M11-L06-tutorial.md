@@ -150,7 +150,7 @@ ends the chain.
 
 ## The signature
 
-```ocaml
+```text
 module type Handle = sig
   type t
   val open_ : string -> t @ once local
@@ -414,7 +414,7 @@ is the most dangerous of the three.
 Compare with the OxCaml signature (the same `Handle` module type
 from above, repeated here side by side with the C prototypes):
 
-```ocaml
+```text
 module type Handle = sig
   type t
   val open_ : string -> t @ once local
@@ -533,7 +533,7 @@ whether the handle may leak. The compiler enforces each piece.
 
 ## A cross-domain-aware connection pool
 
-```ocaml
+```text
 module type Conn = sig
   type t
   type pool
@@ -792,7 +792,7 @@ locality error.
 
 ## The intended buffer signature
 
-```ocaml
+```text
 module type Buffer = sig
   type t
   val alloc : int -> t @ once local

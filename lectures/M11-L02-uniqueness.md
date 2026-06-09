@@ -208,7 +208,7 @@ for `free`) a fresh unique reference is returned to chain through.
 
 ## The `Unique_ref` signature
 
-```ocaml
+```text
 module type Unique_ref = sig
   type 'a t
   val alloc : 'a -> 'a t @ unique
@@ -622,7 +622,7 @@ appropriate axis.
 
 ## Uniqueness vs linearity, modularly
 
-```ocaml
+```text
 module type Free_unique = sig
   type 'a t
   val free : 'a t @ unique -> unit
@@ -630,7 +630,7 @@ end
 ```
 → Safe from the signature alone. Modular reasoning.
 
-```ocaml
+```text
 module type Free_once = sig
   type 'a t
   val free : 'a t @ once -> unit

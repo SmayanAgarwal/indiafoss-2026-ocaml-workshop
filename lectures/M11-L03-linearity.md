@@ -215,7 +215,7 @@ past aliasing), but the *programming model* is the same.
 
 ## File-handle protocol as a type
 
-```ocaml
+```text
 module type Handle = sig
   type t
   val open_ : string -> t @ once
