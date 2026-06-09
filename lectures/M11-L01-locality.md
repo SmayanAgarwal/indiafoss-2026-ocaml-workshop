@@ -614,175 +614,16 @@ locals.
 
 :::
 
-## Mode crossing for primitive types
+## Building a local list with `exclave_`
 
-Look back at `distance`. It takes two `local` points and returns a
-`float`. No `exclave_`. No `@ local` on the return type. How does
-the `float` get out?
+`exclave_` is not only for single records. Because each `exclave_`
+allocates in the *caller's* region, a recursive function can build a
+whole new data structure there, one cons cell at a time.
 
-The answer is **mode crossing**. Some types carry no evidence for
-a particular mode axis: there is no aliasing risk, no escape risk,
-nothing the mode is tracking. For such types, the compiler lets a
-value silently change mode along that axis. The classical examples
-on the locality axis:
-
-- `int`: lives in a register, no heap baggage. A `local` int can
-  always be used where `global` is expected. `int` *mode-crosses*
-  locality.
-- `bool`: same story.
-- `float` (the *boxed* default): *does not* mode-cross locality
-  in vanilla OxCaml, because a boxed `float` is a heap-allocated
-  block.
-
-Wait. If boxed `float` does not mode-cross, how does `distance`
-return a `float`? Look closely: `distance` does not return a
-*local* float. It returns a fresh float, computed by `Float.sqrt`,
-which allocates a fresh boxed float on the heap. So the value
-flowing out is global from the start, not a local that got
-mode-crossed away.
-
-For `int`-style primitives, the cross is silent:
-
-```ocaml
-let bump (x @ local) : int = x + 1
-(* val bump : int @ local -> int = <fun> *)
-```
-
-Read the signature: `int @ local -> int`. Local input, global
-output. The compiler accepts the coercion because `int` is its
-own evidence: it lives in a register, it cannot dangle.
-
-OxCaml's unboxed `float#` also mode-crosses locality: it lives in
-a register, like `int`. This is one of the reasons high-performance
-OxCaml code uses `float#` for inner loops. We will meet `float#`
-again at the end of this lecture, where it removes the last heap
-allocation from the polyline; its full story is the OxCaml
-documentation's *unboxed types*.
-
-You might expect that annotating `distance`'s return as
-`float @ local` (or wrapping `Float.sqrt ...` in `exclave_`) would
-force the issue, or be rejected. Neither: both *compile* and change
-nothing, because a `global` float coerces down to `local` for free
-(`global ⊑ local`), so the annotation is satisfied trivially. The
-float's real cost is not escape at all; it is that a boxed `float`
-is a heap *allocation*. That is a separate axis from locality, and
-the zero-allocation section at the end of the lecture is where it
-gets addressed, with `float#`.
-
-:::slide
-
-## Mode crossing: free coercion for register-sized types
-
-| Type | Mode-crosses locality? |
-|---|---|
-| `int`, `bool`, `char` | Yes (one register) |
-| `float#` (unboxed) | Yes |
-| `float` (boxed default) | No |
-| Records, tuples, lists | No |
-
-An `int @ local` can be silently used where `int @ global` is
-expected. A `point @ local` cannot.
-
-:::
-
-## Putting it together: the polyline
-
-One example threads through this whole lecture: a polyline of 2-D
-points, where every intermediate allocation is on the stack and
-the compiler verifies it.
-
-Start with the perimeter of a triangle: three stack-allocated
-points, three calls to `distance`, no heap allocation for the
-points.
-
-```ocaml
-let triangle_perimeter (a @ local) (b @ local) (c @ local)
-    : float =
-  distance a b +. distance b c +. distance c a
-
-let test_perimeter () =
-  let a = stack_ { x = 0.0; y = 0.0 } in
-  let b = stack_ { x = 3.0; y = 0.0 } in
-  let c = stack_ { x = 3.0; y = 4.0 } in
-  let p = triangle_perimeter a b c in  (* out of tail position *)
-  p
-(* test_perimeter ();; - : float = 12.0 *)
-```
-
-The same binding dance as `test_distance`: the call is bound to
-`p`, out of tail position, so the frame holding `a`, `b`, `c`
-survives it. The points never touch the heap.
-
-Now make the compiler *prove* that. OxCaml has an annotation for
-exactly this claim, `[@zero_alloc]`, checked at `-O3`: compilation
-fails unless the function provably allocates nothing on the heap.
-
-```ocaml
-let[@zero_alloc] triangle_perimeter (a @ local) (b @ local)
-    (c @ local) : float =
-  distance a b +. distance b c +. distance c a
-```
-
-`[@zero_alloc]` is checked *only* by the native `-O3` compiler, so
-the in-browser toplevel accepts the annotated cell above without
-complaint: press Run and it defines fine. The native compiler is
-where the claim is tested, and there it is rejected:
-
-```text
-Error: Annotation check for zero_alloc failed on function
-       triangle_perimeter.
-Error: allocation of 16 bytes for float
-```
-
-The points are on the stack, but the *result* is a bare `float`,
-and a boxed `float` is a 16-byte heap block; each `+.` allocates
-one. Locality and boxing are *different* axes: `local` controls
-where a value lives, not whether a `float` is boxed (recall that a
-boxed `float` does not mode-cross locality).
-
-:::slide
-
-## A triangle perimeter, on the stack
-
-```ocaml
-let triangle_perimeter (a @ local) (b @ local) (c @ local) : float =
-  distance a b +. distance b c +. distance c a
-
-let test_perimeter () =
-  let a = stack_ { x = 0.0; y = 0.0 } in
-  let b = stack_ { x = 3.0; y = 0.0 } in
-  let c = stack_ { x = 3.0; y = 4.0 } in
-  let p = triangle_perimeter a b c in
-  p                          (* = 12. *)
-```
-
-- Three stack points, three `distance` calls.
-- The points never touch the heap.
-- The binding dance again: bind `p`, out of tail position.
-
-:::
-
-:::slide
-
-## `[@zero_alloc]` catches the boxed float
-
-```ocaml
-let[@zero_alloc] triangle_perimeter (a @ local) (b @ local)
-    (c @ local) : float =
-  distance a b +. distance b c +. distance c a
-```
-
-- `[@zero_alloc]` asks the compiler to *prove* no heap allocation.
-- Checked only in native `-O3`; the toplevel here accepts it.
-- Natively it *fails*: `allocation of 16 bytes for float`.
-  - the returned `float` boxes; boxing is a separate axis.
-
-:::
-
-The locality axis extends through data structures. A
+The locality axis extends through data structures: a
 `point list @ local` is a list whose cons cells *and* whose points
-are all in the current region. You can iterate over such a list
-without escape:
+are all in the current region. You can iterate over one without
+escape:
 
 ```ocaml
 let rec sum_xs (lst : point list @ local) : float =
@@ -791,11 +632,12 @@ let rec sum_xs (lst : point list @ local) : float =
   | p :: rest -> p.x +. sum_xs rest
 ```
 
-And you can *build* a new local list, with `exclave_` placing the
-new cons cells in the caller's region:
+And you can *build* a new local list. Reusing the `translate` helper
+from above, `exclave_` places each new cons cell and each translated
+point in the caller's region:
 
 ```ocaml
-let[@zero_alloc] [@inline never] rec translate_polyline
+let rec translate_polyline
     (poly : point list @ local) dx dy : point list @ local =
   match poly with
   | [] -> exclave_ []
@@ -803,26 +645,18 @@ let[@zero_alloc] [@inline never] rec translate_polyline
       exclave_ (translate p dx dy :: translate_polyline rest dx dy)
 ```
 
-Here `[@zero_alloc]` *passes*. Unlike `triangle_perimeter`, this
-function never returns a bare `float`: the coordinates only ever
-fill the fields of local point records, and every cons cell and
-every translated point lives in the caller's region. Nothing
-reaches the heap, so the proof goes through.
+This is the most striking use of the feature. In vanilla OCaml,
+mapping `translate` across an `n`-point list allocates `n` new cons
+cells and `n` new points on the heap, for `2n` allocations. With
+local lists and `exclave_`, the *same shape* of code allocates the
+whole new list in the **caller's** region: no GC traffic.
 
-This is the most striking example of the lecture. In vanilla
-OCaml, mapping `translate` across an `n`-point list allocates `n`
-new cons cells and `n` new points on the heap, for `2n`
-allocations total. With OxCaml's local lists and `exclave_`, the
-*same shape* of code allocates everything in the **caller's**
-region. The new list lives there, the new points live there, no
-GC traffic.
-
-The recursive structure is important: each `exclave_` ends *this*
-frame's region and runs the body in the parent's region; the
-recursive call to `translate_polyline rest` then ends its own
-frame's region and lands in *its* parent's region, which is the
-same as ours. The whole spine of the list collapses into one
-outermost region: the caller of the top-level `translate_polyline`.
+The recursive structure is what makes that work: each `exclave_`
+ends *this* frame's region and runs its body in the parent's region;
+the recursive call on `rest` then ends its own region and lands in
+*its* parent's, which is the same one. The whole spine collapses
+into a single outermost region, the caller of the top-level
+`translate_polyline`.
 
 :::slide
 
@@ -832,7 +666,7 @@ outermost region: the caller of the top-level `translate_polyline`.
 let translate (p @ local) (dx : float) (dy : float) : point @ local =
   exclave_ { x = p.x +. dx; y = p.y +. dy }
 
-let[@zero_alloc] [@inline never] rec translate_polyline
+let rec translate_polyline
     (poly : point list @ local) dx dy : point list @ local =
   match poly with
   | [] -> exclave_ []
@@ -841,102 +675,9 @@ let[@zero_alloc] [@inline never] rec translate_polyline
 ```
 
 - A `point list @ local`: cons cells *and* points all in the region.
-- Each `exclave_` builds into the *caller's* region, so the whole
-  new list lives there: no heap traffic, end to end.
-- `[@zero_alloc]` *passes*: no bare `float` returned, nothing boxes.
-
-:::
-<!-- KC: Best to present exclave_ first and then zero_alloc and then mode crossing.
-
-     It would be best if we move the example up right after the first exclave_ example, to show the power of the feature, with dropping the [@zero_alloc] annoation. Drop the triangle_parameter content.
-
-     Then do all zero alloc content; start with distance example from earlier. Show that it will fail with [@zero_alloc] say that this is because of float and show unboxed floats. The slide below. Then show that the `translate_polyline` is zero alloc.
-
-     Finally, you can show mode crossing; remove that from earlier. -->
-
-## Unboxed floats remove the last allocation
-
-`triangle_perimeter` failed `[@zero_alloc]` for one reason: it
-returned a *boxed* `float`. The fix is **unboxed floats**, `float#`:
-a float that lives in a register instead of a heap block (it
-mode-crosses locality for the same reason `int` does). Rewrite
-`distance` to return `float#`, and the *same* perimeter, summed
-over `float#`, allocates nothing, so the `[@zero_alloc]` check now
-passes:
-
-```ocaml
-module Float_u = struct
-  let of_float = Stdlib_upstream_compatible.Float_u.of_float
-  let to_float = Stdlib_upstream_compatible.Float_u.to_float
-  let sqrt = Stdlib_upstream_compatible.Float_u.sqrt
-  let ( +. ) = Stdlib_upstream_compatible.Float_u.add
-  let ( -. ) = Stdlib_upstream_compatible.Float_u.sub
-  let ( *. ) = Stdlib_upstream_compatible.Float_u.mul
-end
-
-let[@zero_alloc] [@inline never] distance_u (a @ local) (b @ local) : float# =
-  let open Float_u in
-  let dx = of_float a.x -. of_float b.x in
-  let dy = of_float a.y -. of_float b.y in
-  sqrt (dx *. dx +. dy *. dy)
-
-let[@zero_alloc] [@inline never] triangle_perimeter_u
-    (a @ local) (b @ local) (c @ local) : float# =
-  let open Float_u in
-  distance_u a b +. distance_u b c +. distance_u c a
-```
-
-`Stdlib_upstream_compatible.Float_u` offers named operations (`add`,
-`sub`, `mul`, `sqrt`, ...) over `float#` rather than infix operators,
-so we extend it locally with `+.`, `-.`, `*.` and `open` it inside
-each function. Run the perimeter:
-
-```ocaml
-let _ =
-  let a = { x = 0.0; y = 0.0 }
-  and b = { x = 3.0; y = 0.0 }
-  and c = { x = 3.0; y = 4.0 } in
-  Float_u.to_float (triangle_perimeter_u a b c)   (* = 12. *)
-```
-
-Unboxed numbers are their own topic (the OxCaml documentation's
-*unboxed types*); the point here is that locality is one
-zero-allocation tool among several, and boxed-versus-unboxed is a
-*separate* axis from where a value lives. The in-browser toplevel
-runs the code (the perimeter is `12.`) but does not run the
-`[@zero_alloc]` check; under the native `-O3` compiler
-`triangle_perimeter_u` passes it, with the `float#` results living
-in registers and nothing reaching the heap.
-
-:::slide
-
-## Unboxed floats: `float#`
-
-```ocaml
-module Float_u = struct
-  let of_float = Stdlib_upstream_compatible.Float_u.of_float
-  let to_float = Stdlib_upstream_compatible.Float_u.to_float
-  let sqrt = Stdlib_upstream_compatible.Float_u.sqrt
-  let ( +. ) = Stdlib_upstream_compatible.Float_u.add
-  let ( -. ) = Stdlib_upstream_compatible.Float_u.sub
-  let ( *. ) = Stdlib_upstream_compatible.Float_u.mul
-end
-
-let[@zero_alloc] [@inline never] distance_u (a @ local) (b @ local) : float# =
-  let open Float_u in
-  let dx = of_float a.x -. of_float b.x in
-  let dy = of_float a.y -. of_float b.y in
-  sqrt (dx *. dx +. dy *. dy)
-
-let[@zero_alloc] [@inline never] triangle_perimeter_u
-    (a @ local) (b @ local) (c @ local) : float# =
-  let open Float_u in
-  distance_u a b +. distance_u b c +. distance_u c a
-```
-
-- `float#` lives in a register, mode-crossing locality like `int`.
-- The *same* perimeter, over `float#`, allocates nothing.
-- `[@zero_alloc]` passes (checked in the native compiler).
+- Each `exclave_` builds into the *caller's* region.
+  - so the whole new list lives there: no heap traffic, end to end.
+- Vanilla OCaml would do `2n` heap allocations for the same shape.
 
 :::
 
@@ -964,6 +705,215 @@ through real function boundaries, not nested keywords.
 - Must sit in *tail position*.
 - To reach a grandparent's region, the parent function must itself
   exclave.
+
+:::
+
+## Proving zero allocation
+
+Locality controls *where* a value lives; it says nothing about
+whether the value is *boxed*. Those are separate axes, and the
+cleanest way to see the difference is to ask the compiler to prove a
+function allocates nothing on the heap. OxCaml has an annotation for
+exactly that, `[@zero_alloc]`, checked by the native `-O3` compiler:
+compilation fails unless the function provably never touches the
+heap.
+
+Start with `distance` from earlier and ask for the proof:
+
+```ocaml
+let[@zero_alloc] distance (a @ local) (b @ local) : float =
+  let dx = a.x -. b.x in
+  let dy = a.y -. b.y in
+  Float.sqrt (dx *. dx +. dy *. dy)
+```
+
+`[@zero_alloc]` is checked *only* in native `-O3`, so the in-browser
+toplevel accepts the annotated cell without complaint: press Run and
+it defines fine. The native compiler is where the claim is tested,
+and there it is *rejected*:
+
+```text
+Error: Annotation check for zero_alloc failed on function distance.
+Error: allocation of 16 bytes for float
+```
+
+The points are on the stack, but the *result* is a bare `float`, and
+a boxed `float` is a 16-byte heap block. Locality kept the inputs off
+the heap; it does nothing about the boxed float coming out.
+
+:::slide
+
+## `[@zero_alloc]` catches the boxed float
+
+```ocaml
+let[@zero_alloc] distance (a @ local) (b @ local) : float =
+  let dx = a.x -. b.x in
+  let dy = a.y -. b.y in
+  Float.sqrt (dx *. dx +. dy *. dy)
+```
+
+- `[@zero_alloc]` asks the compiler to *prove* no heap allocation.
+- Checked only in native `-O3`; the toplevel here accepts it.
+- Natively it *fails*: `allocation of 16 bytes for float`.
+  - the returned `float` boxes; boxing is a separate axis from locality.
+
+:::
+
+## Unboxed floats remove the allocation
+
+The fix is **unboxed floats**, `float#`: a float that lives in a
+register instead of a heap block. Rewrite `distance` to return
+`float#` and the boxed result is gone, so the `[@zero_alloc]` check
+passes. `Stdlib_upstream_compatible.Float_u` offers named operations
+(`add`, `sub`, `mul`, `sqrt`, ...) over `float#` rather than infix
+operators, so we wrap it in a small module that adds infix `+.`,
+`-.`, `*.`, then `open` that inside the function:
+
+```ocaml
+module Float_u = struct
+  open Stdlib_upstream_compatible.Float_u
+  let of_float = of_float
+  let to_float = to_float
+  let sqrt = sqrt
+  let ( +. ) = add
+  let ( -. ) = sub
+  let ( *. ) = mul
+end
+
+let[@zero_alloc] [@inline never] distance_u (a @ local) (b @ local) : float# =
+  let open Float_u in
+  let dx = of_float a.x -. of_float b.x in
+  let dy = of_float a.y -. of_float b.y in
+  sqrt (dx *. dx +. dy *. dy)
+```
+
+Run it:
+
+```ocaml
+let _ =
+  let a = { x = 0.0; y = 0.0 }
+  and b = { x = 3.0; y = 4.0 } in
+  Float_u.to_float (distance_u a b)   (* = 5. *)
+```
+
+`float#` lives in a register, with no heap block to dangle. The
+in-browser toplevel runs the code (the distance is `5.`) but does
+not run the `[@zero_alloc]` check; under native `-O3` `distance_u`
+passes it.
+Unboxed numbers are their own topic (the OxCaml documentation's
+*unboxed types*); the point here is that boxed-versus-unboxed is a
+*separate* axis from where a value lives.
+
+:::slide
+
+## Unboxed floats: `float#`
+
+```ocaml
+let[@zero_alloc] [@inline never] distance_u (a @ local) (b @ local) : float# =
+  let open Float_u in
+  let dx = of_float a.x -. of_float b.x in
+  let dy = of_float a.y -. of_float b.y in
+  sqrt (dx *. dx +. dy *. dy)
+```
+
+- `float#` lives in a register, not a heap block.
+- No boxed `float` returned, so `[@zero_alloc]` now passes.
+- Boxing is a *separate* axis from locality.
+
+:::
+
+## `translate_polyline` allocates nothing
+
+The local-list builder from the `exclave_` section passes
+`[@zero_alloc]` as written, with no `float#` needed. It never returns
+a bare `float`: the coordinates only ever fill the fields of local
+point records, and every cons cell and translated point lives in the
+caller's region.
+
+```ocaml
+let[@zero_alloc] [@inline never] rec translate_polyline
+    (poly : point list @ local) dx dy : point list @ local =
+  match poly with
+  | [] -> exclave_ []
+  | p :: rest ->
+      exclave_ (translate p dx dy :: translate_polyline rest dx dy)
+```
+
+Nothing reaches the heap, so the proof goes through. This is the
+payoff of the whole arc: stack inputs, `exclave_` for the outputs,
+and the compiler *verifies* there is no heap traffic.
+
+:::slide
+
+## `translate_polyline` is zero-alloc
+
+```ocaml
+let translate (p @ local) (dx : float) (dy : float) : point @ local =
+  exclave_ { x = p.x +. dx; y = p.y +. dy }
+
+let[@zero_alloc] [@inline never] rec translate_polyline
+    (poly : point list @ local) dx dy : point list @ local =
+  match poly with
+  | [] -> exclave_ []
+  | p :: rest ->
+      exclave_ (translate p dx dy :: translate_polyline rest dx dy)
+```
+
+- Builds the whole new list in the caller's region.
+- No bare `float` returned, nothing boxes.
+- `[@zero_alloc]` *passes*, verified in native `-O3`.
+
+:::
+
+## Mode crossing for primitive types
+
+One loose end. Look back at `distance`: it takes two `local` points
+and returns a `float`, with no `exclave_` and no `@ local` on the
+return type. How does the `float` get out?
+
+The answer is **mode crossing**. Some types carry no evidence for a
+particular mode axis: there is no aliasing risk, no escape risk,
+nothing the mode is tracking. For such types the compiler lets a
+value silently change mode along that axis. On the locality axis:
+
+- `int`: lives in a register, no heap baggage. A `local` int can
+  always be used where `global` is expected. `int` *mode-crosses*
+  locality.
+- `bool`: same story.
+- `float` (the *boxed* default): *does not* mode-cross locality in
+  vanilla OxCaml, because a boxed `float` is a heap-allocated block.
+
+So how does `distance` return a `float`? It does not return a *local*
+float: `Float.sqrt` allocates a fresh boxed float on the heap, so the
+value flowing out is global from the start, not a local that got
+mode-crossed away. (That heap allocation is exactly what `float#`
+removed above.) For `int`-style primitives the cross is silent:
+
+```ocaml
+let bump (x @ local) : int = x + 1
+(* val bump : int @ local -> int = <fun> *)
+```
+
+Local input, global output: the compiler accepts the coercion because
+`int` is its own evidence: it lives in a register, it cannot dangle.
+Annotating `distance`'s return as `float @ local` would *compile* and
+change nothing, because a `global` float coerces down to `local` for
+free (`global ⊑ local`); the float's real cost is the heap
+*allocation*, not escape.
+
+:::slide
+
+## Mode crossing: free coercion for register-sized types
+
+| Type | Mode-crosses locality? |
+|---|---|
+| `int`, `bool`, `char` | Yes (one register) |
+| `float#` (unboxed) | Yes |
+| `float` (boxed default) | No |
+| Records, tuples, lists | No |
+
+An `int @ local` can be silently used where `int @ global` is
+expected. A `point @ local` cannot.
 
 :::
 
@@ -1069,25 +1019,29 @@ not change `cache`'s requirement); option 4 confuses immutability
 with locality.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1 compiles: the record literal `{ x = ...; y = ... }` is a *fresh*
+heap allocation at mode `global`, so the result escapes to the caller
+normally; the `local` parameter `p` is only read, never captured.
 
-Q1 (compiles; run it):
 ```ocaml
 let combine (p @ local) : point =
   { x = p.x *. 2.0; y = p.y *. 2.0 }
 ```
-Q2 (rejected; run it):
+
+Q2 is rejected: `cache` is a long-lived global cell, so it demands a
+`global` `point`. Storing the `local` `p` would let it outlive its
+region, so the compiler refuses the assignment.
+
 ```ocaml
 let cache : point ref = ref { x = 0.0; y = 0.0 }
 let save (p @ local) : unit = cache := p
 ```
 
-- `local` parameters do not poison the function's outputs: fresh
-  allocations escape normally.
-- Long-lived cells (global refs, top-level structures) demand
-  `global` contents. Local values cannot land there.
+Takeaway: `local` parameters do not poison a function's outputs (fresh
+allocations escape normally), but long-lived cells demand `global`
+contents, and local values cannot land there.
 
 :::
 
