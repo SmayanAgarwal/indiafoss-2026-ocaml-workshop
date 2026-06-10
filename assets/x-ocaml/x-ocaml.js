@@ -241826,14 +241826,14 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
   (globalThis));
 
 //# 5 ".x_ocaml.eobjs/jsoo/dune__exe__Cell.cmo.js"
-//# shape: Dune__exe__Cell:[F(6),F(1)*,F(2),F(3),F(2),F(2),F(2),F(1)*,F(1)]
+//# shape: Dune__exe__Cell:[F(6),F(1)*,F(2),F(3),F(2),F(3),F(2),F(1)*,F(1)]
 (function
   (globalThis){
    "use strict";
    var
     runtime = globalThis.jsoo_runtime,
     caml_jsstring_of_string = runtime.caml_jsstring_of_string,
-    caml_maybe_attach_backtrace = runtime.caml_maybe_attach_backtrace;
+    caml_ml_string_length = runtime.caml_ml_string_length;
    function caml_call1(f, a0){
     return (f.l >= 0 ? f.l : f.l = f.length) === 1
             ? f(a0)
@@ -241864,9 +241864,23 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
     Stdlib = global_data.Stdlib,
     Dune_exe_Webcomponent = global_data.Dune__exe__Webcomponent,
     Dune_exe_Mutation_observer = global_data.Dune__exe__Mutation_observer,
-    Stdlib_String = global_data.Stdlib__String,
-    Assert_failure = global_data.Assert_failure;
+    Stdlib_String = global_data.Stdlib__String;
    function id(t){return t[1];}
+   function output_has_error(msg){
+    return Stdlib_List[35].call
+            (null,
+             function(o){
+              var hay = o[1], lh = caml_ml_string_length(hay), i = 0;
+              for(;;){
+               if(lh < (i + 6 | 0)) return 0;
+               if(Stdlib_String[16].call(null, hay, i, 6) === "Error:")
+                return 1;
+               var i$0 = i + 1 | 0;
+               i = i$0;
+              }
+             },
+             msg);
+   }
    function pre_source(t){
     var acc = 0, t$0 = t;
     for(;;){
@@ -241875,30 +241889,31 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
       var s = Stdlib_String[7].call(null, "\n", acc);
       return s === "" ? s : Stdlib[28].call(null, s, " ;;\n");
      }
-     var e = match[1], acc$0 = [0, Dune_exe_Editor[2].call(null, e[5]), acc];
-     acc = acc$0;
-     t$0 = e;
+     var e = match[1];
+     if(e[5])
+      t$0 = e;
+     else{acc = [0, Dune_exe_Editor[2].call(null, e[6]), acc]; t$0 = e;}
     }
    }
    function invalidate_from(editor$1){
     var editor = editor$1;
     for(;;){
      editor[4] = 0;
-     Dune_exe_Editor[4].call(null, editor[5]);
-     var count = Dune_exe_Editor[5].call(null, editor[5]), match = editor[3];
+     Dune_exe_Editor[4].call(null, editor[6]);
+     var count = Dune_exe_Editor[5].call(null, editor[6]), match = editor[3];
      if(! match) return 0;
      var editor$0 = match[1];
-     Dune_exe_Editor[7].call(null, editor$0[5], count);
+     Dune_exe_Editor[7].call(null, editor$0[6], count);
      editor = editor$0;
     }
    }
    function refresh_lines_from(editor$1){
     var editor = editor$1;
     for(;;){
-     var count = Dune_exe_Editor[5].call(null, editor[5]), match = editor[3];
+     var count = Dune_exe_Editor[5].call(null, editor[6]), match = editor[3];
      if(! match) return 0;
      var editor$0 = match[1];
-     Dune_exe_Editor[7].call(null, editor$0[5], count);
+     Dune_exe_Editor[7].call(null, editor$0[6], count);
      editor = editor$0;
     }
    }
@@ -241907,7 +241922,8 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
     for(;;){
      if(1 === editor[4]) return 0;
      editor[4] = 3;
-     Dune_exe_Editor[8].call(null, editor[5]);
+     editor[5] = 0;
+     Dune_exe_Editor[8].call(null, editor[6]);
      var match = editor[2];
      if(match){
       var editor$0 = match[1];
@@ -241915,34 +241931,35 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
      }
      editor[4] = 1;
      var
-      code_txt = Dune_exe_Editor[2].call(null, editor[5]),
-      line_number = 1 + Dune_exe_Editor[6].call(null, editor[5]) | 0;
+      code_txt = Dune_exe_Editor[2].call(null, editor[6]),
+      line_number = 1 + Dune_exe_Editor[6].call(null, editor[6]) | 0;
      return Dune_exe_Client[4].call
-             (null, editor[1], line_number, editor[6], code_txt);
+             (null, editor[1], line_number, editor[7], code_txt);
     }
    }
-   var a = [0, "vendor/x-ocaml/src/cell.ml", 75, 6];
-   function set_prev(prev, t){
-    var match = t[2];
-    if(match){var prev$0 = match[1]; prev$0[3] = 0;}
+   function insert(prev, next, t){
     t[2] = prev;
-    if(! prev){
-     Dune_exe_Editor[7].call(null, t[5], 0);
-     return refresh_lines_from(t);
+    t[3] = next;
+    if(prev){var p = prev[1]; p[3] = [0, t];}
+    if(next){var n = next[1]; n[2] = [0, t];}
+    if(prev){
+     var p$0 = prev[1], a = Dune_exe_Editor[5].call(null, p$0[6]);
+     Dune_exe_Editor[7].call(null, t[6], a);
     }
-    var p = prev[1];
-    if(0 !== p[3])
-     throw caml_maybe_attach_backtrace([0, Assert_failure, a], 1);
-    p[3] = [0, t];
-    return refresh_lines_from(p);
+    else
+     Dune_exe_Editor[7].call(null, t[6], 0);
+    refresh_lines_from(t);
+    if(! next) return 0;
+    var n$0 = next[1];
+    return invalidate_from(n$0);
    }
    function set_source_from_html(editor, this$){
     var
      doc = Dune_exe_Webcomponent[2].call(null, this$),
      doc$0 = Stdlib_String[24].call(null, doc);
-    Dune_exe_Editor[3].call(null, editor[5], doc$0);
+    Dune_exe_Editor[3].call(null, editor[6], doc$0);
     invalidate_from(editor);
-    return Dune_exe_Client[5].call(null, editor[1], editor[6], doc$0);
+    return Dune_exe_Client[5].call(null, editor[1], editor[7], doc$0);
    }
    function init(id, run_on, extra_style, inline_style$0, worker, this$){
     var shadow = Dune_exe_Webcomponent[5].call(null, this$);
@@ -241985,18 +242002,18 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
      cm = Dune_exe_Editor[1].call(null, shadow),
      merlin = Dune_exe_Merlin_ext[2].call(null, id, worker),
      merlin_worker = caml_call1(Dune_exe_Merlin_ext[8][4], merlin),
-     editor = [0, id, 0, 0, 0, cm, worker, merlin_worker, run_on];
+     editor = [0, id, 0, 0, 0, 0, cm, worker, merlin_worker, run_on];
     Dune_exe_Editor[10].call
      (null,
       cm,
       function(param){
        editor[4] = 0;
        var
-        count = Dune_exe_Editor[5].call(null, editor[5]),
+        count = Dune_exe_Editor[5].call(null, editor[6]),
         match = editor[3];
        if(! match) return 0;
        var editor$0 = match[1];
-       Dune_exe_Editor[7].call(null, editor$0[5], count);
+       Dune_exe_Editor[7].call(null, editor$0[6], count);
        return invalidate_from(editor$0);
       });
     set_source_from_html(editor, this$);
@@ -242020,7 +242037,7 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
     return editor;
    }
    function set_source(editor, doc){
-    Dune_exe_Editor[3].call(null, editor[5], doc);
+    Dune_exe_Editor[3].call(null, editor[6], doc);
     return refresh_lines_from(editor);
    }
    function render_message(msg){
@@ -242054,14 +242071,14 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
     return caml_call3(Brr[10][140], 0, b, [0, text$0, 0]);
    }
    function add_message(t, loc, msg){
+    if(output_has_error(msg)) t[5] = 1;
     var a = Stdlib_List[21].call(null, render_message, msg);
-    return Dune_exe_Editor[9].call(null, t[5], loc, a);
+    return Dune_exe_Editor[9].call(null, t[6], loc, a);
    }
    function completed_run(ed, msg){
     if(0 !== msg){
-     var
-      loc =
-        runtime.caml_ml_string_length(Dune_exe_Editor[2].call(null, ed[5]));
+     if(output_has_error(msg)) ed[5] = 1;
+     var loc = caml_ml_string_length(Dune_exe_Editor[2].call(null, ed[6]));
      add_message(ed, loc, msg);
     }
     ed[4] = 2;
@@ -242071,21 +242088,21 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
    }
    function receive_merlin(t, msg){
     var
-     a = Dune_exe_Editor[2].call(null, t[5]),
+     a = Dune_exe_Editor[2].call(null, t[6]),
      b = pre_source(t),
      c = Dune_exe_Merlin_ext[6].call(null, b, a, msg);
-    return caml_call2(Dune_exe_Merlin_ext[8][3], t[7], c);
+    return caml_call2(Dune_exe_Merlin_ext[8][3], t[8], c);
    }
-   function loadable(t){return 848348742 === t[8] ? 1 : 0;}
+   function loadable(t){return 848348742 === t[9] ? 1 : 0;}
    runtime.caml_register_global
-    (27,
+    (26,
      [0,
       init,
       id,
       set_source,
       add_message,
       completed_run,
-      set_prev,
+      insert,
       receive_merlin,
       loadable,
       run],
@@ -242184,16 +242201,15 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
     inline_style = current_attribute("inline-style"),
     cst_run_on = "run-on",
     a = current_attribute(cst_run_on),
-    run_on = Stdlib_Option[7].call(null, caml_string_of_jsstring, a);
+    run_on = Stdlib_Option[7].call(null, caml_string_of_jsstring, a),
+    chain = [0, 0];
    Dune_exe_Webcomponent[1].call
     (null,
      elt_name,
      function(this$){
-      var match = all[1];
-      if(match) var e = match[1], prev = [0, e]; else var prev = 0;
-      var match$0 = Dune_exe_Webcomponent[3].call(null, this$, cst_run_on);
-      if(match$0)
-       var s = match$0[1], s$0 = s;
+      var match = Dune_exe_Webcomponent[3].call(null, this$, cst_run_on);
+      if(match)
+       var s = match[1], s$0 = s;
       else
        var s$0 = Stdlib_Option[3].call(null, run_on, "load");
       var
@@ -242203,12 +242219,38 @@ oB=436,oC=218,oy="Csexp",oz="Matching",oA=183,gL="Ocaml_typing__Saved_parts",gK=
          Dune_exe_Cell[1].call
           (null, id, run_on$0, extra_style, inline_style, worker, this$);
       all[1] = [0, editor, all[1]];
-      Dune_exe_Cell[6].call(null, prev, editor);
+      var
+       this_jv = Dune_exe_Webcomponent[4].call(null, this$),
+       rest$0 = chain[1],
+       before_rev = 0,
+       after = rest$0;
+      for(;;){
+       if(! after) break;
+       var
+        rest = after[2],
+        match$0 = after[1],
+        el = match$0[2],
+        c = match$0[1],
+        mask = el.compareDocumentPosition(this_jv);
+       if(0 === (mask & 4)) break;
+       var before = [0, [0, c, el], before_rev];
+       before_rev = before;
+       after = rest;
+      }
+      if(before_rev)
+       var c$0 = before_rev[1][1], prev = [0, c$0];
+      else
+       var prev = 0;
+      if(after) var c$1 = after[1][1], next = [0, c$1]; else var next = 0;
+      chain[1] =
+       Stdlib_List[14].call
+        (null, before_rev, [0, [0, editor, this_jv], after]);
+      Dune_exe_Cell[6].call(null, prev, next, editor);
       if(Stdlib_List[34].call(null, Dune_exe_Cell[8], all[1]))
        Dune_exe_Cell[9].call(null, editor);
       return 0;
      });
-   runtime.caml_register_global(21, [0], "Dune__exe__X_ocaml");
+   runtime.caml_register_global(22, [0], "Dune__exe__X_ocaml");
    return;
   }
   (globalThis));
