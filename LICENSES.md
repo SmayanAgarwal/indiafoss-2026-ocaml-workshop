@@ -25,6 +25,9 @@ written for this course; ISC.
   <https://github.com/art-w/x-ocaml>.
 - `assets/reveal/`: reveal.js 5.x distribution; MIT. See
   <https://github.com/hakimel/reveal.js>.
+- `assets/katex/`: KaTeX 0.16.10 distribution (CSS, JS, auto-render
+  contrib, fonts); MIT. See `assets/katex/LICENSE` and
+  <https://github.com/KaTeX/KaTeX>.
 
 ## Reference material consulted
 
