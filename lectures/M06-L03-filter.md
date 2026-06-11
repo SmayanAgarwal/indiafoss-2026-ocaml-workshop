@@ -67,8 +67,8 @@ let rec positives = function
   | [] -> []
   | h :: t -> if h > 0 then h :: positives t else positives t
 
-let _ = evens [1; 2; 3; 4]
-let _ = positives [-2; 0; 3; -1; 5]
+let _ = evens [1; 2; 3; 4]           (* = [2; 4] *)
+let _ = positives [-2; 0; 3; -1; 5]  (* = [3; 5] *)
 ```
 
 Both walk a list. Both keep an element if some condition is true and
@@ -111,7 +111,7 @@ let positives = filter (fun x -> x > 0)
 
 That is the entire trick. The standard library calls this function
 `List.filter`, and the implementation is essentially what we wrote.
-The library version is also tail-recursive under the hood, which we
+The library version is also stack-safe on long lists, which we
 will come back to in a moment.
 
 ## Type and what it tells you
@@ -126,7 +126,7 @@ The element type appears in three places, and it is the same `'a`
 in each: the predicate takes an `'a`, the input is a list of `'a`,
 the output is also a list of `'a`. Filtering cannot change the type
 of the elements. If you find yourself wanting to "filter and
-transform," you want [`filter_map`](#filter_map-filter-and-transform-in-one-pass),
+transform," you want [`filter_map`](#filtermap-filter-and-transform-in-one-pass),
 which we will see below.
 
 The output is always a *sublist* of the input, in the same order.
@@ -155,7 +155,7 @@ let _ = List.filter (fun s -> String.length s > 3) ["hi"; "hello"; "ok"; "world"
 
 The argument order matters: predicate first, list second. This is
 consistent with `List.map` (function first, list second) and with
-[`List.fold_left`](M06-L04-fold.html#fold_left-the-other-direction)
+[`List.fold_left`](M06-L04-fold.html#foldleft-the-other-direction)
 (function first, accumulator second, list third). The convention is
 that "the part that varies between calls" (the function argument)
 comes first; the list comes last. This lets you partially apply the
@@ -173,7 +173,7 @@ let big_squares xs =
   |> List.map (fun x -> x * x)
   |> List.filter (fun y -> y > 10)
 
-let _ = big_squares [1; 2; 3; 4; 5]
+let _ = big_squares [1; 2; 3; 4; 5]  (* = [16; 25] *)
 ```
 
 :::slide
@@ -219,7 +219,7 @@ its clarity.
 A property worth stating explicitly:
 
 ```ocaml
-let _ = List.filter (fun x -> x > 3) [5; 1; 7; 2; 9; 3; 4]
+let _ = List.filter (fun x -> x > 3) [5; 1; 7; 2; 9; 3; 4]  (* = [5; 7; 9; 4] *)
 ```
 
 :::slide
@@ -239,7 +239,7 @@ let _ = List.filter (fun x -> x > 3) [5; 1; 7; 2; 9; 3; 4]  (* = [5; 7; 9; 4] *)
 
 :::
 
-Result: `[5; 7; 9; 4]`. Elements that passed (`> 3`) appear in the
+Elements that passed (`> 3`) appear in the
 same order they did in the input. This matters more than you might
 initially think: if the input was a sorted list, the output is still
 sorted; if it was a chronologically-ordered log, the output is still
@@ -272,7 +272,7 @@ takes returns an `'a option`: `None` means "drop this element,"
 let parse_ints xs =
   List.filter_map int_of_string_opt xs
 
-let _ = parse_ints ["42"; "frog"; "13"; " "; "0"]
+let _ = parse_ints ["42"; "frog"; "13"; " "; "0"]  (* = [42; 13; 0] *)
 ```
 
 :::slide
@@ -415,6 +415,7 @@ let _ =
     (fun b ->
        if b.year >= 2020 && b.pages > 100 then Some b.title else None)
     library
+  (* = ["OCaml"; "Rust"] *)
 ```
 
 One pass instead of two; same result.
@@ -435,9 +436,8 @@ let rec filter p = function
 In the "keep" branch, the cons `h :: filter p t` does work after the
 recursive call. So filter sits on the stack the same way map does.
 
-The standard library implements `List.filter` *tail-recursively*
-internally, using exactly the accumulator-and-reverse trick we
-showed for `map`:
+You can make it stack-safe by hand with exactly the
+accumulator-and-reverse trick we showed for `map`:
 
 ```ocaml
 let filter p xs =
@@ -450,15 +450,11 @@ let filter p xs =
   go [] xs
 ```
 
-This is a small difference from `map`: the standard library's `map`
-is naive (and thus not tail-recursive); `filter` is tail-recursive
-out of the box. Why the inconsistency? Mostly historical: by the
-time the library committee revisited the question, too much code
-relied on the small constant-factor advantage of the naive `map` for
-typical inputs. The lesson, if there is one: read the documentation
-of the function you are calling, especially for very long lists.
-For practical purposes, both are fine up to the tens of thousands of
-elements.
+The standard library does not need the trick: just as with
+`List.map`, modern OCaml compiles `List.filter` with tail recursion
+modulo cons, so the natural cons-onto-the-recursive-call definition
+is stack-safe out of the box. For practical purposes, both versions
+are fine on lists of any length you are likely to meet.
 
 ## A quick check
 
@@ -496,25 +492,28 @@ sublist.
 A code challenge:
 
 :::quiz code id=M06-L03-q1
-Write `unique : 'a list -> 'a list` that returns the list with
-duplicates removed, keeping each value's *first occurrence* (so
-the output preserves the order in which elements first appear in
-the input). Use `List.mem : 'a -> 'a list -> bool` (returns `true`
-if the value appears in the list).
+We used `List.partition` above; now build it yourself. Write
+`partition : ('a -> bool) -> 'a list -> 'a list * 'a list` that
+returns the elements satisfying the predicate and the elements
+failing it, as a pair of lists, each preserving the input order.
+Do not use `List.partition` or `List.filter`; recurse directly.
 
 ```ocaml
-let unique xs =
+let rec partition p xs =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (unique [1; 2; 1; 3; 2; 4; 1] = [1; 2; 3; 4]) "ints";
-  check (unique ["a"; "b"; "a"; "c"; "b"] = ["a"; "b"; "c"]) "strings";
-  check (unique ([] : int list) = []) "empty";
-  check (unique [42] = [42]) "singleton";
-  check (unique [1; 1; 1; 1] = [1]) "all same";
+  check (partition (fun n -> n mod 2 = 0) [1; 2; 3; 4; 5]
+         = ([2; 4], [1; 3; 5])) "evens vs odds";
+  check (partition (fun s -> String.length s > 2)
+           ["a"; "abc"; "ab"; "abcd"]
+         = (["abc"; "abcd"], ["a"; "ab"])) "strings";
+  check (partition (fun _ -> true) [1; 2] = ([1; 2], [])) "all pass";
+  check (partition (fun _ -> false) [1; 2] = ([], [1; 2])) "none pass";
+  check (partition (fun n -> n > 0) ([] : int list) = ([], [])) "empty";
   print_endline "all tests passed"
 ```
 :::
@@ -524,21 +523,17 @@ let () =
 Reference solution:
 
 ```
-let unique xs =
-  let rec go seen = function
-    | [] -> List.rev seen
-    | x :: rest ->
-        if List.mem x seen then go seen rest
-        else go (x :: seen) rest
-  in
-  go [] xs
+let rec partition p = function
+  | [] -> ([], [])
+  | h :: t ->
+      let (yes, no) = partition p t in
+      if p h then (h :: yes, no) else (yes, h :: no)
 ```
 
-We carry a `seen` list (in reverse, so prepending is cheap), check
-each element against it, and add only the first occurrence. The
-final `List.rev` restores original order. This is `O(n^2)` because
-`List.mem` is linear; for large lists you would use a `Set`
-([Module 7](M07-L08-functors.html)) for `O(n log n)`.
+Partition the tail first, destructure the resulting pair with a
+`let` pattern, then cons the head onto whichever half it belongs
+to. Both halves come out in input order because each head is
+prepended to an already-ordered tail result.
 
 :::
 

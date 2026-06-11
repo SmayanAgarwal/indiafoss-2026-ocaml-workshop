@@ -71,9 +71,9 @@ let sign = function
   | n when n < 0 -> "negative"
   | _ -> "zero"
 
-let _ = sign 5
-let _ = sign (-3)
-let _ = sign 0
+let _ = sign 5     (* = "positive" *)
+let _ = sign (-3)  (* = "negative" *)
+let _ = sign 0     (* = "zero" *)
 ```
 
 :::slide
@@ -146,10 +146,10 @@ let report = function
   | (_, y) when y = 0    -> "on the x-axis"
   | _                    -> "elsewhere"
 
-let _ = report (1, 1)
-let _ = report (0, 5)
-let _ = report (3, 0)
-let _ = report (2, 4)
+let _ = report (1, 1)  (* = "diagonal" *)
+let _ = report (0, 5)  (* = "on the y-axis" *)
+let _ = report (3, 0)  (* = "on the x-axis" *)
+let _ = report (2, 4)  (* = "elsewhere" *)
 ```
 
 :::slide
@@ -203,9 +203,9 @@ let starts_negative = function
   | x :: _ when x < 0 -> true
   | _ -> false
 
-let _ = starts_negative [-3; 5; 7]
-let _ = starts_negative [1; 2; 3]
-let _ = starts_negative []
+let _ = starts_negative [-3; 5; 7]  (* = true *)
+let _ = starts_negative [1; 2; 3]   (* = false *)
+let _ = starts_negative []          (* = false *)
 ```
 
 :::slide
@@ -272,8 +272,10 @@ arbitrary boolean expressions. A guard might call a function,
 read from a file, depend on state; from the compiler's point of
 view every guard is a black box that "might fail at runtime." So
 even though we know the two guards partition the integers, the
-checker treats both clauses as "might be skipped" and reports
-the value `0` as a hypothetical fall-through.
+checker treats both clauses as "might be skipped" and flags the
+whole match: "All clauses in this pattern-matching are guarded."
+Note that it names no witness value; with guards in play it
+cannot point at a concrete uncovered input.
 
 :::slide
 
@@ -432,7 +434,7 @@ let sign = function
   | n when (Printf.printf "checking n < 0\n"; n < 0) -> "negative"
   | _ -> "zero"
 
-let _ = sign 0
+let _ = sign 0  (* = "zero", after both prints *)
 ```
 
 The toplevel prints `checking n > 0`, then `checking n < 0`,
@@ -461,7 +463,7 @@ let sign = function
   | n when (Printf.printf "n < 0?\n"; n < 0) -> "negative"
   | _ -> "zero"
 
-let _ = sign 0
+let _ = sign 0  (* = "zero", after both prints *)
 ```
 
 Prints `n > 0?`, then `n < 0?`, then returns `"zero"`. Two guard
@@ -549,38 +551,37 @@ facts. The fix is an unguarded `| _ -> ...` to close the match.
 A code task:
 
 :::quiz code id=M05-L04-q1
-Write `triangle_kind : int * int * int -> string` that classifies
-a triangle by its sides:
+A football scoreline is a pair `(ours, theirs)` of goal counts.
+Write `match_result : int * int -> string` that returns:
 
-- `"equilateral"` when all three are equal,
-- `"isosceles"` when *exactly* two are equal,
-- `"scalene"` when all three differ.
+- `"win"` when we scored more than they did,
+- `"loss"` when they scored more than we did,
+- `"draw"` otherwise.
 
-Use a tuple pattern with `when`-guards that compare the bound
+Use a tuple pattern with `when`-guards that compare the two bound
 names. Make sure the match is exhaustive (no warning 8).
 
 ```ocaml
-let triangle_kind sides =
+let match_result score =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (triangle_kind (3, 3, 3) = "equilateral") "equilateral";
-  check (triangle_kind (5, 5, 8) = "isosceles") "isosceles-12";
-  check (triangle_kind (5, 3, 5) = "isosceles") "isosceles-13";
-  check (triangle_kind (4, 5, 5) = "isosceles") "isosceles-23";
-  check (triangle_kind (3, 4, 5) = "scalene") "scalene";
+  check (match_result (3, 1) = "win") "win";
+  check (match_result (0, 2) = "loss") "loss";
+  check (match_result (2, 2) = "draw") "draw";
+  check (match_result (0, 0) = "draw") "goalless draw";
   print_endline "all tests passed"
 ```
 :::
 
 :::solution
 
-The shape: tuple pattern binds three names, guards compare the
-bindings. Equilateral first (most specific), then isosceles, then
-scalene as the wildcard catch-all.
+The shape: tuple pattern binds the two counts, guards compare the
+bindings (`ours > theirs`, then `ours < theirs`), and an unguarded
+wildcard returns `"draw"` so the checker sees the match is closed.
 
 :::
 

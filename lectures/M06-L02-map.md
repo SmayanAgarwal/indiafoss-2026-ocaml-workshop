@@ -6,7 +6,7 @@ duration_target_min: 22
 concepts: [map, transformation, list traversal, polymorphism, function arguments]
 keywords: [OCaml, map, list, higher-order, transformation]
 activity_question: "Write [zip_with : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list] that pairs up two lists element-wise using the given combining function. What happens for lists of different lengths?"
-think_about_this: "Why is [List.map] not tail-recursive in the standard library? What problem would a naive tail-recursive version run into?"
+think_about_this: "The natural definition of [map] conses onto a recursive call, so it is not tail-recursive. What goes wrong if you fix it by appending to an accumulator with [@]?"
 reading:
   - title: "Cornell CS3110, Map"
     url: https://cs3110.github.io/textbook/chapters/hop/map.html
@@ -38,7 +38,7 @@ everyday OCaml. Any time you have a list and you want a new list of
 "the same things, but transformed somehow," `map` is the right tool.
 This lecture goes through `map` carefully because the patterns we
 develop here (extracting a walk, writing recursive higher-order
-functions, thinking about [polymorphic types](M02-L03-types-and-inference.html#polymorphism-for-free))
+functions, thinking about [polymorphic types](M04-L04-recursive-types.html#polymorphism))
 carry over to [`filter`](M06-L03-filter.html), [`fold`](M06-L04-fold.html),
 and everything else in this module.
 
@@ -68,8 +68,8 @@ let rec string_lengths = function
   | [] -> []
   | h :: t -> String.length h :: string_lengths t
 
-let _ = double_each [1; 2; 3]
-let _ = string_lengths ["hi"; "world"]
+let _ = double_each [1; 2; 3]            (* = [2; 4; 6] *)
+let _ = string_lengths ["hi"; "world"]   (* = [2; 5] *)
 ```
 
 `double_each` doubles every element of an `int list`. `string_lengths`
@@ -88,8 +88,8 @@ let rec map f = function
   | [] -> []
   | h :: t -> f h :: map f t
 
-let _ = map (fun x -> x * 2) [1; 2; 3]
-let _ = map String.length ["hi"; "world"]
+let _ = map (fun x -> x * 2) [1; 2; 3]     (* = [2; 4; 6] *)
+let _ = map String.length ["hi"; "world"]  (* = [2; 5] *)
 ```
 
 :::slide
@@ -170,10 +170,8 @@ First, **input and output element types can differ.** Look at the
 `int list` to `string list` with `string_of_int`:
 
 ```ocaml
-let _ = List.map string_of_int [1; 2; 3]
+let _ = List.map string_of_int [1; 2; 3]  (* = ["1"; "2"; "3"] *)
 ```
-
-Result: `["1"; "2"; "3"]`.
 
 Second, **the function is polymorphic.** A single `List.map` works
 for `int list -> int list`, `int list -> string list`, `string list
@@ -189,7 +187,7 @@ implementation makes one output element per input element. No
 duplications, no omissions. If you want a different length, you
 want a different function: [`filter`](M06-L03-filter.html) (drops
 elements), [`filter_map`](M06-L03-filter.html#filtermap-filter-and-transform-in-one-pass)
-(drops and transforms), or [`fold_left`](M06-L04-fold.html#fold_left-the-other-direction)
+(drops and transforms), or [`fold_left`](M06-L04-fold.html#foldleft-the-other-direction)
 (returns anything you want).
 
 Reading types this carefully pays off. Once you internalise what a
@@ -324,9 +322,11 @@ let rec map f = function
 ```
 
 - `f h :: map f t` does work *after* the recursive call (the cons).
-- Very long lists overflow the stack.
-- `List.map` handles "reasonable" lengths gracefully.
-- For very long inputs, prefer `List.rev (List.rev_map f xs)`.
+- Hand-written like this, very long lists overflow the stack.
+- Stdlib `List.map` is stack-safe on modern OCaml (5.1+):
+  - the compiler turns cons-onto-recursive-call into a loop
+    (tail recursion modulo cons, TMC).
+- On older OCaml, the workaround was `List.rev (List.rev_map f xs)`.
 
 :::
 
@@ -428,19 +428,20 @@ let _ = rev [1; 2; 3]  (* = [3; 2; 1] *)
 
 :::
 
-The standard library makes a deliberate choice here: `List.map` is
-the naive *non-tail-recursive* version, because for typical inputs
-(lists of a few thousand elements) it is slightly faster (no second
-pass) and just as safe. If you really do have very long lists, the
-standard library provides `List.rev_map` (tail-recursive, but
-returns the list reversed) and you can compose `List.rev (List.rev_map
-f xs)` for a tail-recursive `map` at the cost of two passes.
+What does the standard library do? On modern OCaml (5.1 and
+later), `List.map` keeps the natural cons-onto-the-recursive-call
+definition, but the compiler recognises that shape and turns it
+into a loop; the technique is called *tail recursion modulo cons*
+(TMC), and it makes `List.map` stack-safe even on very long lists.
+On older OCaml, `List.map` really could overflow, and the standard
+workaround was `List.rev (List.rev_map f xs)`: `List.rev_map` is
+tail-recursive but builds the result reversed, so you reverse it
+back, paying a second pass.
 
 The bigger point is that *higher-order functions hide these
 tradeoffs from the caller*. You write `List.map f xs` and stop
-thinking about it; the library author chose the best implementation
-for the typical case; if your case is atypical, the library exposes
-escape hatches.
+thinking about it; the library (and compiler) authors did the
+worrying about stack safety once, so every caller benefits.
 
 ## `map` on options
 
@@ -453,8 +454,8 @@ is the simplest example after lists. An `'a option` is either `None`
 provides `Option.map`:
 
 ```ocaml
-let _ = Option.map (fun x -> x + 1) (Some 5)
-let _ = Option.map (fun x -> x + 1) None
+let _ = Option.map (fun x -> x + 1) (Some 5)  (* = Some 6 *)
+let _ = Option.map (fun x -> x + 1) None      (* = None *)
 ```
 
 :::slide
@@ -495,6 +496,7 @@ let rec map_tree f = function
 
 let _ = map_tree (fun x -> x * 10)
                  (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
+(* = Node (Node (Leaf, 10, Leaf), 20, Node (Leaf, 30, Leaf)) *)
 ```
 
 :::slide
@@ -510,7 +512,7 @@ let rec map_tree f = function
 
 let _ = map_tree (fun x -> x * 10)
                  (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)))
-(* result: Node (Node (Leaf, 10, Leaf), 20, Node (Leaf, 30, Leaf)) *)
+(* = Node (Node (Leaf, 10, Leaf), 20, Node (Leaf, 30, Leaf)) *)
 ```
 
 - Same tree shape; every value multiplied by 10.
@@ -580,23 +582,25 @@ returns `[1; 2]`.
 Now a code challenge:
 
 :::quiz code id=M06-L02-q1
-Write `zip_with : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list`
-that pairs two lists element-wise using the given combining
-function. Stop when the shorter list runs out.
+`map` walks a list of values and applies one function to each.
+Flip the roles: write
+`apply_all : ('a -> 'b) list -> 'a -> 'b list` that walks a list
+of *functions* and applies each one to a single value `x`,
+collecting the results in order. So
+`apply_all [f; g; h] x = [f x; g x; h x]`.
 
 ```ocaml
-let rec zip_with f xs ys =
+let rec apply_all fs x =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (zip_with (+) [1; 2; 3] [10; 20; 30] = [11; 22; 33])      "equal length";
-  check (zip_with (+) [1; 2; 3] [10; 20]    = [11; 22])           "right shorter";
-  check (zip_with (+) [1; 2]    [10; 20; 30] = [11; 22])          "left shorter";
-  check (zip_with (^) ["he"; "wo"] ["llo"; "rld"] = ["hello"; "world"]) "strings";
-  check (zip_with (+) [] [] = [])                                 "both empty";
+  check (apply_all [(fun x -> x + 1); (fun x -> x * 2); (fun x -> x * x)] 10
+         = [11; 20; 100]) "three functions";
+  check (apply_all [String.length] "hello" = [5]) "one function";
+  check (apply_all [] 3 = []) "no functions";
   print_endline "all tests passed"
 ```
 :::
@@ -606,17 +610,16 @@ let () =
 Reference solution:
 
 ```
-let rec zip_with f xs ys =
-  match xs, ys with
-  | [], _ | _, [] -> []
-  | x :: xr, y :: yr -> f x y :: zip_with f xr yr
+let rec apply_all fs x =
+  match fs with
+  | [] -> []
+  | f :: rest -> f x :: apply_all rest x
 ```
 
-The interesting part is the `[], _ | _, []` [or-pattern](M05-L03-nested-and-or-patterns.html#or-patterns-shared-right-hand-sides)
-from Module 5: if either list is empty, return the empty list. The
-other case takes one head from each and combines them. If you prefer,
-you can write the two cases separately: `| [], _ -> [] | _, [] -> []
-| ...`.
+The skeleton is exactly the `map` walk; what changed is which side
+is the data. The list now holds the functions, and the single value
+`x` plays the role the function `f` played in `map`. Functions are
+values, so a list of functions is as ordinary as a list of ints.
 
 :::
 

@@ -394,7 +394,7 @@ For `fold_left (+) 0 [1; 2; 3]`:
 
 :::slide
 
-## `fold_left` walks the list in reverse
+## `fold_left` nests the other way
 
 :::cols
 :::col 45%
@@ -413,14 +413,14 @@ After `fold_left (+) 0 xs`:
 :::
 :::
 
-- Not a mirror of `fold_right`'s tree: `fold_left` genuinely
-  walks the list in **reverse order**.
-- Elements appear top-to-bottom as `5, 4, 3, 2, 1, 0`: the *last*
-  list element is at the outermost `f`, the accumulator at the
-  deepest right.
-- For `(+)` (associative + commutative) this produces the same
-  answer as `fold_right`; the picture works as a stylised
-  visualisation of either fold's effect on a sum.
+- Traversal is still **left to right**: `1` is consumed first.
+- What differs from `fold_right` is how the *expression tree* nests:
+  - the *last* element (`5`) sits at the outermost `f`;
+  - the accumulator (`0`) sits at the deepest position.
+- Elements appear top-to-bottom as `5, 4, 3, 2, 1, 0`:
+  - that is nesting order, not visiting order.
+- For `(+)` (associative + commutative) both folds agree.
+  - The picture works as a stylised view of either fold's sum.
 - Tail-recursive (next slide): each `+` finishes before the next
   call starts.
 
@@ -521,9 +521,10 @@ So when do you reach for which?
   `fold_right`. If the list is short, do not worry. If the list is
   very long, use `List.rev` and switch to `fold_left`.
 - A useful identity: `fold_right f xs init = fold_left (fun acc x ->
-  f x acc) init (List.rev xs)`. This is the trick the standard
-  library actually uses internally for safe right folds on long
-  lists.
+  f x acc) init (List.rev xs)`. The standard library's `fold_right`
+  stays plainly recursive, but third-party libraries (Containers,
+  Base) use this rev-then-`fold_left` trick for stack-safe right
+  folds, and you can apply it yourself when the list is long.
 
 In day-to-day OCaml, `fold_left` is by far the more common choice.
 

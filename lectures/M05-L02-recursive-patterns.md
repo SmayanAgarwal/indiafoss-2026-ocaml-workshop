@@ -43,8 +43,8 @@ constructor. By the end of the lecture we will have written
 
 ## From flat values to recursive structure
 
-- [M05-L01](M05-L01-basic-patterns.html) patterns dispatched on
-  *flat* values: an `int`, a `bool`.
+- [Last lecture](M05-L01-basic-patterns.html), patterns dispatched
+  on *flat* values: an `int`, a `bool`.
 - Real data is *built up*
   - lists from `[]` and `::`
   - trees from `Leaf` and `Node`.
@@ -58,8 +58,8 @@ constructor. By the end of the lecture we will have written
 
 ## A list is built from `[]` and `::`
 
-Recall the built-in list type from
-[M04-L04](M04-L04-recursive-types.html#lists-are-a-recursive-variant):
+Recall the built-in list type from the
+[recursive-types lecture](M04-L04-recursive-types.html#ocamls-built-in-lists-are-just-variants):
 
 ```ocaml
 (* type 'a list =
@@ -177,8 +177,8 @@ let _ = sum [10; 20; 30]  (* = 60 *)
 
 The built-in `List.hd` and `List.tl` raise an exception when the
 list is empty. Exceptions are a Module 7 idea; for now we can
-return `option` instead, matching the slogan from
-[M04-L04](M04-L04-recursive-types.html#when-to-use-option-the-fix):
+return `option` instead, matching the slogan from the
+[recursive-types lecture](M04-L04-recursive-types.html#when-to-use-option-the-fix):
 *make illegal states unrepresentable*. The function returns
 `None` on the empty list and `Some _` otherwise.
 
@@ -306,8 +306,9 @@ match l with
 
 ## A binary tree is `Leaf | Node (l, v, r)`
 
-Recall the binary tree type from
-[M04-L04](M04-L04-recursive-types.html#a-binary-tree):
+Recall the
+[binary tree type](M04-L04-recursive-types.html#a-binary-tree)
+from Module 4:
 
 ```ocaml
 type 'a tree =
@@ -388,6 +389,10 @@ let rec size t =
   match t with
   | Leaf           -> 0
   | Node (l, _, r) -> 1 + size l + size r
+
+let example =
+  Node (Node (Leaf, 1, Leaf), 2,
+        Node (Leaf, 3, Node (Leaf, 4, Leaf)))
 
 let _ = size example  (* = 4 *)
 ```
@@ -486,6 +491,7 @@ let rec mirror t =
   | Node (l, v, r) -> Node (mirror r, v, mirror l)
 
 let _ = mirror (Node (Node (Leaf, 1, Leaf), 2, Leaf))
+(* = Node (Leaf, 2, Node (Leaf, 1, Leaf)) *)
 ```
 
 - LHS `Node (l, v, r)`: pattern that *takes apart* a node.
@@ -614,7 +620,9 @@ let rec inorder t = failwith "TODO"
 
 :::
 
-## Activity discussion
+:::solution
+
+## Activity solution
 
 The structural-recursion recipe applies straight off: one clause
 per constructor, recursive calls on the strictly smaller
@@ -648,13 +656,17 @@ earlier in the lecture.
 
 :::slide
 
-## Activity discussion: `inorder`
+## Activity solution: `inorder`
 
 ```ocaml
 let rec inorder t =
   match t with
   | Leaf           -> []
   | Node (l, v, r) -> inorder l @ [v] @ inorder r
+
+let example =
+  Node (Node (Leaf, 1, Leaf), 2,
+        Node (Leaf, 3, Node (Leaf, 4, Leaf)))
 
 let _ = inorder example  (* = [1; 2; 3; 4] *)
 ```
@@ -665,6 +677,8 @@ let _ = inorder example  (* = [1; 2; 3; 4] *)
 - `@` is the built-in list-append (same shape as the `append`
   we wrote earlier in this lecture).
 - `inorder example` = `[1; 2; 3; 4]`.
+
+:::
 
 :::
 

@@ -64,7 +64,8 @@ projects.
 
 ## A non-exhaustive match
 
-Take the traffic-light example from [Module 4](M04-L03-variants.html#exhaustiveness-checking):
+Take the traffic-light example from
+[the variants lecture](M04-L03-variants.html#declaring-a-variant-the-enum-case):
 
 ```ocaml
 type traffic_light = Red | Yellow | Green
@@ -306,7 +307,7 @@ let action = function
   | Yellow -> "slow down"
   | _ -> "go"
 
-let _ = action FlashingRed  (* = "go" -- silently! *)
+let _ = action FlashingRed  (* = "go", silently! *)
 ```
 
 `action FlashingRed` returns `"go"`. No warning. No error. The
@@ -323,7 +324,7 @@ let action = function
   | Yellow -> "slow down"
   | _ -> "go"
 
-let _ = action FlashingRed  (* = "go" -- silently! *)
+let _ = action FlashingRed  (* = "go", silently! *)
 ```
 
 - `_` makes the match exhaustive *as written*; compiler stops checking.
@@ -357,7 +358,7 @@ let action = function
   | FlashingRed -> "stop, then proceed with caution"
   | Red -> "redundant"
 
-let _ = action Red
+let _ = action Red  (* = "stop" *)
 ```
 ```mdx-error
 Line 6, characters 7-10:
@@ -419,7 +420,7 @@ let category = function
   | (true, false) -> "only first"
   | (false, true) -> "only second"
 
-let _ = category (false, false)
+let _ = category (false, false)  (* raises Match_failure *)
 ```
 ```mdx-error
 Lines 1-4, characters 16-37:
@@ -533,24 +534,28 @@ In real projects, treat partial-match warnings as errors:
 ```
 (executable
  (name foo)
- (flags (:standard -w +a-3-49)))
+ (flags (:standard -w +a-3-49 -warn-error +a)))
 ```
 
 - Or workspace-wide:
   ```
-  (env (_ (flags (:standard -w +a-3-49))))
+  (env (_ (flags (:standard -w +a-3-49 -warn-error +a))))
   ```
-- `-w +a` makes all warnings into errors; `-3-49` disables a few benign ones.
+- `-w +a` *enables* all warnings; `-3-49` switches off a few benign ones.
+- `-warn-error +a` is what *promotes* the enabled warnings to errors.
 - [Module 7](M07-L06-module-basics.html) covers modules; dune is the build tool you use to wire them together.
 
 :::
 
-The flag `(-w +a)` promotes every warning to an error. The
-suffix `-3-49` disables warnings 3 and 49 (about deprecated
-features and missing `cmi` files in some cases), which most
-projects find acceptable to ignore. Warning 8 (exhaustiveness)
-and warning 11 (redundancy) are *not* among the disabled ones,
-so they become errors.
+The flag `-w +a` *enables* every warning, and the suffix `-3-49`
+disables warnings 3 and 49 (about deprecated features and missing
+`cmi` files in some cases), which most projects find acceptable to
+ignore. Enabling a warning does not stop the build by itself; the
+separate flag `-warn-error +a` is what promotes the enabled
+warnings to errors. (A shorthand exists: `-w @a-3-49` both enables
+and errors in one flag.) Warning 8 (exhaustiveness) and warning 11
+(redundancy) are *not* among the disabled ones, so they become
+errors.
 
 If you write OCaml seriously, set this in your dune files from
 day one. The few minutes you spend appeasing the compiler in
@@ -559,7 +564,7 @@ each function will save you hours of debugging in production.
 ## Prefer to avoid catch-all on variants
 
 We saw above that a `_` on a variant
-[silently swallows new constructors](#the-wildcard-tax-_-forfeits-the-punch-list).
+[silently swallows new constructors](#the-wildcard-tax-forfeits-the-punch-list).
 The general recommendation follows: **on variant types, prefer
 to avoid the catch-all pattern.** Enumerate every constructor,
 or group them with an or-pattern; either way, the compiler stays

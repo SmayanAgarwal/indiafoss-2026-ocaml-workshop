@@ -5,7 +5,7 @@ week: 6
 duration_target_min: 20
 concepts: [function composition, pipeline operator, point-free style, readability]
 keywords: [OCaml, function composition, pipeline, |>, @@, point-free]
-activity_question: "Write the function 'square then increment by 1' two ways: as an explicit lambda [fun x -> square x + 1], and as a composition using a helper [compose]."
+activity_question: "Write [is_short : string -> bool], true exactly when a word has at most 3 letters, two ways: as an explicit lambda, and as a composition of [String.length] with a comparison using a helper [compose]. Then use it with [List.filter] to keep the short words of a list."
 think_about_this: "The pipeline operator [|>] is *just* application, written right-to-left in operand order. Why is its existence in the language worth more than zero, given that you could always write [f (g (h x))]?"
 reading:
   - title: "Cornell CS3110, Pipelining"
@@ -81,7 +81,7 @@ let _ =
   [1; 2; 3; 4; 5]
   |> List.map (fun x -> x * x)
   |> List.filter (fun y -> y > 5)
-  |> List.fold_left (+) 0
+  |> List.fold_left (+) 0  (* = 50 *)
 ```
 
 :::slide
@@ -139,7 +139,7 @@ nested calls:
 let _ = List.fold_left (+) 0
           (List.filter (fun y -> y > 5)
              (List.map (fun x -> x * x)
-                [1; 2; 3; 4; 5]))
+                [1; 2; 3; 4; 5]))  (* = 50 *)
 ```
 
 :::slide
@@ -181,7 +181,8 @@ input, and you write the steps in the order they happen.
 [The pipeline notation in Unix](https://www.bell-labs.com/usr/dmr/www/hist.html)
 goes back to Doug McIlroy in the 1960s; functional-programming
 languages adopted it in the form `|>` in the 2000s
-(F# popularised the spelling; OCaml standardised it as `|>` in 2014).
+(F# popularised the spelling; OCaml added `|>` to its standard
+library in version 4.01, released in 2013).
 The Unix analogy is not just a metaphor: the semantics are exactly
 "the value flows from one step to the next."
 
@@ -193,8 +194,8 @@ lets you avoid parens *on the right* of a function call when the
 argument is a long expression.
 
 ```ocaml
-let _ = print_endline @@ string_of_int 42
-let _ = print_endline (string_of_int 42)
+let _ = print_endline @@ string_of_int 42  (* prints 42 *)
+let _ = print_endline (string_of_int 42)   (* prints 42 *)
 ```
 
 :::slide
@@ -205,8 +206,8 @@ let _ = print_endline (string_of_int 42)
 - Used to avoid parens on the right:
 
 ```ocaml
-let _ = print_endline @@ string_of_int 42
-let _ = print_endline (string_of_int 42)
+let _ = print_endline @@ string_of_int 42  (* prints 42 *)
+let _ = print_endline (string_of_int 42)   (* prints 42 *)
 ```
 
 Same thing.
@@ -243,7 +244,7 @@ ourselves:
 let compose f g = fun x -> f (g x)
 
 let square_then_inc = compose (fun x -> x + 1) (fun x -> x * x)
-let _ = square_then_inc 4
+let _ = square_then_inc 4  (* = 17 *)
 ```
 
 :::slide
@@ -299,7 +300,7 @@ Once you have composition, you can sometimes write a function
 let compose f g = fun x -> f (g x)
 
 let process = compose (fun x -> x * 2) (fun x -> x + 1)
-let _ = process 5
+let _ = process 5  (* = 12 *)
 ```
 
 :::slide
@@ -358,7 +359,7 @@ let normalize_words text =
   |> List.filter (fun s -> s <> "")
   |> List.map String.trim
 
-let _ = normalize_words "  Hello World  "
+let _ = normalize_words "  Hello World  "  (* = ["hello"; "world"] *)
 ```
 
 :::slide
@@ -488,8 +489,8 @@ The two adults (Ada and Cleo) have ages `36` and `24`, average
 `30`. The pipeline pulls out the ages of
 adults in a clean two-step chain; the final aggregation needs the
 list length (`List.length`) so it lives outside the pipeline. We
-return an `int option` because the average is undefined for an empty
-list. This is a real shape of code, and it is the kind of thing
+return a `float option` because the average is undefined for an
+empty list. This is a real shape of code, and it is the kind of thing
 Module 6 is preparing you to write fluently.
 
 ## A quick check
@@ -569,10 +570,14 @@ remaining ones, sum. A very common shape.
 
 ## Activity
 
-Write "square then increment by 1" two ways:
+Write `is_short : string -> bool`, true exactly when a word has at
+most 3 letters, two ways:
 
-1. As an explicit lambda `fun x -> ...`.
-2. Using a `compose` helper you define yourself.
+1. As an explicit lambda `fun w -> ...`.
+2. By composing `String.length` with a comparison, using a
+   `compose` helper you define yourself.
+
+Then use it with `List.filter` to keep the short words of a list.
 
 :::
 
@@ -583,22 +588,22 @@ Write "square then increment by 1" two ways:
 ## Activity solution
 
 ```ocaml
-let f1 = fun x -> (x * x) + 1
+let f1 = fun w -> String.length w <= 3
 
 let compose g f = fun x -> g (f x)
-let square x = x * x
-let inc x = x + 1
-let f2 = compose inc square
+let f2 = compose (fun n -> n <= 3) String.length
 
-let _ = f1 5  (* = 26 *)
-let _ = f2 5  (* = 26 *)
+let _ = f1 "fox"    (* = true *)
+let _ = f2 "quick"  (* = false *)
+let _ = List.filter f2 ["the"; "quick"; "fox"; "is"]  (* = ["the"; "fox"; "is"] *)
 ```
 
-Same answer.
+Same predicate, two spellings.
 
-- `f1` is direct: take `x`, square it, add 1.
-- `f2` composes `inc` with `square`: first `square`, then `inc`.
-- Both forms have their place; pick whichever reads better in context.
+- `f1` is direct: measure the word, compare the length.
+- `f2` composes the comparison with `String.length`:
+  - length first, then `<= 3`.
+- A composed *predicate* slots straight into `List.filter`.
 
 :::
 

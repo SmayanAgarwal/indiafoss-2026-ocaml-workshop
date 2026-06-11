@@ -5,7 +5,7 @@ week: 5
 duration_target_min: 22
 concepts: [pattern matching, match expression, literal patterns, variable patterns, wildcard]
 keywords: [OCaml, pattern matching, match, wildcard, _, literal pattern]
-activity_question: "What does [match 0 with | x -> x | 0 -> 99] return? Which clause runs, and what happens when you swap the two clauses?"
+activity_question: "Given [let f = function | x -> x | 0 -> 99], what do [f 0] and [f 5] return? Which clause runs, and what happens when you swap the two clauses?"
 think_about_this: "A variable pattern always matches anything and binds the matched value to that name. What happens when a variable pattern is *followed by* a more specific pattern? Which wins?"
 reading:
   - title: "Cornell CS3110, Pattern matching"
@@ -43,8 +43,8 @@ nearly every interesting function.
 ## Pattern matching moves to the centre
 
 - You have seen, in small doses,
-  - `match ... with` since [M3](M03-L02-recursion.html)
-  - `let (x, y) = ...` since [M4](M04-L01-tuples.html)
+  - `match ... with` since [Module 3](M03-L02-recursion.html)
+  - `let (x, y) = ...` since [Module 4](M04-L01-tuples.html)
 - From this module on, pattern matching is **everywhere**:
   - take apart a [tuple](M04-L01-tuples.html),
   - dispatch on a [constructor](M04-L03-variants.html),
@@ -70,7 +70,7 @@ the basic shape and the three simplest pattern forms:
 
 The next five lectures build on this base.
 [Lecture 2](M05-L02-recursive-patterns.html) pairs these patterns
-with the recursive types from M04 (lists, trees) and gives us the
+with the recursive types from Module 4 (lists, trees) and gives us the
 canonical shape of every list and tree function.
 [Lecture 3](M05-L03-nested-and-or-patterns.html) covers patterns
 inside patterns, record-pattern shorthands, the diagonal idiom,
@@ -108,8 +108,8 @@ let classify n =
   | 2 -> "two"
   | _ -> "many"
 
-let _ = classify 1
-let _ = classify 5
+let _ = classify 1  (* = "one" *)
+let _ = classify 5  (* = "many" *)
 ```
 
 :::slide
@@ -124,8 +124,8 @@ let classify n =
   | 2 -> "two"
   | _ -> "many"
 
-let _ = classify 1
-let _ = classify 5
+let _ = classify 1  (* = "one" *)
+let _ = classify 5  (* = "many" *)
 ```
 
 - `match` takes a value (here `n`) and a list of clauses.
@@ -187,7 +187,7 @@ forms:
 let _ =
   match 42 with
   | 0 -> "zero"
-  | n -> "non-zero: " ^ string_of_int n
+  | n -> "non-zero: " ^ string_of_int n  (* = "non-zero: 42" *)
 ```
 
 - Pattern `n` matches anything.
@@ -199,7 +199,7 @@ A **literal pattern** is a value spelled exactly as it appears.
 `0` matches the integer `0`. `'a'` matches the character `'a'`.
 `"hello"` matches the string `"hello"`. `true` matches the boolean
 `true`. The check is the same structural equality (`=`) we saw in
-[M02-L04](M02-L04-operators.html#comparison-and-equality). Two
+[the operators lecture](M02-L04-operators.html#comparison-and-equality). Two
 strings with the same bytes match; two records with the same fields
 match. The literal pattern is the workhorse for "is this the special
 case I want to handle?"
@@ -224,10 +224,12 @@ reach for `_`:
   `| (x, _) -> x` extracts the first component of a pair without
   giving the second a name.
 
-OCaml warns about unused variable bindings, so if you write
-`(x, y) -> x` and never use `y`, the compiler will tell you. The
-wildcard is the way to say "I am ignoring this on purpose; please
-do not warn me."
+Development tooling warns about unused pattern variables: dune's
+default build profile enables warning 27, so if you write
+`(x, y) -> x` and never use `y`, the build will tell you. (The
+bare toplevel, including the cells on this page, leaves that
+warning off, so there it stays silent.) The wildcard is the way
+to say "I am ignoring this on purpose."
 
 ## Why pattern order matters
 
@@ -240,7 +242,7 @@ let classify n =
   | x -> "variable: " ^ string_of_int x
   | 0 -> "this never fires"
 
-let _ = classify 0
+let _ = classify 0  (* = "variable: 0" *)
 ```
 
 What does `classify 0` return? Not `"this never fires"`. The
@@ -258,7 +260,7 @@ let classify n =
   | x -> "variable: " ^ string_of_int x
   | 0 -> "this never fires"
 
-let _ = classify 0
+let _ = classify 0  (* = "variable: 0" *)
 ```
 
 - Variable pattern `x` matches *anything*, including `0`.
@@ -299,8 +301,8 @@ let classify n =
   | 0 -> "zero"
   | x -> "non-zero: " ^ string_of_int x
 
-let _ = classify 0
-let _ = classify 7
+let _ = classify 0  (* = "zero" *)
+let _ = classify 7  (* = "non-zero: 7" *)
 ```
 
 Now `classify 0` is `"zero"` and `classify 7` is `"non-zero: 7"`,
@@ -326,21 +328,23 @@ the ignored piece is, but you still do not intend to use it.
 ```ocaml
 let first_only (x, _) = x
 
-let _ = first_only (10, 20)
+let _ = first_only (10, 20)  (* = 10 *)
 ```
 
 `first_only (10, 20)` returns `10`. The wildcard in the second
 position says "there is something here, I do not care what."
-Writing `(x, y) -> x` would also compile, but the compiler would
-warn about the unused `y`. Try it:
+Writing `(x, y) -> x` also compiles, and runs silently in the
+toplevel (warning 27 is off by default there, so the cell below
+prints nothing unusual):
 
 ```ocaml
 let first_only (x, y) = x
 
-let _ = first_only (10, 20)
+let _ = first_only (10, 20)  (* = 10 *)
 ```
 
-OCaml emits:
+Build the same code under dune's default profile, which enables
+the warning, and the compiler tells you:
 
 ```
 Warning 27 [unused-var-strict]: unused variable y.
@@ -356,27 +360,29 @@ please do not warn me."
 - Use `_` to **discard** a component you don't need.
 - Use a name like `_x` to **document** an ignored piece without
   using it; `_` itself cannot be referenced.
-- Writing `(x, y)` with `y` unused triggers a warning.
+- Writing `(x, y)` with `y` unused: suspicious, and dev tooling
+  flags it.
 
 :::
 
 :::slide
 
-## Forgetting `_` triggers a warning
+## Unused pattern variables are suspicious
 
 ```ocaml
 let first_only (x, y) = x
 
-let _ = first_only (10, 20)
+let _ = first_only (10, 20)  (* = 10 *)
 ```
 
-Click **Run**: OCaml prints
+- Runs silently here: the toplevel leaves warning 27 off.
+- Under dune's default profile, the build warns:
 
 ```
 Warning 27 [unused-var-strict]: unused variable y.
 ```
 
-Replace `y` with `_` and the warning disappears.
+- Replace `y` with `_` to say "ignored on purpose".
 
 :::
 
@@ -397,8 +403,8 @@ let direction_label s =
   | "w" -> "west"
   | _ -> "unknown"
 
-let _ = direction_label "n"
-let _ = direction_label "x"
+let _ = direction_label "n"  (* = "north" *)
+let _ = direction_label "x"  (* = "unknown" *)
 ```
 
 :::slide
@@ -507,7 +513,7 @@ several places.
 
 ```ocaml
 let (x, y) = (3, 4)
-let _ = x + y
+let _ = x + y  (* = 7 *)
 ```
 
 The left-hand side of a `let` is also a pattern. So you can
@@ -524,7 +530,7 @@ without calling it pattern matching, but that is exactly what it is.
 
 ```ocaml
 let (x, y) = (3, 4)
-let _ = x + y
+let _ = x + y  (* = 7 *)
 ```
 
 - `x` and `y` are bound by **destructuring** the pair.
@@ -534,10 +540,10 @@ Function parameters can also be patterns:
 ```ocaml
 let sum (a, b) = a + b
 
-let _ = sum (3, 4)
+let _ = sum (3, 4)  (* = 7 *)
 ```
 
-`int = 7`. The parameter pattern destructures the pair on the way in.
+The parameter pattern destructures the pair on the way in.
 
 :::
 
@@ -675,6 +681,7 @@ let _ =
   match Random.int 10 with
   | 0 -> "rolled zero"
   | _ -> "rolled non-zero"
+  (* = "rolled zero" or "rolled non-zero", at random *)
 ```
 
 The `Random.int 10` call happens once; the resulting number is
@@ -693,11 +700,11 @@ let parse_level = function
   | "error" -> 3
   | _       -> 1   (* default to info *)
 
-let _ = parse_level "warn"
-let _ = parse_level "verbose"
+let _ = parse_level "warn"     (* = 2 *)
+let _ = parse_level "verbose"  (* = 1 *)
 ```
 
-`int = 2` and `int = 1`. The four literal patterns handle the
+The four literal patterns handle the
 recognised levels; the wildcard handles everything else. The
 shape is repetitive enough that it is tempting to reach for a
 hash table or an `assoc` list, but at five entries the pattern
@@ -725,7 +732,7 @@ let result = f 0
 :::quiz mcq id=M05-L01-q2
 What does this evaluate to?
 
-```text
+```ocaml skip
 let f = function
   | n -> "got " ^ string_of_int n
   | 0 -> "zero"
@@ -801,7 +808,7 @@ every clause, including the first, for vertical alignment.
 values of the *same type*. If one clause returns `"hello"` and
 another returns `42`, the compiler will reject the whole `match`.
 This is the same expression-typing rule we saw for `if`/`else` in
-[M02-L05](M02-L05-if-expressions.html#why-the-branches-must-agree).
+[the if-expressions lecture](M02-L05-if-expressions.html#why-the-branches-must-agree).
 
 **Pitfall 4: forgetting the wildcard on `int` or `string`.** OCaml
 will let you write a `match` on `int` with only specific cases
@@ -826,8 +833,8 @@ match is incomplete.
 ## Common pitfalls (cont.)
 
 3. **`match` is an expression.** All clauses must have the
-   *same* type, just like the branches of `if` / `else`
-   ([M02-L05](M02-L05-if-expressions.html#why-the-branches-must-agree)).
+   *same* type, just like the branches of
+   [`if` / `else`](M02-L05-if-expressions.html#why-the-branches-must-agree).
 4. **Forgetting the wildcard on `int` / `string`.** Listing only
    `0`, `1`, ... triggers warning 8; add `| _ -> ...`.
 
@@ -842,7 +849,7 @@ match is incomplete.
 What does the following return? Then swap the two clauses: does
 the answer change?
 
-```ocaml
+```ocaml skip
 let f = function
   | x -> x
   | 0 -> 99
@@ -850,18 +857,16 @@ let f = function
 let _ = f 0
 let _ = f 5
 ```
-```mdx-error
-Line 3, characters 7-8:
-Warning 11 [redundant-case]: this match case is unused.
-```
 
 :::
 
 Predict before reading on.
 
+:::solution
+
 :::slide
 
-## Activity discussion: the broken version
+## Activity solution: the broken version
 
 ```ocaml
 let f = function
@@ -882,7 +887,7 @@ Warning 11 [redundant-case]: this match case is unused.
 
 :::slide
 
-## Activity discussion: the fix
+## Activity solution: the fix
 
 ```ocaml
 let f = function
@@ -894,7 +899,7 @@ let f = function
 - Now `f 0` returns `99`; `f n` returns `n` for any other `n`.
 - The rule to internalise: **specific first, general last**.
 
-::: 
+:::
 
 The variable pattern `x` matches everything. The clause that says
 "return `99` when the input is `0`" never runs because `x` already
@@ -904,11 +909,14 @@ case first restores the intended behaviour.
 This is the cleanest illustration of why pattern order matters,
 and why "specific first, general last" is the rule to internalise.
 
+:::
+
 ## What's next
 
 [Lecture 2](M05-L02-recursive-patterns.html) pairs the patterns
-we have seen with the recursive types from
-[M04-L04](M04-L04-recursive-types.html). With one new piece of
+we have seen with the
+[recursive types](M04-L04-recursive-types.html) from Module 4.
+With one new piece of
 notation (`[]` and `h :: t` for lists, `Leaf` and `Node` for
 trees), pattern matching turns into the canonical shape of every
 list and tree function: one clause per constructor, recursing on

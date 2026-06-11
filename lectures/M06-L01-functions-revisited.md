@@ -40,10 +40,11 @@ argument.
 
 :::slide
 
-## From M3, leaned on
+## From Module 3, leaned on
 
-- M3: functions are **first-class values** (named, passed, returned, stored).
-- M6: we lean on that idea for the entire module.
+- Module 3: functions are **first-class values** (named, passed,
+  returned, stored).
+- Module 6: we lean on that idea for the entire module.
 - A **higher-order function** is one that:
   - takes a function as an argument, *or*
   - returns a function as its result
@@ -337,6 +338,7 @@ let on_click handler =
 let _ =
   on_click (fun msg ->
     "got event: " ^ msg)
+  (* = "got event: user clicked at (100, 200)" *)
 ```
 
 - `on_click` calls its argument `handler` with an event description.
@@ -489,7 +491,7 @@ not names that get re-looked-up later.
 let n = 10
 let f = fun x -> x + n
 let n = 99
-let _ = f 1
+let _ = f 1  (* = 11 *)
 ```
 
 What is `f 1`? It is `11`, not `100`. When `f` was defined, the
@@ -545,7 +547,7 @@ let _ = curry3 dist3 3 4 12  (* = 13.0 *)
 will eventually bundle them into a triple and apply `dist3`.
 "Currying" is the term for this technique: turning an `n`-argument
 function into a chain of `n` one-argument functions. We saw it in
-[M03-L03](M03-L03-currying.html) and will see it again as a recurring
+[the currying lecture](M03-L03-currying.html) and will see it again as a recurring
 background hum throughout this module.
 
 The point of the example above is not currying itself; it is the
@@ -640,8 +642,8 @@ Write `flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c` that swaps the
 argument order of a two-argument function. Test with:
 
 ```ocaml skip
-let _ = flip (-) 3 10
-let _ = flip (fun x xs -> x :: xs) [1; 2; 3] 0
+let _ = flip (-) 3 10               (* = 7 *)
+let _ = flip (fun x xs -> x :: xs) [1; 2; 3] 0  (* = [0; 1; 2; 3] *)
 ```
 
 :::

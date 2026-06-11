@@ -14,8 +14,8 @@ reading:
 # Practice: recursion, higher-order functions, and syntax trees
 
 This is a *Practice* chapter, not a Tutorial. There are no slides
-and there is no video; it is a worksheet. The Tutorial
-([M06-L06](M06-L06-tutorial.html)) walked through worked examples
+and there is no video; it is a worksheet. The
+[tutorial](M06-L06-tutorial.html) walked through worked examples
 on screen. Here you solve the problems yourself, directly in the
 browser. Each problem has an editable cell seeded with
 `failwith "not implemented"` and a test cell that prints
@@ -176,8 +176,8 @@ and `range 7 7 = [7]`. If `num2 < num1`, call `failwith "Incorrect range"`.
 (`failwith` raises a generic failure exception; you have used it
 since Module 1 as the placeholder body for unimplemented functions.
 Exceptions are introduced properly in
-[M07-L03](M07-L03-exceptions.html); here we just use `failwith` as
-a signal.)
+[the exceptions lecture](M07-L03-exceptions.html); here we just use
+`failwith` as a signal.)
 
 :::quiz code id=M06-L07-q3
 Implement `range`. The tests below check only the valid-range path;
@@ -217,40 +217,40 @@ num2`) returns a one-element list. The recursive case prepends
 
 :::
 
-## Problem 4: `zipwith`
+## Problem 4: `unzip`
 
 Write a function
 
 ```text
-zipwith : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list
+unzip : ('a * 'b) list -> 'a list * 'b list
 ```
 
-such that `zipwith f l1 l2` returns the list whose `i`th element is
-`f` applied to the `i`th element of `l1` and the `i`th element of
-`l2`. If the lists have different lengths, ignore the extra elements
-of the longer one. For example, `zipwith (+) [1; 2; 3] [4; 5] = [5; 7]`.
+that splits a list of pairs into a pair of lists, preserving order:
+the first list holds every first component, the second list every
+second component. For example,
+`unzip [(1, 'a'); (2, 'b'); (3, 'c')] = ([1; 2; 3], ['a'; 'b'; 'c'])`.
 
-`zipwith` is a generalised `List.map2` (the standard library version
-raises on length mismatch instead of truncating). It is also called
-`zip_with` or `map2` in other languages.
+The standard library calls this `List.split`; write it yourself
+with direct recursion. (Hint: destructure the recursive call's
+result with a `let (xs, ys) = ... in ...` pattern.)
 
 :::quiz code id=M06-L07-q4
-Implement `zipwith`.
+Implement `unzip`.
 
 ```ocaml
-let rec zipwith f l1 l2 =
+let rec unzip l =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (zipwith (+) [1; 2; 3] [4; 5] = [5; 7]) "truncate l2";
-  check (zipwith (+) [1; 2] [4; 5; 6] = [5; 7]) "truncate l1";
-  check (zipwith (+) [] [1; 2; 3] = []) "empty l1";
-  check (zipwith (+) [1; 2] [] = []) "empty l2";
-  check (zipwith (fun a b -> (a, b)) [1; 2] ['a'; 'b']
-         = [(1, 'a'); (2, 'b')]) "pair tuple";
+  check (unzip [(1, 'a'); (2, 'b'); (3, 'c')]
+         = ([1; 2; 3], ['a'; 'b'; 'c'])) "three pairs";
+  check (unzip ([] : (int * char) list) = ([], [])) "empty";
+  check (unzip [(7, "x")] = ([7], ["x"])) "singleton";
+  check (unzip [(true, 1); (false, 2)] = ([true; false], [1; 2]))
+        "bools and ints";
   print_endline "all tests passed"
 ```
 :::
@@ -260,15 +260,18 @@ let () =
 Reference solution:
 
 ```
-let rec zipwith f l1 l2 =
-  match l1, l2 with
-  | [], _ | _, [] -> []
-  | x :: xs, y :: ys -> f x y :: zipwith f xs ys
+let rec unzip = function
+  | [] -> ([], [])
+  | (a, b) :: rest ->
+      let (xs, ys) = unzip rest in
+      (a :: xs, b :: ys)
 ```
 
-Pattern-match on both lists at once. Either-empty case returns the
-empty list (this is how the truncation falls out). The cons-cons
-case applies `f` to the two heads and recurses on the two tails.
+The base case returns a pair of empty lists. The cons case takes a
+pair `(a, b)` off the front, unzips the rest, and conses `a` and
+`b` onto their respective halves. Both output lists come out in the
+input order because each component is prepended to an
+already-ordered result.
 
 :::
 
@@ -419,37 +422,46 @@ the end. Tail-recursive.
 
 :::
 
-## Problem 7: `flatten`
+## Problem 7: `pairwise`
 
 Write a function
 
 ```text
-flatten : 'a list list -> 'a list
+pairwise : 'a list -> ('a * 'a) list
 ```
 
-that flattens a list of lists into a single list, preserving order.
-For example, `flatten [[1; 2]; [3; 4]] = [1; 2; 3; 4]`.
+that pairs each element with its immediate successor. For example,
+`pairwise [1; 2; 3; 4] = [(1, 2); (2, 3); (3, 4)]`. Lists with
+fewer than two elements have no adjacent pairs: return `[]`.
 
-The standard library's `List.concat` does the same job; this
-exercise asks you to write it yourself. (You may use the
-list-append operator `@`.)
+Note each middle element appears in *two* pairs (once on the right,
+once on the left), so this is not a chunking of the list. The shape
+is useful whenever a computation compares neighbours: detecting
+ascending runs, computing differences, drawing line segments
+between consecutive points.
+
+(Hint: the nested pattern `x :: (y :: _ as rest)` from the
+nested-patterns lecture matches a list with at least two elements
+*and* keeps a name for everything after `x`.)
 
 :::quiz code id=M06-L07-q7
-Implement `flatten`.
+Implement `pairwise`.
 
 ```ocaml
-let rec flatten l =
+let rec pairwise l =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (flatten [[1; 2]; [3; 4]] = [1; 2; 3; 4]) "two pairs";
-  check (flatten ([] : int list list) = ([] : int list)) "empty";
-  check (flatten [[]; []; []] = ([] : int list)) "all empty";
-  check (flatten [[1]; [2]; [3]] = [1; 2; 3]) "singletons";
-  check (flatten [[1; 2; 3]] = [1; 2; 3]) "single inner list";
+  check (pairwise [1; 2; 3; 4] = [(1, 2); (2, 3); (3, 4)])
+        "four elements";
+  check (pairwise ([] : int list) = []) "empty";
+  check (pairwise [5] = []) "singleton";
+  check (pairwise [1; 2] = [(1, 2)]) "exactly one pair";
+  check (pairwise ["a"; "b"; "c"] = [("a", "b"); ("b", "c")])
+        "strings";
   print_endline "all tests passed"
 ```
 :::
@@ -459,24 +471,16 @@ let () =
 Reference solution:
 
 ```
-let rec flatten l =
-  match l with
-  | [] -> []
-  | x :: xs -> x @ flatten xs
+let rec pairwise = function
+  | x :: (y :: _ as rest) -> (x, y) :: pairwise rest
+  | _ -> []
 ```
 
-Two-case recursion. The empty list flattens to the empty list; a
-non-empty list appends its head (which is itself a list) onto the
-flattening of its tail.
-
-A one-line `fold_right` form is also available:
-
-```
-let flatten l = List.fold_right (@) l []
-```
-
-This is the same computation: fold list-append over the list of
-lists with empty as the seed.
+The first clause matches a list with at least two elements: `x` is
+the head, `y` the second element, and `as rest` names the tail
+*including* `y` so the recursion can pair `y` with its own
+successor. The catch-all covers both the empty list and the
+singleton, the two shapes with no adjacent pair.
 
 :::
 
@@ -504,7 +508,7 @@ fold_inorder (fun acc x -> acc @ [x]) []
   = [1; 2; 3]
 ```
 
-The tutorial in [M06-L06](M06-L06-tutorial.html#problem-5-tree-folds-in-three-orderings)
+The [tree-folds section of the tutorial](M06-L06-tutorial.html#problem-5-tree-folds-in-three-orderings)
 walked through this. Here, write it yourself before peeking.
 
 :::quiz code id=M06-L07-q8
@@ -572,16 +576,19 @@ let rec fib n =
   else fib (n - 1) + fib (n - 2)
 ```
 
-has exponential running time: computing `fib 50` is unbearable.
-But Fibonacci can be computed in linear time by carrying the
-current and previous values as you go. Implement
+has exponential running time: computing `fib 46` this way is
+already unbearable. But Fibonacci can be computed in linear time
+by carrying the current and previous values as you go. Implement
 
 ```text
 fib_tailrec : int -> int
 ```
 
 as a *tail-recursive* function (each recursive call is in tail
-position) so that `fib_tailrec 50 = 12586269025` returns quickly.
+position) so that `fib_tailrec 46 = 1836311903` returns instantly.
+(Why stop at 46? The in-browser toplevel compiles to JavaScript,
+where OCaml ints are 32-bit; `fib 47` already overflows them. On
+native 64-bit OCaml you could go much further.)
 
 :::quiz code id=M06-L07-q9
 Implement `fib_tailrec`.
@@ -598,7 +605,7 @@ let () =
   check (fib_tailrec 1 = 1) "fib 1";
   check (fib_tailrec 2 = 1) "fib 2";
   check (fib_tailrec 10 = 55) "fib 10";
-  check (fib_tailrec 50 = 12586269025) "fib 50";
+  check (fib_tailrec 46 = 1836311903) "fib 46";
   print_endline "all tests passed"
 ```
 :::
@@ -939,39 +946,41 @@ the output has the same length as the input.
 
 :::
 
-## Problem 15: `sum_sq_evens`
+## Problem 15: `dot_product`
 
 Write a function
 
 ```text
-sum_sq_evens : int list -> int
+dot_product : int list -> int list -> int
 ```
 
-that returns the sum of the squares of the even elements of a list.
-For example, `sum_sq_evens [1; 2; 3; 4; 5; 6] = 56` (that is
-`4 + 16 + 36`).
+that treats the two lists as vectors of equal length and returns
+the sum of the element-wise products. For example,
+`dot_product [1; 2; 3] [4; 5; 6] = 32` (that is
+`1*4 + 2*5 + 3*6`).
 
-Write it as a *pipeline*: filter to the evens, map to squares, then
-fold to a sum, chained with `|>`. This is the exact shape the
-[pipelines lecture](M06-L05-pipelines.html) argued for: a data-flow
-read top-to-bottom, one transformation per stage.
+Write it as a *pipeline*: combine the two lists element-wise with
+`List.map2` (the standard library's two-list `map`; it raises
+`Invalid_argument` on a length mismatch, which is fine here since
+the inputs are promised to have equal length), then pipe the
+products into a fold that sums them.
 
 :::quiz code id=M06-L07-q15
-Implement `sum_sq_evens` as a `|>` pipeline.
+Implement `dot_product` with `List.map2` and a `|>` pipeline.
 
 ```ocaml
-let sum_sq_evens xs =
+let dot_product xs ys =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (sum_sq_evens [1; 2; 3; 4; 5; 6] = 56) "mixed";
-  check (sum_sq_evens ([] : int list) = 0) "empty";
-  check (sum_sq_evens [1; 3; 5] = 0) "no evens";
-  check (sum_sq_evens [2; 4] = 20) "all evens";
-  check (sum_sq_evens [-2; -3; 4] = 20) "negatives";
+  check (dot_product [1; 2; 3] [4; 5; 6] = 32) "1*4 + 2*5 + 3*6";
+  check (dot_product ([] : int list) [] = 0) "empty";
+  check (dot_product [2] [10] = 20) "singleton";
+  check (dot_product [1; -1] [5; 5] = 0) "cancels to zero";
+  check (dot_product [3; 0; 2] [0; 7; 5] = 10) "zeros inside";
   print_endline "all tests passed"
 ```
 :::
@@ -981,18 +990,17 @@ let () =
 Reference solution:
 
 ```
-let sum_sq_evens xs =
-  xs
-  |> List.filter (fun x -> x mod 2 = 0)
-  |> List.map (fun x -> x * x)
+let dot_product xs ys =
+  List.map2 ( * ) xs ys
   |> List.fold_left ( + ) 0
 ```
 
-Three stages read top-to-bottom: keep the evens, square each, sum
-the result. `|>` feeds each stage's output into the next. The same
-computation could be one `fold_left` that tests, squares, and adds
-in a single pass; the pipeline form trades a little efficiency for
-a lot of readability.
+`List.map2 ( * )` multiplies the lists element-wise, producing the
+list of products; the pipeline feeds it into `fold_left ( + ) 0`,
+which sums them. Note `( * )` is the multiplication operator as a
+function (the spaces keep it from being read as a comment opener).
+A single `fold_left2` could do it in one pass; the two-stage
+pipeline reads more clearly.
 
 :::
 
@@ -1226,11 +1234,12 @@ Higher-order functions remain in play throughout.
 
 ## Sources
 
-Part 1 (Problems 1 to 9) is drawn from
+Most of Part 1 is drawn from
 [Assignment 1](https://github.com/fplaunchpad/cs3100_m25/tree/main/assignments/assignment1)
 of the instructor's *CS3100: Paradigms of Programming* course at
 IIT Madras (Monsoon 2025), with prose, test harnesses, and
-reference solutions rewritten for this NPTEL course. Part 2
-(Problems 10 to 15) and Part 3 (Problems 16 to 17) are new here,
-extending the higher-order toolkit and the arithmetic AST from the
-Module 4 to Module 6 lectures and tutorials.
+reference solutions rewritten for this NPTEL course; Problems 4
+and 7 are new here. Part 2 (Problems 10 to 15) and Part 3
+(Problems 16 to 17) are also new, extending the higher-order
+toolkit and the arithmetic AST from the Module 4 to Module 6
+lectures and tutorials.

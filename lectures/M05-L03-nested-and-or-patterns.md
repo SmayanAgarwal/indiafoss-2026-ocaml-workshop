@@ -31,7 +31,7 @@ The pattern forms we saw in [Lecture 1](M05-L01-basic-patterns.html)
 "this is the constant `0`", or "this is anything, call it `x`." Real
 OCaml values are usually built out of pieces: a [tuple](M04-L01-tuples.html)
 holds two things, a [constructor](M04-L03-variants.html#constructors-with-payload)
-wraps a payload, a [list](M04-L04-recursive-types.html#lists-are-a-recursive-variant)
+wraps a payload, a [list](M04-L04-recursive-types.html#ocamls-built-in-lists-are-just-variants)
 is a head followed by a tail. Patterns mirror that nested structure.
 A pattern can contain *other patterns* inside it, exactly the way a
 value contains other values.
@@ -53,7 +53,8 @@ nontrivial pattern match you write uses one or both.
 
 ## This lecture: nested and or-patterns
 
-- L1's patterns matched at *one level* (literal, variable, wildcard).
+- Last lecture's patterns matched at *one level* (literal,
+  variable, wildcard).
 - Real values are built of pieces: tuples, constructors, lists.
 - Patterns mirror that nested structure: a pattern can contain
   other patterns.
@@ -67,9 +68,9 @@ nontrivial pattern match you write uses one or both.
 ## Patterns inside constructors
 
 The most common nested pattern is to look inside a constructor's
-payload. We saw [variant types in M04-L03](M04-L03-variants.html)
+payload. We saw [variant types](M04-L03-variants.html) in Module 4
 and you have seen `Some` and `None` and you have seen [records](M04-L02-records.html)
-and [lists](M04-L04-recursive-types.html#lists-are-a-recursive-variant).
+and [lists](M04-L04-recursive-types.html#ocamls-built-in-lists-are-just-variants).
 Start with a record. Suppose we want to describe where a point
 sits relative to the axes. Without any nesting, you would write
 the logic as a cascade of `if`s on the two fields:
@@ -281,9 +282,9 @@ let is_unit_circle = function
   | Circle 1.0 -> true
   | _ -> false
 
-let _ = is_unit_circle (Circle 1.0)
-let _ = is_unit_circle (Circle 2.0)
-let _ = is_unit_circle (Rectangle (1.0, 1.0))
+let _ = is_unit_circle (Circle 1.0)             (* = true *)
+let _ = is_unit_circle (Circle 2.0)             (* = false *)
+let _ = is_unit_circle (Rectangle (1.0, 1.0))   (* = false *)
 ```
 
 :::slide
@@ -412,8 +413,8 @@ let head_first = function
   | (x, _) :: _ -> Some x
   | [] -> None
 
-let _ = head_first [(1, "a"); (2, "b"); (3, "c")]
-let _ = head_first []
+let _ = head_first [(1, "a"); (2, "b"); (3, "c")]  (* = Some 1 *)
+let _ = head_first []                              (* = None *)
 ```
 
 :::slide
@@ -425,8 +426,8 @@ let head_first = function
   | (x, _) :: _ -> Some x
   | [] -> None
 
-let _ = head_first [(1, "a"); (2, "b"); (3, "c")]
-let _ = head_first []
+let _ = head_first [(1, "a"); (2, "b"); (3, "c")]  (* = Some 1 *)
+let _ = head_first []                              (* = None *)
 ```
 
 - Pattern `(x, _) :: _` matches a non-empty list whose head is a pair.
@@ -461,9 +462,9 @@ let first_two = function
   | a :: b :: _ -> Some (a, b)
   | _ -> None
 
-let _ = first_two [10; 20; 30]
-let _ = first_two [10]
-let _ = first_two []
+let _ = first_two [10; 20; 30]  (* = Some (10, 20) *)
+let _ = first_two [10]          (* = None *)
+let _ = first_two []            (* = None *)
 ```
 
 The pattern `a :: b :: _` matches a list of length at least two:
@@ -600,8 +601,8 @@ let is_vowel = function
   | 'a' | 'e' | 'i' | 'o' | 'u' -> true
   | _ -> false
 
-let _ = is_vowel 'a'
-let _ = is_vowel 'b'
+let _ = is_vowel 'a'  (* = true *)
+let _ = is_vowel 'b'  (* = false *)
 ```
 
 :::slide
@@ -655,8 +656,8 @@ let is_horizontal = function
   | East | West -> true
   | North | South -> false
 
-let _ = is_horizontal East
-let _ = is_horizontal North
+let _ = is_horizontal East   (* = true *)
+let _ = is_horizontal North  (* = false *)
 ```
 
 :::slide
@@ -726,11 +727,11 @@ type tagged = A of int | B of int
 let to_int = function
   | A x | B x -> x
 
-let _ = to_int (A 5)
-let _ = to_int (B 7)
+let _ = to_int (A 5)  (* = 5 *)
+let _ = to_int (B 7)  (* = 7 *)
 ```
 
-- `5` and `7`. Each alternative binds an `int` to `x`.
+- Each alternative binds an `int` to `x`.
 - Right-hand side can now refer to `x` unambiguously.
 
 :::
@@ -763,10 +764,10 @@ let summary = function
   | _ :: _       -> "starts with something else"
   | []           -> "empty"
 
-let _ = summary [0; 5; 6]
-let _ = summary [1; 5; 6]
-let _ = summary [5; 6]
-let _ = summary []
+let _ = summary [0; 5; 6]  (* = "starts with 0 or 1" *)
+let _ = summary [1; 5; 6]  (* = "starts with 0 or 1" *)
+let _ = summary [5; 6]     (* = "starts with something else" *)
+let _ = summary []         (* = "empty" *)
 ```
 
 :::slide
@@ -826,10 +827,10 @@ let head_and_full xs =
   | x :: _ -> Some (x, List.length xs)
   | [] -> None
 
-let _ = head_and_full [10; 20; 30]
+let _ = head_and_full [10; 20; 30]  (* = Some (10, 3) *)
 ```
 
-`Some (10, 3)`. The clause destructures (`x :: _`) and *also*
+The clause destructures (`x :: _`) and *also*
 needs the whole list (`xs`) on the right. We can get `xs` because
 the parameter has a name. Inside `function` (no parameter name),
 this trick is not available; `as` is the cleanest way to keep the
@@ -840,10 +841,10 @@ let head_and_full = function
   | (x :: _) as xs -> Some (x, List.length xs)
   | [] -> None
 
-let _ = head_and_full [10; 20; 30]
+let _ = head_and_full [10; 20; 30]  (* = Some (10, 3) *)
 ```
 
-Same result, `Some (10, 3)`. The pattern `(x :: _) as xs` first
+Same result. The pattern `(x :: _) as xs` first
 destructures (`x` is the head); then `as xs` names the *entire*
 matched list `xs`. The right-hand side has both names available.
 
@@ -1007,29 +1008,29 @@ is rejected.
 A code task:
 
 :::quiz code id=M05-L03-q1
-Given the `shape` type from earlier, write `is_unit_shape : shape
--> bool` that returns `true` for a unit circle (`Circle 1.0`) or a
-unit square (`Rectangle (1.0, 1.0)`), and `false` otherwise. Use a
-single clause with an or-pattern combining the two nested literal
-patterns.
+A server's reply is either a numeric status code or a timeout.
+Write `should_retry : reply -> bool` that returns `true` for
+`Code 502`, `Code 503`, or `Timeout`, and `false` for everything
+else. Use a single clause whose left side is an or-pattern; two of
+the three alternatives are nested literal patterns inside `Code`.
 
 ```ocaml
-type shape =
-  | Circle of float
-  | Rectangle of float * float
+type reply =
+  | Code of int
+  | Timeout
 
-let is_unit_shape s =
+let should_retry r =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (is_unit_shape (Circle 1.0) = true) "unit circle";
-  check (is_unit_shape (Rectangle (1.0, 1.0)) = true) "unit rectangle";
-  check (is_unit_shape (Circle 2.0) = false) "non-unit circle";
-  check (is_unit_shape (Rectangle (1.0, 2.0)) = false) "non-unit rectangle";
-  check (is_unit_shape (Rectangle (2.0, 1.0)) = false) "another non-unit rectangle";
+  check (should_retry (Code 502) = true) "bad gateway";
+  check (should_retry (Code 503) = true) "unavailable";
+  check (should_retry Timeout = true) "timeout";
+  check (should_retry (Code 200) = false) "ok";
+  check (should_retry (Code 404) = false) "not found";
   print_endline "all tests passed"
 ```
 
@@ -1037,11 +1038,11 @@ let () =
 
 :::solution
 
-The shape: `function | Circle 1.0 | Rectangle (1.0, 1.0) -> true |
-_ -> false`. One or-pattern with two nested constructor patterns:
-the literal `1.0` lives inside `Circle`, the tuple `(1.0, 1.0)`
-lives inside `Rectangle`. Both alternatives bind no variables, so
-the same-bindings rule is trivially satisfied.
+The shape: `function | Code 502 | Code 503 | Timeout -> true |
+_ -> false`. One or-pattern with three alternatives: the literals
+`502` and `503` live *inside* the `Code` constructor pattern, and
+`Timeout` is a bare constructor. No alternative binds a variable,
+so the same-bindings rule is trivially satisfied.
 
 :::
 
@@ -1079,7 +1080,7 @@ Write `is_unit_shape : shape -> bool` that returns `true` for
 shape. Use a single clause whose left side is an **or-pattern**
 combining the two nested literal patterns.
 
-```ocaml skip
+```ocaml
 type shape = Circle of float | Rectangle of float * float
 (* is_unit_shape (Circle 1.0)            => true  *)
 (* is_unit_shape (Rectangle (1.0, 1.0))  => true  *)

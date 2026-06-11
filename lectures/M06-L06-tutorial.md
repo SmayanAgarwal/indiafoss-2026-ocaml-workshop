@@ -392,6 +392,10 @@ The tree:
 ```
 
 ```ocaml
+let t = Node (Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf)), 4,
+              Node (Node (Leaf, 5, Leaf), 6, Node (Leaf, 7, Leaf)))
+let collect acc x = acc @ [x]
+
 let _ = fold_inorder   collect [] t  (* = [1; 2; 3; 4; 5; 6; 7] *)
 let _ = fold_preorder  collect [] t  (* = [4; 2; 1; 3; 6; 5; 7] *)
 let _ = fold_postorder collect [] t  (* = [1; 3; 2; 5; 7; 6; 4] *)
@@ -585,12 +589,13 @@ let word_counts text =
        (w, n + 1) :: List.remove_assoc w counts
      ) []
 
-let _ = word_counts "the quick brown fox jumps over the lazy dog the fox"  (* = [("fox", 2); ...; ("the", 3)] *)
+let _ = word_counts "the quick brown fox jumps over the lazy dog the fox"  (* = [("fox", 2); ("the", 3); ...; ("quick", 1)] *)
 ```
 
-The result is something like `[("fox", 2); ("dog", 1); ("lazy", 1);
-("over", 1); ("jumps", 1); ("brown", 1); ("quick", 1); ("the", 3)]`
-(the exact ordering depends on the fold's traversal).
+The result is `[("fox", 2); ("the", 3); ("dog", 1); ("lazy", 1);
+("over", 1); ("jumps", 1); ("brown", 1); ("quick", 1)]`: each fold
+step prepends the freshly-bumped pair, so the words appear in
+most-recently-touched-first order.
 
 The pipeline reads top-to-bottom: lowercase, split into words, drop
 empty pieces, then fold to build up a frequency table. The fold's
@@ -638,28 +643,48 @@ let word_counts text =
 
 :::slide
 
+## `assoc_opt` is not magic
+
+```ocaml
+let rec assoc_opt k = function
+  | [] -> None
+  | (k', v) :: rest -> if k = k' then Some v else assoc_opt k rest
+
+let _ = assoc_opt "fox" [("the", 3); ("fox", 2)]  (* = Some 2 *)
+```
+
+- Walk the pairs; first matching key wins.
+- `O(n)` per lookup; `List.remove_assoc` is the same walk.
+- That linear lookup inside `word_counts`' fold is exactly where
+  its `O(n^2)` comes from.
+
+:::
+
+:::slide
+
 ## `word_counts`: a worked example
 
 ```ocaml
 let _ = word_counts
   "the quick brown fox jumps over the lazy dog the fox"
-(* = [("fox", 2); ("dog", 1); ("lazy", 1); ("over", 1);
-      ("jumps", 1); ("brown", 1); ("quick", 1); ("the", 3)] *)
+(* = [("fox", 2); ("the", 3); ("dog", 1); ("lazy", 1);
+      ("over", 1); ("jumps", 1); ("brown", 1); ("quick", 1)] *)
 ```
 
 - Eight distinct words; "the" appears three times, "fox" twice.
 - Ordering is "most-recently-touched first" (each step prepends).
 - Same code on a 10 MB text file: still works, but `O(n^2)` in
   distinct words starts to bite.
-- M07's `Map` / `Hashtbl` will turn this into an `O(n)` one-liner
-  with the same overall shape.
+- Module 7's `Map` / `Hashtbl` will turn this into an `O(n)`
+  one-liner with the same overall shape.
 
 :::
 
 ## A quick check
 
 :::quiz mcq id=M06-L06-q3
-Which of the following is *not* expressible as a fold over a single list?
+Which of the following is *not* a fold doing constant work per
+element as it walks the list once?
 
 - [ ] `List.length`
 - [ ] `List.filter p`
@@ -667,12 +692,15 @@ Which of the following is *not* expressible as a fold over a single list?
 - [x] `List.sort compare`
 
 **Why:** `length`, `filter`, and `map` are all linear walks of the
-list with an accumulator. They are folds. Sorting (`List.sort`) is
-`O(n log n)`: it cannot be expressed as a single left-to-right fold
-that examines each element once. A fold has to compare elements that
-are far apart, which a single linear pass cannot do. (You can
-*implement* a sorting algorithm using fold inside a more complex
-construction, but the sort itself is not a fold.)
+list, combining each element into the accumulator with a
+constant-time step. They are textbook folds. Sorting is the odd one
+out, with a qualifier worth knowing: you *can* write insertion sort
+as a fold (`fold_right insert xs []`), but the combining step
+(`insert`) is itself a linear walk of the accumulator, so the whole
+thing is `O(n^2)`. What no fold gives you is `List.sort`'s
+`O(n log n)` merge sort: that algorithm repeatedly compares elements
+far apart, which does not fit the one-pass,
+combine-as-you-go shape.
 :::
 
 :::quiz mcq id=M06-L06-q2
@@ -692,24 +720,25 @@ the classic one-line `List.rev`. To get back the original order, use
 A code challenge:
 
 :::quiz code id=M06-L06-q1
-Write `maximum : 'a list -> 'a option` that returns the largest
-element of a list, or `None` for an empty list. Use `List.fold_left`
-with the `compare` function or `max`. (Hint: the accumulator is an
-`'a option`.)
+Write `longest : string list -> string option` that returns the
+longest string in a list, or `None` for an empty list. If several
+strings share the greatest length, return the *first* of them. Use
+`List.fold_left` with `String.length`. (Hint: the accumulator is a
+`string option`.)
 
 ```ocaml
-let maximum xs =
+let longest xs =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (maximum [3; 7; 1; 9; 5]      = Some 9)   "ints";
-  check (maximum ([] : int list)      = None)     "empty";
-  check (maximum [42]                 = Some 42)  "singleton";
-  check (maximum [-5; -3; -1; -10]    = Some (-1)) "all negative";
-  check (maximum ["a"; "c"; "b"]      = Some "c") "strings";
+  check (longest ["hi"; "hello"; "hey"]   = Some "hello") "basic";
+  check (longest []                       = None)         "empty";
+  check (longest ["solo"]                 = Some "solo")  "singleton";
+  check (longest ["abc"; "xyz"; "ab"]     = Some "abc")   "tie keeps first";
+  check (longest [""; "a"]                = Some "a")     "empty string loses";
   print_endline "all tests passed"
 ```
 :::
@@ -719,19 +748,21 @@ let () =
 Reference solution:
 
 ```
-let maximum xs =
+let longest xs =
   List.fold_left
-    (fun acc x ->
+    (fun acc s ->
       match acc with
-      | None -> Some x
-      | Some m -> Some (max m x))
+      | None -> Some s
+      | Some t ->
+          if String.length s > String.length t then Some s else acc)
     None xs
 ```
 
-The accumulator is an `'a option`, starting at `None`. For each
-element: if the accumulator is `None`, take this element as the
-current best. If it is `Some m`, compare and keep the bigger. The
-result is `None` if the list was empty, `Some v` otherwise.
+The accumulator is a `string option`, starting at `None`. For each
+string: if the accumulator is `None`, take this string as the
+current best. Otherwise keep whichever is longer; the strict `>`
+means a tie keeps the earlier string. The result is `None` exactly
+when the list was empty.
 
 :::
 
@@ -765,7 +796,8 @@ let _ = maximum [3; 7; 1; 9; 5]      (* = Some 9 *)
 let _ = maximum ([] : int list)      (* = None *)
 ```
 
-- Accumulator is an `int option`.
+- Accumulator is an *option* (`'a option`; an `int option` in the
+  calls above).
 - Starts at `None` (no element seen yet).
 - For each element: if `None`, take this element; otherwise keep the larger.
 - `([] : int list)` annotation is needed: `[]` alone is polymorphic

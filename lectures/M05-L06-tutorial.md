@@ -93,7 +93,7 @@ will have one clause per constructor, three of which recurse.
 
 ## The AST
 
-```ocaml skip
+```ocaml
 type ty = T_int | T_bool
 
 type expr =
@@ -145,7 +145,7 @@ if true then x + 5 else 0
 
 as an `expr` value:
 
-```ocaml skip
+```ocaml
 let example =
   Let_in ("x", Some T_int, Int 10,
     If (Bool true,
@@ -192,25 +192,23 @@ let rec pretty e =
     ^ " in " ^ pretty e2 ^ ")"
 
 let _ = pretty example
+(* = "(let x : int = 10 in (if true then (x + 5) else 0))" *)
 ```
 
 The `Let_in` clause uses an *inner* `match` on the
 `ty option`: present or absent, decided once, plugged back into
 the surrounding string. This is the
-[nested-pattern](M05-L03-nested-and-or-patterns.html#nesting-in-tuples-and-records)
+[pattern-inside-a-constructor](M05-L03-nested-and-or-patterns.html#patterns-inside-a-variant-constructor)
 shape, used here at the
-sub-result level rather than at the outer pattern. Output on
-`example`:
-
-```text
-(let x : int = 10 in (if true then (x + 5) else 0))
-```
+sub-result level rather than at the outer pattern.
 
 :::slide
 
 ## `pretty`: one clause per constructor
 
-```ocaml skip
+```ocaml
+let pretty_ty t = match t with T_int -> "int" | T_bool -> "bool"
+
 let rec pretty e =
   match e with
   | Int n  -> string_of_int n
@@ -280,7 +278,7 @@ bottom.
 
 ## `depth`: or-pattern across the leaves
 
-```ocaml skip
+```ocaml
 let rec depth e =
   match e with
   | Int _ | Bool _ | Var _ -> 1
@@ -338,7 +336,7 @@ covered exceptions yet ([Module 7](M07-L03-exceptions.html)), so
 we return `value option`: `Some v` on success, `None` on any
 runtime mismatch. That matches the
 [*make-illegal-states-unrepresentable*](M04-L04-recursive-types.html#when-to-use-option-the-fix)
-slogan from M04-L04: the type forces the caller to handle the
+slogan from Module 4: the type forces the caller to handle the
 failure.
 
 We also need to look up a variable in the environment. A plain
@@ -356,7 +354,7 @@ let rec lookup x (e : env) =
 
 ## `eval`: values, environment, and lookup
 
-```ocaml skip
+```ocaml
 type value = VInt of int | VBool of bool
 type env = (string * value) list
 
@@ -424,7 +422,7 @@ Reading the clauses:
 
 ## `eval`: the easy cases
 
-```ocaml skip
+```text
 let rec eval (env : env) e =
   match e with
   | Int n  -> Some (VInt n)
@@ -447,7 +445,7 @@ let rec eval (env : env) e =
 
 ## `eval`: `If`, `Var`, `Let_in`
 
-```ocaml skip
+```text
   | If (c, t, f) ->
     (match eval env c with
      | Some (VBool true)  -> eval env t
@@ -468,6 +466,35 @@ let rec eval (env : env) e =
 
 :::
 
+:::slide
+
+## `eval`, assembled
+
+```ocaml
+let rec eval (env : env) e =
+  match e with
+  | Int n   -> Some (VInt n)
+  | Bool b  -> Some (VBool b)
+  | Add (e1, e2) ->
+    (match eval env e1, eval env e2 with
+     | Some (VInt a), Some (VInt b) -> Some (VInt (a + b))
+     | _ -> None)
+  | If (c, t, f) ->
+    (match eval env c with
+     | Some (VBool true)  -> eval env t
+     | Some (VBool false) -> eval env f
+     | _ -> None)
+  | Var x -> lookup x env
+  | Let_in (x, _, e1, e2) ->
+    (match eval env e1 with
+     | Some v -> eval ((x, v) :: env) e2
+     | None   -> None)
+
+let _ = eval [] example  (* = Some (VInt 15) *)
+```
+
+:::
+
 ## More examples
 
 Now that `eval` is defined, let us run it on a few small
@@ -476,22 +503,14 @@ can read the program as surface syntax) and the `eval` result.
 
 ```ocaml
 let ex1 = Add (Int 2, Int 3)
-let _ = pretty ex1
+let _ = pretty ex1   (* = "(2 + 3)" *)
 let _ = eval [] ex1  (* = Some (VInt 5) *)
-```
-
-```text
-(2 + 3)
 ```
 
 ```ocaml
 let ex2 = Let_in ("x", None, Int 10, Add (Var "x", Int 1))
-let _ = pretty ex2
+let _ = pretty ex2   (* = "(let x = 10 in (x + 1))" *)
 let _ = eval [] ex2  (* = Some (VInt 11) *)
-```
-
-```text
-(let x = 10 in (x + 1))
 ```
 
 `Let_in` extends the environment with `("x", VInt 10) :: []`,
@@ -500,12 +519,8 @@ then evaluates the body under that env. `Var "x"` finds it via
 
 ```ocaml
 let ex3 = If (Bool true, Int 42, Add (Int 1, Int 1))
-let _ = pretty ex3
+let _ = pretty ex3   (* = "(if true then 42 else (1 + 1))" *)
 let _ = eval [] ex3  (* = Some (VInt 42) *)
-```
-
-```text
-(if true then 42 else (1 + 1))
 ```
 
 The condition `Bool true` evaluates to `VBool true`, so the
@@ -515,7 +530,7 @@ The condition `Bool true` evaluates to `VBool true`, so the
 
 ## `eval` on a few small programs
 
-```ocaml skip
+```ocaml
 let ex1 = Add (Int 2, Int 3)
 let _ = eval [] ex1  (* = Some (VInt 5) *)
 (* pretty: (2 + 3) *)
@@ -545,12 +560,8 @@ unbound in the current environment.
 
 ```ocaml
 let bad1 = Add (Bool true, Int 1)
-let _ = pretty bad1
+let _ = pretty bad1   (* = "(true + 1)" *)
 let _ = eval [] bad1  (* = None *)
-```
-
-```text
-(true + 1)
 ```
 
 `Add` expects two `VInt` payloads, and the first sub-expression
@@ -559,12 +570,8 @@ clause falls through to `_ -> None`.
 
 ```ocaml
 let bad2 = Var "y"
-let _ = pretty bad2
+let _ = pretty bad2   (* = "y" *)
 let _ = eval [] bad2  (* = None *)
-```
-
-```text
-y
 ```
 
 `lookup "y" []` walks the empty environment and returns `None`,
@@ -572,12 +579,8 @@ which propagates to the top.
 
 ```ocaml
 let bad3 = If (Int 1, Int 42, Int 0)
-let _ = pretty bad3
+let _ = pretty bad3   (* = "(if 1 then 42 else 0)" *)
 let _ = eval [] bad3  (* = None *)
-```
-
-```text
-(if 1 then 42 else 0)
 ```
 
 The condition is an integer, not a boolean. The nested `match`
@@ -587,7 +590,7 @@ inside the `If` clause falls through to `_ -> None`.
 
 ## When `eval` returns `None`
 
-```ocaml skip
+```ocaml
 let bad1 = Add (Bool true, Int 1)    (* "(true + 1)" *)
 let _ = eval [] bad1                  (* = None *)
 
@@ -702,7 +705,7 @@ explanation: |
   Two sources of failure: an off-shape arithmetic operand (e.g.,
   `Add (Bool true, Int 1)`) and an unbound variable. With no
   exceptions yet, `option` is the natural way to surface either
-  one to the caller. The slogan from M04-L04 is at work:
+  one to the caller. The slogan from Module 4 is at work:
   `value option` *forces* the caller to handle failure.
 :::
 
@@ -724,35 +727,60 @@ explanation: |
 :::
 
 :::quiz code id=M05-L06-q3
-question: |
-  Add a new constructor `Sub of expr * expr` to `expr`. Write
-  the corresponding clause for `eval`. Assume the surrounding
-  definitions of `eval`, `lookup`, and `value` are in scope.
-starter: |
-  type ty = T_int | T_bool
-  type expr =
-    | Int of int
-    | Bool of bool
-    | Add of expr * expr
-    | Sub of expr * expr
-    | If of expr * expr * expr
-    | Var of string
-    | Let_in of string * ty option * expr * expr
+Extend `expr` with a new constructor `Sub of expr * expr` and
+complete `eval`'s `Sub` clause. The starter redefines `expr` with
+`Sub` and repeats `eval` with the `Sub` clause left as a `TODO`;
+the chapter's `ty`, `value`, `env`, and `lookup` are still in
+scope.
 
-  (* Write the Sub clause. *)
-  let sub_clause () = failwith "TODO"
-solution: |
-  (* Add this clause between `Add` and `If` in `eval`:
+```ocaml
+type expr =
+  | Int of int
+  | Bool of bool
+  | Add of expr * expr
+  | Sub of expr * expr
+  | If of expr * expr * expr
+  | Var of string
+  | Let_in of string * ty option * expr * expr
 
-     | Sub (e1, e2) ->
-       (match eval env e1, eval env e2 with
-        | Some (VInt a), Some (VInt b) -> Some (VInt (a - b))
-        | _ -> None)
-  *)
-  let sub_clause () = ()
-checks:
-  - call: sub_clause ()
-    expect: ()
+let rec eval (env : env) e =
+  match e with
+  | Int n   -> Some (VInt n)
+  | Bool b  -> Some (VBool b)
+  | Add (e1, e2) ->
+    (match eval env e1, eval env e2 with
+     | Some (VInt a), Some (VInt b) -> Some (VInt (a + b))
+     | _ -> None)
+  | Sub (e1, e2) -> failwith "TODO: the Sub clause"
+  | If (c, t, f) ->
+    (match eval env c with
+     | Some (VBool true)  -> eval env t
+     | Some (VBool false) -> eval env f
+     | _ -> None)
+  | Var x -> lookup x env
+  | Let_in (x, _, e1, e2) ->
+    (match eval env e1 with
+     | Some v -> eval ((x, v) :: env) e2
+     | None   -> None)
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (eval [] (Sub (Int 10, Int 3)) = Some (VInt 7)) "10 - 3";
+  check (eval [] (Sub (Bool true, Int 1)) = None) "ill-typed operand";
+  check (eval [] (Let_in ("x", None, Int 10, Sub (Var "x", Int 4)))
+         = Some (VInt 6)) "sub under a let";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+The `Sub` clause mirrors `Add` with the operator swapped:
+evaluate both children, require two `VInt`s, rebuild with `a - b`,
+and collapse everything off-shape to `None`.
+
 :::
 
 ## Activity
@@ -779,9 +807,11 @@ Add `Sub of expr * expr` and `Mul of expr * expr` to `expr`.
 Run the build before reading on. The compiler should report
 three sites that need attention.
 
+:::solution
+
 :::slide
 
-## Activity discussion: which matches need updating
+## Activity solution: which matches need updating
 
 Adding `Sub` and `Mul`:
 
@@ -806,9 +836,9 @@ type expr =
 
 :::slide
 
-## Activity discussion: `depth` and `eval`
+## Activity solution: `depth` and `eval`
 
-```ocaml skip
+```text
 (* depth: extend the binary or-pattern *)
 | Add (e1, e2) | Sub (e1, e2) | Mul (e1, e2) ->
     1 + max (depth e1) (depth e2)
@@ -829,6 +859,8 @@ type expr =
 - `eval`'s `Sub` and `Mul` are near-copies of `Add` with the
   operator swapped. The repetition is real; we tame it in
   [Module 6](M06-L04-fold.html).
+
+:::
 
 :::
 
