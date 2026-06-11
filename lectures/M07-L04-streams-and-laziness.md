@@ -168,7 +168,7 @@ let _ = hd (tl zero_ones)   (* = 1 *)
 
 :::
 
-Two small accessor functions. `hd` returns the head;`tl` *forces*
+Two small accessor functions. `hd` returns the head; `tl` *forces*
 the thunk and returns the next node.
 
 ```ocaml
@@ -237,7 +237,8 @@ let _ = hd (drop 3 zero_ones)    (* = 1 *)
 
 ## Higher-order functions on streams
 
-The shapes you saw on lists in [Module 6](M06-L02-map.html) carry
+The shapes you saw on lists in the
+[higher-order-functions module](M06-L02-map.html) carry
 over almost line-for-line. `map` applies a function to every
 element; `filter` keeps only the elements satisfying a predicate;
 `zip` walks two streams in lockstep.
@@ -259,10 +260,10 @@ time, when the consumer asks for more.
 
 ```ocaml
 let zero_ones_str = map string_of_int zero_ones
-let _ = take 6 zero_ones_str
+let _ = take 6 zero_ones_str   (* = ["0"; "1"; "0"; "1"; "0"; "1"] *)
 ```
 
-`string list = ["0"; "1"; "0"; "1"; "0"; "1"]`. The mapped stream
+The mapped stream
 is itself infinite; we extract a finite prefix with `take`.
 
 A subtlety in `filter`: if no element of the stream satisfies the
@@ -323,7 +324,7 @@ let _ = take 5 (zip (+) (from 1) (from 100))
 ```
 
 - Walks both streams in lockstep, combining each pair with `f`.
-- Same shape as list `zip` from M06; only the tail wrapping
+- Same shape as `zip` on lists; only the tail wrapping
   changes.
 
 :::
@@ -420,17 +421,17 @@ let v = lazy (print_endline "running lazy"; 10 + 20)
 expression has not run.
 
 ```ocaml
-let _ = Lazy.force v
+let _ = Lazy.force v   (* prints "running lazy"; = 30 *)
 ```
 
-This prints `running lazy` and returns `30`. The result and a
+The result and a
 "has been forced" flag are stored inside the `Lazy.t`.
 
 ```ocaml
-let _ = Lazy.force v
+let _ = Lazy.force v   (* prints NOTHING; = 30 *)
 ```
 
-This prints *nothing* and returns `30` immediately. The body did
+The body did
 not run again: the cached value is reused. That is the whole
 difference between a thunk (recomputes) and a `lazy` value
 (memoizes).
@@ -646,13 +647,16 @@ let _ = ltake 10 lfibs
 
 The exponential-vs-linear claim is easy to *see*. A tiny helper
 times a thunk and returns its result alongside the elapsed
-milliseconds:
+milliseconds. `Sys.time` reports the *processor* time the
+program has used, not the wall clock; for a single-threaded
+pure computation like this the two track each other closely,
+and `Sys.time` works in the browser cells too.
 
 ```ocaml
 let time_it f =
-  let t0 = Unix.gettimeofday () in
+  let t0 = Sys.time () in
   let r = f () in
-  (r, (Unix.gettimeofday () -. t0) *. 1000.)
+  (r, (Sys.time () -. t0) *. 1000.)
 ```
 
 Now race the two streams at a largish prefix. Both compute the
@@ -660,10 +664,10 @@ same 30 Fibonacci numbers; only the cost differs:
 
 ```ocaml skip
 (* thunk stream: recomputes the prefix exponentially *)
-let _ = time_it (fun () -> take 30 fibs)
+let _ = time_it (fun () -> take 30 fibs)    (* = (..., 100s of ms) *)
 
 (* lazy stream: each node memoized, linear *)
-let _ = time_it (fun () -> ltake 30 lfibs)
+let _ = time_it (fun () -> ltake 30 lfibs)  (* = (..., ~0 ms) *)
 ```
 
 The thunk version takes hundreds of milliseconds (and roughly
@@ -677,9 +681,9 @@ instant. These two cells are not run when the page loads; click
 
 ```ocaml
 let time_it f =
-  let t0 = Unix.gettimeofday () in
+  let t0 = Sys.time () in
   let r = f () in
-  (r, (Unix.gettimeofday () -. t0) *. 1000.)
+  (r, (Sys.time () -. t0) *. 1000.)
 ```
 
 ```ocaml skip
@@ -687,7 +691,8 @@ let _ = time_it (fun () -> take 30 fibs)   (* slow: ~100s of ms *)
 let _ = time_it (fun () -> ltake 30 lfibs) (* fast: ~0 ms *)
 ```
 
-- `time_it f` returns `(result, milliseconds)`.
+- `time_it f` returns `(result, CPU milliseconds)`; `Sys.time`
+  is processor time, close to wall-clock for pure code.
 - Thunk `fibs`: exponential, hundreds of ms at a 30-element prefix.
 - Lazy `lfibs`: linear, effectively instant.
 - Click **Run**: these are not run on page load.
@@ -741,8 +746,9 @@ The result is a *list*, not a stream: it terminates as soon as
 :::quiz code id=M07-L04-q3
 Write `take_while : ('a -> bool) -> 'a stream -> 'a list`. It
 walks the stream and collects elements until the predicate
-returns `false` (or forever, if it never does — so callers must
-make sure it does).
+returns `false`. If the predicate never returns `false`, the
+walk never terminates; callers must make sure it eventually
+does.
 
 ```ocaml
 type 'a stream = Cons of 'a * (unit -> 'a stream)

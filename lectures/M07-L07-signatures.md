@@ -198,11 +198,6 @@ To attach a signature to a module, write the signature after a
 colon in the module definition:
 
 ```ocaml
-module type COUNTER = sig
-  val next : unit -> int
-  val reset : unit -> unit
-end
-
 module Counter : COUNTER = struct
   let n = ref 0
   let next () = incr n; !n
@@ -215,8 +210,9 @@ let () = Counter.reset ()
 let _ = Counter.next ()   (* = 1 *)
 ```
 
-Two things are happening at
-the colon. First, the compiler *checks* that every value listed
+(`COUNTER` is the module type we declared above.) Two things are
+happening at the colon. First, the compiler *checks* that every
+value listed
 in `COUNTER` is provided by the structure, with a type matching
 or more general than what the signature requires. (Both `next`
 and `reset` are present with the right types, so the check
@@ -236,12 +232,9 @@ were no such name at all. From the outside, there isn't.
 
 ## A module conforming to a signature
 
-```ocaml
-module type COUNTER = sig
-  val next : unit -> int
-  val reset : unit -> unit
-end
+`COUNTER` is the signature from the previous slide.
 
+```ocaml
 module Counter : COUNTER = struct
   let n = ref 0
   let next () = incr n; !n
@@ -367,10 +360,10 @@ module Stack : STACK = struct
 end
 
 let s = Stack.push 1 (Stack.push 2 (Stack.push 3 Stack.empty))
-let _ = Stack.pop s
+let _ = Stack.pop s   (* = Some (1, <abstr>) *)
 ```
 
-The toplevel reports something like `Some (1, <abstr>)`. The key
+The key
 move is in the signature: `type 'a t` declares that the module
 has a parameterised type called `t`, but does *not* say what `t`
 is. From outside, `Stack.t` is an *abstract type*: a token you
@@ -472,7 +465,7 @@ that `foo.ml` matches `foo.mli` exactly as if you had written
 `module Foo : <contents of foo.mli> = struct <contents of foo.ml>
 end`.
 
-```
+```text
 (* counter.mli *)
 val next : unit -> int
 val reset : unit -> unit
@@ -501,7 +494,7 @@ abstraction is enforced project-wide.
 - `foo.ml` is the implementation; `foo.mli` is the interface.
 - The compiler enforces that `foo.ml` matches `foo.mli`.
 
-```
+```text
 (* counter.mli *)
 val next : unit -> int
 val reset : unit -> unit
@@ -796,9 +789,9 @@ let _ = Logbook.count ()   (* = 2 *)
 let _ = Logbook.last ()    (* = Some "ready" *)
 ```
 
-The most recent message is at the head because `log` prepends.
-Try `let _ = !Logbook.entries` and the compiler refuses with
-`Unbound value Logbook.entries`. The signature has hidden it.
+- Most recent message is at the head: `log` prepends.
+- Try `let _ = !Logbook.entries`: the compiler refuses with
+  `Unbound value Logbook.entries`; the signature hid it.
 
 :::
 

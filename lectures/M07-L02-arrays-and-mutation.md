@@ -66,12 +66,11 @@ type counter = { mutable n : int; name : string }
 let c = { n = 0; name = "visits" }
 let () = c.n <- c.n + 1
 let () = c.n <- c.n + 1
-let _ = c.n
-let _ = c.name
+let _ = c.n      (* = 2 *)
+let _ = c.name   (* = "visits" *)
 ```
 
-The toplevel reports `int = 2` for `c.n` and `string = "visits"`
-for `c.name`. Only fields marked `mutable` can be updated: trying
+Only fields marked `mutable` can be updated: trying
 to write `c.name <- "x"` would be a *compile-time error*. The `<-`
 operator is the field-assignment operator. It takes a field-access
 expression on the left and a new value on the right, and produces
@@ -397,15 +396,11 @@ same type. The literal syntax uses bar-brackets:
 ```ocaml
 let a = [| 10; 20; 30; 40; 50 |]
 
-let _ = a.(0)
-let _ = a.(2)
+let _ = a.(0)            (* = 10 *)
+let _ = a.(2)            (* = 30 *)
 let () = a.(2) <- 999
-let _ = a
+let _ = a                (* = [|10; 20; 999; 40; 50|] *)
 ```
-
-The toplevel reports `int = 10` for `a.(0)`, `int = 30` for
-`a.(2)`, then `int array = [|10; 20; 999; 40; 50|]` for `a` after
-the assignment.
 
 A few syntactic things to note:
 
@@ -473,8 +468,9 @@ The standard trade-off is between O(1) random access (arrays) and
 O(1) prepending plus immutability (lists). If your computation
 walks the data front to back, building up a result as it goes, a
 list is usually the more natural shape; we have seen this all
-through [Module 5](M05-L01-basic-patterns.html) and
-[Module 6](M06-L01-functions-revisited.html). If your computation
+through the [pattern-matching](M05-L01-basic-patterns.html) and
+[higher-order-functions](M06-L01-functions-revisited.html)
+modules. If your computation
 needs to *jump* to arbitrary positions, an array is the right tool.
 
 :::slide
@@ -509,9 +505,9 @@ You rarely write a large array as a literal. The standard library
 gives you three workhorse constructors.
 
 ```ocaml
-let _ = Array.make 5 0
-let _ = Array.init 5 (fun i -> i * i)
-let _ = Array.of_list [10; 20; 30]
+let _ = Array.make 5 0                  (* = [|0; 0; 0; 0; 0|] *)
+let _ = Array.init 5 (fun i -> i * i)   (* = [|0; 1; 4; 9; 16|] *)
+let _ = Array.of_list [10; 20; 30]      (* = [|10; 20; 30|] *)
 ```
 
 `Array.make n x` allocates an array of length `n` with every
@@ -566,12 +562,12 @@ For a pure transformation that does not mutate the input, use
 ```ocaml
 let a = [|10; 20; 30|]
 let b = Array.map (fun x -> x * 2) a
-let _ = b
-let _ = a
+let _ = b   (* = [|20; 40; 60|] *)
+let _ = a   (* = [|10; 20; 30|]: untouched *)
 ```
 
-`b` is `[|20; 40; 60|]`; `a` is unchanged at `[|10; 20; 30|]`.
-`Array.map` allocates a new array. If you want to update the
+`Array.map` allocates a new array and leaves the input
+unchanged. If you want to update the
 input in place, use `Array.iteri` and write back explicitly, or
 use the loop syntax we are about to see.
 
@@ -660,10 +656,10 @@ let count_chars s =
 
 let _ =
   let c = count_chars "hello" in
-  (c.(Char.code 'l'), c.(Char.code 'o'))
+  (c.(Char.code 'l'), c.(Char.code 'o'))  (* = (2, 1) *)
 ```
 
-The toplevel reports `(2, 1)`: two 'l's, one 'o'. The shape of
+Two 'l's, one 'o'. The shape of
 the algorithm is exactly what an imperative loop in C would do:
 walk through the input, indexing by the current character into a
 fixed-size table, incrementing the counter.
@@ -709,11 +705,11 @@ let sum_arr a =
   Array.iter (fun x -> s := !s + x) a;
   !s
 
-let _ = sum_lst [1;2;3;4;5]
-let _ = sum_arr [|1;2;3;4;5|]
+let _ = sum_lst [1;2;3;4;5]    (* = 15 *)
+let _ = sum_arr [|1;2;3;4;5|]  (* = 15 *)
 ```
 
-Both compute `15`. The first version is one line and produces no
+The first version is one line and produces no
 intermediate mutable state. The second version is three lines and
 needs a `ref`. (You could also write the second with
 `Array.fold_left (+) 0 a`, which is again one line.)
@@ -733,11 +729,9 @@ let sum_arr a =
   Array.iter (fun x -> s := !s + x) a;
   !s
 
-let _ = sum_lst [1;2;3;4;5]
-let _ = sum_arr [|1;2;3;4;5|]
+let _ = sum_lst [1;2;3;4;5]    (* = 15 *)
+let _ = sum_arr [|1;2;3;4;5|]  (* = 15 *)
 ```
-
-Both give `15`.
 
 - The fold version is **one line**.
 - The array version is **three lines with a `ref`**.
@@ -909,12 +903,11 @@ let find_index p a =
   done;
   if !i < n then Some !i else None
 
-let _ = find_index (fun x -> x < 0) [|1; 3; -5; 7|]
-let _ = find_index (fun x -> x < 0) [|1; 3;  5; 7|]
+let _ = find_index (fun x -> x < 0) [|1; 3; -5; 7|]  (* = Some 2 *)
+let _ = find_index (fun x -> x < 0) [|1; 3;  5; 7|]  (* = None *)
 ```
 
-The first call returns `Some 2` (the index of `-5`); the second
-returns `None`. Two things to notice. First, the loop variable
+Two things to notice. First, the loop variable
 `i` is a `ref`, because the body needs to mutate it. (OCaml's
 `for` gives you a fresh immutable binding each iteration; `while`
 is where refs and loops fit together.) Second, the loop condition
@@ -942,8 +935,7 @@ let find_index p a =
   done;
   if !i < n then Some !i else None
 
-let _ = find_index (fun x -> x < 0) [|1; 3; -5; 7|]
-   (* = Some 2 *)
+let _ = find_index (fun x -> x < 0) [|1; 3; -5; 7|] (* = Some 2 *)
 ```
 
 - Loop variable is a **`ref`**: the body increments it.
@@ -959,8 +951,9 @@ The mutation toolkit (refs, mutable fields, arrays) is in the
 language because some algorithms genuinely want it: random-access
 table updates, doubly-linked structures, in-place reverses, callbacks
 that push state into the world. But everything we have built so far,
-all the way through [Module 6](M06-L01-functions-revisited.html), did
-without it. There is a reason to keep that as the default.
+all the way through the
+[higher-order-functions module](M06-L01-functions-revisited.html),
+did without it. There is a reason to keep that as the default.
 
 Immutable data has three concrete payoffs. First, you do not have
 to think about [aliasing](M07-L01-references.html#aliasing-two-names-for-one-cell):
@@ -971,8 +964,8 @@ new list `x :: xs` shares all of `xs` with the original, no copy
 needed. Third, immutable data is a perfect fit for *concurrency*:
 two threads (or two domains, or two distant cores) can read the
 same value at once without locks, because there is nothing to
-race over. We will return to that point in
-[Module 10](M10-L03-data-races-are-ub.html).
+race over. We will return to that point when we discuss
+[data races](M10-L03-data-races-are-ub.html).
 
 The recommendation, then, is the same one OCaml itself follows:
 use immutable data structures by default, and reach for mutation

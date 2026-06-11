@@ -5,7 +5,7 @@ week: 7
 duration_target_min: 0
 concepts: [practice problems, references, mutable records, arrays, modules, functors, streams]
 keywords: [OCaml, practice, assignment, ref, mutable, array, module, functor, stream]
-think_about_this: "These problems mix the three threads of Module 7: in-place mutation, packaging code behind signatures and functors, and infinite data built lazily. The module/functor problems are the hard ones; budget most of your time there."
+think_about_this: "These problems mix the three threads of this module: in-place mutation, packaging code behind signatures and functors, and infinite data built lazily. The module/functor problems are the hard ones; budget most of your time there."
 reading:
   - title: "OCaml manual, The module system"
     url: https://v2.ocaml.org/manual/moduleexamples.html
@@ -83,7 +83,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let sum_ref xs =
   let acc = ref 0 in
   List.iter (fun x -> acc := !acc + x) xs;
@@ -142,7 +142,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let rotate_left a =
   let n = Array.length a in
   if n > 1 then begin
@@ -213,7 +213,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let deposit acc n = acc.balance <- acc.balance + n
 
 let withdraw acc n =
@@ -273,7 +273,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let gensym =
   let counter = ref 0 in
   fun () ->
@@ -338,7 +338,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let prefix_sums_in_place a =
   for i = 1 to Array.length a - 1 do
     a.(i) <- a.(i) + a.(i - 1)
@@ -417,7 +417,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 type t = { mutable data : int array; mutable len : int }
 
 let create () = { data = Array.make 4 0; len = 0 }
@@ -514,7 +514,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 type window = { buf : int array; mutable count : int; size : int }
 
 let make_window k = { buf = Array.make k min_int; count = 0; size = k }
@@ -592,7 +592,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 module IntShowable : Showable with type t = int = struct
   type t = int
   let string_of_t = string_of_int
@@ -707,7 +707,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 module MakeNode (C : Showable) : NODE with type content = C.t = struct
   type content = C.t
   type t = {
@@ -839,7 +839,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 module MakeList (N : NODE) : DLL with type content = N.content = struct
   type content = N.content
   type t = { mutable head : N.t option }
@@ -873,11 +873,13 @@ ever descending into the node.
 
 :::
 
-## Problem 11: a set functor over an ordering
+## Problem 11: set algebra over an ordering
 
-The standard library's `Set.Make` takes a module describing *how to
-compare elements* and returns a set module. Build a small version.
-Given
+The [functors lecture](M07-L08-functors.html) built a
+`Set.Make`-style functor whose output could only answer
+*membership* questions: `empty`, `add`, `mem`. A real set module
+also provides the set *algebra*: intersection, difference,
+subset. Extend the same sorted-list design with those. Given
 
 ```text
 module type ORDERED = sig
@@ -899,18 +901,25 @@ module type SET = sig
   type elt
   type t
   val empty   : t
-  val mem     : elt -> t -> bool
   val add     : elt -> t -> t
-  val to_list : t -> elt list   (* ascending, no duplicates *)
+  val mem     : elt -> t -> bool
+  val inter   : t -> t -> t      (* elements in both *)
+  val diff    : t -> t -> t      (* in the first, not the second *)
+  val subset  : t -> t -> bool   (* first contained in second? *)
+  val to_list : t -> elt list    (* ascending, no duplicates *)
 end
 ```
 
-Represent the set as a *sorted list with no duplicates*, using
-`O.compare` to keep it ordered. `add` of an element already present
-is a no-op; `to_list` returns the elements in ascending order.
+The representation is a *sorted list with no duplicates*, and the
+starter already implements the membership part (`empty`, `add`,
+`mem`, `to_list`). Your job is `inter`, `diff`, and `subset`.
+*Both* arguments satisfy the sorted invariant, so each operation
+can be a single synchronized walk down the two lists, comparing
+heads and advancing the smaller side (the merge pattern), rather
+than a nested loop that calls `mem` once per element.
 
 :::quiz code id=M07-L10-q11
-Implement the functor `MakeSet`.
+Implement `inter`, `diff`, and `subset` in the functor `MakeSet`.
 
 ```ocaml
 module type ORDERED = sig
@@ -922,19 +931,42 @@ module type SET = sig
   type elt
   type t
   val empty   : t
-  val mem     : elt -> t -> bool
   val add     : elt -> t -> t
+  val mem     : elt -> t -> bool
+  val inter   : t -> t -> t
+  val diff    : t -> t -> t
+  val subset  : t -> t -> bool
   val to_list : t -> elt list
 end
 
 module MakeSet (O : ORDERED) : SET with type elt = O.t = struct
-  (* Implement the set here. *)
   type elt = O.t
-  type t = elt list  (* keep this sorted and duplicate-free *)
+  type t = elt list  (* sorted ascending, no duplicates *)
+
   let empty = []
-  let mem _ _ = failwith "not implemented"
-  let add _ _ = failwith "not implemented"
-  let to_list _ = failwith "not implemented"
+
+  let rec mem x = function
+    | [] -> false
+    | y :: ys ->
+        let c = O.compare x y in
+        if c = 0 then true
+        else if c < 0 then false
+        else mem x ys
+
+  let rec add x = function
+    | [] -> [x]
+    | (y :: ys) as l ->
+        let c = O.compare x y in
+        if c = 0 then l
+        else if c < 0 then x :: l
+        else y :: add x ys
+
+  let to_list s = s
+
+  (* Implement these with a synchronized walk on both lists. *)
+  let inter _ _ = failwith "not implemented"
+  let diff _ _ = failwith "not implemented"
+  let subset _ _ = failwith "not implemented"
 end
 ```
 
@@ -944,11 +976,16 @@ module IntOrd = struct type t = int let compare = Stdlib.compare end
 module IntSet = MakeSet (IntOrd)
 let () =
   let open IntSet in
-  let s = add 3 (add 1 (add 2 (add 1 empty))) in
-  check (to_list s = [1; 2; 3]) "sorted, deduplicated";
-  check (mem 2 s) "mem present";
-  check (not (mem 9 s)) "mem absent";
-  check (to_list (add 0 s) = [0; 1; 2; 3]) "insert at front";
+  let of_list xs = List.fold_left (fun s x -> add x s) empty xs in
+  let evens = of_list [2; 4; 6] in
+  let small = of_list [5; 3; 1; 4; 2] in
+  check (to_list (inter small evens) = [2; 4]) "inter";
+  check (to_list (inter small empty) = []) "inter empty";
+  check (to_list (diff small evens) = [1; 3; 5]) "diff";
+  check (to_list (diff evens small) = [6]) "diff, other order";
+  check (subset (of_list [4; 2]) evens) "subset holds";
+  check (not (subset evens small)) "subset fails";
+  check (subset empty small) "empty is a subset";
   print_endline "all tests passed"
 ```
 :::
@@ -957,10 +994,10 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 module MakeSet (O : ORDERED) : SET with type elt = O.t = struct
   type elt = O.t
-  type t = elt list
+  type t = elt list  (* sorted ascending, no duplicates *)
 
   let empty = []
 
@@ -969,29 +1006,57 @@ module MakeSet (O : ORDERED) : SET with type elt = O.t = struct
     | y :: ys ->
         let c = O.compare x y in
         if c = 0 then true
-        else if c < 0 then false   (* past where x would be *)
+        else if c < 0 then false
         else mem x ys
 
   let rec add x = function
     | [] -> [x]
     | (y :: ys) as l ->
         let c = O.compare x y in
-        if c = 0 then l            (* already present *)
-        else if c < 0 then x :: l  (* insert here *)
+        if c = 0 then l
+        else if c < 0 then x :: l
         else y :: add x ys
 
   let to_list s = s
+
+  let rec inter s1 s2 = match s1, s2 with
+    | [], _ | _, [] -> []
+    | x :: xs, y :: ys ->
+        let c = O.compare x y in
+        if c = 0 then x :: inter xs ys
+        else if c < 0 then inter xs s2   (* x not in s2; drop it *)
+        else inter s1 ys                 (* y not in s1; drop it *)
+
+  let rec diff s1 s2 = match s1, s2 with
+    | [], _ -> []
+    | _, [] -> s1
+    | x :: xs, y :: ys ->
+        let c = O.compare x y in
+        if c = 0 then diff xs ys         (* x is in s2; drop it *)
+        else if c < 0 then x :: diff xs s2
+        else diff s1 ys
+
+  let rec subset s1 s2 = match s1, s2 with
+    | [], _ -> true
+    | _, [] -> false
+    | x :: xs, y :: ys ->
+        let c = O.compare x y in
+        if c = 0 then subset xs ys
+        else if c < 0 then false         (* x can't appear in s2 *)
+        else subset s1 ys
 end
 ```
 
-The invariant is "sorted ascending, no duplicates," and every
-operation preserves it. `mem` can stop early: once it passes the
-point where `x` would sit (`c < 0`), `x` cannot be further along.
-`add` inserts at the first position where the element is no longer
-greater, and does nothing if it is already there. Because the
-representation type `t` is abstract behind the signature, callers
-cannot accidentally hand in an unsorted list. This is exactly the
-shape of `Set.Make`, parameterised by the `compare` you supply.
+All three walk the two lists in lockstep. At each step, compare
+the heads: equal heads mean a shared element (keep it for
+`inter`, drop it for `diff`, keep checking for `subset`); a
+smaller head on one side cannot appear on the other side at all,
+because both lists are sorted. Each operation is therefore
+O(|s1| + |s2|), the same shape as the merge step of merge sort.
+The naive alternative, calling `mem` on `s2` once per element of
+`s1`, is O(|s1| * |s2|): the sorted invariant is what buys the
+speedup. `subset` can answer `false` the moment an element of
+`s1` proves smaller than every remaining element of `s2`.
 
 :::
 
@@ -1081,10 +1146,12 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 module MakeDict (K : KEY) : DICT with type key = K.t = struct
   type key = K.t
   type 'v t = (key * 'v) list
+
+  let empty = []
 
   let remove k d = List.filter (fun (k', _) -> not (K.equal k k')) d
   let add k v d = (k, v) :: remove k d
@@ -1168,7 +1235,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 module FHeap : FHEAP = struct
   type ('k, 'v) t = ('k * 'v) list
   let empty = []
@@ -1238,7 +1305,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let rec interleave s1 s2 =
   Cons (hd s1, fun () -> interleave s2 (tl s1))
 ```
@@ -1293,7 +1360,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let cycle lst =
   if lst = [] then invalid_arg "cycle: empty list";
   let rec go = function
@@ -1373,7 +1440,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let rec merge s1 s2 =
   let h1 = hd s1 and h2 = hd s2 in
   if h1 < h2 then Cons (h1, fun () -> merge (tl s1) s2)
@@ -1435,7 +1502,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let rec iterate f x =
   Cons (x, fun () -> iterate f (f x))
 ```
@@ -1493,7 +1560,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let partial_sums s =
   let rec go acc s =
     let acc = acc + hd s in
@@ -1559,7 +1626,7 @@ let () =
 
 Reference solution:
 
-```
+```ocaml
 let nat_pairs =
   let rec diag s i =
     if i > s then diag (s + 1) 0    (* finished diagonal s; start s+1 *)
@@ -1604,7 +1671,7 @@ By the end of these nineteen problems you should be comfortable with:
   (`merge` / Hamming), unfolding (`iterate`), scanning
   (`partial_sums`), and diagonalising a grid (`nat_pairs`).
 
-[Module 8](M08-L01-option-monad.html) goes further with two more
+The [next module](M08-L01-option-monad.html) goes further with two more
 advanced ideas: *monads* (a uniform way to sequence computations
 that carry context, including the kind of functional-heap state you
 built in Problem 13) and *generalised algebraic data types* (GADTs).
@@ -1619,5 +1686,5 @@ course at IIT Madras, with prose, signatures, test harnesses, and
 reference solutions rewritten for this NPTEL course. The set and
 dictionary functors (`MakeSet`, `MakeDict`) follow the standard
 `Set.Make` / `Map.Make` shape. Part 1 (references, arrays, mutable
-records) and Part 3 (streams) are new here, exercising the Module 7
-lectures directly.
+records) and Part 3 (streams) are new here, exercising this
+module's lectures directly.

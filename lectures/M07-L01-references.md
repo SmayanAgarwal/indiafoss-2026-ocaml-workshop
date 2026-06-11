@@ -83,9 +83,9 @@ screen, raising an exception, looping forever, sending a packet
 over the network. This module covers the first three. We focus on
 **state** (mutable cells, mutable fields, arrays) this lecture and
 the [next](M07-L02-arrays-and-mutation.html); we cover
-[**exceptions**](M07-L03-exceptions.html) in lecture 3. **I/O** has
-been with us implicitly since `print_endline` in
-[Module 1](M01-L02-why-fp.html); **non-termination** is whatever
+[**exceptions**](M07-L03-exceptions.html) in their own lecture.
+**I/O** has been with us implicitly since `print_endline` in
+[the very first programs](M01-L02-why-fp.html); **non-termination** is whatever
 recursion you write that does not stop. The general lesson is the
 same for all four: they let you do things pure functions cannot,
 but they cost you equational reasoning.
@@ -96,8 +96,10 @@ but they cost you equational reasoning.
 
 A *side effect* is anything an expression does besides return a value.
 
-- **State**: mutable cells, mutable record fields, arrays. (This lecture + L2.)
-- **Exceptions**: control-flow escapes. ([L3](M07-L03-exceptions.html).)
+- **State**: mutable cells, mutable record fields, arrays. (This
+  lecture and the next.)
+- **Exceptions**: control-flow escapes.
+  ([Their own lecture](M07-L03-exceptions.html).)
 - **I/O**: `print_endline`, file and network access.
 - **Non-termination**: a loop that never returns.
 
@@ -126,15 +128,14 @@ let counter = ref 0
 
 let () = counter := 1
 let () = counter := 2
-let _ = !counter
+let _ = !counter  (* = 2 *)
 ```
 
 Three operators, three roles. `ref x` *creates* a fresh mutable
 cell holding the value `x`; the expression evaluates to a reference
 to that cell, of type `int ref`. The operator `:=` *writes* a new
 value into the cell. The operator `!` *reads* the current value
-out. The toplevel reports `int = 2`, the contents after the last
-write.
+out: the contents left by the last write.
 
 :::slide
 
@@ -200,12 +201,12 @@ Here is the price you pay when you reach for a `ref`.
 let counter = ref 0
 let get_next () = counter := !counter + 1; !counter
 
-let _ = get_next ()
-let _ = get_next ()
-let _ = get_next ()
+let _ = get_next ()  (* = 1 *)
+let _ = get_next ()  (* = 2 *)
+let _ = get_next ()  (* = 3 *)
 ```
 
-The toplevel reports `1`, then `2`, then `3`. The same expression
+The same expression
 `get_next ()` produces three different answers in succession. There
 is no way to predict the answer of a call to `get_next ()` without
 knowing how many times it has been called before.
@@ -226,8 +227,9 @@ let _ = get_next ()  (* = 3 *)
 - `get_next ()` is *not* equal to `get_next ()`.
 - First call returns 1, second returns 2.
 - You can't replace a call by its result without changing behaviour.
-- **The cost of mutation**: the equational reasoning we had with
-  pure functions (Module 2) is gone for code that touches a `ref`.
+- **The cost of mutation**: the
+  [equational reasoning](M01-L02-why-fp.html#equational-reasoning)
+  we had with pure functions is gone for code that touches a `ref`.
 
 :::
 
@@ -319,13 +321,12 @@ let make_once () =
     end
 
 let f = make_once ()
-let _ = f ()
-let _ = f ()
-let _ = f ()
+let _ = f ()  (* = Some "first call" *)
+let _ = f ()  (* = None *)
+let _ = f ()  (* = None *)
 ```
 
-The first call returns `Some "first call"`. Subsequent calls all
-return `None`. The mutable state `used` is hidden inside the
+The mutable state `used` is hidden inside the
 closure: there is no way to reach it from the outside. Each call
 to `make_once` produces a fresh, independent one-shot.
 
@@ -369,7 +370,7 @@ exposed and you put them together as needed.
 
 ## Sequencing side effects with `;`
 
-We met `;` in [M01-L04](M01-L04-hello-world.html) as the way to
+We met `;` in [the hello-world lecture](M01-L04-hello-world.html) as the way to
 sequence two unit-typed expressions: `e1; e2` evaluates `e1`
 (which must be `unit`), then `e2`, and returns `e2`'s value. With
 refs, `;` becomes the everyday tool for threading several updates
@@ -392,8 +393,8 @@ warns that you are throwing a value away; wrap the offender in
 
 The `begin ... end` and `(...)` brackets group a sequence into one
 expression, which we sometimes need when a sequence appears in the
-branch of an `if`. We saw this in
-[M03-L02](M03-L02-recursion.html) when writing `count_down`.
+branch of an `if`. We saw this when writing
+[`count_down`](M03-L02-recursion.html).
 
 :::slide
 
@@ -409,7 +410,7 @@ let () =
 ```
 
 - `;` sequences side effects (introduced in
-  [M01-L04](M01-L04-hello-world.html)).
+  [the hello-world lecture](M01-L04-hello-world.html)).
 - Left of each `;` must be `unit`.
 - A non-unit expression in sequence triggers a warning; wrap in
   `ignore` to silence.
@@ -482,13 +483,14 @@ what the other name sees.
 let x = ref 42
 let y = x
 let () = x := 99
-let _ = !x
-let _ = !y
+let _ = !x  (* = 99 *)
+let _ = !y  (* = 99 *)
 ```
 
-Both `!x` and `!y` return `99`. The `let y = x` did not copy the
+The `let y = x` did not copy the
 cell; it bound a new name to the same cell. Both names refer to
-the same place in memory.
+the same place in memory, so the write through `x` is visible
+through `y`.
 
 If you actually want two independent cells with the same initial
 value, you have to create two cells:
@@ -497,12 +499,12 @@ value, you have to create two cells:
 let x = ref 42
 let y = ref 42
 let () = x := 99
-let _ = !x
-let _ = !y
+let _ = !x  (* = 99 *)
+let _ = !y  (* = 42 *)
 ```
 
-Now `!x` is `99` and `!y` is `42`. Each `ref 42` evaluation is a
-fresh allocation.
+Each `ref 42` evaluation is a fresh allocation, so the write
+through `x` leaves `y`'s cell untouched.
 
 This *aliasing* is the source of much of the difficulty of
 imperative programming. Anywhere a `ref` (or any mutable value)
@@ -672,9 +674,9 @@ answer in `x-ocaml` cells as on the command line.
 :::quiz mcq id=M07-L01-q4
 Given:
 
-```ocaml skip
-let a = [| 1; 2; 3 |]
-let b = [| 1; 2; 3 |]
+```ocaml
+let a = ref 5
+let b = ref 5
 let c = a
 ```
 
@@ -686,11 +688,11 @@ which of the following are true?
 - [ ] none of them
 
 **Why:** structural equality `=` ignores identity, so `a = b` and
-`a = c` are both true (all three arrays have contents `1; 2; 3`).
-Physical equality `==` requires the *same* allocation: `a == c` is
-true because `let c = a` shares the array, but `a == b` is false
-because `[| 1; 2; 3 |]` was evaluated twice and produced two
-distinct arrays.
+`a = c` are both true (all three refs hold `5`). Physical
+equality `==` requires the *same* allocation: `a == c` is true
+because `let c = a` aliases the cell, but `a == b` is false
+because `ref 5` was evaluated twice and allocated two distinct
+cells.
 :::
 
 ## Value restriction: a subtle interaction with polymorphism
@@ -710,7 +712,7 @@ infer which one from the first use.
 ```ocaml
 let r = ref []
 let () = r := [1]
-let _ = !r          (* now r : int list ref *)
+let _ = !r          (* = [1]; r is now int list ref *)
 ```
 
 After `r := [1]`, the type of `r` is locked to `int list ref`. A
@@ -843,9 +845,9 @@ let dispense_broken () =
   incr n;
   !n
 
-let _ = dispense_broken ()
-let _ = dispense_broken ()
-let _ = dispense_broken ()
+let _ = dispense_broken ()  (* = 1 *)
+let _ = dispense_broken ()  (* = 1 *)
+let _ = dispense_broken ()  (* = 1 *)
 ```
 
 Expected: `1`, `2`, `3`. Actual: `1` every time.
@@ -867,14 +869,13 @@ let dispense =
     incr n;
     !n
 
-let _ = dispense ()
-let _ = dispense ()
-let _ = dispense ()
+let _ = dispense ()  (* = 1 *)
+let _ = dispense ()  (* = 2 *)
+let _ = dispense ()  (* = 3 *)
 ```
 
 Now there is one cell, allocated at definition time, captured by
-the closure. Successive calls hit the same cell. The toplevel
-reports `1`, `2`, `3`.
+the closure. Successive calls hit the same cell.
 
 The lesson generalises: a `let` *inside* a function body runs on
 every call; a `let` outside, captured by closure, runs once. With
@@ -891,9 +892,9 @@ let dispense_broken () =
   incr n;
   !n
 
-let _ = dispense_broken ()
-let _ = dispense_broken ()
-let _ = dispense_broken ()
+let _ = dispense_broken ()  (* = 1 *)
+let _ = dispense_broken ()  (* = 1 *)
+let _ = dispense_broken ()  (* = 1 *)
 ```
 
 Expected `1; 2; 3`. Actual: `1; 1; 1`.
@@ -909,9 +910,9 @@ let dispense =
   let n = ref 0 in        (* allocated once, at definition *)
   fun () -> incr n; !n
 
-let _ = dispense ()
-let _ = dispense ()
-let _ = dispense ()       (* = 1, 2, 3 *)
+let _ = dispense ()  (* = 1 *)
+let _ = dispense ()  (* = 2 *)
+let _ = dispense ()  (* = 3 *)
 ```
 
 - `let` *inside* the body runs on every call: fresh cell.
@@ -1012,12 +1013,16 @@ let _ = add 10   (* = 18 *)
 ```ocaml
 let a = make_running_total ()
 let b = make_running_total ()
-let _ = a 1, a 2, a 3, b 10, b 20
+let _ = a 1    (* = 1  *)
+let _ = a 2    (* = 3  *)
+let _ = a 3    (* = 6  *)
+let _ = b 10   (* = 10 *)
+let _ = b 20   (* = 30 *)
 ```
 
-`(1, 3, 6, 10, 30)`. Each call to `make_running_total ()`
-allocates a fresh `total` captured by a fresh closure; `a` and `b`
-don't share state.
+- Each call to `make_running_total ()` allocates a fresh `total`,
+  captured by a fresh closure.
+- `a` and `b` don't share state.
 
 :::
 
@@ -1025,7 +1030,7 @@ Each call to `make_running_total ()` is a fresh allocation of
 `total`, captured by a fresh closure. The two accumulators `a` and
 `b` are *independent*: `a`'s `total` and `b`'s `total` are
 different cells. This is the same
-[closure machinery from Module 3](M03-L01-functions-as-values.html),
+[closure machinery from functions-as-values](M03-L01-functions-as-values.html),
 with the captured value happening to be a mutable cell rather than
 an integer.
 

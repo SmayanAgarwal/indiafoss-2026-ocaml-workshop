@@ -48,12 +48,12 @@ all course is a tree of modules:
 [`List`](M04-L04-recursive-types.html), `String`, `Array`,
 [`Option`](M04-L04-recursive-types.html), `Map`, and so on. A
 real OCaml project is a tree of *your* modules using and being used
-by them. This lecture introduces the syntax.
-[Lecture 7](M07-L07-signatures.html) covers *signatures*, the
+by them. This lecture introduces the syntax. The
+[signatures lecture](M07-L07-signatures.html) covers the
 type-level description of a module that lets you hide internals.
-[Lecture 8](M07-L08-functors.html) covers *functors*, modules
-parameterized by other modules.
-[Lecture 9](M07-L09-tutorial.html) is the tutorial.
+The [functors lecture](M07-L08-functors.html) covers modules
+parameterized by other modules. The
+[module tutorial](M07-L09-tutorial.html) closes the module.
 
 :::slide
 
@@ -84,11 +84,9 @@ module Greet = struct
   let goodbye name = "goodbye, " ^ name
 end
 
-let _ = Greet.hello "world"
-let _ = Greet.goodbye "world"
+let _ = Greet.hello "world"     (* = "hello, world" *)
+let _ = Greet.goodbye "world"   (* = "goodbye, world" *)
 ```
-
-The toplevel reports `"hello, world"` and `"goodbye, world"`.
 
 The shape is consistent throughout the language: `module Name =
 struct ... end` is to modules what `let name = ...` is to values.
@@ -176,10 +174,10 @@ module Color = struct
 end
 
 let c : Color.t = Color.Red
-let _ = Color.to_string c
+let _ = Color.to_string c   (* = "red" *)
 ```
 
-The toplevel reports `"red"`. Notice the dot notation extends
+Notice the dot notation extends
 uniformly: `Color.t` is the *type* defined inside `Color`,
 `Color.Red` is one of its constructors, `Color.to_string` is the
 function. From outside, you always go through the module name.
@@ -233,9 +231,8 @@ end
 let _ =
   let open Greet in
   hello "alice" ^ "; " ^ goodbye "alice"
+  (* = "hello, alice; goodbye, alice" *)
 ```
-
-`"hello, alice; goodbye, alice"`.
 
 The `let open M in expr` form opens `M` *only* inside `expr`.
 Outside that expression, you still need the `Greet.` prefix. This
@@ -288,17 +285,18 @@ limiting the scope.
 - For small modules, fine.
 - For big ones (`open List`, `open Stdlib`), it can hide where a
   name comes from.
-- **Middle ground**: `M.()` (apply notation) or `M.[...]` (list
-  syntax) lets you use module-specific forms briefly:
+- **Middle ground**: `M.(...)` (local open in parentheses) or
+  `M.[...]` (the list form) opens `M` only inside the brackets:
 
 ```ocaml
-let _ = List.[1; 2; 3]                            (* = [1; 2; 3] *)
-let _ = String.length "x" + String.length "yy"    (* = 3 *)
+let _ = String.(length "x" + length "yy")   (* = 3 *)
+let _ = List.[1; 2; 3]                      (* = [1; 2; 3] *)
 ```
 
-- The first is unnecessary here (lists are top-level) but shows
+- The first writes `length` twice with no `String.` prefix and
+  no `open` leaking out of the parentheses.
+- The second is unnecessary here (lists are top-level) but shows
   the syntax.
-- The second avoids the verbose prefix without opening.
 
 :::
 
@@ -324,12 +322,10 @@ module Counter = struct
   let reset () = n := 0
 end
 
-let _ = Counter.next ()
-let _ = Counter.next ()
-let _ = !Counter.n
+let _ = Counter.next ()   (* = 1 *)
+let _ = Counter.next ()   (* = 2 *)
+let _ = !Counter.n        (* = 2 *)
 ```
-
-`1`, `2`, `2`.
 
 Here is the catch: without an interface, *every* definition in
 the module is visible to the outside world. The `n` ref is meant
@@ -366,7 +362,7 @@ This is the major motivation for the
 the module with a *signature*: a type-level description that lists
 exactly which names escape, with which types. Anything not in the
 signature is invisible from the outside. We hold off on the details
-until [M07-L07](M07-L07-signatures.html).
+until the [signatures lecture](M07-L07-signatures.html).
 
 ## Modules can nest
 
@@ -387,10 +383,10 @@ module Geometry = struct
 end
 
 let p = Geometry.Point.make 3.0 4.0
-let _ = p.x
+let _ = p.x   (* = 3. *)
 ```
 
-`float = 3.0`. The dot notation extends to any depth for
+The dot notation extends to any depth for
 *module* paths: `Geometry.Point.t`, `Geometry.Point.make`, and so
 on. The field access on the last line is just `p.x`, not
 `p.Geometry.Point.x`: OCaml already knows `p : Geometry.Point.t`,
@@ -471,8 +467,8 @@ on the other end (`(val v : T)`). It is occasionally useful, but
 not for everyday code. For the standard module toolkit this
 lecture introduces, modules live at compile time and are used
 statically. The "function-like" thing that takes a module and
-returns a module is called a *functor*, and we cover it in
-[Lecture 8](M07-L08-functors.html).
+returns a module is called a *functor*, and we cover it in the
+[functors lecture](M07-L08-functors.html).
 
 :::slide
 
@@ -481,7 +477,8 @@ returns a module is called a *functor*, and we cover it in
 - Not first-class by default; cannot pass them like ints.
 - *First-class modules* are an extension; ignored this week.
 - Modules live at **compile time**, used statically.
-- A function from modules to modules is a **functor** (Lecture 8).
+- A function from modules to modules is a **functor** (a later
+  lecture).
 
 :::
 
@@ -607,8 +604,9 @@ let _ = Stack.pop ()     (* = Some 2 *)
 - Push 1, 2, 3; `peek` reads the top (`Some 3`) without removing.
 - `pop` returns and removes: `Some 3`, then `Some 2`.
 - There's *one* stack, shared by every caller: the simplest design.
-- For multiple independent stacks, parameterize with a functor
-  (a later lecture).
+- For multiple independent stacks: create *values*, not modules;
+  - make the stack a type passed to the operations, or have a
+    `make ()` return a fresh one.
 
 :::
 

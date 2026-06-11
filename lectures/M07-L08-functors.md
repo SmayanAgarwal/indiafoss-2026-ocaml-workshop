@@ -436,7 +436,12 @@ module satisfying `ORDERED`. We use an inline module to make
 `Int_set`. The same trick works for any ordered type:
 `SetLite (String)` would give us a string set,
 `SetLite (Int_ord)` likewise if we had defined an `Int_ord`
-module.
+module. One caveat if you do define such a module: sealing it as
+`module Int_ord : ORDERED = ...` hides `t`, so the resulting
+set's element type would be abstract and you could never build
+an element to insert. Real code keeps `t` usable with a
+signature *constraint*, `ORDERED with type t = int`, which the
+practice problems cover.
 
 This is the pattern. Define a signature describing what your data
 structure needs from the element type (`compare`, or `hash`, or
@@ -548,8 +553,9 @@ go.
 :::
 
 :::quiz mcq id=M07-L08-q2
-What is the result of this snippet, supposing `Stdlib.compare`
-gives the usual lexicographic ordering on strings?
+What is the result of this snippet? (`Map.Make(String)` orders
+its keys with `String.compare`, the usual lexicographic
+ordering.)
 
 ```ocaml
 module M = Map.Make(String)

@@ -40,7 +40,8 @@ We have already seen one way to express this: the
 [`result` type](M04-L04-recursive-types.html#the-result-type)
 (`Error e` instead of just `None`, so the failure can carry a
 reason). Those were the subjects of
-[Module 4](M04-L04-recursive-types.html). They are the *typed*
+[the recursive-types lecture](M04-L04-recursive-types.html).
+They are the *typed*
 approach to partial functions: the possibility of failure is right
 there in the return type, and the compiler will not let you forget
 to handle it.
@@ -63,8 +64,8 @@ right shape and when an `option` or `result` is.
 
 - Some functions have no answer: `List.hd []`, `1 / 0`,
   `int_of_string "hello"`.
-  - *Typed* approach (Module 4): wrap failure in `option` or
-  `result`.
+  - *Typed* approach (the recursive-types lecture): wrap failure
+  in `option` or `result`.
   - *This lecture*: the other approach, *exceptions*.
 - An exception interrupts evaluation and propagates up the call
   stack until something catches it.
@@ -146,10 +147,10 @@ let rec factorial n =
   else if n = 0 then 1
   else n * factorial (n - 1)
 
-let _ = factorial 5
+let _ = factorial 5    (* = 120 *)
 ```
 
-`int = 120`. The `raise Negative_input` branch never returns;
+The `raise Negative_input` branch never returns;
 control jumps out of `factorial` and up the call stack until
 something catches the exception (we will get to catching in the
 next section). If nothing does, the program halts and prints the
@@ -200,10 +201,10 @@ let head = function
   | [] -> failwith "head of empty list"
   | x :: _ -> x
 
-let _ = head [1; 2; 3]
+let _ = head [1; 2; 3]    (* = 1 *)
 ```
 
-`int = 1`. The `failwith` arm expands to
+The `failwith` arm expands to
 `raise (Failure "head of empty list")`. The expanded form makes
 the construction explicit: an exception value is a constructor
 applied to its payload, exactly like `Some 3` is `Some` applied
@@ -305,11 +306,10 @@ let safe_head xs =
   try Some (List.hd xs)
   with Failure _ -> None
 
-let _ = safe_head [1; 2; 3]
-let _ = safe_head []
+let _ = safe_head [1; 2; 3]   (* = Some 1 *)
+let _ = safe_head []          (* = None *)
 ```
 
-`Some 1` for the non-empty list, `None` for the empty list.
 `List.hd` raises `Failure "hd"` on the empty list; the `with`
 clause catches `Failure _` (the wildcard `_` ignores the
 message) and produces `None`. Both `Some (List.hd xs)` and
@@ -362,10 +362,10 @@ let parse_and_divide sa sb =
   | Failure _ -> -1
   | Division_by_zero -> -2
 
-let _ = parse_and_divide "10" "2"
-let _ = parse_and_divide "oops" "2"
-let _ = parse_and_divide "10" "oops"
-let _ = parse_and_divide "10" "0"
+let _ = parse_and_divide "10" "2"      (* =  5 *)
+let _ = parse_and_divide "oops" "2"    (* =  0 *)
+let _ = parse_and_divide "10" "oops"   (* = -1 *)
+let _ = parse_and_divide "10" "0"      (* = -2 *)
 ```
 
 - `parse_and_divide "10" "2"` returns `5`: both parses succeed,
@@ -586,13 +586,13 @@ let parse_int_field s =
   with Failure _ ->
     raise (Parse_error ("not an int: " ^ s, 7))
 
-let _ =
+let _ =                       (* = 42, prints nothing *)
   try parse_int_field "42"
   with Parse_error (msg, line) ->
     Printf.printf "line %d: %s\n" line msg;
     0
 
-let _ =
+let _ =                       (* = 0, prints "line 7: ..." *)
   try parse_int_field "oops"
   with Parse_error (msg, line) ->
     Printf.printf "line %d: %s\n" line msg;
@@ -630,14 +630,14 @@ type exn += My_other_error of string
 (* both flow through raise / try ... with identically *)
 let _ =
   try raise (My_error "via the sugar")
-  with My_error s -> s
+  with My_error s -> s          (* = "via the sugar" *)
 
 let _ =
   try raise (My_other_error "via type exn +=")
-  with My_other_error s -> s
+  with My_other_error s -> s    (* = "via type exn +=" *)
 ```
 
-Both calls return their string. The `+=` form makes the
+The `+=` form makes the
 extension explicit; the `exception` keyword is the
 exception-flavoured shorthand. We will not need to write `type
 exn +=` ourselves in this course, but seeing it once explains
@@ -656,7 +656,7 @@ let parse_int_field s =
   with Failure _ ->
     raise (Parse_error ("not an int: " ^ s, 7))
 
-let _ =
+let _ =                       (* = 0, prints "line 7: ..." *)
   try parse_int_field "oops"
   with Parse_error (msg, line) ->
     Printf.printf "line %d: %s\n" line msg;
@@ -681,8 +681,10 @@ exception My_error of string
 (* desugared: extend the open exn type *)
 type exn += My_other_error of string
 
-let _ = try raise (My_error "a")       with My_error s -> s
-let _ = try raise (My_other_error "b") with My_other_error s -> s
+let _ = try raise (My_error "a")
+        with My_error s -> s          (* = "a" *)
+let _ = try raise (My_other_error "b")
+        with My_other_error s -> s    (* = "b" *)
 ```
 
 - All exception constructors share one type: `exn`.
@@ -974,7 +976,7 @@ easier to read for your case.
 
 ## What's next
 
-That closes the imperative trio of Module 7. The
+That closes this module's imperative trio. The
 [next two lectures](M07-L04-streams-and-laziness.html) take a
 small detour: *streams* (infinite data structures, built using
 thunks and refs from this module) and *memoization* (caching

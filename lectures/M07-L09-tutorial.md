@@ -675,9 +675,14 @@ module Queue : QUEUE = struct
     | [], back -> dequeue { front = List.rev back; back = [] }
 end
 
+let queue_length q = Queue.length q
+
 let q = Queue.empty |> Queue.enqueue 1 |> Queue.enqueue 2 |> Queue.enqueue 3
-let _ = Queue.length q   (* = 3 *)
+let _ = queue_length q   (* = 3 *)
 ```
+
+- The starter's `queue_length` stub forwards to the new
+  `Queue.length`; the tests call `queue_length`.
 
 :::
 

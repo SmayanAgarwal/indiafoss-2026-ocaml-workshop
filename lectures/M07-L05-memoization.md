@@ -68,19 +68,26 @@ To see speedups we need to *measure* them. A short helper:
 
 ```ocaml
 let time_it f =
-  let t0 = Unix.gettimeofday () in
+  let t0 = Sys.time () in
   let r = f () in
-  let dt = (Unix.gettimeofday () -. t0) *. 1000. in
+  let dt = (Sys.time () -. t0) *. 1000. in
   Printf.printf "  time = %.1f ms\n%!" dt;
   r
 ```
 
-`time_it` takes a thunk, runs it, prints the elapsed wall-clock
-time in milliseconds, and returns the result. `Unix.gettimeofday
-()` returns the current time in seconds (as a float); the
-difference between two readings, scaled by `1000.`, is the
-elapsed milliseconds. The `%!` in the format string flushes the
-output buffer so the timing line appears immediately.
+`time_it` takes a thunk, runs it, prints the elapsed time in
+milliseconds, and returns the result. `Sys.time ()` returns the
+*processor* time the program has used so far, in seconds (as a
+float); the difference between two readings, scaled by `1000.`,
+is the elapsed milliseconds. Processor time is not the wall
+clock, but for a single-threaded pure computation the two track
+each other closely, and `Sys.time` works in the browser cells.
+The `%!` in the format string flushes the output buffer so the
+timing line appears immediately.
+
+The slow timing demos in this lecture are *not* run when the
+page loads (each costs a second or more); click **Run** on a
+timing cell to reproduce the numbers on your own machine.
 
 ## The `memo` combinator
 
@@ -160,9 +167,11 @@ after doing that work:
 
 ```ocaml
 let slow_id x = let _ = fib 37 in x
+```
 
-let _ = time_it (fun () -> slow_id 10)
-let _ = time_it (fun () -> slow_id 10)
+```ocaml skip
+let _ = time_it (fun () -> slow_id 10)   (* = 10, slow *)
+let _ = time_it (fun () -> slow_id 10)   (* = 10, slow AGAIN *)
 ```
 
 Two calls with the same argument; both run `fib 37`; both take
@@ -173,11 +182,13 @@ Now wrap it:
 
 ```ocaml
 let memo_id = memo slow_id
+```
 
-let _ = time_it (fun () -> memo_id 10)   (* slow: cache miss *)
-let _ = time_it (fun () -> memo_id 10)   (* fast: cache hit *)
-let _ = time_it (fun () -> memo_id 20)   (* slow: different key *)
-let _ = time_it (fun () -> memo_id 10)   (* fast: still cached *)
+```ocaml skip
+let _ = time_it (fun () -> memo_id 10)   (* = 10, slow: cache miss *)
+let _ = time_it (fun () -> memo_id 10)   (* = 10, fast: cache hit *)
+let _ = time_it (fun () -> memo_id 20)   (* = 20, slow: different key *)
+let _ = time_it (fun () -> memo_id 10)   (* = 10, fast: still cached *)
 ```
 
 The first call to `memo_id 10` runs `slow_id 10` (and hence
@@ -206,11 +217,11 @@ let memo_id = memo slow_id
 
 ## Memoizing a slow function: miss vs hit
 
-```ocaml
-let _ = time_it (fun () -> memo_id 10)   (* slow: miss *)
-let _ = time_it (fun () -> memo_id 10)   (* fast: hit *)
-let _ = time_it (fun () -> memo_id 20)   (* slow: new key *)
-let _ = time_it (fun () -> memo_id 10)   (* fast: still cached *)
+```ocaml skip
+let _ = time_it (fun () -> memo_id 10)   (* = 10, slow: miss *)
+let _ = time_it (fun () -> memo_id 10)   (* = 10, fast: hit *)
+let _ = time_it (fun () -> memo_id 20)   (* = 20, slow: new key *)
+let _ = time_it (fun () -> memo_id 10)   (* = 10, fast: cached *)
 ```
 
 - First call per key: cache miss, runs the body (`fib 37`).
@@ -236,14 +247,16 @@ duplicates. We compare mapping the raw `slow_id` against mapping
 a *freshly memoized* copy (`memo slow_id`, evaluated once by
 `List.map` so the whole batch shares one cache):
 
-```ocaml
+```ocaml skip
 let queries = [10; 20; 10; 20; 10; 20; 10; 20]
 
 (* without memo: 8 slow runs *)
 let _ = time_it (fun () -> List.map slow_id queries)
+   (* = [10; 20; ...] *)
 
 (* with a fresh memo: 2 slow runs (for 10 and 20), 6 cache hits *)
 let _ = time_it (fun () -> List.map (memo slow_id) queries)
+   (* = [10; 20; ...] *)
 ```
 
 The plain version runs the slow body once per list element,
@@ -262,7 +275,7 @@ read as zero slow runs.)
 
 ## Where plain `memo` pays off: repeated arguments
 
-```ocaml
+```ocaml skip
 let queries = [10; 20; 10; 20; 10; 20; 10; 20]
 
 let _ = time_it (fun () -> List.map slow_id queries)
@@ -300,7 +313,7 @@ This *should* be the classic case for memoization. The same
 arguments come up over and over; if we cached each, the total
 work would drop to O(n). Try the obvious:
 
-```ocaml
+```ocaml skip
 let memo_fib_outer = memo fib
 let _ = time_it (fun () -> memo_fib_outer 35)   (* slow: cache empty *)
 let _ = time_it (fun () -> memo_fib_outer 35)   (* fast: outer hit *)
@@ -318,7 +331,7 @@ non-memoized version.
 
 ## Memoizing recursive `fib`: the obvious attempt
 
-```ocaml
+```ocaml skip
 let rec fib n = if n < 2 then 1 else fib (n - 1) + fib (n - 2)
 let memo_fib_outer = memo fib
 
@@ -483,12 +496,13 @@ The payoff:
 ```ocaml
 let fib_memo = memo_rec fib_open
 
-let _ = time_it (fun () -> fib_memo 30)
-let _ = time_it (fun () -> fib_memo 30)
-let _ = time_it (fun () -> fib_memo 35)
+let _ = time_it (fun () -> fib_memo 30)  (* = 1346269 *)
+let _ = time_it (fun () -> fib_memo 30)  (* = 1346269, all cached *)
+let _ = time_it (fun () -> fib_memo 35)  (* = 14930352 *)
 ```
 
-`fib_memo 30` is fast: the recursive structure visits each
+This one is cheap enough to run live on the page. `fib_memo 30`
+is fast: the recursive structure visits each
 sub-Fibonacci once, caches it, and the work collapses to O(n).
 The repeated call is faster still: every node is already cached.
 `fib_memo 35` is also fast: it only computes the few nodes not
@@ -508,9 +522,9 @@ native 63-bit `int` around `n = 90`, and the browser's 32-bit
 ```ocaml
 let fib_memo = memo_rec fib_open
 
-let _ = time_it (fun () -> fib_memo 30)
-let _ = time_it (fun () -> fib_memo 30)
-let _ = time_it (fun () -> fib_memo 35)
+let _ = time_it (fun () -> fib_memo 30)  (* = 1346269 *)
+let _ = time_it (fun () -> fib_memo 30)  (* = 1346269, cached *)
+let _ = time_it (fun () -> fib_memo 35)  (* = 14930352 *)
 ```
 
 - First `fib_memo 30`: O(n), each subproblem computed once.
@@ -615,8 +629,10 @@ let edit_dist_open self (s, t) =
 
 let edit_dist_memo = memo_rec edit_dist_open
 
-let _ = time_it (fun () -> edit_dist_memo ("kitten", "sitting"))
-let _ = time_it (fun () -> edit_dist_memo ("kitten 4.08", "sitting 4.08"))
+let _ = time_it (fun () ->
+  edit_dist_memo ("kitten", "sitting"))             (* = 3 *)
+let _ = time_it (fun () ->
+  edit_dist_memo ("kitten 4.08", "sitting 4.08"))   (* = 3 *)
 ```
 
 Both runs now finish quickly. The memoized version computes
@@ -658,15 +674,16 @@ let edit_dist_memo = memo_rec edit_dist_open
 ## Edit distance: timing the payoff
 
 ```ocaml
-let _ = time_it (fun () -> edit_dist_memo ("kitten", "sitting"))
-let _ = time_it (fun () -> edit_dist_memo ("kitten 4.08", "sitting 4.08"))
+let _ = time_it (fun () ->
+  edit_dist_memo ("kitten", "sitting"))             (* = 3 *)
+let _ = time_it (fun () ->
+  edit_dist_memo ("kitten 4.08", "sitting 4.08"))   (* = 3 *)
 ```
 
 - Both return in a few ms (each `(s', t')` pair computed once).
 - The *naive* `edit_dist` on the longer pair would run
   effectively forever: three-way branching, no cache.
 - Memoized = the DP table, filled top-down on demand.
-- Click **Run** to see both finish instantly.
 
 :::
 
@@ -867,10 +884,10 @@ let _ = binom_memo (30, 15)  (* = 155117520, instant *)
 
 ## What's next
 
-That closes Module 7's small detour through laziness, streams,
+That closes this module's small detour through laziness, streams,
 and memoization. The
 [next lecture](M07-L06-module-basics.html) starts the second
-half of Module 7: OCaml's *module system*, the unit of code
+half of the module: OCaml's *module system*, the unit of code
 organisation at scale. Modules group related definitions,
 provide namespacing, and (with signatures) hide internals. The
 standard library you have been using all course is itself a tree
