@@ -51,14 +51,14 @@ thing without getting dizzy.
 You have written `for` loops and `while` loops in C, Java, or Python.
 In OCaml you will write very few. The closest thing is a `for` loop,
 which exists in the language (we cover it in
-[M07-L02](M07-L02-arrays-and-mutation.html#ocamls-for-and-while-loops))
+[the arrays-and-mutation lecture](M07-L02-arrays-and-mutation.html#ocamls-for-and-while-loops))
 but is rarely used because mutable state is rarely the natural way
 to express a computation. Almost everything that would be a loop
 in C is a recursive function in OCaml. That sounds expensive
 (function calls? for a loop?), but recursion in OCaml is cheap,
 and the compiler is good at translating the natural recursive
 style into efficient code. We will see how later in
-[M03-L04](M03-L04-tail-recursion.html) (tail recursion). For now,
+[the tail-recursion lecture](M03-L04-tail-recursion.html). For now,
 the goal is to get comfortable writing recursive functions in the
 first place.
 
@@ -72,7 +72,7 @@ let rec factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
 
-let _ = factorial 5
+let _ = factorial 5  (* = 120 *)
 ```
 
 :::slide
@@ -84,10 +84,10 @@ let rec factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
 
-let _ = factorial 5
+let _ = factorial 5  (* = 120 *)
 ```
 
-`int = 120`. Three things to notice:
+Three things to notice:
 
 - The keyword `rec`: without it, `factorial` isn't in scope in its body.
 - The **base case** `if n = 0 then 1`: without one, recursion never stops.
@@ -136,7 +136,7 @@ let factorial n =
 
 ## Why `let rec` and not just `let`?
 
-```ocaml
+```text
 let factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
@@ -156,7 +156,7 @@ scope*. References to `factorial` inside the body mean the outer
 `factorial` (if any), not the one being defined.
 
 This is the same rule we used for shadowing in
-[M02-L02](M02-L02-let-bindings.html#shadowing): `let x = x + 1`
+[the let-bindings lecture](M02-L02-let-bindings.html#shadowing): `let x = x + 1`
 means "the new `x` is the old `x` plus one." If `let` brought the
 new name into scope eagerly, this would mean something different
 (an infinite loop trying to reference itself). The default for
@@ -179,7 +179,7 @@ let rec length xs =
   | [] -> 0
   | _ :: rest -> 1 + length rest
 
-let _ = length [10; 20; 30; 40]
+let _ = length [10; 20; 30; 40]  (* = 4 *)
 ```
 
 :::slide
@@ -192,17 +192,16 @@ let rec length xs =
   | [] -> 0
   | _ :: rest -> 1 + length rest
 
-let _ = length [10; 20; 30; 40]
+let _ = length [10; 20; 30; 40]  (* = 4 *)
 ```
 
-- `int = 4`.
 - Base case `[] -> 0`: empty list has length 0.
 - Recursive case `_ :: rest -> 1 + length rest`: strip head, recur.
 - Uses pattern matching (full coverage in Module 5).
 
 :::
 
-Result: `int = 4`. The function uses `match ... with`, which we
+The function uses `match ... with`, which we
 will study in detail in [Module 5](M05-L01-basic-patterns.html).
 For now, read it as a multi-way branch on the *shape* of the input:
 
@@ -237,7 +236,7 @@ let rec count_down n =
     count_down (n - 1)
   end
 
-let _ = count_down 5
+let _ = count_down 5  (* prints 5 4 3 2 1 0, one per line *)
 ```
 
 :::slide
@@ -252,10 +251,9 @@ let rec count_down n =
     count_down (n - 1)
   end
 
-let _ = count_down 5
+let _ = count_down 5  (* prints 5 4 3 2 1 0, one per line *)
 ```
 
-- Prints `5`, `4`, `3`, `2`, `1`, `0`.
 - Base case `n < 0`: do nothing.
 - Recursive case: print `n`, then recur on `n - 1`.
 - `begin ... end`: sequenced block (more in Module 7).
@@ -272,8 +270,9 @@ recur" is the sequenced body. We need the bracketing because the
 sequencing `;` would otherwise be ambiguous with the `else`
 branch. `begin/end` is the more readable form in OCaml; plain
 parens work too. (Side effects and sequencing get full treatment
-in [M08-L01](M08-L01-option-monad.html); for this lecture, just
-trust the brackets do what you would expect.)
+in [the references lecture](M07-L01-references.html) of Module 7;
+for this lecture, just trust the brackets do what you would
+expect.)
 
 ## Recursion on numbers, summing
 
@@ -284,7 +283,7 @@ let rec sum_up_to n =
   if n = 0 then 0
   else n + sum_up_to (n - 1)
 
-let _ = sum_up_to 10
+let _ = sum_up_to 10  (* = 55 *)
 ```
 
 :::slide
@@ -296,10 +295,9 @@ let rec sum_up_to n =
   if n = 0 then 0
   else n + sum_up_to (n - 1)
 
-let _ = sum_up_to 10
+let _ = sum_up_to 10  (* = 55 *)
 ```
 
-- `int = 55`.
 - Each step reduces `n` by one until zero.
 - Closed form `n * (n + 1) / 2` is faster.
 - Recursion here to illustrate the pattern.
@@ -378,7 +376,7 @@ let rec factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
 
-let _ = factorial (-1)
+let _ = factorial (-1)  (* Stack overflow! *)
 ```
 
 :::slide
@@ -390,7 +388,7 @@ let rec factorial n =
   if n = 0 then 1
   else n * factorial (n - 1)
 
-let _ = factorial (-1)
+let _ = factorial (-1)  (* Stack overflow! *)
 ```
 
 - Stack overflow: `-1, -2, -3, ...` never reaches `0`.
@@ -516,7 +514,7 @@ let rec power x n =
   if n = 0 then 1
   else x * power x (n - 1)
 
-let _ = power 2 10
+let _ = power 2 10  (* = 1024 *)
 ```
 
 :::slide
@@ -530,16 +528,15 @@ let rec power x n =
   if n = 0 then 1
   else x * power x (n - 1)
 
-let _ = power 2 10
+let _ = power 2 10  (* = 1024 *)
 ```
 
-- `int = 1024`.
 - Base case: anything to the zero is `1`.
 - Recursive case: `x^n = x * x^(n-1)`. `n` moves toward the base.
 
 :::
 
-Result: `1024`. The function follows the same shape: base case `n
+The function follows the same shape: base case `n
 = 0` returns `1`; recursive case `x^n = x * x^(n-1)`. Note that
 `x` is unchanged in the recursive call; only `n` is reduced. This
 is fine: the *measure* by which the recursion makes progress is
@@ -555,7 +552,7 @@ let rec fib n =
   if n < 2 then n
   else fib (n - 1) + fib (n - 2)
 
-let _ = fib 10
+let _ = fib 10  (* = 55 *)
 ```
 
 :::slide
@@ -567,10 +564,9 @@ let rec fib n =
   if n < 2 then n
   else fib (n - 1) + fib (n - 2)
 
-let _ = fib 10
+let _ = fib 10  (* = 55 *)
 ```
 
-- `int = 55`.
 - Two base cases bundled: `fib 0 = 0`, `fib 1 = 1`.
 - Recursive case has *two* calls.
 - Slow for large `n`: overlapping subproblems recomputed.
@@ -634,6 +630,29 @@ base case, and how does the recursive call differ from
 
 :::
 
+:::solution
+
+:::slide
+
+## Activity solution
+
+```ocaml
+let rec count_up lo hi =
+  if lo > hi then ()
+  else begin
+    print_endline (string_of_int lo);
+    count_up (lo + 1) hi
+  end
+```
+
+- Base case `lo > hi`: do nothing.
+- Recursive case: print `lo`, recur on `(lo + 1) hi` (only `lo` changes).
+- Trace `count_up 1 3`: prints `1, 2, 3`, then `count_up 4 3` hits base.
+
+:::
+
+:::
+
 :::quiz mcq id=M03-L02-q1
 For the function below, what is the base case?
 
@@ -658,25 +677,6 @@ hi`. For `count_up 1 3`, the prints are `1`, `2`, `3`, then
 were `lo = hi`, the function would print `1`, `2` and stop
 without printing `3`. The current base case (`lo > hi`) is what
 makes `hi` print.
-:::
-
-:::slide
-
-## Activity discussion
-
-```ocaml
-let rec count_up lo hi =
-  if lo > hi then ()
-  else begin
-    print_endline (string_of_int lo);
-    count_up (lo + 1) hi
-  end
-```
-
-- Base case `lo > hi`: do nothing.
-- Recursive case: print `lo`, recur on `(lo + 1) hi` (only `lo` changes).
-- Trace `count_up 1 3`: prints `1, 2, 3`, then `count_up 4 3` hits base.
-
 :::
 
 ## What's next

@@ -90,7 +90,7 @@ The first reading is the everyday one: "a function that takes two
 ninety-nine percent of the time, and it is correct.
 
 The second reading takes the type signature literally. We saw in
-[M03-L01](M03-L01-functions-as-values.html#reading-function-types-is-right-associative)
+[the functions-as-values lecture](M03-L01-functions-as-values.html#reading-function-types-is-right-associative)
 that `->` is right-associative, so `int -> int -> int` parses as
 `int -> (int -> int)`. Under that parse, `add` is a function that
 takes *one* `int` and returns *another function* of type
@@ -168,16 +168,16 @@ let add5 = add 5
 - `add5 : int -> int`. Adds 5 to whatever you give it.
 
 ```ocaml
-let _ = add5 3
+let _ = add5 3  (* = 8 *)
 ```
 
-- `int = 8`. We *partially applied* `add` to one argument.
+- We *partially applied* `add` to one argument.
 - Result: a function waiting for the rest.
 
 :::
 
 The picture is exactly the closure picture from
-[M03-L01](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment).
+[the functions-as-values lecture](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment).
 When we apply `add` to `5`, the body `fun y -> x + y` becomes a
 value with `x` captured to `5`. That captured value lives inside
 the closure as long as the closure exists. Calls to `add5` reuse
@@ -211,10 +211,9 @@ inline without writing `fun x -> ...` for every little operation.
 
 ```ocaml
 let xs = [1; 2; 3; 4]
-let xs_plus_10 = List.map (add 10) xs
+let xs_plus_10 = List.map (add 10) xs  (* = [11; 12; 13; 14] *)
 ```
 
-- `int list = [11; 12; 13; 14]`.
 - `List.map` wants `int -> int`. `add 10` already *is* that.
 - Currying eliminates small wrapper lambdas in higher-order code.
 
@@ -311,20 +310,20 @@ This means you can partial-apply operators too:
 let increment = (+) 1
 let double    = ( * ) 2
 
-let _ = increment 5
-let _ = double 5
+let _ = increment 5  (* = 6 *)
+let _ = double 5     (* = 10 *)
 ```
 
 :::slide
 
-## Function composition by partial application
+## Operators have prefix forms too
 
 ```ocaml
 let increment = (+) 1
 let double    = ( * ) 2
 
-let _ = increment 5
-let _ = double 5
+let _ = increment 5  (* = 6 *)
+let _ = double 5     (* = 10 *)
 ```
 
 - `(+)` is prefix form of `+`: `fun x y -> x + y`.
@@ -355,8 +354,8 @@ let between lo hi x = x >= lo && x <= hi
 let in_human_range  = between 0 150
 let in_celsius_room = between 15.0 30.0
 
-let _ = in_human_range 42
-let _ = in_celsius_room 22.5
+let _ = in_human_range 42     (* = true *)
+let _ = in_celsius_room 22.5  (* = true *)
 ```
 
 :::slide
@@ -369,11 +368,10 @@ let between lo hi x = x >= lo && x <= hi
 let in_human_range = between 0 150  (* age in years *)
 let in_celsius_room = between 15.0 30.0
 
-let _ = in_human_range 42
-let _ = in_celsius_room 22.5
+let _ = in_human_range 42     (* = true *)
+let _ = in_celsius_room 22.5  (* = true *)
 ```
 
-- Both `true`.
 - `between` takes three arguments.
 - Partial-apply two; get a one-argument predicate.
 - Same idea as `add 5`, one more layer of nesting.
@@ -469,7 +467,7 @@ eta-reduces to:
 ```ocaml
 let add_ten = List.map ((+) 10)
 
-let _ = add_ten [1; 2; 3; 4]
+let _ = add_ten [1; 2; 3; 4]  (* = [11; 12; 13; 14] *)
 ```
 
 - Reads cleanly: "`add_ten` *is* map with `+10`."
@@ -501,7 +499,7 @@ pattern-match it inside the function:
 ```ocaml
 let add_pair (x, y) = x + y
 
-let _ = add_pair (3, 4)
+let _ = add_pair (3, 4)  (* = 7 *)
 ```
 
 :::slide
@@ -514,7 +512,7 @@ let _ = add_pair (3, 4)
 ```ocaml
 let add_pair (x, y) = x + y
 
-let _ = add_pair (3, 4)
+let _ = add_pair (3, 4)  (* = 7 *)
 ```
 
 - `add_pair : int * int -> int`. One argument: a pair.
@@ -546,17 +544,20 @@ when we get to product types in
 ## A quick check
 
 :::quiz mcq id=M03-L03-q3
-Given `let add x y = x + y`, what is the type of `add 5`?
+Given `let between lo hi x = x >= lo && x <= hi`, what is the
+type of `between 0 150`?
 
-- [ ] `int`
-- [x] `int -> int`
-- [ ] `int -> int -> int`
-- [ ] `unit -> int`
+- [ ] `bool`
+- [ ] `int -> int -> bool`
+- [x] `int -> bool`
+- [ ] `'a -> bool`
 
-**Why:** `add` has type `int -> int -> int`, which reads as `int ->
-(int -> int)`. Apply it to one `int` argument and you get back the
-`int -> int` half. The result is a function value waiting for the
-second `int`.
+**Why:** `between` has type `'a -> 'a -> 'a -> bool`. The integer
+literals `0` and `150` pin `'a` to `int`, and supplying the first
+two arguments peels two arrows off the chain. What remains is the
+one-argument predicate `int -> bool`, waiting for `x`. (It is not
+`'a -> bool`: once the bounds are `int`, the third argument must
+be `int` too.)
 :::
 
 :::quiz mcq id=M03-L03-q2
@@ -679,10 +680,10 @@ lecture, [M03-L04](M03-L04-tail-recursion.html), returns to the
 recursion from [M03-L02](M03-L02-recursion.html) with a sharper
 tool: *tail recursion*, the technique that lets recursive
 functions run in constant stack space. The naive `factorial` and
-`sum_to` from Lecture 2 overflow the stack on large inputs; the
-tail-recursive versions do not. The mechanism is small (an extra
-parameter), but the payoff is that you can recurse on inputs of
-any size without worrying about the stack.
+`sum_up_to` from the recursion lecture overflow the stack on
+large inputs; the tail-recursive versions do not. The mechanism
+is small (an extra parameter), but the payoff is that you can
+recurse on inputs of any size without worrying about the stack.
 
 ## Reading
 

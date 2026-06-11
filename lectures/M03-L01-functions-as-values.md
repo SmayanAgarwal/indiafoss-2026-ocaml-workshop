@@ -150,7 +150,7 @@ passed to a higher-order function, for instance).
 `fun x -> e` is an expression. It evaluates to a function value.
 
 ```ocaml
-let _ = fun x -> x + 1
+let _ = fun x -> x + 1  (* : int -> int = <fun> *)
 ```
 
 The toplevel reports `int -> int = <fun>` and binds the result to
@@ -158,7 +158,7 @@ The toplevel reports `int -> int = <fun>` and binds the result to
 apply it on the spot:
 
 ```ocaml
-let _ = (fun x -> x + 1) 7
+let _ = (fun x -> x + 1) 7  (* = 8 *)
 ```
 
 :::slide
@@ -169,10 +169,9 @@ let _ = (fun x -> x + 1) 7
 - It's a value of function type.
 
 ```ocaml
-let _ = fun x -> x + 1
+let _ = fun x -> x + 1  (* : int -> int = <fun> *)
 ```
 
-- Toplevel: `int -> int = <fun>`, bound to `_`.
 - The function exists; just unnamed.
 
 :::
@@ -182,10 +181,10 @@ let _ = fun x -> x + 1
 ## Anonymous functions, applied on the spot
 
 ```ocaml
-let _ = (fun x -> x + 1) 7
+let _ = (fun x -> x + 1) 7  (* = 8 *)
 ```
 
-- `int = 8`. Parenthesize, then apply.
+- Parenthesize, then apply.
 - Parens are needed: application binds tighter than `fun`.
 - Key point: `fun ... -> ...` is a real expression.
 
@@ -251,9 +250,9 @@ let plus_one = fun x -> x + 1
 let double   = fun x -> x * 2
 let triple   = fun x -> x * 3
 
-let _ = plus_one 5
-let _ = double 5
-let _ = triple 5
+let _ = plus_one 5  (* = 6 *)
+let _ = double 5    (* = 10 *)
+let _ = triple 5    (* = 15 *)
 ```
 
 :::slide
@@ -265,9 +264,9 @@ let plus_one = fun x -> x + 1
 let double   = fun x -> x * 2
 let triple   = fun x -> x * 3
 
-let _ = plus_one 5
-let _ = double 5
-let _ = triple 5
+let _ = plus_one 5  (* = 6 *)
+let _ = double 5    (* = 10 *)
+let _ = triple 5    (* = 15 *)
 ```
 
 - Three function values, named with `let`, then applied.
@@ -288,8 +287,8 @@ defined, but each time you call it with `()`:
 ```ocaml
 let greet () = "hello"
 
-let _ = greet
-let _ = greet ()
+let _ = greet     (* : unit -> string = <fun> *)
+let _ = greet ()  (* = "hello" *)
 ```
 
 `greet` is the thunk: a value of type `unit -> string`. The first
@@ -298,8 +297,8 @@ function value. The second, `greet ()`, applies the thunk and
 produces `"hello"`. Each application re-runs the body. The thunk
 is the canonical way to bundle a computation as a value and
 decide *later* when to perform it; you will see thunks again in
-[M07-L04](M07-L04-streams-and-laziness.html), where a stream's
-tail is exactly a `unit -> 'a stream` thunk.
+[the streams-and-laziness lecture](M07-L04-streams-and-laziness.html),
+where a stream's tail is exactly a `unit -> 'a stream` thunk.
 
 ## Functions can be returned from other functions
 
@@ -311,8 +310,8 @@ let make_adder n = fun x -> x + n
 let plus_five = make_adder 5
 let plus_ten  = make_adder 10
 
-let _ = plus_five 3
-let _ = plus_ten 3
+let _ = plus_five 3  (* = 8 *)
+let _ = plus_ten 3   (* = 13 *)
 ```
 
 :::slide
@@ -325,8 +324,8 @@ let make_adder n = fun x -> x + n
 let plus_five = make_adder 5
 let plus_ten  = make_adder 10
 
-let _ = plus_five 3
-let _ = plus_ten 3
+let _ = plus_five 3  (* = 8 *)
+let _ = plus_ten 3   (* = 13 *)
 ```
 
 - `make_adder : int -> (int -> int)`.
@@ -361,7 +360,7 @@ hold "the function body"; it also holds a record of "what `n` was
 when this function was created." The value `n = 5` was *captured*
 by the function at the moment of its creation. Such a function-value-with-captured-environment
 is called a *closure*. We saw closures briefly in
-[M02-L02](M02-L02-let-bindings.html#why-shadowing-differs-from-mutation-closures-see-the-old-value)
+[the let-bindings lecture](M02-L02-let-bindings.html#why-shadowing-differs-from-mutation-closures-see-the-old-value)
 (the function captures the *value*, not the *name*).
 
 :::slide
@@ -372,7 +371,7 @@ is called a *closure*. We saw closures briefly in
 let make_adder n = fun x -> x + n
 
 let plus_five = make_adder 5
-let _ = plus_five 100
+let _ = plus_five 100  (* = 105 *)
 ```
 
 - In `plus_five 100`, body is `x + n`. Where does `n` come from?
@@ -510,14 +509,14 @@ What does `f 1` return? `11`.
 Returns `11`. The closure captured `n = 10` when `f` was defined;
 the later `let n = 99` shadows the outer `n` but does not change
 the value `f` saw. This is the same point from
-[M02-L02](M02-L02-let-bindings.html#shadowing) (shadowing is not
-mutation), applied to function closures.
+[the let-bindings lecture](M02-L02-let-bindings.html#shadowing)
+(shadowing is not mutation), applied to function closures.
 
 OCaml uses *static scoping with value capture*: the binding that
 was in scope when `f` was defined is the one `f` uses, forever. In
 a language where names were re-looked-up at call time, or where the
 closure held a *reference* to the variable rather than its value,
-`f ()` could see a later assignment. OCaml does neither.
+`f 1` could see a later assignment. OCaml does neither.
 
 ## Functions can be passed as arguments
 
@@ -526,8 +525,8 @@ The third thing you can do with a value: pass it as an argument.
 ```ocaml
 let apply_twice f x = f (f x)
 
-let _ = apply_twice (fun x -> x + 1) 5
-let _ = apply_twice double 5
+let _ = apply_twice (fun x -> x + 1) 5  (* = 7 *)
+let _ = apply_twice double 5            (* = 20 *)
 ```
 
 :::slide
@@ -537,8 +536,8 @@ let _ = apply_twice double 5
 ```ocaml
 let apply_twice f x = f (f x)
 
-let _ = apply_twice (fun x -> x + 1) 5
-let _ = apply_twice double 5
+let _ = apply_twice (fun x -> x + 1) 5  (* = 7 *)
+let _ = apply_twice double 5            (* = 20 *)
 ```
 
 - `apply_twice f x = f (f x)`.
@@ -547,7 +546,7 @@ let _ = apply_twice double 5
 - `'a` is a **type variable**: any type, same one each occurrence.
 - Works at `int -> int`, `float -> float`, `string -> string`, ...
 - This is **polymorphism**. Formal treatment:
-  [M04-L04](M04-L04-recursive-types.html#polymorphism).
+  [the recursive-types lecture](M04-L04-recursive-types.html#polymorphism).
 
 :::
 
@@ -567,8 +566,8 @@ functions, `string -> string` functions, etc.
 
 This is the first time we are seeing a type variable; we will
 return to polymorphism formally in
-[M04-L04](M04-L04-recursive-types.html#polymorphism), once we
-have parameterised variants (lists of *anything*) to motivate
+[the recursive-types lecture](M04-L04-recursive-types.html#polymorphism),
+once we have parameterised variants (lists of *anything*) to motivate
 it. For now, read `'a -> 'a` as "any type to itself."
 
 ## Anonymous functions are everywhere
@@ -578,7 +577,7 @@ a small one-off function to a higher-order utility like `List.map`.
 
 ```ocaml
 let nums = [1; 2; 3; 4; 5]
-let _ = List.map (fun x -> x * x) nums
+let _ = List.map (fun x -> x * x) nums  (* = [1; 4; 9; 16; 25] *)
 ```
 
 :::slide
@@ -589,14 +588,14 @@ let _ = List.map (fun x -> x * x) nums
 
 ```ocaml
 let nums = [1; 2; 3; 4; 5]
-let _ = List.map (fun x -> x * x) nums
+let _ = List.map (fun x -> x * x) nums  (* = [1; 4; 9; 16; 25] *)
 ```
 
 Without anonymous functions:
 
 ```ocaml
 let square x = x * x
-let _ = List.map square nums
+let _ = List.map square nums  (* = [1; 4; 9; 16; 25] *)
 ```
 
 - First form is shorter; idiom leans this way for one-offs.
@@ -614,7 +613,7 @@ this little computation:
 
 ```ocaml
 let square x = x * x
-let _ = List.map square nums
+let _ = List.map square nums  (* = [1; 4; 9; 16; 25] *)
 ```
 
 Both are fine. The anonymous-function form is shorter and keeps the
@@ -678,17 +677,19 @@ inserting "and given an X, produces" between each arrow.
 ## A quick check
 
 :::quiz mcq id=M03-L01-q3
-What is the type of `fun x -> x +. 1.0`?
+What is the type of `fun s -> s ^ "!"`?
 
-- [ ] `int -> int`
-- [ ] `int -> float`
-- [x] `float -> float`
+- [x] `string -> string`
+- [ ] `char -> string`
+- [ ] `'a -> string`
 - [ ] `'a -> 'a`
 
-**Why:** the literal `1.0` is `float`. The operator `+.` forces its
-left operand (the parameter `x`) to be `float`, and the result is
-`float`. So the anonymous function is `float -> float`. There is no
-ambiguity here: the operator pins both ends.
+**Why:** the literal `"!"` is a `string`, and the concatenation
+operator `^` works on strings only. It forces its left operand
+(the parameter `s`) to be `string`, and the result of the
+concatenation is `string`. So the anonymous function is
+`string -> string`. The operator pins both ends; nothing is left
+polymorphic.
 :::
 
 :::quiz mcq id=M03-L01-q2

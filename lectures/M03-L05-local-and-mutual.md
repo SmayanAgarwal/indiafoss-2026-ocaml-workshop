@@ -47,7 +47,7 @@ definitions: helpers defined inside another function with
 glued together with the `and` keyword. Both are ordinary features
 of day-to-day OCaml; you have already seen the first in passing
 (every tail-recursive function in
-[M03-L04](M03-L04-tail-recursion.html#the-accumulator-pattern)
+[the tail-recursion lecture](M03-L04-tail-recursion.html#the-accumulator-pattern)
 used a local helper), and the second turns up the moment you
 write a parser, a tree walker, or the classic `is_even` /
 `is_odd` example.
@@ -59,7 +59,7 @@ top-level, and what the `and` keyword does and why it has to exist.
 ## Local helpers: definitions inside `let ... in`
 
 We saw `let rec go ... in ...` in every tail-recursive rewrite in
-[M03-L04](M03-L04-tail-recursion.html#the-accumulator-pattern).
+[the tail-recursion lecture](M03-L04-tail-recursion.html#the-accumulator-pattern).
 The keyword combination defines `go` only inside the body of the
 outer function:
 
@@ -255,11 +255,10 @@ and is_odd n =
   if n = 0 then false
   else is_even (n - 1)
 
-let _ = is_even 10
-let _ = is_odd 10
+let _ = is_even 10  (* = true *)
+let _ = is_odd 10   (* = false *)
 ```
 
-- `true, false`.
 - Each function calls the other.
 - Tied together by `and`.
 - Both names in scope simultaneously inside both bodies.
@@ -283,7 +282,7 @@ let rec is_odd  n = if n = 0 then false else is_even (n - 1)
 
 OCaml rejects the first line: `Unbound value is_odd`. The reason
 is the same one we saw for `let rec` vs. plain `let` in
-[M03-L02](M03-L02-recursion.html#why-let-rec-and-not-just-let):
+[the recursion lecture](M03-L02-recursion.html#why-let-rec-and-not-just-let):
 a `let rec` brings the name being defined into scope inside its
 own body, but not *other* names that have not been defined yet.
 When the compiler processes the first `let rec is_even`, the name
@@ -349,6 +348,8 @@ let demo () =
   and pong n = ping n
   in
   ping 5
+
+let _ = demo ()  (* = "done" *)
 ```
 
 :::slide
@@ -363,10 +364,11 @@ let demo () =
   and pong n = ping n
   in
   ping 5
+
+let _ = demo ()  (* = "done" *)
 ```
 
 - `let rec ... and ...` works inside `let ... in` too.
-- Result: `string = "done"`.
 - Both names local; neither leaks outside `demo`.
 
 :::
@@ -474,7 +476,7 @@ let () =
 `n mod 2` is the lowest bit; `n / 2` drops it. A local
 tail-recursive helper threads the running count:
 
-```ocaml
+```text
 let bit_count n =
   let rec go acc n =
     if n = 0 then acc
@@ -534,9 +536,9 @@ and mod3_eq_2 n =
   if n = 0 then false
   else mod3_eq_1 (n - 1)
 
-let _ = mod3_eq_0 9   (* true:  9 mod 3 = 0 *)
-let _ = mod3_eq_1 10  (* true: 10 mod 3 = 1 *)
-let _ = mod3_eq_2 11  (* true: 11 mod 3 = 2 *)
+let _ = mod3_eq_0 9   (* = true:  9 mod 3 = 0 *)
+let _ = mod3_eq_1 10  (* = true: 10 mod 3 = 1 *)
+let _ = mod3_eq_2 11  (* = true: 11 mod 3 = 2 *)
 ```
 
 - Three bodies, all in scope inside all bodies.
@@ -568,15 +570,17 @@ scope inside every body.
 
 Lecture 6: the **tutorial** for Module 3.
 
-- Work through `fib`, `gcd`, and small list utilities.
+- Work through `fib`, a power-of-two test, fast `power`, and
+  digit counting.
 - Trade-offs: naive vs tail recursion.
 
 :::
 
 The next lecture, [M03-L06](M03-L06-tutorial.html), is the
 tutorial for Module 3. We will work through several classic small
-problems: Fibonacci (naive and fast), GCD by Euclid, list helpers
-(sum, reverse, nth, last), and a digit-counting function. The
+problems: Fibonacci (naive and linear-time), testing whether a
+number is a power of two, fast integer power by
+square-and-multiply, and digit counting. The
 goal is to consolidate the techniques (recursion, accumulators,
 local helpers) on problems you have probably seen in some form
 before, and to discuss when each approach is the right choice.

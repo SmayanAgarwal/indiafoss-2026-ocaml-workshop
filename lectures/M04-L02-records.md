@@ -116,9 +116,9 @@ OCaml's records are *nominally* typed: two record types with the
 same fields are not interchangeable. If you declare `type a = { x :
 int }` and `type b = { x : int }`, then an `a` value cannot be
 passed where a `b` is expected, even though they have the same
-shape. This is the opposite of Go's structural records or
-TypeScript's structural object types, and it is a deliberate choice
-to make types more meaningful identifiers.
+shape. This is the opposite of TypeScript's structural object
+types, and it is a deliberate choice to make types more meaningful
+identifiers.
 
 ## Accessing fields
 
@@ -128,8 +128,8 @@ Python), and *destructuring* (like patterns).
 ```ocaml
 type point = { x : float; y : float }
 let p = { x = 3.0; y = 4.0 }
-let _ = p.x
-let _ = p.y
+let _ = p.x  (* = 3. *)
+let _ = p.y  (* = 4. *)
 ```
 
 `p.x` and `p.y` are *field-access expressions*. The result of
@@ -145,11 +145,10 @@ computed value.
 ```ocaml
 type point = { x : float; y : float }
 let p = { x = 3.0; y = 4.0 }
-let _ = p.x
-let _ = p.y
+let _ = p.x  (* = 3. *)
+let _ = p.y  (* = 4. *)
 ```
 
-- `p.x` returns `3.0`, `p.y` returns `4.0`.
 - The thing after `.` must be a literal field name (no
   `p.(expr)`).
 
@@ -163,8 +162,8 @@ let _ = p.y
 type point = { x : float; y : float }
 let p = { x = 3.0; y = 4.0 }
 let { x; y } = p
-let _ = x
-let _ = y
+let _ = x  (* = 3. *)
+let _ = y  (* = 4. *)
 ```
 
 - `let { x; y } = p` matches `p` against the pattern and binds
@@ -213,7 +212,7 @@ let distance p q =
   let dy = q.y -. p.y in
   sqrt (dx *. dx +. dy *. dy)
 
-let _ = distance { x = 0.0; y = 0.0 } { x = 3.0; y = 4.0 }
+let _ = distance { x = 0.0; y = 0.0 } { x = 3.0; y = 4.0 }  (* = 5. *)
 ```
 
 The body uses `p.x`, `q.x`, etc. The same function, written with
@@ -311,11 +310,10 @@ let p2 = { p with y = 10.0 }
 type point = { x : float; y : float }
 let p = { x = 3.0; y = 4.0 }
 let p2 = { p with y = 10.0 }
-let _ = p.y
-let _ = p2.y
+let _ = p.y   (* = 4. *)
+let _ = p2.y  (* = 10. *)
 ```
 
-- Results: `4.0` and `10.0`.
 - Immutable equivalent of "mutate this field".
 
 :::
@@ -327,7 +325,7 @@ field and pass that new version forward. The old version is still
 valid; nothing observable about it has changed.
 
 This buys you the same property we discussed for shadowing in
-[M02-L02](M02-L02-let-bindings.html#immutability-the-bit-you-have-to-internalise):
+[the let-bindings lecture](M02-L02-let-bindings.html#shadowing):
 *equational reasoning*. The value `p` is what it is forever.
 Nothing later in the program can have changed `p.y` underneath
 you. Once you have a record, you can reason about it without
@@ -470,7 +468,7 @@ corresponding fields are equal.
 type point = { x : float; y : float }
 let p1 = { x = 1.0; y = 2.0 }
 let p2 = { x = 1.0; y = 2.0 }
-let _ = p1 = p2
+let _ = p1 = p2  (* = true *)
 ```
 
 The expression `p1 = p2` is `true`, because both records have
@@ -486,10 +484,9 @@ define, no `equals()` override; the compiler handles it.
 type point = { x : float; y : float }
 let p1 = { x = 1.0; y = 2.0 }
 let p2 = { x = 1.0; y = 2.0 }
-let _ = p1 = p2
+let _ = p1 = p2  (* = true *)
 ```
 
-- Result: `true`.
 - **Structural equality**: compares field by field.
 - Same `=` as for ints, strings; works on records out of the box.
 
@@ -558,7 +555,7 @@ problem entirely.
 Records are *immutable by default*. OCaml does allow individual
 fields to be opted into in-place mutation (with a `mutable`
 keyword in the type declaration and a `<-` assignment operator),
-but we defer that to [Module 7](M07-L01-references.html#mutable-record-fields),
+but we defer that to [Module 7](M07-L02-arrays-and-mutation.html#mutable-record-fields),
 where references and the rest of the mutation story land
 together. For Module 4, every record is immutable, and the
 functional-update form above (`{ p with ... }`) is how you
@@ -647,10 +644,8 @@ let real_world_ocaml =
 
 let book_title b = b.title
 
-let _ = book_title real_world_ocaml
+let _ = book_title real_world_ocaml  (* = "Real World OCaml" *)
 ```
-
-- Result: `string = "Real World OCaml"`.
 
 :::
 

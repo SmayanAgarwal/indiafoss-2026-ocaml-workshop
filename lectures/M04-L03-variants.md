@@ -358,7 +358,7 @@ let s3 = Connected  { peer = "10.0.0.1"; bytes_sent = 4096 }
 
 Extracting the data uses pattern matching with the inline-record
 syntax on the pattern side, which we will see in
-[M05](M05-L03-nested-and-or-patterns.html#inline-records-inside-constructors).
+[Module 5](M05-L03-nested-and-or-patterns.html#inline-records-inside-constructors).
 
 :::slide
 
@@ -448,8 +448,16 @@ let example_error    = ()
 ```
 
 ```ocaml skip
-(* The grader only checks that each example value type-checks
-   against http_response. Decomposing them comes in M05. *)
+(* Each example must type-check against http_response, and the
+   three examples must use three different constructors.
+   Decomposing them comes in M05. *)
+let _ : http_response = example_success
+let _ : http_response = example_redirect
+let _ : http_response = example_error
+let () = assert (example_success <> example_redirect)
+let () = assert (example_success <> example_error)
+let () = assert (example_redirect <> example_error)
+let () = print_endline "all tests passed"
 ```
 :::
 

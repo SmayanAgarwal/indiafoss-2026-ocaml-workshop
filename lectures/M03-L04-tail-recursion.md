@@ -5,7 +5,7 @@ week: 3
 duration_target_min: 25
 concepts: [tail call, tail-recursive functions, accumulator pattern, stack frames]
 keywords: [OCaml, tail recursion, accumulator, stack overflow, optimization]
-activity_question: "Take the [power : int -> int -> int] function from M03-L02 and rewrite it tail-recursively with an accumulator. Same signature; same answers; constant stack."
+activity_question: "Take the [power : int -> int -> int] function from the recursion lecture and rewrite it tail-recursively with an accumulator. Same signature; same answers; constant stack."
 think_about_this: "Why does the compiler need to *recognize* a tail call, instead of optimizing every recursive call? What does a non-tail call need to keep on the stack that a tail call doesn't?"
 reading:
   - title: "Cornell CS3110, Tail recursion"
@@ -26,9 +26,23 @@ reading:
 
 :::
 
-The naive `factorial` and `sum_to` we wrote in
-[M03-L02](M03-L02-recursion.html#a-first-recursive-function) work
-fine for small inputs and crash with a stack overflow for big ones.
+:::slide
+
+## This lecture: tail recursion
+
+- Naive recursive functions crash on big inputs: *stack overflow*.
+  - Each call keeps a frame to finish work after the return.
+- The fix: rewrite so the recursive call is the *last* step.
+  - The compiler then reuses the frame: constant stack space.
+- The tool: the *accumulator pattern*, one extra parameter.
+- After this lecture: recursion as cheap as a C `for` loop.
+
+:::
+
+The naive `factorial` and `sum_up_to` we wrote in
+[the recursion lecture](M03-L02-recursion.html#a-first-recursive-function)
+work fine for small inputs and crash with a stack overflow for
+big ones.
 The crash is not a bug in OCaml; it is a fundamental consequence
 of how function calls use memory. This lecture shows what is going
 wrong, introduces the technique that fixes it, and walks through
@@ -47,36 +61,42 @@ The cost to you is small: an extra parameter (the *accumulator*) and
 an inner helper. The benefit is large: your recursive functions stop
 crashing on big inputs and they run as fast as the equivalent `for`
 loop in C. The technique is standard across functional languages
-(Scheme, Haskell, ML, F#) and increasingly across mainstream ones:
-[GCC](https://gcc.gnu.org/) and [Clang](https://clang.llvm.org/)
-both do tail-call optimisation on C code; modern JavaScript engines
-do it; only Java still refuses to.
+(Scheme, Haskell, ML, F#) and appears in mainstream ones with
+caveats: [GCC](https://gcc.gnu.org/) and
+[Clang](https://clang.llvm.org/) eliminate tail calls in C code
+when optimisation is enabled; among JavaScript engines, only
+JavaScriptCore (Safari) implements the proper tail calls the
+language standard calls for; Java does not do it at all.
 
 ## What a stack overflow looks like
 
 The simplest recursion that demonstrates the problem is summing the
 integers from `1` to `n`. We saw the naive version in
-[M03-L02](M03-L02-recursion.html#recursion-on-numbers-summing):
+[the recursion lecture](M03-L02-recursion.html#recursion-on-numbers-summing):
 
 ```ocaml
-let rec sum_to n =
+let rec sum_up_to n =
   if n = 0 then 0
-  else n + sum_to (n - 1)
+  else n + sum_up_to (n - 1)
 ```
 
-`sum_to 10` works. `sum_to 1_000` works. `sum_to 10_000` crashes
-in the browser:
+`sum_up_to 10` works. `sum_up_to 1_000` works. Push the input
+high enough and it crashes. Run this cell and watch:
 
-```
-Stack overflow during evaluation (looping recursion?).
+```ocaml skip
+let _ = sum_up_to 1_000_000  (* Stack overflow! *)
 ```
 
-It is not a looping recursion; the recursion terminates correctly,
-each step reducing `n` by one. The problem is that each call needs
-its own stack frame, and ten thousand frames is more than the
-browser gave us. (Native OCaml takes longer to fall over but the
-mechanism is the same.) To understand why each call needs a frame,
-look at the body of the recursive case: `n + sum_to (n - 1)`.
+The error is `Stack overflow during evaluation (looping
+recursion?)`. It is not a looping recursion; the recursion
+terminates correctly, each step reducing `n` by one. The problem
+is that each call needs its own stack frame, and a million frames
+is more than any environment will give us. Exactly where the
+limit falls depends on the environment: the in-browser toplevel
+on this page gives up after a few thousand frames, and native
+OCaml lasts longer but falls over too; a million exceeds them
+all. To understand why each call needs a frame,
+look at the body of the recursive case: `n + sum_up_to (n - 1)`.
 After the recursive call returns, we still need to do an addition:
 take its result and add `n` to it. To do that addition, we have to
 remember `n` across the call. That memory has to live somewhere;
@@ -92,37 +112,39 @@ rest of this lecture is about avoiding it.
 
 ## What a stack overflow looks like
 
-```ocaml
-let rec sum_to n =
+```ocaml skip
+let rec sum_up_to n =
   if n = 0 then 0
-  else n + sum_to (n - 1)
+  else n + sum_up_to (n - 1)
 
-let _ = sum_to 10_000
+let _ = sum_up_to 1_000_000  (* Stack overflow! *)
 ```
 
 - Crashes: `Stack overflow during evaluation`.
 - Each call needs a stack frame to remember "what to do with the result".
-- Body `n + sum_to (n - 1)`: must remember `n` across the call.
-- Ten thousand frames: stack runs out.
+- Body `n + sum_up_to (n - 1)`: must remember `n` across the call.
+- A million frames: the stack runs out long before the base case.
+  - Exact limit varies by environment (in-browser: a few
+    thousand frames).
 
 :::
 
-Picture the stack during `sum_to 5`. We push a frame for `sum_to 5`,
-which calls `sum_to 4`; we push a frame for that, which calls
-`sum_to 3`; another frame; another; another. By the time we hit the
-base case `sum_to 0 = 0`, the stack has *six* frames. Each frame
-holds a copy of `n` (5, 4, 3, 2, 1, 0 respectively) and a
-"return-here-and-add" instruction. As `sum_to 0` returns 0, the
-stack unwinds: frame for `n = 1` returns `1 + 0 = 1`; frame for
+Picture the stack during `sum_up_to 5`. We push a frame for
+`sum_up_to 5`, which calls `sum_up_to 4`; we push a frame for
+that, which calls `sum_up_to 3`; another frame; another; another.
+By the time we hit the base case `sum_up_to 0 = 0`, the stack has
+*six* frames. Each frame holds a copy of `n` (5, 4, 3, 2, 1, 0
+respectively) and a "return-here-and-add" instruction. As
+`sum_up_to 0` returns 0, the stack unwinds: frame for `n = 1`
+returns `1 + 0 = 1`; frame for
 `n = 2` returns `2 + 1 = 3`; and so on, building up `15` at the
 top.
 
-For `n = 5` the stack of six frames is fine. For `n = 10_000` in
-the browser, or `n = 1_000_000` natively, the stack runs out. The
-operating system (or, in the browser, the JS engine) imposes a
-stack size limit; the browser's is the strictest, typically room
-for around ten thousand JS frames. Each frame is some tens of
-bytes; enough frames, and we crash.
+For `n = 5` the stack of six frames is fine. For `n = 1_000_000`,
+the stack runs out. The operating system (or, in the browser, the
+JS engine) imposes a stack size limit; the browser's is the
+strictest, typically room for a few thousand frames. Each frame
+is some tens of bytes; enough frames, and we crash.
 
 The problem is not specific to OCaml. Try the equivalent recursive
 sum in Python, in Java, in C: they all crash for large `n`. Python
@@ -141,11 +163,11 @@ position*.
 The crisp definition: a function call is in tail position if its
 value is the immediate result of the enclosing function, with no
 further computation between the call returning and the function
-returning. The recursive call to `sum_to` in `n + sum_to (n - 1)` is
-*not* in tail position: after it returns, we have to do an addition
-before we can return ourselves. The recursive call in `sum_to (n -
-1)` *would* be in tail position, if we wrote a function that does
-nothing but recur.
+returning. The recursive call to `sum_up_to` in
+`n + sum_up_to (n - 1)` is *not* in tail position: after it
+returns, we have to do an addition before we can return ourselves.
+The recursive call in `sum_up_to (n - 1)` *would* be in tail
+position, if we wrote a function that does nothing but recur.
 
 :::slide
 
@@ -221,26 +243,26 @@ it. To do that, you add an extra parameter (the accumulator) that
 carries the partial result down through the recursion. When you hit
 the base case, the accumulator holds the answer; just return it.
 
-For `sum_to`, the work after the recursive call is "add `n`."
+For `sum_up_to`, the work after the recursive call is "add `n`."
 Instead, we will add `n` *to a running total* on the way down, and
 the base case will return that running total directly.
 
 ```ocaml
-let sum_to n =
+let sum_up_to n =
   let rec go acc n =
     if n = 0 then acc
     else go (acc + n) (n - 1)
   in
   go 0 n
 
-let _ = sum_to 10_000
+let _ = sum_up_to 1_000_000  (* = 500000500000 *)
 ```
 
-`int = 50005000`. No stack overflow this time, even though the
-non-tail version crashed on the very same input. The recursive
-call no longer needs an enclosing frame, so each call reuses the
-caller's instead of pushing a new one. Ten thousand iterations
-run without growing the stack at all.
+No stack overflow this time, even though the non-tail version
+crashed on the very same input. The recursive call no longer
+needs an enclosing frame, so each call reuses the caller's
+instead of pushing a new one. A million iterations run without
+growing the stack at all.
 
 :::slide
 
@@ -249,25 +271,24 @@ run without growing the stack at all.
 - Move the work *before* the recursive call; carry a running total.
 
 ```ocaml
-let sum_to n =
+let sum_up_to n =
   let rec go acc n =
     if n = 0 then acc
     else go (acc + n) (n - 1)
   in
   go 0 n
 
-let _ = sum_to 10_000
+let _ = sum_up_to 1_000_000  (* = 500000500000 *)
 ```
 
-- Result: `int = 50005000`. **No stack overflow.**
-- Same input crashed the non-tail version.
+- **No stack overflow**: same input crashed the non-tail version.
 - Tail call: recursive call is the *final* expression.
 
 :::
 
 The structure has three parts worth naming:
 
-- An outer function, `sum_to n`, with the original API. The caller
+- An outer function, `sum_up_to n`, with the original API. The caller
   does not know or care about the accumulator.
 - An inner helper, `go`, with an extra parameter `acc` (idiomatic
   shorthand for "accumulator"). The helper does the real recursion.
@@ -277,20 +298,21 @@ The structure has three parts worth naming:
   case of the original function returned.
 
 This is the standard shape, and we will use it constantly. We
-will use it again in [M03-L05](M03-L05-local-and-mutual.html)
+will use it again in
+[the local-and-mutual-recursion lecture](M03-L05-local-and-mutual.html)
 (where the local-helper pattern gets its own treatment) and
 throughout [Module 6](M06-L04-fold.html), where `List.fold_left`
 packages exactly this pattern.
 
 ## Tracing through it
 
-Walking through `sum_to 4`, which calls `go 0 4`:
+Walking through `sum_up_to 4`, which calls `go 0 4`:
 
 :::slide
 
 ## Walking through it
 
-`sum_to 4` calls `go 0 4`.
+`sum_up_to 4` calls `go 0 4`.
 
 ```
 go 0 4  =>  go (0+4) 3  =>  go 4 3
@@ -316,7 +338,7 @@ The trace also makes clear that this is the same computation a
 procedural language would do as a loop:
 
 ```c
-int sum_to(int n) {
+int sum_up_to(int n) {
   int acc = 0;
   for (int i = n; i > 0; i--) acc += i;
   return acc;
@@ -344,7 +366,7 @@ let factorial n =
   in
   go 1 n
 
-let _ = factorial 10
+let _ = factorial 10  (* = 3628800 *)
 ```
 
 :::slide
@@ -359,10 +381,9 @@ let factorial n =
   in
   go 1 n
 
-let _ = factorial 10
+let _ = factorial 10  (* = 3628800 *)
 ```
 
-- `int = 3628800`.
 - Running product passed as `acc`; base returns `acc`.
 - Caveat: `factorial 100` overflows OCaml's `int`.
 - For arbitrary precision: `Zarith`.
@@ -388,8 +409,9 @@ course; just know it exists.
 
 Not every recursive function admits this rewrite cleanly. We will
 see one such case (`map`) in
-[M06-L02](M06-L02-map.html#tail-recursion-and-list-map), once we
-have the right vocabulary to discuss the two-pass workaround.
+[the `List.map` lecture](M06-L02-map.html#tail-recursion-and-listmap),
+once we have the right vocabulary to discuss the two-pass
+workaround.
 
 ## A heuristic for spotting tail calls
 
@@ -451,7 +473,8 @@ tail position, because there is an addition after the `if`.
 
 ## Activity
 
-Recall `power` from [M03-L02](M03-L02-recursion.html#worked-example-power):
+Recall `power` from
+[the recursion lecture](M03-L02-recursion.html#worked-example-power):
 
 ```ocaml
 let rec power x n =
@@ -500,7 +523,7 @@ a tail-recursive one:
    computes incrementally as it walks the input. Make it a new
    parameter, conventionally `acc`.
 2. *What is its starting value?* Whatever the original function
-   would have returned in the base case. For `sum_to`, that is
+   would have returned in the base case. For `sum_up_to`, that is
    `0`; for `factorial` and `power`, `1`; for `sum_of_squares`,
    `0`.
 3. *What happens to it at each step?* Whatever the original
@@ -556,7 +579,7 @@ let rec h n =
 ```
 
 - [ ] Both calls to `h (n - 1)`.
-- [ ] Only the one in the `else if n mod 2 = 0` branch.
+- [ ] Only the one in the odd branch, inside `1 + h (n - 1)`.
 - [x] Only the one in the even branch (no `1 +` after).
 - [ ] Neither.
 
@@ -582,7 +605,7 @@ Lecture 5: **local functions and mutual recursion**.
 :::
 
 We have used the `let rec go ... in` pattern twice in this
-lecture (in `sum_to` and `factorial`) without explaining what it
+lecture (in `sum_up_to` and `factorial`) without explaining what it
 does. The next lecture,
 [M03-L05](M03-L05-local-and-mutual.html), is about that pattern:
 *local* function definitions, scoped to inside another function.

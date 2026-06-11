@@ -6,7 +6,7 @@ duration_target_min: 22
 concepts: [tuples, product types, pair, fst, snd, destructuring, tuple patterns]
 keywords: [OCaml, tuple, pair, product type, destructuring]
 activity_question: "Given [let p = (3, true, \"hi\")], what is the type of [p]? Write a function [first3 : 'a * 'b * 'c -> 'a] that returns the first component."
-think_about_this: "Tuples in OCaml are *fixed-arity*: a [(int, int)] and a [(int, int, int)] are different types. Compare that to Python tuples, which are variable-arity. What does the OCaml choice buy you, and what does it cost?"
+think_about_this: "Tuples in OCaml are *fixed-arity*: an [int * int] and an [int * int * int] are different types. Compare that to Python tuples, which are variable-arity. What does the OCaml choice buy you, and what does it cost?"
 reading:
   - title: "Cornell CS3110, Records and Tuples"
     url: https://cs3110.github.io/textbook/chapters/data/records_tuples.html
@@ -225,8 +225,8 @@ library gives you two convenience functions:
 
 ```ocaml
 let p = (10, 20)
-let _ = fst p
-let _ = snd p
+let _ = fst p  (* = 10 *)
+let _ = snd p  (* = 20 *)
 ```
 
 `fst` returns the first component of a pair; `snd` returns the
@@ -248,8 +248,8 @@ and larger, OCaml expects you to *destructure*.
 
 ```ocaml
 let p = (10, 20)
-let _ = fst p
-let _ = snd p
+let _ = fst p  (* = 10 *)
+let _ = snd p  (* = 20 *)
 ```
 
 - `fst : 'a * 'b -> 'a`, `snd : 'a * 'b -> 'b`.
@@ -264,9 +264,9 @@ let _ = snd p
 
 ```ocaml
 let (x, y, z) = (1, 2, 3)
-let _ = x
-let _ = y
-let _ = z
+let _ = x  (* = 1 *)
+let _ = y  (* = 2 *)
+let _ = z  (* = 3 *)
 ```
 
 - `(x, y, z)` on the left is a **pattern**, not a tuple expression.
@@ -315,7 +315,7 @@ let distance (x1, y1) (x2, y2) =
   let dy = y2 -. y1 in
   sqrt (dx *. dx +. dy *. dy)
 
-let _ = distance (0.0, 0.0) (3.0, 4.0)
+let _ = distance (0.0, 0.0) (3.0, 4.0)  (* = 5. *)
 ```
 
 The two parameters are *patterns* `(x1, y1)` and `(x2, y2)`. When
@@ -336,10 +336,9 @@ let distance (x1, y1) (x2, y2) =
   let dy = y2 -. y1 in
   sqrt (dx *. dx +. dy *. dy)
 
-let _ = distance (0.0, 0.0) (3.0, 4.0)
+let _ = distance (0.0, 0.0) (3.0, 4.0)  (* = 5. *)
 ```
 
-- Result: `float = 5.0`.
 - Each parameter is a *pattern* `(x1, y1)`.
 - Inferred type: `float * float -> float * float -> float`.
 - Patterns in depth in [Module 5](M05-L01-basic-patterns.html).
@@ -369,8 +368,8 @@ Consider these three function definitions:
 ```ocaml
 let add_curried x y    = x + y
 let add_tupled (x, y)  = x + y
-let _ = add_curried 3 4
-let _ = add_tupled (3, 4)
+let _ = add_curried 3 4    (* = 7 *)
+let _ = add_tupled (3, 4)  (* = 7 *)
 ```
 
 Both compute `7`, but the function signatures are different:
@@ -380,8 +379,9 @@ Both compute `7`, but the function signatures are different:
 
 `add_curried` takes *two* arguments, applied one at a time (this
 is the curried form we saw in
-[M03-L01](M03-L01-functions-as-values.html#multiple-parameters)
-and studied in [M03-L03](M03-L03-currying.html)). It can be
+[the functions-as-values lecture](M03-L01-functions-as-values.html#multiple-parameters)
+and studied in [the currying lecture](M03-L03-currying.html)). It
+can be
 partially applied: `add_curried 3` is a meaningful value of type
 `int -> int`.
 
@@ -468,16 +468,16 @@ tuple, which is the standard way to return multiple results.
 let divmod a b =
   (a / b, a mod b)
 
-let _ = divmod 17 5
+let _ = divmod 17 5  (* = (3, 2) *)
 ```
 
-The function returns a pair `(quotient, remainder)`. The toplevel
-reports `(int * int) = (3, 2)`. The caller destructures:
+The function returns a pair `(quotient, remainder)`. The caller
+destructures:
 
 ```ocaml
 let divmod a b = (a / b, a mod b)
 let (q, r) = divmod 17 5
-let _ = q + r
+let _ = q + r  (* = 5 *)
 ```
 
 :::slide
@@ -490,10 +490,10 @@ OCaml functions return a **single** value: can be a tuple.
 let divmod a b =
   (a / b, a mod b)
 
-let _ = divmod 17 5
+let _ = divmod 17 5  (* = (3, 2) *)
 ```
 
-- Result: `(int * int) = (3, 2)`. Caller destructures:
+- Caller destructures:
 
 ```ocaml
 let divmod a b = (a / b, a mod b)
@@ -681,9 +681,11 @@ Write the function.
 
 :::
 
+:::solution
+
 :::slide
 
-## Activity discussion
+## Activity solution
 
 ```ocaml
 let p = (3, true, "hi")
@@ -694,17 +696,14 @@ let p = (3, true, "hi")
 
 ```ocaml
 let first3 (x, _, _) = x
+
+let _ = first3 (3, true, "hi")  (* = 3 *)
 ```
 
 - `val first3 : 'a * 'b * 'c -> 'a = <fun>`.
 - `_` ignores a component.
 
-```ocaml
-let first3 (x, _, _) = x
-let _ = first3 (3, true, "hi")
-```
-
-- Result: `int = 3`.
+:::
 
 :::
 

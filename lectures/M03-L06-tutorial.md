@@ -1,10 +1,10 @@
 ---
-title: "Tutorial: Fibonacci, GCD, power, digits"
+title: "Tutorial: Fibonacci, powers of two, fast power, digits"
 lecture_no: 6
 week: 3
 duration_target_min: 28
 concepts: [worked recursive examples, tail vs naive recursion, memoization preview]
-keywords: [OCaml, tutorial, fibonacci, gcd, power, digits, recursion, tail recursion]
+keywords: [OCaml, tutorial, fibonacci, power of two, power, digits, recursion, tail recursion]
 activity_question: "Write [sum_digits : int -> int] that returns the sum of the base-10 digits of a non-negative integer. [sum_digits 12345 = 15]. Same shape as [count_digits]; what changes in the recursive case?"
 think_about_this: "When a function does not terminate on certain inputs (like negative arguments to factorial), should it crash, return a sentinel, or return an [option] / [result]? What does each choice cost the caller?"
 reading:
@@ -19,16 +19,30 @@ reading:
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Tutorial: Fibonacci, GCD, power, digits</h2>
+<h2 class="title-slide-lecture">Tutorial: Fibonacci, powers of two, fast power, digits</h2>
 <p class="title-slide-label">Module 3 &middot; Lecture 6</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
+:::slide
+
+## This lecture: the Module 3 tutorial
+
+- Four small problems: Fibonacci, power-of-two test, fast power,
+  digit counting.
+- Goal: consolidate recursion, accumulators, local helpers.
+- Recurring choice: *naive* vs *tail-recursive* form.
+  - Rule of thumb: write the clear naive version first.
+  - Convert with an accumulator when inputs get large.
+
+:::
+
 This tutorial works through four small problems: Fibonacci (naive
-and linear-time), GCD by Euclid, fast integer power (by
-square-and-multiply), and digit-counting. None are individually
+and linear-time), testing whether a number is a power of two,
+fast integer power (by square-and-multiply), and digit-counting.
+None are individually
 hard; the point is to consolidate the techniques from Module 3
 ([recursion](M03-L02-recursion.html),
 [tail calls and accumulators](M03-L04-tail-recursion.html),
@@ -42,7 +56,8 @@ it is what you should reach for in a sketch or a small script. If
 the function will be called on large inputs (long lists, large
 numbers, in hot paths), convert to tail-recursive form using the
 [accumulator pattern](M03-L04-tail-recursion.html#the-accumulator-pattern)
-from M03-L04. Most code never needs the conversion; practitioners
+from the tail-recursion lecture. Most code never needs the
+conversion; practitioners
 get a feel for which functions are likely to be called on big data
 and rewrite those preemptively.
 
@@ -57,7 +72,7 @@ let rec fib n =
   if n < 2 then n
   else fib (n - 1) + fib (n - 2)
 
-let _ = fib 20
+let _ = fib 20  (* = 6765 *)
 ```
 
 :::slide
@@ -69,18 +84,17 @@ let rec fib n =
   if n < 2 then n
   else fib (n - 1) + fib (n - 2)
 
-let _ = fib 20
+let _ = fib 20  (* = 6765 *)
 ```
 
-- `int = 6765`.
 - Two recursive calls per step; call tree branches.
 - Total calls: exponential in `n`.
 - `fib 30`: slow. `fib 40`: slower. `fib 50`: impractical.
 
 :::
 
-`fib 20` is `6765`. The function is correct and the code reads
-exactly like the mathematical definition.
+The function is correct and the code reads exactly like the
+mathematical definition.
 
 The trouble is performance. Each call to `fib n` (for `n >= 2`)
 makes *two* recursive calls. So the work to compute `fib n` is
@@ -112,7 +126,7 @@ let fib n =
   in
   go 0 1 0
 
-let _ = fib 46
+let _ = fib 46  (* = 1836311903 *)
 ```
 
 :::slide
@@ -131,10 +145,10 @@ let fib n =
   in
   go 0 1 0
 
-let _ = fib 46
+let _ = fib 46  (* = 1836311903 *)
 ```
 
-- `int = 1836311903`. Linear in `n`.
+- Linear in `n`; one recursive call per step.
 
 :::
 
@@ -163,66 +177,73 @@ You can call `fib 1_000_000` without blowing the stack, although the
 result is a number with hundreds of thousands of digits and would
 overflow OCaml's native `int` long before that.
 
-## Problem 2: GCD by Euclid
+## Problem 2: is it a power of two?
 
-The greatest common divisor of two non-negative integers is
-computed by Euclid's algorithm: if `b` is zero, the GCD is `a`;
-otherwise, the GCD of `(a, b)` equals the GCD of `(b, a mod b)`. The
-translation is one line:
+A positive integer is a power of two (`1`, `2`, `4`, `8`, ...)
+exactly when repeatedly halving it lands on `1` without ever
+passing through an odd number bigger than `1`. The recursion: `1`
+is a power of two (`2^0`); an even number is a power of two iff
+its half is; everything else (zero, negatives, odd numbers above
+`1`) is not.
 
 ```ocaml
-let rec gcd a b =
-  if b = 0 then a
-  else gcd b (a mod b)
+let rec is_power_of_two n =
+  if n = 1 then true
+  else if n <= 0 || n mod 2 = 1 then false
+  else is_power_of_two (n / 2)
 
-let _ = gcd 48 18
+let _ = is_power_of_two 64  (* = true *)
+let _ = is_power_of_two 96  (* = false *)
 ```
 
 :::slide
 
-## Problem 2: GCD by Euclid
+## Problem 2: is it a power of two?
 
 ```ocaml
-let rec gcd a b =
-  if b = 0 then a
-  else gcd b (a mod b)
+let rec is_power_of_two n =
+  if n = 1 then true
+  else if n <= 0 || n mod 2 = 1 then false
+  else is_power_of_two (n / 2)
 
-let _ = gcd 48 18
+let _ = is_power_of_two 64  (* = true *)
+let _ = is_power_of_two 96  (* = false *)
 ```
 
-- `int = 6`. Classic Euclidean algorithm.
-- Each step replaces `(a, b)` with `(b, a mod b)`.
-- Base case `b = 0`; then `a` is the GCD.
-- Termination: `a mod b < b`, so the second argument strictly decreases.
+- Base cases first: `1` succeeds; zero, negatives, odds fail.
+- Recursive case: halve and ask again.
+- Termination: `n / 2 < n` for `n >= 2`; strictly decreasing.
 - Already tail-recursive.
 
 :::
 
-`gcd 48 18` returns `6`. Trace: `gcd 48 18` -> `gcd 18 12` ->
-`gcd 12 6` -> `gcd 6 0` -> `6`.
+Trace the two calls: `is_power_of_two 64` -> `32` -> `16` -> `8`
+-> `4` -> `2` -> `1` -> `true`; `is_power_of_two 96` -> `48` ->
+`24` -> `12` -> `6` -> `3`, and `3` is odd -> `false`.
 
-Two things to notice. First, the function is already tail-recursive
-without any rewriting. The recursive call is the final expression
-in the else-branch; there is no work after it. The accumulator
-pattern is unnecessary because the accumulation happens "for free"
-as the argument pair, which gets smaller with each call.
+Three things to notice. First, the function is already
+tail-recursive without any rewriting. The recursive call is the
+final expression of its branch; there is no work after it. No
+accumulator is needed because the answer needs no combining on
+the way back up; the base case *is* the answer.
 
-Second, termination is guaranteed by the standard fact that `a mod
-b < b` for `b > 0`. So each recursive call strictly decreases the
-second argument, with `0` as the floor. The recursion is at most
-`O(log(min(a, b)))` deep, a beautiful property of Euclid's algorithm.
+Second, termination: `n / 2 < n` whenever `n >= 2`, and the only
+inputs that reach the recursive call satisfy `n >= 2` (the two
+base tests have already filtered out everything below `2` and the
+odds). The argument strictly decreases toward the base cases, and
+the recursion is at most `log2 n` deep.
 
-For negative inputs, the behaviour depends on OCaml's `mod`, which
-follows C: the sign of the result matches the sign of the dividend.
-So `gcd (-48) 18` actually works correctly here (the algorithm
-self-corrects), but the conventional definition of GCD is for
-non-negative inputs, and a defensive version would `abs`-wrap both
-inputs before recursing.
+Third, the *order* of the tests matters. `1` is odd, so if the
+`n mod 2 = 1` test ran first, the function would return `false`
+on `1`; and since every successful chain of halvings bottoms out
+at `1`, it would then return `false` on every input. When base
+cases overlap with a catch-the-rest test, the base cases must
+come first.
 
 ## Problem 3: fast integer power
 
-The naive `power` we wrote in M03-L02 takes `n` recursive calls to
-compute `x^n`:
+The naive `power` we wrote in the recursion lecture takes `n`
+recursive calls to compute `x^n`:
 
 ```ocaml
 let rec power x n =
@@ -246,7 +267,7 @@ let rec fast_power x n =
     half * half
   else x * fast_power x (n - 1)
 
-let _ = fast_power 2 30
+let _ = fast_power 2 30  (* = 1073741824 *)
 ```
 
 :::slide
@@ -261,18 +282,16 @@ let rec fast_power x n =
     half * half
   else x * fast_power x (n - 1)
 
-let _ = fast_power 2 30
+let _ = fast_power 2 30  (* = 1073741824 *)
 ```
 
-- `int = 1073741824` (i.e. `2^30`).
 - Even `n`: one squaring of `x^(n/2)`.
 - Odd `n`: multiply by `x`, then the new exponent is even.
 - Calls: about `2 * log2(n)` (`~10` for `n = 30`, vs `30` for naive).
 
 :::
 
-Result: `1073741824`. The recursion depth is *logarithmic* in `n`,
-not linear. For `n = 1_000_000`, the naive `power` makes a million
+The recursion depth is *logarithmic* in `n`, not linear. For `n = 1_000_000`, the naive `power` makes a million
 recursive calls; `fast_power` makes about forty. The transformation
 is purely algorithmic: same answer, far fewer calls. The trick
 ("decompose by parity") is the same one that underlies fast matrix
@@ -281,8 +300,9 @@ related algorithms.
 
 A nuance worth flagging: `fast_power` is *not* tail-recursive. The
 even case has `half * half` running *after* the recursive call, and
-the odd case has `x *` running after. The accumulator pattern from
-M03-L04 does not unfold cleanly here: the running result depends
+the odd case has `x *` running after. The accumulator pattern
+from the tail-recursion lecture does not unfold cleanly here: the
+running result depends
 on values you do not know yet. For typical exponents (`n` up to a
 few thousand), the logarithmic depth is comfortably small (under
 20 frames for `n` up to a million), so non-tail recursion is fine.
@@ -322,7 +342,7 @@ let rec count_digits n =
   if n < 10 then 1
   else 1 + count_digits (n / 10)
 
-let _ = count_digits 12345
+let _ = count_digits 12345  (* = 5 *)
 ```
 
 :::slide
@@ -334,10 +354,9 @@ let rec count_digits n =
   if n < 10 then 1
   else 1 + count_digits (n / 10)
 
-let _ = count_digits 12345
+let _ = count_digits 12345  (* = 5 *)
 ```
 
-- `int = 5`.
 - Strips one digit at a time; base case is single-digit.
 - Each step: `n / 10` shifts right by one place.
 
@@ -348,10 +367,10 @@ let _ = count_digits 12345
 ## `count_digits`: negative inputs misbehave
 
 ```ocaml
-let _ = count_digits (-12345)
+let _ = count_digits (-12345)  (* = 1, wrong! *)
 ```
 
-- Returns `1`. Wrong! `(-12345)` has five digits, not one.
+- Wrong: `(-12345)` has five digits, not one.
 - `n < 10` is true for *all* negatives.
 - The recursion stops at the very first call.
 
@@ -369,16 +388,15 @@ let count_digits n =
   in
   go (abs n)
 
-let _ = count_digits (-12345)
+let _ = count_digits (-12345)  (* = 5 *)
 ```
 
-- Now `int = 5`.
 - Outer wrapper strips the sign with `abs`.
 - Local `go` only ever sees `n >= 0`; the base case behaves.
 
 :::
 
-Result: `5`. The recursion strips one digit per step. The base case
+The recursion strips one digit per step. The base case
 is "a single-digit number" (`n < 10`), which catches both `0`
 through `9` and recursive calls when the remaining `n` is below 10.
 
@@ -411,18 +429,20 @@ different convention you would adjust the base case.
 ## A quick check
 
 :::quiz mcq id=M03-L06-q2
-The toplevel reports the type of `gcd` from this lecture as:
+In `is_power_of_two`, why must the `n = 1` test come *before*
+the `n mod 2 = 1` test?
 
-- [ ] `int -> int`
-- [x] `int -> int -> int`
-- [ ] `int -> int -> bool`
-- [ ] `int -> int * int -> int`
+- [ ] It makes the function tail-recursive.
+- [x] `1` is odd; tested the other way round, the function would return `false` for `1`.
+- [ ] `n = 1` is cheaper to evaluate than `n mod 2 = 1`.
+- [ ] No reason; the two tests can be swapped freely.
 
-**Why:** `gcd a b` takes two integers, uses `=` and `mod` and
-recurses on the same shape, and returns the first argument when
-the second is zero. So both parameters and the return are `int`.
-Written curried, the type is `int -> int -> int` (read as `int
--> (int -> int)`).
+**Why:** `1 = 2^0` is a power of two, but `1` is also odd. If
+the oddness test ran first, the function would return `false` on
+`1`, and since every successful chain of halvings bottoms out at
+`1`, it would return `false` on *every* input. When a base case
+overlaps with a catch-the-rest test, the base case must be
+checked first. Tail-recursion is unaffected by the test order.
 :::
 
 :::quiz mcq id=M03-L06-q3
@@ -485,12 +505,12 @@ let rec sum_digits n =
   if n = 0 then 0
   else (n mod 10) + sum_digits (n / 10)
 
-let _ = sum_digits 12345
+let _ = sum_digits 12345  (* = 15 *)
 ```
 
 - Base case `n = 0`: empty number, digit sum `0`.
 - Recursive case: last digit + digit sum of the rest.
-- `int = 15`. Same shape as `count_digits`; different per-step.
+- Same shape as `count_digits`; different per-step contribution.
 
 :::
 

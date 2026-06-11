@@ -107,7 +107,8 @@ home/
 ## A first cut: file vs directory
 
 Two pieces of data live on every entry: its `name` and its
-permissions. We will use an *inline record* (M04-L03) inside each
+permissions. We will use an *inline record* (from
+[the variants lecture](M04-L03-variants.html)) inside each
 variant constructor to keep the fields self-documenting.
 Permissions get their own small record type:
 
@@ -245,7 +246,7 @@ type entry =
 let rw = { read = true; write = true;  exec = false }
 let rx = { read = true; write = false; exec = true  }
 let alice =
-  Dir { name = "alice"; perms = rx; contents = [] }
+  Dir { name = "alice"; perms = rx; contents = [] }  (* contents elided *)
 
 let home =
   Dir { name = "home"; perms = rx; contents = [alice] }
@@ -264,6 +265,8 @@ parsing: just constructors and records.
 :::col 62%
 
 ```ocaml
+let rx = { read = true; write = false; exec = true }
+
 let cat =
   File { name = "cat.jpg"; size = 184_000; perms = rw }
 let dog =
@@ -350,9 +353,9 @@ let anonymous =
 "no owner data attached." Note that this is genuinely "no value
 attached," not "an owner who is the empty string"; the type
 forces the two cases apart. That distinction (and the
-[M04-L04 rule of thumb](M04-L04-recursive-types.html): `option`
-for *consumer uncertainty*, not for an explicit domain value) is
-what this kind of design buys you.
+[recursive-types lecture's rule of thumb](M04-L04-recursive-types.html#when-to-use-option):
+`option` for *consumer uncertainty*, not for an explicit domain
+value) is what this kind of design buys you.
 
 :::slide
 
@@ -406,15 +409,18 @@ example *values* of the return type, to make sure the design fits:
 ```ocaml
 type perms = { read : bool; write : bool; exec : bool }
 type entry =
-  | File of { name : string; size : int; perms : perms }
-  | Dir of { name : string; perms : perms; contents : entry list }
+  | File of { name : string; size : int; perms : perms;
+              owner : string option }
+  | Dir of { name : string; perms : perms;
+             contents : entry list; owner : string option }
 type lookup_error =
   | Not_found
   | Permission_denied
 let rw = { read = true; write = true; exec = false }
 
 let ok_result   : (entry, lookup_error) result =
-  Ok (File { name = "notes.txt"; size = 1284; perms = rw })
+  Ok (File { name = "notes.txt"; size = 1284; perms = rw;
+             owner = Some "alice" })
 
 let missing : (entry, lookup_error) result =
   Error Not_found
@@ -452,8 +458,11 @@ val lookup : entry -> string list -> (entry, lookup_error) result
 ## Lookup outcome: example values
 
 ```ocaml
+let rw = { read = true; write = true; exec = false }
+
 let ok : (entry, lookup_error) result =
-  Ok (File { name = "notes.txt"; size = 1284; perms = rw })
+  Ok (File { name = "notes.txt"; size = 1284; perms = rw;
+             owner = Some "alice" })
 
 let missing : (entry, lookup_error) result = Error Not_found
 let blocked : (entry, lookup_error) result = Error Permission_denied
@@ -539,7 +548,8 @@ Why use `owner : string option` instead of `owner : string`
       may be missing.
 
 **Why:** this is the "make illegal states unrepresentable"
-slogan from M04-L04. With `owner : string`, the absence of an
+slogan from the recursive-types lecture. With `owner : string`,
+the absence of an
 owner is encoded as a sentinel (the empty string), and the
 compiler cannot tell that sentinel apart from a genuine owner
 named `""`; you would rely on every reader remembering to

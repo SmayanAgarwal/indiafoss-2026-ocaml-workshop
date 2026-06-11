@@ -6,7 +6,7 @@ duration_target_min: 25
 concepts: [recursive types, list, tree, ADT, expression trees, structural induction]
 keywords: [OCaml, recursive types, list, tree, ADT, expression]
 activity_question: "Extend the [expr] type with a [Sub] constructor (two sub-expressions, like [Add] and [Mul]) and construct a value representing [(7 - 3) - 2]."
-think_about_this: "If you compare a value of type [int list] and a value of type [int tree], can [=] tell them apart? What property of structural equality lets one operator handle both?"
+think_about_this: "Structural equality [=] compares [int list] values and [int tree] values alike, with no comparison code written by you for either type. What about the way variants are built lets one polymorphic operator walk both structures?"
 reading:
   - title: "Cornell CS3110, Lists"
     url: https://cs3110.github.io/textbook/chapters/data/lists.html
@@ -38,7 +38,8 @@ how OCaml encodes them, and how to walk them with recursive
 functions.
 
 We have already met recursion at the *function* level
-([M03-L02](M03-L02-recursion.html)). This lecture connects it
+([the recursion lecture](M03-L02-recursion.html)). This lecture
+connects it
 with recursion at the *type* level. The two go together: a
 recursive type asks for a recursive function to process it, and
 the structural shape of the recursion mirrors the shape of the
@@ -374,7 +375,7 @@ later called this his *billion-dollar mistake*:
 > which have probably caused a billion dollars of pain and
 > damage in the last forty years.
 >
-> -- Sir Tony Hoare,
+> Sir Tony Hoare,
 > *[Null References: The Billion Dollar Mistake](https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/)*
 > (QCon 2009)
 
@@ -553,6 +554,15 @@ expressible. We will lean on this principle again in
 [Module 7](M07-L07-signatures.html#why-hide-internals) when we
 discuss API design.
 
+A rule of thumb for when `option` is the right model: reach for
+it when the *consumer* of the data faces genuine uncertainty
+about whether a value is there (a mark not yet entered, a field
+the source did not supply), not as a stand-in for a legitimate
+domain value. If "absent" is itself a meaningful value of the
+domain (a score of zero, an empty string the user actually
+typed), give it an honest representation of its own; `None`
+should mean "nothing here," never "a particular something."
+
 :::slide
 
 ## When to use `option`: the problem
@@ -592,6 +602,8 @@ let bob   = { name = "Bob";   roll_no = "CS25"; marks = None }
 - The type forces every reader to handle both cases.
 - The slogan: *make illegal states unrepresentable*. No
   sentinel `-1`, no magic `0`.
+- Rule of thumb: `option` models *consumer uncertainty*
+  ("may not be there"), never a legitimate domain value.
 
 :::
 
@@ -665,7 +677,7 @@ new list by adding a head is cheap:
 ```ocaml
 let xs = [10; 20; 30]
 let ys = 0 :: xs
-let _ = ys
+let _ = ys  (* = [0; 10; 20; 30] *)
 ```
 
 `ys` is `[0; 10; 20; 30]`. The new value *shares* its tail with
@@ -674,7 +686,7 @@ safe. Now rebind `xs` to something completely different:
 
 ```ocaml
 let xs = [99; 99; 99]
-let _ = ys
+let _ = ys  (* = [0; 10; 20; 30], unchanged *)
 ```
 
 `ys` is still `[0; 10; 20; 30]`. The earlier `let ys = 0 :: xs`
@@ -682,7 +694,7 @@ captured the *value* `xs` was bound to at that moment (the list
 `[10; 20; 30]`), not the *name* `xs`. Rebinding `xs` later does
 not change what `ys` points at. This is the same shadowing-is-not-mutation
 point from
-[M02-L02](M02-L02-let-bindings.html#why-shadowing-differs-from-mutation-closures-see-the-old-value),
+[the let-bindings lecture](M02-L02-let-bindings.html#why-shadowing-differs-from-mutation-closures-see-the-old-value),
 applied to lists.
 
 :::slide
@@ -692,10 +704,9 @@ applied to lists.
 ```ocaml
 let xs = [10; 20; 30]
 let ys = 0 :: xs
-let _ = ys
+let _ = ys  (* = [0; 10; 20; 30] *)
 ```
 
-- `int list = [0; 10; 20; 30]`.
 - `ys` shares its tail with `xs` (no copy).
 - Prepending is `O(1)`; appending to the end is `O(n)`.
 
@@ -709,12 +720,12 @@ Now rebind `xs`:
 
 ```ocaml
 let xs = [99; 99; 99]
-let _ = ys
+let _ = ys  (* = [0; 10; 20; 30], unchanged *)
 ```
 
-- `ys` is *still* `[0; 10; 20; 30]`.
 - `ys` captured the **value** at binding time, not the name `xs`.
-- Same shadowing-is-not-mutation point from M02-L02.
+- Same shadowing-is-not-mutation point from the let-bindings
+  lecture.
 
 :::
 
@@ -820,7 +831,7 @@ trees, even trees with an unbounded number of children (called
 
 Two types can be mutually recursive (each referring to the other).
 The keyword is `and`, just like for
-[mutual recursion of functions in M03-L05](M03-L05-local-and-mutual.html#mutual-recursion-two-functions-calling-each-other).
+[mutual recursion of functions](M03-L05-local-and-mutual.html#mutual-recursion-two-functions-calling-each-other).
 A small example: a "rose tree" or "n-ary tree," where each node
 has a value and an arbitrary number of children:
 
@@ -851,12 +862,10 @@ and  'a rose_tree = Rose of 'a * 'a forest
 
 :::
 
-The same `and` keyword serves three purposes in OCaml: mutual
-recursion of `let` bindings, mutual recursion of `type` declarations,
-and (we will see in [Module 7](M07-L06-module-basics.html)) mutual
-recursion of `module` declarations. The intuition is the same in
-each case: the names introduced together are all in scope for each
-other.
+The same `and` keyword serves two purposes in OCaml: mutual
+recursion of `let` bindings and mutual recursion of `type`
+declarations. The intuition is the same in both cases: the names
+introduced together are all in scope for each other.
 
 ## Modelling arithmetic expressions
 
@@ -886,7 +895,7 @@ representations, regex ASTs, configuration languages, and network
 protocol decoders are all modelled in OCaml. Once we have pattern
 matching, evaluating one of these shapes is straightforward
 (`Module 5` has the tools; the
-[M05-L06 tutorial](M05-L06-tutorial.html) walks an `expr`
+[Module 5 tutorial](M05-L06-tutorial.html) walks an `expr`
 evaluator end-to-end).
 
 :::slide
@@ -949,11 +958,11 @@ Which of these are **valid** values of type `expr`?
 - [x] `Mul (Add (Num 1, Num 2), Num 3)`
 - [ ] `Add (1, 2)`
 
-**Why:** `Num`, `Add`, and `Mul` all take payloads that are
-themselves `expr`. So `Add` accepts two `expr`s, not two `int`s
-directly. `Add (Num 1, Num 2)` is well-typed; `Add (1, 2)` is
-not. The recursive nesting (`Mul` of `Add` of `Num`s) is exactly
-what makes this a *recursive* variant.
+**Why:** `Num` takes an `int` payload; `Add` and `Mul` take
+payloads that are themselves `expr`s. So `Add` accepts two
+`expr`s, not two `int`s directly. `Add (Num 1, Num 2)` is
+well-typed; `Add (1, 2)` is not. The recursive nesting (`Mul` of
+`Add` of `Num`s) is exactly what makes this a *recursive* variant.
 :::
 
 :::quiz mcq id=M04-L04-q3
@@ -1080,7 +1089,7 @@ pieces together on worked examples: the
 syntax tree for OCaml itself, and the
 [file system tutorial](M04-L06-tutorial-fs.html) reapplies the
 same toolkit to a different domain. Walking these data shapes
-(the step we have been deferring throughout M04-L03 and M04-L04)
+(the step we have been deferring since variants arrived)
 starts in [Module 5](M05-L01-basic-patterns.html), where pattern
 matching gets its own treatment.
 

@@ -236,7 +236,7 @@ type expr =
 carries three pieces: the *name* being bound, the *binding
 expression* whose value gets bound to that name, and the *body*
 in which the name is in scope. That is the same `let name = e1 in
-e2` shape from M02-L02, now expressed as data.
+e2` shape from the let-bindings lecture, now expressed as data.
 
 The AST for `let x = 5 in x + 3`:
 
@@ -265,7 +265,7 @@ let e_let_nested =
 
 The body of the outer `Let_in` is another `Let_in`; that one's
 body is the addition. Exactly the right-associative nesting of
-source `let` chains we saw in M02-L02.
+source `let` chains we saw in the let-bindings lecture.
 
 :::slide
 
@@ -340,7 +340,8 @@ type expr =
 `If (cond, then_branch, else_branch)` carries three children: the
 test, the value when the test is true, and the value when the test
 is false. That matches the three slots in OCaml's
-`if ... then ... else ...` expression from M02-L05.
+`if ... then ... else ...` expression from the if-expressions
+lecture.
 
 The AST for `if x < 0 then 0 else x`:
 
@@ -526,9 +527,9 @@ let e_annotated =
 
 The `option` cleanly captures "the source either wrote a type or
 did not." This is exactly the kind of *consumer uncertainty* the
-[M04-L04 rule of thumb](M04-L04-recursive-types.html) covers: a
-later stage (the type checker) has to decide what to do when the
-annotation is missing vs present.
+[recursive-types lecture's rule of thumb](M04-L04-recursive-types.html#when-to-use-option)
+covers: a later stage (the type checker) has to decide what to do
+when the annotation is missing vs present.
 
 :::slide
 
@@ -749,8 +750,8 @@ You have now seen the full Module 4 toolkit applied to an AST.
 
 :::
 
-You have now seen the full Module 4 toolkit (records, variants,
-tuples, recursion, `option`, `result`) applied to an AST. The next
+You have now seen the full Module 4 toolkit (variants, tuples,
+recursion, `option`) applied to an AST. The next
 tutorial ([M04-L06](M04-L06-tutorial-fs.html)) reapplies the same
 toolkit to a tiny file system, so you see how the same ingredients
 fit a very different domain. Walking either tree (an AST evaluator,
