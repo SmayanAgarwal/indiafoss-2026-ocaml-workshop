@@ -53,12 +53,18 @@ jobs:
         run: |
           # Probe the Worker via its workers.dev URL. The URL is
           # printed by wrangler deploy; we recover it from the
-          # deployments API.
+          # deployments API. A deploy whose health endpoint we cannot
+          # even locate is a failed deploy: hard-fail rather than
+          # report green.
           set -e
           DEPLOY_URL=$(npx wrangler deployments list 2>&1 | grep -oE 'https://nptel-quiz\.[a-z0-9-]+\.workers\.dev' | head -1 || true)
-          if [ -n "$DEPLOY_URL" ]; then
-            echo "Probing $DEPLOY_URL/healthz"
-            curl -sf "$DEPLOY_URL/healthz" && echo " OK"
-          else
-            echo "Worker URL not found in deployments list; skipping smoke check"
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::error::Worker URL not found in deployments list; cannot smoke-check the deploy"
+            exit 1
           fi
+          echo "Probing $DEPLOY_URL/healthz"
+          if ! curl -sf --max-time 30 --retry 3 --retry-delay 5 "$DEPLOY_URL/healthz"; then
+            echo "::error::Smoke check failed: $DEPLOY_URL/healthz did not return 2xx"
+            exit 1
+          fi
+          echo " OK"

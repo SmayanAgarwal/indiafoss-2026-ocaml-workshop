@@ -6,6 +6,10 @@
 //   POST /quiz             body: { reader_uuid, quiz_id, page, kind,
 //                                  selected?, passed?, correct, commit_sha }
 //                          Inserts one row into quiz_response.
+//                          Hardened: bodies over 4 KB and malformed
+//                          JSON get 400; integers are clamped; each
+//                          reader_uuid gets at most DAILY_WRITE_CAP
+//                          writes per UTC day (429 beyond that).
 //
 //   GET  /quiz/agg         Aggregated stats per quiz_id (count, accuracy).
 //                          Public, used by the dashboard page.
@@ -75,14 +79,34 @@ export default {
 // Defend against pathological input by capping every string field.
 const cap = (s, n) => String(s ?? '').slice(0, n);
 const boolToInt = (v) => (typeof v === 'boolean' ? (v ? 1 : 0) : null);
+const clampInt = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+// No legitimate quiz POST body comes anywhere near this; reject
+// anything bigger before parsing it.
+const MAX_BODY_BYTES = 4096;
+
+// Per-reader daily write cap. A real reader answering every quiz in
+// the course several times over stays well under this; only a
+// script hammering the endpoint hits it.
+const DAILY_WRITE_CAP = 500;
+
+// Parse a JSON request body, rejecting oversized or malformed
+// payloads. Returns { body } on success or { err } (a Response).
+async function readJsonBody(request) {
+  const raw = await request.text();
+  if (raw.length > MAX_BODY_BYTES) {
+    return { err: new Response('Body too large', { status: 400, headers: CORS }) };
+  }
+  try {
+    return { body: JSON.parse(raw) };
+  } catch {
+    return { err: new Response('Bad JSON', { status: 400, headers: CORS }) };
+  }
+}
 
 async function handleQuizPost(request, env) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return new Response('Bad JSON', { status: 400, headers: CORS });
-  }
+  const { body, err } = await readJsonBody(request);
+  if (err) return err;
 
   const { reader_uuid, quiz_id, page, kind, selected, passed, attempts,
           correct, commit_sha, line } = body || {};
@@ -99,9 +123,10 @@ async function handleQuizPost(request, env) {
   const reader = cap(reader_uuid, 64);
   const qid    = cap(quiz_id, 256);
   const pg     = cap(page, 256);
-  const sel    = (kind === 'mcq' && Number.isInteger(selected)) ? selected : null;
+  const sel    = (kind === 'mcq' && Number.isInteger(selected))
+                   ? clampInt(selected, 0, 15) : null;
   const pass   = (kind === 'code') ? boolToInt(passed) : null;
-  const att    = Number.isInteger(attempts) ? attempts : 1;
+  const att    = Number.isInteger(attempts) ? clampInt(attempts, 1, 1000) : 1;
   const corr   = boolToInt(correct);
   const sha    = cap(commit_sha, 64);
   // [line] is the 1-based markdown line of the quiz block; the
@@ -110,6 +135,23 @@ async function handleQuizPost(request, env) {
   const ln     = (Number.isInteger(line) && line > 0 && line < 1000000)
                    ? line : null;
   const ts     = new Date().toISOString();
+
+  // Abuse guard: cap writes per reader_uuid per UTC day. The
+  // 'YYYY-MM-DD' prefix sorts lexicographically before every ISO
+  // timestamp of that day, so a plain >= comparison on the ts text
+  // column selects today's rows; idx_qr_reader_ts (migration 0003)
+  // makes the COUNT an index range scan.
+  const today = ts.slice(0, 10);
+  const used = await env.DB.prepare(
+    `SELECT COUNT(*) AS n
+       FROM quiz_response
+      WHERE reader_uuid = ? AND ts >= ?`
+  ).bind(reader, today).first();
+  if ((used?.n ?? 0) >= DAILY_WRITE_CAP) {
+    return new Response('Daily write limit reached', {
+      status: 429, headers: CORS,
+    });
+  }
 
   await env.DB.prepare(
     `INSERT INTO quiz_response
@@ -183,9 +225,8 @@ async function handleQuizExport(request, env) {
   // as JSON. The requester must supply the UUID, which they have
   // in their browser's localStorage; no auth flow needed because
   // the UUID is itself the credential.
-  let body;
-  try { body = await request.json(); }
-  catch { return new Response('Bad JSON', { status: 400, headers: CORS }); }
+  const { body, err } = await readJsonBody(request);
+  if (err) return err;
 
   const { reader_uuid } = body || {};
   if (!reader_uuid) {
@@ -207,9 +248,8 @@ async function handleQuizExport(request, env) {
 }
 
 async function handleQuizForget(request, env) {
-  let body;
-  try { body = await request.json(); }
-  catch { return new Response('Bad JSON', { status: 400, headers: CORS }); }
+  const { body, err } = await readJsonBody(request);
+  if (err) return err;
 
   const { reader_uuid } = body || {};
   if (!reader_uuid) {

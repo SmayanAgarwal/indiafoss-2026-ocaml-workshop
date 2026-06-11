@@ -33,6 +33,19 @@ ocamlfind query qcheck-core.runner >/dev/null 2>&1 || { echo "qcheck-core.runner
 ocamlfind query qcheck             >/dev/null 2>&1 || { echo "qcheck not installed: opam install qcheck (pulls in alcotest-backed runner)"; exit 1; }
 ocamlfind query ounit2             >/dev/null 2>&1 || { echo "ounit2 not installed: opam install ounit2"; exit 1; }
 
+# The M09 lectures use QCheck.(list_small ...) and friends from the
+# modernised qcheck-core API, which only exists from 0.91 onwards. A
+# bundle built against an older switch loads fine but every list_small
+# cell dies with "Unbound value", which is miserable to debug from the
+# browser. Fail loudly here instead.
+QC_MIN_VERSION=0.91
+QC_VERSION=$(ocamlfind query -format '%v' qcheck-core)
+if [ "$(printf '%s\n%s\n' "$QC_MIN_VERSION" "$QC_VERSION" | sort -V | head -n1)" != "$QC_MIN_VERSION" ]; then
+  echo "qcheck-core $QC_VERSION is too old: the M09 lectures need >= $QC_MIN_VERSION (QCheck.list_small etc.)." >&2
+  echo "Upgrade with: opam install 'qcheck-core>=$QC_MIN_VERSION'" >&2
+  exit 1
+fi
+
 QC=$(ocamlfind query qcheck-core)
 QCR=$(ocamlfind query qcheck-core.runner)
 QCFULL=$(ocamlfind query qcheck)
