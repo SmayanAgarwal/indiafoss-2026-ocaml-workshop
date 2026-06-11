@@ -17,6 +17,9 @@
 #   7. playwright VM playground    -- dune-in-browser boot check
 #   8. dashboard smoke             -- dashboard renders against the
 #                                    live worker (skipped offline)
+#   9. slide-overflow scan         -- every deck fits 1280x800
+#                                    (parallel, ~15s; CHECK_OVERFLOW=0
+#                                    to skip)
 #
 # Exits non-zero on any failure. Run from anywhere.
 
@@ -30,10 +33,10 @@ red()   { printf '\033[31m%s\033[0m\n' "$*"; }
 green() { printf '\033[32m%s\033[0m\n' "$*"; }
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
 
-bold '[1/8] activity-fresh-code audit'
+bold '[1/9] activity-fresh-code audit'
 python3 tools/audit-activities.py
 
-bold '[2/8] KC-comment sweep'
+bold '[2/9] KC-comment sweep'
 # `KC:` (silent fix) is allowed to linger; `KC?:` and `KC!:` are
 # blockers per CLAUDE.md. Surface all three so the user sees them.
 KC_HITS=$(grep -rEn '<!--[[:space:]]*KC[!?]?:' \
@@ -52,16 +55,16 @@ else
   green '  no KC comments outstanding'
 fi
 
-bold '[3/8] link + anchor check'
+bold '[3/9] link + anchor check'
 python3 tools/check-links.py
 
-bold '[4/8] dune runtest (mdx + OCaml tests)'
+bold '[4/9] dune runtest (mdx + OCaml tests)'
 opam exec -- dune runtest
 
-bold '[5/8] build site'
+bold '[5/9] build site'
 tools/build-site.sh
 
-bold '[6/8] playwright end-to-end'
+bold '[6/9] playwright end-to-end'
 # Find a server rooted at the repo (so /_site/... resolves): reuse one
 # that already serves the smoke page correctly, else bind the first
 # free port from the candidate list. A stale server squatting a port
@@ -101,7 +104,7 @@ SMOKE_URL="http://localhost:$PORT/_site/test/smoke.html"
 
 node "$SCRIPT_DIR/playwright-check.mjs" "$SMOKE_URL"
 
-bold '[7/8] playwright VM playground'
+bold '[7/9] playwright VM playground'
 # Boot the in-browser dune VM and build hello end-to-end. Use the
 # local VM data when the build scratch dir is present (fast, no
 # network); otherwise fall back to the production
@@ -113,7 +116,7 @@ fi
 node "$SCRIPT_DIR/playwright-vm-check.mjs" \
   "http://localhost:$PORT/_site/playground.html"
 
-bold '[8/8] dashboard smoke'
+bold '[8/9] dashboard smoke'
 # The dashboard JS needs the live worker; skip (don't fail) when it
 # is unreachable, e.g. recording offline in the studio.
 QUIZ_API="https://nptel-quiz.kc-7c7.workers.dev"
@@ -124,13 +127,15 @@ else
   red "  quiz worker unreachable (offline?); skipping dashboard smoke."
 fi
 
-# Optional: full 78-deck slide-overflow scan (~15 min). Run with
-# CHECK_OVERFLOW=1, or directly:
-#   node tools/playwright-overflow-check.mjs http://localhost:8765/_site [page.html ...]
-if [ "${CHECK_OVERFLOW:-0}" = "1" ]; then
-  bold '[extra] slide-overflow scan (all decks)'
+bold '[9/9] slide-overflow scan (all decks)'
+# Parallel scan of every deck against the 1280x800 canvas (~15s with
+# the default 6-tab pool). Skip with CHECK_OVERFLOW=0; single pages:
+#   node tools/playwright-overflow-check.mjs http://localhost:8765/_site page.html
+if [ "${CHECK_OVERFLOW:-1}" = "1" ]; then
   node "$SCRIPT_DIR/playwright-overflow-check.mjs" \
     "http://localhost:$PORT/_site"
+else
+  red '  skipped (CHECK_OVERFLOW=0)'
 fi
 
 green 'All tests passed.'
