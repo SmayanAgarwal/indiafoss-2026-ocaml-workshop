@@ -97,9 +97,8 @@ with your question (or surface in chat).
   `lectures/mdx_prelude.ml`, which de-fangs OUnit2's
   `run_test_tt_main` argv-parse/exit, plus a capped bytecode
   stack so Stack_overflow demos trip fast as in the browser).
-  M10 and M12 are not covered yet; M11 needs the OxCaml
-  toolchain (the 5.2.0+ox switch has an `ocaml-mdx`, untried
-  beyond a probe).
+  M12 is not covered yet; M11 needs the OxCaml toolchain (the
+  5.2.0+ox switch has an `ocaml-mdx`, untried beyond a probe).
 
 ## Where things live
 
