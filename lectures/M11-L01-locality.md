@@ -201,6 +201,28 @@ OxCaml catches at compile time, on the program.
 
 :::slide
 
+## Recall: the M10 handle and its combinator
+
+```ocaml
+type handle = { mutable closed : bool }
+let my_open () = print_endline "open"; { closed = false }
+let my_close h =
+  if h.closed then failwith "double close"
+  else (print_endline "close"; h.closed <- true)
+let fun_protect finally work =
+  match work () with
+  | x -> finally (); x
+  | exception e -> finally (); raise e
+```
+
+- A handle must be closed exactly once.
+  - `use` and `my_close` raise on misuse, at runtime.
+- `fun_protect` runs the cleanup on both exits.
+
+:::
+
+:::slide
+
 ## The handle that escaped (Module 10)
 
 ```ocaml
@@ -216,9 +238,7 @@ let () = with_handle (fun h -> escaped := Some h)
   close` at runtime (M10).
 - With `handle @ local`: `escaped := Some h` is a *compile-time*
   error.
-
-> Error: This value is "local" ... expected to be "global"
-> because it is contained (via constructor "Some") ...
+  - "this value is local, but expected to be global."
 
 :::
 
@@ -403,9 +423,9 @@ The `stack_` keyword forces an allocation onto the **stack**
 instead of the heap, at mode `local`; the compiler convinces itself
 the value does not escape, or refuses to compile.
 
-The running example for the rest of this lecture: computing the
-length of a 2-D polyline, built from the `point` type. First a
-basic distance function:
+The running example for the rest of this lecture: 2-D points,
+and the polylines built from them. First a basic distance
+function:
 
 ```ocaml
 type point = { x : float; y : float }
@@ -417,8 +437,8 @@ let distance (a @ local) (b @ local) =
 (* val distance : point @ local -> point @ local -> float = <fun> *)
 ```
 
-Both arguments are at mode `local`: `distance` promises to consume
-them within its body, never capturing or returning them. The body
+Both arguments are at mode `local`: `distance` promises to use
+them only within its body, never capturing or returning them. The body
 reads two field values, does arithmetic, calls `Float.sqrt`. The
 returned `float` is not marked local (we will see why in a moment),
 so the answer escapes to the caller cleanly.
@@ -456,12 +476,10 @@ constrained. (Run the cell: the toplevel echoes `- : float = 5.`.)
 
 ```ocaml
 type point = { x : float; y : float }
-
 let distance (a @ local) (b @ local) =
   let dx = a.x -. b.x in
   let dy = a.y -. b.y in
   Float.sqrt (dx *. dx +. dy *. dy)
-
 let test_distance () =
   let a = stack_ { x = 0.0; y = 0.0 } in
   let b = stack_ { x = 3.0; y = 4.0 } in
@@ -473,8 +491,7 @@ let test_distance () =
   `local`.
 - Bind the call to `d` (out of tail position) so the frame outlives
   it.
-- The `float` result escapes.
-  - the points evaporate with the frame.
+- The `float` result escapes: the points evaporate with the frame.
 
 :::
 
@@ -975,8 +992,8 @@ What does the compiler say about this function?
 - [ ] It compiles; the result is local, despite the absence of
       `@ local`.
 - [x] It compiles; the record literal allocates a fresh `point`
-      on the heap, so the result is global, and `p` is consumed
-      within the function.
+      on the heap, so the result is global, and `p` never escapes
+      the function.
 - [ ] It fails: the result is local but the return type does not
       say so.
 
@@ -1077,19 +1094,20 @@ blur the two; OxCaml keeps them separate, on separate axes.
 
 ## What's next
 
-The next lecture (M11-L02) moves to the **uniqueness** axis,
-which tracks whether a value has been aliased. Locality protected
-values that must not outlive a scope; uniqueness protects
-resources that must be released exactly once by whoever holds the
-only reference. Then M11-L03 covers **linearity**, M11-L04 covers
-**portability**, M11-L05 covers **contention**, and M11-L06 is
-the tutorial that combines everything.
+The next lecture (M11-L02) moves to the **uniqueness** axis.
+Locality protected values that must not outlive a scope;
+uniqueness is about proving a reference is the *only* one to its
+target, and the privileges that proof licenses, starting with
+releasing the resource exactly once. Then M11-L03 covers
+**linearity**, M11-L04 covers **portability**, M11-L05 covers
+**contention**, and M11-L06 is the tutorial that combines
+everything.
 
 :::slide
 
 ## What's next
 
-- Lecture 2: **uniqueness**. Past-aliasing tracking. Safe `free`.
+- Lecture 2: **uniqueness**. The only reference. Safe `free`.
 - Lecture 3: **linearity**. Future-use tracking. Safe `close`.
 - Lecture 4: **portability**. Cross-domain crossing.
 - Lecture 5: **contention**. Cross-domain access.

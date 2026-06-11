@@ -5,8 +5,8 @@ week: 11
 duration_target_min: 25
 concepts: [tutorial, file handle, linearity, locality, manual resource management, API design]
 keywords: [OCaml, OxCaml, tutorial, file handle, malloc, buffer, once, local, exclave_]
-activity_question: "Design a buffer API where `alloc` produces a heap buffer, `read` and `write` take the buffer, and `free` releases it. Which OxCaml mode(s) would prevent a use-after-free of the buffer?"
-think_about_this: "You are writing a library with a C-style `malloc`/`free` interface, but in OxCaml. Sketch the signatures of `malloc`, `read`, `write`, `free` so that the compiler statically refuses double-free, use-after-free, and escape of the buffer beyond its allocation scope."
+activity_question: "Design a buffer API where [alloc] produces a heap buffer, [read] and [write] take the buffer, and [free] releases it. Which OxCaml mode(s) would prevent a use-after-free of the buffer?"
+think_about_this: "You are writing a library with a C-style [malloc]/[free] interface, but in OxCaml. Sketch the signatures of [malloc], [read], [write], [free] so that the compiler statically refuses double-free, use-after-free, and escape of the buffer beyond its allocation scope."
 reading:
   - title: "OxCaml documentation, modes overview"
     url: https://oxcaml.org/documentation/modes/
@@ -150,22 +150,18 @@ ends the chain.
 
 ## The signature
 
-```text
+```ocaml
 module type Handle = sig
   type t
   val open_ : string -> t @ once local
-  val read  : t @ once local
-              -> int -> string Modes.Global.t * t @ once local
+  val read  : t @ once local -> int -> string Modes.Global.t * t @ once local
   val write : t @ once local -> string -> t @ once local
   val close : t @ once local -> unit
 end
 ```
 
-- `once`: at most one further use.
-- `local`: cannot escape the caller's scope.
+- `once`: at most one further use. `local`: cannot escape.
 - `Modes.Global.t`: lets the string out of the local pair.
-
-The ownership chain threads the handle through each call.
 
 :::
 
@@ -416,12 +412,13 @@ is the most dangerous of the three.
 Compare with the OxCaml signature (the same `Handle` module type
 from above, repeated here side by side with the C prototypes):
 
-```text
+```ocaml
 module type Handle = sig
   type t
   val open_ : string -> t @ once local
   val read  : t @ once local
               -> int -> string Modes.Global.t * t @ once local
+  val write : t @ once local -> string -> t @ once local
   val close : t @ once local -> unit
 end
 ```
@@ -535,25 +532,19 @@ whether the handle may leak. The compiler enforces each piece.
 
 ## A cross-domain-aware connection pool
 
-```text
+```ocaml
 module type Conn = sig
   type t
   type pool
   val pool   : pool @@ portable
   val borrow : pool @ portable -> t @ once local
-  val read   : t @ once local
-               -> string Modes.Global.t * t @ once local
+  (* read: the ownership chain, as in Handle *)
   val close  : t @ once local -> unit
 end
 ```
 
-- `portable` on the pool: any domain may hold it.
-- Internal counter as `Portable.Atomic.t`: mode-crosses
-  contention.
-- Handles are `once local`: linearity + locality, as in the
-  `Handle` design.
-
-Four axes in one API; the compiler enforces every piece.
+- `portable` pool: any domain may hold it.
+- Internal counter: `Portable.Atomic.t` mode-crosses contention.
 
 :::
 
@@ -572,7 +563,7 @@ returns data *alongside* the handle. A unique handle threaded
 through `read : t @ unique -> int -> string * t @ unique` style
 signatures trips over the rule that every component of a unique
 result must itself be unique or be explicitly wrapped; the
-uniqueness lecture's `read_line` paid that tax with
+uniqueness lecture's `Unique_ref` paid that tax in `get`, with
 `Modes.Aliased.t`, and an API with many such operations pays it
 everywhere.
 
@@ -686,9 +677,8 @@ A skeleton signature is provided below. Fill in the modes.
 
 ## Design exercise
 
-Design `Buffer` with the skeleton below. Add the mode
-annotations directly in the cell and press Run until the
-signature you believe in type-checks:
+Add modes in the cell; press Run until your signature
+type-checks:
 
 ```ocaml
 module type Buffer_todo = sig
@@ -700,12 +690,8 @@ module type Buffer_todo = sig
 end
 ```
 
-The compiler should reject:
-- double-free
-- use-after-free
-- escape from the allocation scope
-
-What mode annotations do you put where?
+- Must reject: double-free, use-after-free, escape from the
+  allocation scope.
 
 :::
 
@@ -796,7 +782,7 @@ locality error.
 
 ## The intended buffer signature
 
-```text
+```ocaml
 module type Buffer = sig
   type t
   val alloc : int -> t @ once local
@@ -841,8 +827,8 @@ Five axes, eleven modes in all (`global`/`local`,
 compiler checks all of them simultaneously. The cost is zero at
 runtime; the benefit is whole categories of bugs becoming
 impossible. This is the two-sided promise the module opened with:
-locality buys *control* (stack allocation, zero-allocation hot
-loops), and the other four buy *safety* (no use-after-free, no
+*control* (stack allocation and zero-allocation hot loops, from
+locality) and *safety* (no escapes, no use-after-free, no
 double-close, no data races), in one type system.
 
 The same shape of argument ran through all five: a runtime

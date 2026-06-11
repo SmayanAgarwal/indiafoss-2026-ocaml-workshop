@@ -1,9 +1,9 @@
 ---
-title: "Uniqueness: use-after-free at the type level"
+title: "Uniqueness: the only reference"
 lecture_no: 2
 week: 11
 duration_target_min: 25
-concepts: [uniqueness, unique, aliased, manual resource management, use-after-free, double-free, closure capture]
+concepts: [uniqueness, unique, aliased, manual resource management, use-after-free, double-free, in-place update, closure capture]
 keywords: [OCaml, OxCaml, uniqueness, unique mode, aliased, free, Unique_ref, closure capture]
 activity_question: "Against the [Unique_ref] signature, decide which of three clients fails to type-check (an underscored shadow drops the fresh handle), and predict what happens when a closure captures a unique reference and is called twice."
 think_about_this: "Your reference is unique; you call `free` on it; the compiler is happy. Now you put a closure around the `free` call: `let f () = free r`. The closure has captured a unique reference. How many times is it safe to call `f`?"
@@ -16,14 +16,14 @@ reading:
     url: https://blog.janestreet.com/oxidizing-ocaml-ownership/
 ---
 
-# Uniqueness: use-after-free at the type level
+# Uniqueness: the only reference
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">Uniqueness: use-after-free at the type level</h2>
+<h2 class="title-slide-lecture">Uniqueness: the only reference</h2>
 <p class="title-slide-label">Module 11 &middot; Lecture 2</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
@@ -69,10 +69,13 @@ is no language-level help to enforce it.
 OxCaml's **uniqueness** axis is the type-level fix. Like locality,
 it is a *mode*: it tracks not what a reference is but *how* it may
 be used, here whether any other reference to it still exists. The
-compiler tracks which references have no aliases; you can then
-attach a "consumes the reference" semantics to operations like
-`free`, and the type system prevents both use-after-free and
-double-free.
+compiler proves, for designated references, that they are the
+*only* reference to their target. That proof is the valuable
+thing: an operation that would be unsafe in the presence of
+aliasing becomes safe once the compiler has ruled the aliases out.
+Freeing the target is the operation this lecture follows end to
+end, and use-after-free and double-free are the bugs that fall to
+it.
 
 :::slide
 
@@ -83,8 +86,9 @@ double-free.
   connections, FFI-allocated buffers, mapped pages.
 - The OCaml type system traditionally had nothing to say about
   these.
-- This lecture: **uniqueness**. Compile-time use-after-free
-  prevention for any manually managed resource.
+- This lecture: **uniqueness**.
+  - the compiler proves a reference is the *only* one.
+  - today's thread: `free` exactly once, checked at compile time.
 
 :::
 
@@ -142,6 +146,43 @@ where aliased is expected. The reverse is rejected.
 
 Uniqueness is *deep*: a unique record has unique parts (with one
 escape hatch, `Modes.Aliased.t`).
+
+:::
+
+## What the proof licenses
+
+Before the worked example, it is worth being clear about what
+"no other references" actually buys. The proof licenses three
+privileges, each unsafe under aliasing:
+
+- **Free it.** If no other reference exists, deallocating the
+  target cannot leave a dangling reference behind: there is
+  nothing to dangle.
+- **Move it.** Ownership can be handed to another part of the
+  program outright. The receiver knows it now holds the only
+  reference, with all the same privileges; no copy is needed.
+- **Update it in place.** If nobody else can see the value,
+  mutating it is unobservable from outside. A "functional" update
+  (build a new record from an old one) can safely reuse the old
+  memory instead of allocating; this is the optimisation
+  direction the OxCaml designers are building on top of the same
+  proof.
+
+All three are one principle: aliasing is what makes these
+operations dangerous, so a proof of no-aliasing makes them safe.
+This lecture follows the first privilege, `free`, end to end; the
+other two ride on exactly the same bookkeeping.
+
+:::slide
+
+## What "only reference" licenses
+
+- **Free it**: no other reference exists, so none can dangle.
+- **Move it**: hand over ownership outright, no copy.
+- **Update it in place**: mutation nobody else can observe.
+  - a functional update can reuse the old memory.
+- One principle: aliasing is what made each unsafe.
+- This lecture follows **`free`** end to end.
 
 :::
 
@@ -208,7 +249,7 @@ for `free`) a fresh unique reference is returned to chain through.
 
 ## The `Unique_ref` signature
 
-```text
+```ocaml
 module type Unique_ref = sig
   type 'a t
   val alloc : 'a -> 'a t @ unique
@@ -218,10 +259,9 @@ module type Unique_ref = sig
 end
 ```
 
-Every operation:
-- consumes the unique reference,
-- (except `free`) returns a fresh one,
-- forming a **linear chain of ownership** through the program.
+- Every operation consumes the unique reference.
+- All but `free` return a fresh one: a **linear chain of
+  ownership**.
 
 :::
 
@@ -349,7 +389,7 @@ The compiler's response:
 
 > Error: This value is used here, but it has already been used as
 > unique:
-> Line 2, characters 7-8.
+> Line 3, characters 7-8.
 
 Crisp. The first `free r` consumed the unique binding. By the time
 we reach the second use (in `get r`), the original `r` is no
@@ -366,7 +406,7 @@ let double_free (r : int t @ unique) =
 
 > Error: This value is used here, but it has already been used as
 > unique:
-> Line 2, characters 7-8.
+> Line 3, characters 7-8.
 
 These errors are *static*. There is no runtime check, no flag, no
 extra branch. The compiler's bookkeeping eliminated a whole class
@@ -377,13 +417,13 @@ of memory-safety bugs.
 ## Use-after-free and double-free: type errors
 
 ```ocaml
-let oops_uaf (r : int t @ unique) =
+let use_after_free (r : int t @ unique) =
   free r;
   get r           (* type error *)
 ```
 
 ```ocaml
-let oops_double (r : int t @ unique) =
+let double_free (r : int t @ unique) =
   free r;
   free r          (* type error *)
 ```
@@ -406,7 +446,7 @@ the returned value.
 In the `okay` example, watch the ownership pass through:
 
 ```ocaml
-let okay_renamed (r0 : int t @ unique) =
+let chain (r0 : int t @ unique) =
   let _v, r1 = get r0 in   (* ownership passed from r0 to r1 *)
   let r2 = set r1 20 in    (* passed from r1 to r2 *)
   free r2                  (* r2 consumed, no new owner *)
@@ -438,76 +478,6 @@ of `free`, no live handle exists.
 
 :::
 
-## A subtle problem: capturing a unique value in a closure
-
-Here is where the story gets interesting. The 2025-06-04 blog post
-opens with exactly this scenario; it is worth working through
-carefully, because it motivates the next lecture's introduction of
-linearity.
-
-Suppose we have a unique reference and write a closure that frees
-it:
-
-```ocaml
-(* Press Run; the closure captures a unique value, becomes `once`,
-   and the second call is rejected on linearity grounds. *)
-let wat () =
-  let t = alloc 42 in       (* t : int t @ unique *)
-  let f () = free t in      (* closure captures t *)
-  f ();                     (* OK: free t *)
-  f ()                      (* uh oh: double-free? *)
-```
-
-Read this carefully. The closure `f` captures `t`. Calling `f`
-runs `free t`. Calling `f` *twice* would run `free t` twice. That
-is a double-free. The compiler must reject it.
-
-But on what grounds? The unique value `t` is consumed *inside*
-`f`'s body, not at the outer level. From the outer level's point
-of view, `t` is referenced by `f`. The unique binding is *captured*,
-not consumed.
-
-The compiler's answer: a closure that captures a unique value is
-itself given the mode **`once`** (which is on the *linearity* axis,
-the topic of the next lecture). Once-mode means "use at most once." The
-second call to `f` is then rejected, not because `t` was already
-freed (the linearity check fires before any value-level reasoning
-about `t`), but because `f` itself has already been used.
-
-The error:
-
-> Error: This value is used here, but it is defined as once and
-> has already been used:
-> Line 4, characters 2-3.
-
-This is the punchline of the 2025-06-04 post: uniqueness alone is
-not enough. You also need linearity to handle the closure-capture
-case. The two axes cooperate: capturing a unique value automatically
-downgrades the closure's linearity to `once`.
-
-:::slide
-
-## The closure-capture pitfall
-
-```ocaml
-let wat () =
-  let t = alloc 42 in
-  let f () = free t in
-  f ();
-  f ()       (* type error *)
-```
-
-- `f` captures the unique `t`.
-- Capture *itself* does not consume `t`.
-- But calling `f` twice would free `t` twice.
-- Resolution: capturing a `unique` value gives the closure mode
-  `once`. The second call to `f` is rejected on **linearity**
-  grounds.
-
-This is why we need *both* uniqueness and linearity.
-
-:::
-
 ## The other side of the same coin: aliasing a unique reference
 
 You can also see the asymmetry in the submoding rule. Take a
@@ -516,20 +486,19 @@ unique reference and pass it through a function that aliases it:
 ```ocaml
 let dup r = (r, r)
 
-let oops () =
+let aliases () =
   let r = alloc 42 in
-  let a, b = dup r in
-  (a, b)
+  dup r
 ```
 
-The type of `oops` is `unit -> int t * int t`. The two components
-of the pair are at mode `aliased` (the default for the pair type
-returned by `dup`). The compiler accepts the call to `dup`,
-because `dup` requires its argument at mode `aliased`, and the
-unique `r` can be coerced down (`unique ⊑ aliased`).
+The type of `aliases` is `unit -> int t * int t`. The two
+components of the pair are at mode `aliased` (the default for the
+pair type returned by `dup`). The compiler accepts the call to
+`dup`, because `dup` requires its argument at mode `aliased`, and
+the unique `r` can be coerced down (`unique ⊑ aliased`).
 
-But now `a` and `b` are aliased. They can no longer be passed to
-`free`, `get`, or `set`:
+But now the two components are aliased. They can no longer be
+passed to `free`, `get`, or `set`:
 
 ```ocaml
 (* Press Run; once you alias a unique reference via `dup`, you
@@ -556,9 +525,9 @@ useful life.
 ```ocaml
 let dup r = (r, r)
 
-let oops_alias () =
+let oops () =
   let r = alloc 42 in      (* r : int t @ unique *)
-  let a, _b = dup r in (* coerced to aliased *)
+  let a, _b = dup r in     (* coerced to aliased *)
   free a                   (* error: aliased, expected unique *)
 ```
 
@@ -567,232 +536,71 @@ you cannot regain it.
 
 :::
 
-## Why uniqueness gives you *modular* safety
+## A puzzle to end on: capturing a unique value in a closure
 
-A theme worth pulling out. The 2025-06-04 post emphasises this
-explicitly.
+The machinery so far looks complete: unique references thread
+through the program, every consuming operation is bookkept, and
+both use-after-free and double-free die at compile time. To close
+the lecture, here is a four-line program that puts a dent in that
+completeness. The 2025-06-04 blog post opens with exactly this
+scenario.
 
-When you read the signature of `free`:
-
-```ocaml
-module type Free_unique = sig
-  type 'a t
-  val free : 'a t @ unique -> unit
-end
-```
-
-you can conclude, just from the signature, that calling `free` on
-a `unique` reference is safe. The argument:
-
-1. The reference is unique. (That is what the type says.)
-2. Therefore there are no other live references to the underlying
-   resource.
-3. Therefore freeing it cannot create a dangling reference: there
-   is nothing to dangle.
-
-This argument is **modular**. You do not need to look at `free`'s
-implementation. You do not need to audit the rest of the library.
-You do not need to read every call site. The signature is the
-contract.
-
-Contrast with a hypothetical linear-only version of the same API:
+Suppose we have a unique reference and write a closure that frees
+it:
 
 ```ocaml
-module type Free_once = sig
-  type 'a t
-  val free : 'a t @ once -> unit
-end
+(* Press Run and read the error message carefully. *)
+let wat () =
+  let t = alloc 42 in       (* t : int t @ unique *)
+  let f () = free t in      (* closure captures t *)
+  f ();                     (* OK: free t *)
+  f ()                      (* uh oh: double-free? *)
 ```
 
-This says "use the reference at most once, then call `free`." From
-the signature alone, you cannot conclude that no aliases exist.
-The `once` constraint is about *this binding's future use*, not
-about *aliasing*. To prove the API is safe, you would have to
-inspect every operation that produces a `'a t`, every operation
-that consumes one, and the whole control flow of every client.
-That is *whole-API reasoning*.
+Read it carefully. The closure `f` captures `t`. Calling `f` runs
+`free t`. Calling `f` *twice* would run `free t` twice. That is a
+double-free. The compiler must reject it.
 
-Both versions can deliver the right runtime behaviour. But the
-unique version's *signature alone* is convincing; the linear
-version requires more work. For an API where modular reasoning
-matters (and it always matters), uniqueness is the more
-appropriate axis.
+But on what grounds? The unique value `t` is consumed *inside*
+`f`'s body, not at the outer level. From the outer level's point
+of view, `t` is referenced by `f`. The unique binding is
+*captured*, not consumed. Nothing in this lecture's bookkeeping
+covers that. And indeed the error the compiler produces is not a
+uniqueness error at all:
+
+> Error: This value is used here, but it is defined as once and
+> has already been used:
+> Line 5, characters 2-3.
+
+"Defined as *once*." The error is not about `t`; it is about `f`,
+and it names a mode this lecture has not introduced. The compiler
+has quietly given the closure a mode on a *different axis*, one
+that tracks how many times a value may be used in the future, and
+rejected the second call on those grounds.
+
+That axis is **linearity**, and it is the subject of the next
+lecture. For now, take away the puzzle and its shape: uniqueness
+alone is not enough; the moment a unique value hides inside a
+closure, "no other references" stops being the property that
+protects you, and "how many times can this be called" takes over.
 
 :::slide
 
-## Uniqueness vs linearity, modularly
-
-```text
-module type Free_unique = sig
-  type 'a t
-  val free : 'a t @ unique -> unit
-end
-```
-→ Safe from the signature alone. Modular reasoning.
-
-```text
-module type Free_once = sig
-  type 'a t
-  val free : 'a t @ once -> unit
-end
-```
-→ Safe only if you audit the whole API. Whole-API reasoning.
-
-For `free`-like APIs, **uniqueness is more appropriate**.
-
-:::
-
-## Past, future, and which axis you reach for
-
-The 2025-06-04 post puts the difference in one sentence:
-
-- **Uniqueness** talks about the **past**: has this value been
-  aliased *before now*?
-- **Linearity** talks about the **future**: will this value be
-  used *after now*?
-
-A unique value may *become* aliased in the future (you can pass it
-to `dup`, as above; you can coerce it explicitly). A linear value
-may have been aliased in the *past*. These are different
-properties.
-
-For most resource-management APIs, you want both. The next lecture
-develops linearity; the tutorial at the end of the
-module puts the two together.
-
-:::slide
-
-## Past vs future
-
-- **Uniqueness**: was this value aliased in the *past*?
-- **Linearity**: will this value be used in the *future*?
-
-Different axes; different rules; both useful.
-
-:::
-
-## A killer application: file descriptors
-
-Module 10's lecture on the edges of the safe fragment closed with
-resource safety in vanilla OCaml. The story was:
-`In_channel.with_open_text` and `Fun.protect` close the easy cases
-(open-use-close in one scope); the awkward cases (handle escapes
-the function, custom lifetime, socket pools) need either
-programmer discipline or a runtime flag. This lecture is the
-type-level answer to those awkward cases.
-
-A unique `File_descr` is the OxCaml answer: a file descriptor
-whose handle the compiler has proven has no other live references.
-With that proof, `close` can take the handle at mode `unique`
-*and consume it*. After the call, no live unique reference exists;
-the bug class "use after close" cannot be expressed because the
-binding the compiler is tracking is gone.
-
-The cell below backs the module with an **in-memory mock** (a
-list of lines standing in for file contents), because the browser
-toplevel has no real file system. In production the same
-signature wraps the `Unix` system calls; the comments mark where.
-The mode discipline is identical either way.
+## A puzzle to end on
 
 ```ocaml
-module File_descr : sig
-  type t
-  val open_     : string -> t @ unique
-  val read_line : t @ unique -> string Modes.Aliased.t * t @ unique
-  val close     : t @ unique -> unit
-end = struct
-  type t = { mutable lines : string list }
-  let open_ _path =
-    (* In production: Unix.openfile path [Unix.O_RDONLY] 0o600. *)
-    { lines = ["first line"; "second line"; "third line"] }
-  let read_line t =
-    (* In production: read from the stored fd. *)
-    let remaining = t.lines in
-    let s, rest =
-      match remaining with
-      | [] -> ("", [])
-      | l :: rest -> (l, rest)
-    in
-    t.lines <- rest;
-    Modes.Aliased.{ aliased = s }, t
-  let close _t =
-    (* In production: Unix.close t.fd. *)
-    ()
-end
+let wat () =
+  let t = alloc 42 in
+  let f () = free t in
+  f ();
+  f ()       (* rejected, but on what grounds? *)
 ```
 
-Read each line of the signature. `open_` returns a `t @ unique`:
-a fresh handle with no other references (it was just created).
-`read_line` consumes the unique handle and returns the line,
-wrapped in `Modes.Aliased.t` exactly as `Unique_ref.get` wrapped
-its result (so the caller may copy the line freely), plus a fresh
-unique handle for the caller to chain. `close` consumes the
-handle and returns `unit`: no fresh handle, no way to use the
-file again.
-
-A correct client threads the handle through:
-
-```ocaml
-let fd_demo () =
-  let fd = File_descr.open_ "data.txt" in
-  let l1, fd = File_descr.read_line fd in
-  let l2, fd = File_descr.read_line fd in
-  File_descr.close fd;
-  (l1.Modes.Aliased.aliased, l2.Modes.Aliased.aliased)
-
-let () =
-  let a, b = fd_demo () in
-  Printf.printf "%S %S\n" a b  (* "first line" "second line" *)
-```
-
-And the misuse is a compile error:
-
-```ocaml
-(* Press Run; double-close is rejected at compile time. *)
-let fd_bad () =
-  let fd = File_descr.open_ "data.txt" in
-  File_descr.close fd;
-  File_descr.close fd
-```
-
-Double-close and use-after-close: each is a type error against
-this signature. The compiler does what `with_open_text` did at
-runtime, only now it does it at compile time.
-
-:::slide
-
-## A unique `File_descr` module
-
-```ocaml
-module type File_descr = sig
-  type t
-  val open_     : string -> t @ unique
-  val read_line : t @ unique -> string Modes.Aliased.t * t @ unique
-  val close     : t @ unique -> unit
-end
-```
-
-- `open_` mints a fresh unique handle.
-- `read_line` consumes and re-mints, like `Unique_ref.get` / `set`.
-- `close` consumes without re-minting: no live handle remains.
-
-Double-close and use-after-close fail to type-check against this
-signature.
-
-:::
-
-:::slide
-
-## From runtime combinator to compile-time type
-
-| Vanilla OCaml (runtime) | OxCaml uniqueness (compile time) |
-|---|---|
-| `In_channel.with_open_text` | `t @ unique` in `close`'s signature |
-| `Fun.protect ~finally:close` | Unique-tracking by the type checker |
-| Catches double-close at runtime, sometimes | Catches double-close at compile time, always |
-| Restricted to one-scope lifetimes | Works for any explicit ownership chain |
-
-The runtime combinator becomes the type.
+- `f` captures the unique `t`.
+- Capture *itself* does not consume `t`.
+- Calling `f` twice would free `t` twice: must be rejected.
+- The error: "defined as **once** and has already been used."
+  - not a uniqueness error: a mode the next lecture explains.
 
 :::
 
@@ -862,19 +670,15 @@ What happens? (Press Run to check your prediction.)
       not `get`.
 
 **Why:** The capture of a unique value (`r`) into a closure
-forces the closure's linearity mode to `once`. The first call to
-`f` is fine; it consumes the captured `r` and produces a new
-binding *inside `f`'s body*, which is then discarded by the
-caller's pattern. The second call is rejected because `f` is
-`once`, regardless of what `f` does internally. Capture is not
+forces the closure's mode to `once`, exactly as in the `wat`
+puzzle. The first call to `f` is fine; it consumes the captured
+`r` and returns the fresh handle, which the caller's pattern then
+discards. The second call is rejected because `f` is `once`,
+regardless of what `f` does internally. Capture is not
 consumption, but it is enough to downgrade the closure.
 :::
 
 :::solution
-
-:::slide
-
-## Activity solution
 
 Q1: C is rejected. `a_ok` and `b_ok` thread the unique binding
 correctly; `c_bad` calls `get r` (which consumes `r` and returns a
@@ -897,8 +701,6 @@ let c_bad (r : int t @ unique) =
 Q2: capturing (not consuming) a unique reference in a closure forces
 the closure to `once`; capture alone downgrades it. That is the
 bridge into the next lecture.
-
-:::
 
 :::
 
@@ -929,13 +731,13 @@ the unsafe version; the type checker has just proven it safe.
 
 ## What's next
 
-The next lecture is **linearity**. We will treat it on
-its own terms: a separate axis that tracks *future* use rather
-than past aliasing, a separate set of modes (`many` and `once`),
-a separate set of compile errors. We will see why some APIs are
-more naturally written with linearity than uniqueness (the
-"linear handle" example), and we will look at the file-handle
-shape that puts the two together.
+The next lecture is **linearity**, the axis the `wat` error came
+from. It gets treated on its own terms: a separate axis that
+tracks *future* use rather than past aliasing, with its own modes
+(`many` and `once`) and its own compile errors. It resolves the
+closure puzzle properly, builds a file-handle API on the axis
+that suits it, and takes up the question this lecture deferred:
+when you design a resource API, which axis do you reach for?
 
 After linearity, the module turns to the two concurrency axes,
 portability and contention, and then the module closes with the
@@ -948,6 +750,7 @@ a type error.
 ## What's next
 
 - Lecture 3: **linearity**. Future-use tracking, `once` and `many`.
+  - resolves today's closure puzzle.
 - Lecture 4: **portability**. Cross-domain crossing.
 - Lecture 5: **contention**. Cross-domain access.
 - Lecture 6: tutorial. A resource-management API combining the
@@ -974,10 +777,8 @@ a type error.
 The `Unique_ref` API, the worked client examples, and the
 compiler-error blocks are adapted from the instructor's 2025-05-29
 blog post and the CS6868 OxCaml handout (the instructor's own
-teaching material, freely reusable). The closure-capture pitfall
-narrative draws on the 2025-06-04 post's *Capturing unique values*
-section. The modular-reasoning argument is paraphrased from the
-same post's *Uniqueness is more appropriate for safe refs*
+teaching material, freely reusable). The closing closure-capture
+puzzle draws on the 2025-06-04 post's *Capturing unique values*
 section. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

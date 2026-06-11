@@ -460,18 +460,29 @@ escaping bug (from M10), a "what locality mode captures" concept
 slide, and the compiler rejecting the escape, all *before* the
 global/local mechanics. L01 now sits at the 30-min ceiling and is
 the natural split candidate if recorded delivery overruns.
+
+A 2026-06-11 review pass on L03-L06 moved the press-Run example
+and rejection code onto slides so the deck carries the payoff
+moments (KC's inline comments on L03; same principle applied to
+L04/L05). KC follow-ups the same day: self-descriptive slide
+titles for video-only viewers; L03's modular-reasoning material
+restructured as per-signature slides (`Free_unique` then
+`Free_once`, each with its submoding bullets); the L03
+"three bugs" summary table and the Girard history slide dropped.
+Echo-aware overflow checks (navigate per slide; bulk reads
+under-measure past reveal's viewDistance) forced three splits.
 Estimate uses slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
 | M11-L01 | Locality: safe stack allocation (opens with OxCaml/modes intro) | 22 | 2 | 0 | 33 | 46 |
-| M11-L02 | Uniqueness: use-after-free at the type level | 16 | 2 | 0 | 24 | 34 |
-| M11-L03 | Linearity: use at most once | 13 | 2 | 0 | 20 | 28 |
-| M11-L04 | Portability: data-race freedom across domains | 15 | 2 | 0 | 23 | 32 |
-| M11-L05 | Contention: synchronisation at compile time | 17 | 2 | 0 | 26 | 36 |
+| M11-L02 | Uniqueness: the only reference | 12 | 2 | 0 | 18 | 25 |
+| M11-L03 | Linearity: use at most once (+ uniqueness synthesis) | 19 | 2 | 0 | 29 | 41 |
+| M11-L04 | Portability: data-race freedom across domains | 16 | 2 | 0 | 24 | 34 |
+| M11-L05 | Contention: synchronisation at compile time | 18 | 2 | 0 | 27 | 38 |
 | M11-L06 | Tutorial: a resource-management API | 16 | 2 | 1 | 24 | 33 |
-| **M11 total** | | **99** | **12** | **1** | **150** | **209** |
-| | | | | | **(2.5 h)** | **(3.5 h)** |
+| **M11 total** | | **103** | **12** | **1** | **155** | **217** |
+| | | | | | **(2.6 h)** | **(3.6 h)** |
 
 L01 is now 22 slides / ~33 video min, over the NPTEL 30-min ceiling
 after KC's 2026-06-09 review additions (the live M10 escaping-handle
@@ -483,10 +494,10 @@ OxCaml intro + the M10 escaping handle + locality basics
 (global/local, `stack_`, escape) and **L01b** `exclave_`, mode
 crossing, the polyline, the zero-alloc/unboxed performance arc.)
 
-All six M11 lectures land in the 20-30 min NPTEL band. Dropping the
-modes-intro lecture removed ~21 min of preview video; the OxCaml
-and modes framing now lives where the audience first needs it, at
-the top of locality.
+Apart from L01 (accepted over-ceiling, above), the M11 lectures
+land in the 20-30 min NPTEL band. Dropping the modes-intro lecture
+removed ~21 min of preview video; the OxCaml and modes framing now
+lives where the audience first needs it, at the top of locality.
 
 ### M12: Unikernels (MirageOS) (6 lectures)
 

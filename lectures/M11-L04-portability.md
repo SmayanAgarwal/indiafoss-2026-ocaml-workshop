@@ -6,7 +6,7 @@ duration_target_min: 22
 concepts: [portability, portable, nonportable, Domain.Safe.spawn, data race, capture, Atomic, gensym]
 keywords: [OCaml, OxCaml, portability, portable, nonportable, Domain, Atomic, data race]
 activity_question: "A closure captures a [Buffer.t] and appends to it; why does annotating it [@ portable] get it rejected? And why does swapping a [ref] counter for a stdlib [Atomic.t] still not make the closure portable?"
-think_about_this: "OCaml today lets you build a closure that captures a mutable `ref` and hand it to `Domain.spawn`. The compiler is happy; the race happens at runtime, on the bad input. What information would the compiler need to refuse that spawn?"
+think_about_this: "OCaml today lets you build a closure that captures a mutable [ref] and hand it to [Domain.spawn]. The compiler is happy; the race happens at runtime, on the bad input. What information would the compiler need to refuse that spawn?"
 reading:
   - title: "OxCaml documentation, modes"
     url: https://oxcaml.org/documentation/modes/
@@ -156,8 +156,9 @@ let gensym =
    semantics).
 
 Remove any one ingredient and the race disappears. OxCaml's plan:
-attack ingredient 2 with **portability** (this lecture) and
-ingredient 3 with **contention** (next lecture).
+attack ingredient 2 with **portability** (this lecture), ingredient
+3 with **contention** (next lecture), and ingredient 4 with mode
+crossing on atomics (also next lecture).
 
 :::
 
@@ -179,11 +180,11 @@ be used anywhere a `nonportable` value is expected ("safe to ship"
 is a stronger promise than "not safe to ship"). The reverse is
 rejected.
 
-A new wrinkle compared to locality: the same value can appear at
-different modes in different contexts. `gensym` is `nonportable`
-at the top level (because it captures `count`); a fresh closure
+As with locality, the mode is a property of the use, not a brand
+on the value: the compiler tracks it at every use site. `gensym`
+is `nonportable` (because it captures `count`); a fresh closure
 that does not capture any mutable state is `portable` from the
-start. The compiler tracks the mode at every use site.
+start.
 
 :::slide
 
@@ -247,11 +248,16 @@ let spawn = Domain.Safe.spawn
 (* val spawn : (unit -> 'a) @ once portable -> 'a Domain.t *)
 ```
 
+```ocaml
+(* Press Run; OxCaml refuses the racy spawn. *)
+let _ = Domain.Safe.spawn (fun () -> gensym "x")
+(* Error: The value "gensym" is "nonportable" but is
+   expected to be "portable" ... *)
+```
+
 - The thunk must be `portable` (and `once`: run at most one time).
-- The vanilla `Domain.spawn` lacks the annotations, which is why
-  the race compiles today.
-- The OxCaml version uses the type system to bake the discipline
-  in.
+- The vanilla `Domain.spawn` lacks the annotations.
+  - that is why the race compiles today.
 
 :::
 
@@ -316,6 +322,41 @@ compiler is refusing to permit.
 
 `gensym` captures and mutates `count : int ref`. Therefore
 nonportable. Therefore cannot be spawned.
+
+:::
+
+:::slide
+
+## A pure closure is portable
+
+```ocaml
+let test_portable () =
+  let (f @ portable) = fun x y -> x + y in
+  f 1 2
+
+let () = Printf.printf "test_portable () = %d\n" (test_portable ())
+```
+
+- Captures nothing mutable: nothing to race on.
+- The `@ portable` annotation is checked, and passes.
+
+:::
+
+:::slide
+
+## Capturing a mutable `ref`: rejected
+
+```ocaml
+(* Press Run; the mutation of the captured ref is rejected. *)
+let test_nonportable () =
+  let r = ref 0 in
+  let (counter @ portable) () = incr r; !r in
+  counter ()
+```
+
+- Captured `r` is treated as shared with other domains.
+  - `incr` needs it exclusive.
+  - the two requirements collide.
 
 :::
 
@@ -406,6 +447,9 @@ let d  = Domain.Safe.spawn (fun () -> Gen.gensym "y")
 let s1 = Gen.gensym "x"
 let s2 = Domain.join d
 let () = Printf.printf "%s %s\n" s1 s2
+(* x_1 y_0 here: the spawned thunk ran first and drew 0
+   (fetch_and_add returns the pre-increment value). The x/y
+   split varies with timing, but no number ever repeats. *)
 ```
 
 Two domains, a shared atomic counter, no race; the compiler
@@ -428,7 +472,7 @@ dance is not necessary.
 
 :::slide
 
-## The fix
+## The fix: `Portable.Atomic` in a module
 
 ```ocaml
 module Gen = struct
@@ -440,13 +484,10 @@ module Gen = struct
 end
 ```
 
-- Swap stdlib `Atomic` for `Portable.Atomic`: it mode-crosses
-  both portability and contention.
-- Wrap in a module.
-  - inference marks it `@@ portable`.
-  - A bare toplevel `let` would read back as nonportable.
-
-Then `Domain.Safe.spawn` accepts the closure.
+- `Portable.Atomic` mode-crosses portability and contention.
+- Wrap in a module: inference marks it `@@ portable`.
+  - a bare toplevel `let` would read back as nonportable.
+- `Domain.Safe.spawn` now accepts the closure.
 
 :::
 
@@ -492,20 +533,21 @@ A subtle but important point. Portability constrains *what a
 closure captures from its enclosing scope*. It does **not** force
 *parameters* into any particular mode.
 
-A `portable` function can still take an `@ uncontended` parameter
-and mutate it inside the body, because parameters are supplied
-fresh at each call. The function itself does not capture them; the
-caller hands them in. This split matters because parallel APIs
-hand callbacks an explicit token (a scheduler handle, a slice, a
-parallel-context tag), and that token can carry whatever mode the
-API specifies even though the callback is portable.
+A `portable` function can still take a `ref` (or any other
+mutable value) as a parameter and mutate it inside the body,
+because parameters are supplied fresh at each call. The function
+itself does not capture them; the caller hands them in. This
+split matters because parallel APIs hand callbacks an explicit
+token (a scheduler handle, a slice, a parallel-context tag), and
+that token can carry whatever mode the API specifies even though
+the callback is portable.
 
 A small example, with the loop split out of the enclosing scope:
 
 ```ocaml
 let factorial_portable n =
   let a = ref 1 in
-  let rec (loop @ portable) (a @ uncontended) i =
+  let rec (loop @ portable) a i =
     if i > 0 then begin
       a := !a * i;
       loop a (i - 1)
@@ -516,12 +558,12 @@ let factorial_portable n =
 ```
 
 Here `loop` is portable: it captures nothing from outside. It
-accepts `a` as a parameter at mode `@ uncontended` (vocabulary
-from the *contention* axis, the next lecture's topic; here it
-just means the parameter may be freely read and written) and
-mutates it freely. The caller (the outer function) holds `a` and passes it
-in. This split is the way to write portable callbacks that still
-need to read or write to a mutable accumulator.
+accepts `a` as an ordinary parameter and mutates it freely; a
+parameter arrives with whatever access rights the caller has, and
+the caller (the outer function) holds `a` with full rights and
+passes it in. (The next lecture gives this access status its
+proper name.) This split is the way to write portable callbacks
+that still need to read or write to a mutable accumulator.
 
 :::slide
 
@@ -638,8 +680,9 @@ contention axis on its own terms.
 
 **Pitfall 4: "I can mutate a parameter inside a portable
 closure."** Yes; portability constrains captures, not parameters.
-A `@ portable` function can take an `@ uncontended` parameter
-and mutate it freely.
+A `@ portable` function can take a mutable value as a parameter
+and mutate it freely: the parameter arrives with the caller's
+access rights.
 
 :::slide
 

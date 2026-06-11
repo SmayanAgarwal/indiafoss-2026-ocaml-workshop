@@ -5,7 +5,7 @@ week: 11
 duration_target_min: 25
 concepts: [contention, uncontended, contended, shared, Atomic, mode crossing, capsule, parallel counter]
 keywords: [OCaml, OxCaml, contention, uncontended, contended, Atomic, mode crossing, parallel counter, capsule]
-activity_question: "A record has one immutable and one mutable field and is shared between two domains: which accesses does OxCaml reject, and why does even a *read* of the mutable field get refused on a contended value? And if a team swaps an `int ref` for an `Atomic.t` so the program compiles, is it true that atomics mode-cross *all* the axes, or does the capturing closure still need `Portable.Atomic`?"
+activity_question: "A record has one immutable and one mutable field and is shared between two domains: which accesses does OxCaml reject, and why does even a *read* of the mutable field get refused on a contended value? And if a team swaps an [int ref] for an [Atomic.t] so the program compiles, is it true that atomics mode-cross *all* the axes, or does the capturing closure still need [Portable.Atomic]?"
 think_about_this: "Portability said you could *send* a value to another domain. Contention says how you can *access* it once it gets there. What kind of value is safe to read from two domains without locking?"
 reading:
   - title: "OxCaml documentation, modes"
@@ -55,12 +55,15 @@ together deliver compile-time data-race freedom.
 
 ## A new question: how do shared values get accessed?
 
-- Previous lecture's portability: can the value *cross* a domain
-  boundary?
-- This lecture's contention: how can the value *be accessed*
+- **Portability** (previous lecture): can the value *cross* a
+  domain boundary at all?
+  - about closures crossing boundaries.
+- **Contention** (this lecture): how can the value *be accessed*
   once it has been shared?
-- Both axes are needed: portability is ingredient 2 of a race,
-  contention is ingredient 3.
+  - about reads and writes of mutable fields.
+- The axes are independent, and both are needed.
+  - portability is ingredient 2 of a race, contention is
+    ingredient 3.
 - A value can be on the right domain (portable) and still be
   racy (uncontended writes).
 
@@ -75,21 +78,6 @@ together deliver compile-time data-race freedom.
 - M11-L03: linearity. Future use.
 - M11-L04: portability. Cross-domain crossing.
 - This lecture (M11-L05): **contention**. Cross-domain access.
-
-:::
-
-:::slide
-
-## Portability vs contention, in one slide
-
-- **Portability** (previous lecture): can this value *get to*
-  another domain at all?
-- **Contention** (this lecture): once it gets there, how can it
-  be *accessed*?
-- Portability is about closures crossing boundaries.
-- Contention is about reads and writes of mutable fields.
-- Both axes are independent. A race needs both to be wrong;
-  closing either axis closes the race.
 
 :::
 
@@ -110,7 +98,7 @@ no compile-time help on ingredients 2 to 4: you rely on the
 discipline "do not forget the lock," and you find out at runtime
 when you forget.
 
-OxCaml's mode system attacks ingredients 2 and 3 directly:
+OxCaml's mode system attacks ingredients 2, 3, and 4:
 
 - **Portability** (the previous lecture) attacks ingredient 2: by
   rejecting
@@ -121,6 +109,10 @@ OxCaml's mode system attacks ingredients 2 and 3 directly:
   rejecting writes (and even reads) of mutable fields of
   shared values, the compiler refuses programs where two
   domains can write the same field.
+- **Mode crossing** handles ingredient 4: atomics are exempt from
+  the contention rules precisely because the runtime serialises
+  their operations. `Atomic.t`'s mode crossing is the typed form
+  of "make the location atomic."
 
 :::slide
 
@@ -236,13 +228,14 @@ If you remove the `@ contended` annotation, the value defaults to
 
 - `shared` is the read-only-share mode.
 - Mutable field on `shared`: read **yes**, write **no**.
-- The use case: many domains need to read the same mutable
-  field; only one (or none) is writing.
+- The use case: many domains read the same mutable state, with
+  writers excluded for the duration.
 - Without `shared`, you would have to choose between
   `uncontended` (only one domain) and `contended` (no reads).
 
-A practical example: a thread-local snapshot of a config record
-that one domain updates periodically and many domains read.
+A practical example: domains holding a read lock on a shared
+cache each see it at `shared`; the lock keeps writers out while
+any reader is in.
 
 :::
 
@@ -250,18 +243,38 @@ that one domain updates periodically and many domains read.
 
 ## Reads and writes on a contended record
 
-```text
+```ocaml
+type mood = Happy | Neutral | Sad
 type thing = { price : float; mutable mood : mood }
+
+let price_contended (t @ contended) = t.price
+(* val price_contended : thing @ contended -> float *)
 ```
 
 - `price` is immutable. Read it from `contended`: fine.
-- `mood` is mutable.
-- Write `t.mood` on `contended`: rejected.
-- *Read* `t.mood` on `contended`: also rejected.
+  - nobody can be racing a read of an immutable field.
+- `mood` is mutable: both accesses on the next slide are
+  rejected.
 
-The read rejection is the surprising bit. It encodes ingredient
-3 of a race: the compiler cannot know if another domain is
-writing, so it refuses both.
+:::
+
+:::slide
+
+## Mutable field on `contended`: no write, no read
+
+```ocaml
+(* Press Run; the write is rejected. *)
+let cheer_up_contended (t @ contended) = t.mood <- Happy
+```
+
+```ocaml
+(* Press Run; even the read is rejected. *)
+let read_mood_contended (t @ contended) = t.mood
+```
+
+- The read rejection is the surprising bit.
+  - it encodes ingredient 3: the compiler cannot know another
+    domain is not mid-write, so it refuses both.
 
 :::
 
@@ -320,25 +333,11 @@ lifted into a typed pattern.
 | `Atomic.t` | Yes |
 | `ref`, mutable record, `Hashtbl.t` | No |
 
-`Atomic.t` is the typed pattern for safely shared mutable state:
-it is always safe to access, regardless of contention mode.
-
-:::
-
-:::slide
-
-## Immutable data: free to share
-
-- An immutable type mode-crosses contention.
-- Many domains can read an `int`, a `string`, an immutable
-  record, an `Iarray.t` simultaneously: there is no write,
-  so there is no race.
-- This is why parallel APIs reach for `Iarray.t` for shared
-  input data: it slots into any domain without contention
-  worry.
-
-If you can make your data immutable, the contention axis
-disappears for free.
+- Immutable data: no write anywhere, so no race anywhere.
+  - make your data immutable and the contention axis disappears
+    for free.
+- `Atomic.t`: the typed pattern for safely shared mutable state.
+  - always safe to access, regardless of contention mode.
 
 :::
 
@@ -404,6 +403,68 @@ The compiler verified the program is race-free before anything
 ran; given that, atomic increments cannot lose updates, and the
 final count is exactly 2,000,000 on any machine, parallel or
 not.
+
+:::slide
+
+## A racy parallel counter (OCaml today)
+
+```ocaml
+[@@@alert "-do_not_spawn_domains"]
+[@@@alert "-unsafe_multidomain"]
+let count = ref 0
+let d1 = Domain.spawn (fun () ->
+  for _ = 1 to 1_000_000 do count := !count + 1 done)
+let d2 = Domain.spawn (fun () ->
+  for _ = 1 to 1_000_000 do count := !count + 1 done)
+let () = Domain.join d1; Domain.join d2
+let () = Printf.printf "count = %d\n" !count
+```
+
+- Compiles today.
+  - on a parallel machine the count comes up short.
+  - this browser toplevel is single-domain, so it prints
+    2,000,000 here.
+
+:::
+
+:::slide
+
+## The fix: a `Portable.Atomic` counter
+
+```ocaml
+module Counter = struct
+  open Portable
+  let count = Atomic.make 0
+  let bump_loop n =
+    for _ = 1 to n do Atomic.incr count done
+  let value () = Atomic.get count
+end
+```
+
+- `Portable.Atomic` mode-crosses portability and contention.
+- The module wrap lets the spawned closure read `Counter` back
+  at portable mode.
+
+:::
+
+:::slide
+
+## Running the fixed counter
+
+```ocaml
+let () =
+  let d1 = Domain.Safe.spawn (fun () -> Counter.bump_loop 1_000_000) in
+  let d2 = Domain.Safe.spawn (fun () -> Counter.bump_loop 1_000_000) in
+  Domain.join d1;
+  Domain.join d2;
+  Printf.printf "count = %d\n" (Counter.value ())
+(* count = 2000000, on any machine, parallel or not *)
+```
+
+- Verified race-free at compile time.
+  - atomic increments cannot lose updates.
+
+:::
 
 :::slide
 
@@ -597,10 +658,6 @@ same point the portability lecture made from the other side.
 
 :::solution
 
-:::slide
-
-## Activity solution
-
 Q1: reading the *immutable* field of a `contended` value is fine;
 reading or writing its *mutable* field is rejected (a `contended`
 value may be shared with other domains, so its mutable parts are
@@ -608,8 +665,6 @@ off-limits without synchronisation).
 
 Q2: mode crossing is per-axis. Stdlib `Atomic.t` crosses contention
 but not portability; `Portable.Atomic.t` crosses both.
-
-:::
 
 :::
 

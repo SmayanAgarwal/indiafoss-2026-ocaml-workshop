@@ -3,7 +3,7 @@ title: "Linearity: use at most once"
 lecture_no: 3
 week: 11
 duration_target_min: 25
-concepts: [linearity, once, many, linear types, file handle, resource discipline, linear logic]
+concepts: [linearity, once, many, linear types, closure capture, file handle, resource discipline, linear logic]
 keywords: [OCaml, OxCaml, linearity, once, many, linear types, file handle, Linear Logic, Girard]
 activity_question: "Given the [Handle] signature, which of three clients fails to type-check? And why does a closure that captures a once-handle itself become once?"
 think_about_this: "Rust's ownership system enforces 'this value will be used at most once' through move semantics. OxCaml's linearity is a similar idea, but the value is not the package: the *mode* is. What does it buy you to separate the value from the mode?"
@@ -30,10 +30,45 @@ reading:
 
 :::
 
-The previous lecture's uniqueness axis tracked something about a
-value's **past**: has it been aliased? This lecture's linearity
-axis tracks something about a value's **future**: how many more
-times will it be used?
+The previous lecture ended on a puzzle. A closure captured a
+unique reference and freed it; calling the closure twice would be
+a double-free; and the compiler rejected the program with an
+error that uniqueness could not explain. Here is the puzzle
+again, live. The first cell recalls the safe reference's `alloc`
+and `free` in miniature, so this page stands alone:
+
+```ocaml
+(* The previous lecture's alloc / free, recalled in miniature. *)
+module M : sig
+  type 'a t
+  val alloc : 'a -> 'a t @ unique
+  val free  : 'a t @ unique -> unit
+end = struct
+  type 'a t = { mutable value : 'a }
+  let alloc x = { value = x }
+  let free _t = ()
+end
+open M
+```
+
+```ocaml
+(* Press Run; the rejection names a mode we have not met. *)
+let wat () =
+  let t = alloc 42 in       (* t : int t @ unique *)
+  let f () = free t in      (* closure captures t *)
+  f ();
+  f ()                      (* rejected, but on what grounds? *)
+```
+
+> Error: This value is used here, but it is defined as once and
+> has already been used:
+> Line 5, characters 2-3.
+
+"Defined as *once*." That mode belongs to this lecture's axis:
+**linearity**. Where the uniqueness axis tracked something about
+a value's **past** (has it been aliased before now?), linearity
+tracks something about a value's **future**: how many more times
+may it be used?
 
 These sound similar but are genuinely different. A value can have
 no aliases right now (unique) and still be used many times in the
@@ -54,21 +89,23 @@ What the language needs to enforce is step 4 (use no further), not
 the program). Linearity is the axis that says "after this use,
 there are no more." That is exactly the file-handle discipline.
 
-This lecture introduces the linearity axis, walks through a
-file-handle module that uses it, contrasts it briefly with Rust's
-ownership, and traces the idea back to Girard's Linear Logic.
+This lecture introduces the linearity axis, resolves the closure
+puzzle, walks through a file-handle module built on the axis,
+asks when to reach for uniqueness and when for linearity,
+contrasts the result briefly with Rust's ownership, and traces
+the idea back to Girard's Linear Logic.
 
 :::slide
 
 ## Where we are
 
-- M11-L01: locality. Tracks scope.
-- M11-L02: uniqueness. Tracks past aliasing.
-- M11-L03 (this lecture): **linearity**. Tracks future use.
-- M11-L04: portability. Tracks cross-domain crossing.
-- M11-L05: contention. Tracks cross-domain access.
-
-Five independent axes. M11-L06 puts them together.
+- The uniqueness lecture ended on a puzzle.
+  - the error: "defined as **once** and has already been used."
+- `once` lives on a new axis: **linearity**.
+  - uniqueness tracks the *past*: has it been aliased?
+  - linearity tracks the *future*: how many more uses?
+- This lecture: the axis, the puzzle resolved, a file-handle API,
+  and which axis to reach for when.
 
 :::
 
@@ -107,6 +144,120 @@ reference. We will see the full signature in context in a moment.
 
 Submoding: `many ⊑ once`. A many-value can flow into a once-slot.
 The reverse is rejected.
+
+:::
+
+## A `once` function, explicitly
+
+The simplest way to meet a `once` value is to build one. A
+function can declare that the closure it returns is usable at
+most once:
+
+```ocaml
+let make_once_fn () : (unit -> int) @ once =
+  let v @ unique = 42 in
+  fun () -> v
+```
+
+The body binds `v` at mode `unique` and returns a closure that
+captures it. The return annotation says the caller receives the
+closure at mode `once`. Using it once is fine:
+
+```ocaml
+let use_once () =
+  let f = make_once_fn () in
+  let result = f () in
+  Printf.printf "%d\n" result
+
+let () = use_once ()   (* prints 42 *)
+```
+
+Using it twice is rejected:
+
+```ocaml
+(* Press Run; the second call is the second use of a once value. *)
+let use_twice () =
+  let f = make_once_fn () in
+  let _ = f () in
+  f ()
+```
+
+> Error: This value is used here, but it is defined as once and
+> has already been used:
+> Line 4, characters 10-11.
+
+The same error as the `wat` puzzle, now with nothing mysterious
+about it: `f` is a `once` value, the first call used it, the
+second call is one use too many. The bookkeeping is the same
+consumed-binding tracking as the uniqueness lecture's, applied to
+*future* uses instead of past aliases.
+
+:::slide
+
+## A `once` function, explicitly
+
+```ocaml
+let make_once_fn () : (unit -> int) @ once =
+  let v @ unique = 42 in
+  fun () -> v
+
+let use_twice () =
+  let f = make_once_fn () in
+  let _ = f () in
+  f ()            (* type error: f is once, already used *)
+```
+
+- The annotation hands the caller the closure at mode `once`.
+- First call: fine. Second call: one use too many.
+- Same consumed-binding bookkeeping as uniqueness, aimed at the
+  *future*.
+
+:::
+
+## Resolving the closure puzzle
+
+Now the `wat` error from the uniqueness lecture reads cleanly. In
+`make_once_fn` we *declared* the closure `once`. In `wat` nobody
+declared anything; the compiler *inferred* it. The rule:
+
+**A closure that captures a `unique` (or `once`) value is itself
+given mode `once`.**
+
+The reasoning: each call to the closure uses the captured value
+once. If the captured value tolerates at most one use (a unique
+value being consumed, a once value being used), then the closure
+tolerates at most one call. Capture is not consumption, but it
+transfers the restriction from the captured value to the closure.
+
+This is automatic. You do not annotate it; the compiler computes
+the closure's mode from the modes of its captures. So in `wat`,
+the closure `f` captured the unique `t`, the compiler marked `f`
+as `once`, the first `f ()` consumed that single use, and the
+second `f ()` was rejected, not because `t` was already freed
+(the linearity check fires before any value-level reasoning about
+`t`), but because `f` itself had already been used.
+
+This is also why the two axes ship together: uniqueness alone
+cannot police a unique value that hides inside a closure, and
+linearity is exactly the axis that can.
+
+:::slide
+
+## Resolving the closure puzzle
+
+```ocaml
+let wat () =
+  let t = alloc 42 in       (* t : int t @ unique *)
+  let f () = free t in      (* closure captures t *)
+  f ();
+  f ()                      (* error: f is once, already used *)
+```
+
+- Rule: a closure capturing a `unique` or `once` value is itself
+  `once`.
+  - inferred from the captures, no annotation needed.
+- Uniqueness alone cannot police a capture.
+  - linearity is the axis that can.
 
 :::
 
@@ -215,7 +366,7 @@ past aliasing), but the *programming model* is the same.
 
 ## File-handle protocol as a type
 
-```text
+```ocaml
 module type Handle = sig
   type t
   val open_ : string -> t @ once
@@ -230,6 +381,25 @@ end
 
 Client uses the **ownership-chain** shape: shadow `t` through
 each operation.
+
+:::
+
+:::slide
+
+## A correct client: threading the handle
+
+```ocaml
+let read_two () =
+  let t = Handle.open_ "data.txt" in
+  let s1, t = Handle.read t 100 in
+  let s2, t = Handle.read t 100 in
+  Handle.close t;
+  s1, s2
+```
+
+- Each line consumes the current `t` and rebinds a fresh one.
+- `close` ends the chain.
+  - after it, no live handle exists.
 
 :::
 
@@ -287,19 +457,42 @@ a "once" protocol, and each fits the same mode signature.
 ## A send-once channel
 
 ```ocaml
-module type Send_once = sig
+module Send_once_channel : sig
   type 'a t
   val make  : unit -> 'a t @ once
   val send  : 'a t @ once -> 'a -> unit
+end = struct
+  type 'a t = unit
+  let make () = ()
+  let send _t x = ignore x  (* in production: deliver the message *)
 end
 ```
 
 - `make` produces a once-usable channel.
 - `send` consumes it and delivers the message.
-- A second `send` is a type error.
 
-Same shape as `close`: a `once` protocol where the final step
-consumes the handle.
+:::
+
+:::slide
+
+## Send-once: one send, no more
+
+```ocaml
+let example () =
+  let ch = Send_once_channel.make () in
+  Send_once_channel.send ch "hello"
+```
+
+```ocaml
+(* Press Run; the second send is rejected. *)
+let bad () =
+  let ch = Send_once_channel.make () in
+  Send_once_channel.send ch "hello";
+  Send_once_channel.send ch "again"   (* type error *)
+```
+
+- The first send consumes the channel.
+- A second send is a second use of a `once` value.
 
 :::
 
@@ -351,7 +544,7 @@ tries to use it again. The compiler tracks the single allowable
 use and rejects the second one with the same "already been used as
 once" error.
 
-### Bug 3: forgetting to close. Not caught.
+### Bug 3: forgetting to close, not caught
 
 ```ocaml
 (* Press Run; this COMPILES. The leak is invisible to linearity. *)
@@ -382,16 +575,93 @@ uses; it does not chase the missing ones.
 
 :::slide
 
-## Three bugs, two caught
+## Double-close: rejected
 
-| Bug | What | Compiler says |
-|---|---|---|
-| Double-close | `close t; close t` | "used as once, already used" |
-| Use-after-close | `close t; read t ...` | same |
-| Forgot to close | discard the final handle | **compiles**: `once` is *at most* once |
+```ocaml
+(* Press Run; the compiler refuses on linearity grounds. *)
+let double_close () =
+  let t = Handle.open_ "data.txt" in
+  Handle.close t;
+  Handle.close t
+```
 
-The first two C bugs do not survive the OxCaml type checker. The
-leak does: affine, not strictly linear.
+- The first `close` consumed the handle.
+  - the second is a second use of a `once` value.
+
+:::
+
+:::slide
+
+## Use-after-close: rejected
+
+```ocaml
+(* Press Run; the same refusal as double-close. *)
+let read_after_close () =
+  let t = Handle.open_ "data.txt" in
+  Handle.close t;
+  let _s, _t' = Handle.read t 10 in
+  ()
+```
+
+- `close` consumed the handle.
+  - the `read` is one use too many.
+
+:::
+
+:::slide
+
+## The forgotten `close` compiles
+
+```ocaml
+(* Press Run; this COMPILES. The leak is invisible to linearity. *)
+let leak () =
+  let t = Handle.open_ "data.txt" in
+  let _s, _t = Handle.read t 10 in
+  ()
+```
+
+- The fresh handle lands in `_t` and is silently discarded.
+- `once` means *at most* once: zero uses are allowed.
+  - affine, not strictly linear.
+
+:::
+
+## The closure rule, on a real resource
+
+The capture rule from the puzzle resolution applies to `once`
+captures just as it does to `unique` ones. A closure that
+captures the once-handle has the handle's single use built into
+it:
+
+```ocaml
+(* Press Run; the closure captures a once-handle and is itself
+   forced to mode once, so a second call fails to type-check. *)
+let use_it () =
+  let t = Handle.open_ "data.txt" in
+  let f = fun () -> Handle.close t in
+  f ();
+  f ()                  (* type error: f is once, already used *)
+```
+
+`f` captures a `once` handle, so `f` is `once`; the second call
+is rejected. The rule keeps you from sneaking a once-resource
+through an ordinary function value.
+
+:::slide
+
+## Closure capture forces `once`
+
+```ocaml
+let use_it () =
+  let t = Handle.open_ "data.txt" in
+  let f = fun () -> Handle.close t in
+  f ();
+  f ()           (* type error: f used twice *)
+```
+
+- A closure capturing a `once` value is `once`.
+  - the same inference as the unique-capture rule.
+- No sneaking a once-resource through an ordinary function value.
 
 :::
 
@@ -400,10 +670,59 @@ leak does: affine, not strictly linear.
 The 2025-06-04 blog post devotes a section to this question. The
 short answer: each axis captures something the other does not.
 
-**Uniqueness gives modular reasoning.** From
-`val free : 'a t @ unique -> unit` alone, you know `free` cannot
-create a dangling alias: the input had no aliases to begin with.
-You do not need to inspect the rest of the library.
+**Uniqueness gives modular reasoning.** Compare two signatures
+for a deallocation function:
+
+```ocaml
+module type Free_unique = sig
+  type 'a t
+  val free : 'a t @ unique -> unit
+end
+```
+
+From this signature alone, you can conclude that calling `free`
+is safe. The argument: the reference is unique (that is what the
+type says); therefore no other live references to the resource
+exist; therefore freeing it cannot create a dangling reference,
+because there is nothing to dangle. You did not need `free`'s
+implementation, the rest of the library, or any call site. The
+signature is the contract.
+
+Now the linear-only version of the same API:
+
+```ocaml
+module type Free_once = sig
+  type 'a t
+  val free : 'a t @ once -> unit
+end
+```
+
+This says "the binding you pass will not be used again after
+`free`." From the signature alone, you cannot conclude that no
+aliases exist: `once` constrains *this binding's future use*, not
+*aliasing*. To prove the API safe, you would have to inspect
+every operation that produces a `'a t`, every operation that
+consumes one, and the control flow of every client. That is
+*whole-API reasoning*.
+
+The submoding direction is what makes the two signatures so
+different in strength. The uniqueness axis orders
+`unique ⊑ aliased`, so an aliased value cannot flow into a
+parameter that demands `unique`. The only way to call
+`Free_unique.free` at all is to present a value the compiler has
+*proven* has no other live references. The call site supplies a
+fact about the *past*, and the body of `free` gets to rely on it:
+that demand is hard to satisfy, which is exactly why satisfying
+it carries information. The linearity axis points the other way:
+`many ⊑ once` means *anything* flows into a `once` parameter,
+freely aliased values included. The demand is trivially
+satisfiable, so the callee learns nothing about the argument's
+history; the annotation's entire content is the forward-looking
+promise that `free` will use its argument at most once. The
+double-free protection therefore cannot come from `free`'s
+signature. It appears only when the *client's own binding* is
+`once`, which is why every producer in the API must hand the
+value out at `once`, and why the reasoning is whole-API.
 
 **Linearity gives use-once guarantees that survive aliasing.** A
 `@ once` handle may have aliases (someone earlier in the program
@@ -426,6 +745,49 @@ end of the module combines them.
 
 :::slide
 
+## `Free_unique`: safe from the signature alone
+
+```ocaml
+module type Free_unique = sig
+  type 'a t
+  val free : 'a t @ unique -> unit
+end
+```
+
+- `free` **demands** `unique`.
+  - `unique ⊑ aliased` is one-way: an aliased value cannot
+    flow in.
+  - the call site must *prove* "no other references".
+- A fact about the *past*, supplied by the caller.
+  - `free` can rely on it: nothing can dangle.
+- **Modular reasoning**: the signature is the contract.
+
+:::
+
+:::slide
+
+## `Free_once`: safe only with a whole-API audit
+
+```ocaml
+module type Free_once = sig
+  type 'a t
+  val free : 'a t @ once -> unit
+end
+```
+
+- `free` **accepts** `once`.
+  - `many ⊑ once`: anything flows in, aliases and all.
+  - the callee learns nothing about the past.
+- Only a promise about the *future*.
+  - `free` uses its argument at most once.
+- Double-free safety needs the **client's binding** to be `once`.
+  - every producer must hand out `t @ once`: **whole-API
+    reasoning**.
+
+:::
+
+:::slide
+
 ## Uniqueness vs linearity: when to reach for each
 
 | Axis | Tracks | Best for |
@@ -433,7 +795,8 @@ end of the module combines them.
 | **Uniqueness** | Past aliasing | `free`-style APIs; modular reasoning |
 | **Linearity** | Future uses | `close`-style protocols; sequence-of-ops |
 
-Often combined. The next lecture builds an API that uses both.
+For `free`-like APIs, **uniqueness is more appropriate**. Often
+combined: the module's tutorial builds an API that uses both.
 
 :::
 
@@ -476,65 +839,11 @@ matters.
 |---|---|---|
 | Forbids aliasing? | Yes | No |
 | Forbids dropping? | No | No (at most once) |
-| Forbids double use? | n/a (consumed once) | Yes |
 | Tracks | Past | Future |
 | Best for | `free` | `close` |
 
 Pick uniqueness when "no other references" is what matters.
 Pick linearity when "never used twice" is what matters.
-
-:::
-
-## The closure-capture rule revisited
-
-In the uniqueness lecture we saw that a closure capturing a
-unique value becomes
-`once`. That rule sits squarely on the linearity axis. Here is the
-phenomenon stated in linearity terms.
-
-A closure that captures a once-value (or a unique value, which is
-related) has the future use of that value built into it. Each call
-to the closure uses the captured value once. If the captured value
-is at mode `once`, the closure must be at mode `once`, because
-calling it twice would use the captured value twice.
-
-This is automatic: you do not annotate the closure as `once`; the
-compiler infers it from the captures.
-
-```ocaml
-(* Press Run; the closure captures a once-handle and is itself
-   forced to mode once, so a second call fails to type-check. *)
-let use_it () =
-  let t = Handle.open_ "data.txt" in
-  let f = fun () -> Handle.close t in
-  f ();
-  f ()                  (* type error: f is once, already used *)
-```
-
-The function `f` has been given mode `once` because it captures a
-`once` handle. The second call is rejected. This is the same shape
-as the `wat` example from the uniqueness lecture, but stated on
-the linearity axis instead of the uniqueness axis.
-
-:::slide
-
-## Closure capture forces `once`
-
-A closure that captures a `once` value has mode `once`.
-A closure that captures a `unique` value has mode `once`.
-
-```ocaml
-(* Same shape as the use_it example above; press Run to see the
-   second call rejected. *)
-let demo_capture () =
-  let t = Handle.open_ "data.txt" in
-  let f = fun () -> Handle.close t in
-  f ();
-  f ()           (* type error: f used twice *)
-```
-
-The rule keeps you from sneaking a once-resource through a normal
-function value.
 
 :::
 
@@ -614,21 +923,6 @@ uniqueness lecture too, brings the linearity and uniqueness threads together in
 one formal system: that paper is the academic mirror of what
 OxCaml ships.
 
-:::slide
-
-## Where linearity comes from
-
-- **Girard, 1987**: linear logic.
-  - drop contraction: every proposition used once.
-- **Wadler, 1990s**: linear types in programming.
-- **OxCaml, 2024+**: linearity as one of five mode axes,
-  cooperating with the rest.
-
-The intuition has been around for nearly four decades. The
-production deployment is recent.
-
-:::
-
 ## Activity
 
 :::quiz mcq id=M11-L03-q1
@@ -700,10 +994,6 @@ force `once`.
 
 :::solution
 
-:::slide
-
-## Activity solution
-
 Q1: C is rejected. B threads the handle correctly (the ownership-chain
 shape). A *compiles* (the discarded final handle is a silent leak;
 at-most-once has no opinion on zero uses). C reads the *original* `t`
@@ -721,8 +1011,6 @@ let c () =
 
 Q2: a closure that captures a `once` value itself becomes `once`;
 capturing is enough to downgrade it.
-
-:::
 
 :::
 
@@ -794,11 +1082,12 @@ then combines the axes in one resource-management API.
 
 ## Sources
 
-The `Handle` module shape and the three-bug walkthrough are
-adapted from the CS6868 OxCaml handout (the instructor's own
-teaching material). The linearity-vs-uniqueness contrast and the
-past-vs-future framing are paraphrased from the instructor's
-2025-06-04 blog post. The historical footnote on Girard, Wadler,
+The `Handle` module shape, the explicit once-function example,
+and the three-bug walkthrough are adapted from the CS6868 OxCaml
+handout (the instructor's own teaching material). The
+linearity-vs-uniqueness contrast (including the modular-reasoning
+argument) and the past-vs-future framing are paraphrased from the
+instructor's 2025-06-04 blog post. The historical footnote on Girard, Wadler,
 and the long arc of linear types is original to this course but
 relies on standard public-domain history. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
