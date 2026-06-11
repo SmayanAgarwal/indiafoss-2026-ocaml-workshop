@@ -67,6 +67,7 @@ Wadler's move, replayed on OCaml's `option`.
   - L3: the **state** monad and parameterised state.
 - **GADTs** (L4-L6): variants that carry type-level information.
 - **L7 tutorial**: a tiny well-typed evaluator combining both.
+- **L8 practice**: stretch problems on monads and GADTs.
 
 :::
 

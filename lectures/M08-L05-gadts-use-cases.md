@@ -3,8 +3,8 @@ title: "GADTs: use cases beyond toy interpreters"
 lecture_no: 5
 week: 8
 duration_target_min: 25
-concepts: [type witnesses, typed pretty-printers, type-safe builders, church encoding, length-indexed lists]
-keywords: [OCaml, GADT, type witness, query builder, length-indexed list, church encoding, vec]
+concepts: [type witnesses, typed pretty-printers, type-safe builders, Peano encoding, length-indexed lists]
+keywords: [OCaml, GADT, type witness, query builder, length-indexed list, Peano encoding, vec]
 activity_question: "Reusing the lecture's [type _ ty] witness, write [default : type a. a ty -> a] that produces a default value for the witnessed type (0, the empty string, false, a pair of defaults, the empty list). This runs the witness the opposite direction from [show]."
 think_about_this: "A GADT lets you write a function whose return type depends on the input *value* (not just the input type). Why is that more powerful than overloading or type classes?"
 reading:
@@ -91,8 +91,8 @@ let rec show : type a. a ty -> a -> string = fun t v ->
       "[" ^ String.concat "; " (List.map (show t') v) ^ "]"
 ```
 
-- `'a ty` is a *witness* for OCaml type `'a`.
-- `show t v` takes a witness and a value of the type it witnesses.
+- `'a ty` is a *witness* for type `'a`: `show t v` renders the
+  value that `t` describes.
 
 :::
 
@@ -243,11 +243,11 @@ its type.
 To do that we first need *numbers that live in types*. We build them
 the way you count on your fingers: `z` is zero, and `'n s` (`s` for
 *successor*) is one more than `'n`. So `z` is 0, `z s` is 1, `z s s`
-is 2, and so on, the classic *church* (or *Peano*) encoding:
+is 2, and so on, the classic *Peano* encoding:
 
 :::slide
 
-## Church numerals: numbers in the types
+## Peano numerals: numbers in the types
 
 ```ocaml
 type z = Z               (* zero           *)
@@ -423,26 +423,19 @@ A value of this type *is* a proof; this is the Curry-Howard
 correspondence (propositions are types, proofs are values).
 `PlusZero` is the base fact `0 + n = n`; `PlusSucc` adds one to the
 first summand and to the sum. With it, `append` can promise that the
-result length is exactly the sum of the inputs:
+result length is exactly the sum of the inputs. Its type says so:
 
-```ocaml
-let rec append : type m n o.
-  (m, n, o) plus -> ('a, m) vec -> ('a, n) vec -> ('a, o) vec =
-  fun p l1 l2 -> match p, l1 with
-  | PlusZero, Nil             -> l2
-  | PlusSucc p', Cons (x, xs) -> Cons (x, append p' xs l2)
-
-(* append [1; 2] [3; 4; 5], with a proof that 2 + 3 = 5 *)
-let two_plus_three : (z s s, z s s s, z s s s s s) plus =
-  PlusSucc (PlusSucc PlusZero)
-let _ = append two_plus_three
-          (Cons (1, Cons (2, Nil))) (Cons (3, Cons (4, Cons (5, Nil))))
+```text
+val append :
+  ('m, 'n, 'o) plus -> ('a, 'm) vec -> ('a, 'n) vec -> ('a, 'o) vec
 ```
 
-Each `Cons` taken off `l1` is matched by one `PlusSucc` peeled off
-the proof, so the two cases are exhaustive and the result length is
-justified at every step. The same `plus` justifies an O(n)
-length-preserving reverse.
+The proof argument and the first vector shrink in lock-step: each
+`Cons` taken off the first vector is matched by one `PlusSucc`
+peeled off the proof, so the result length stays justified at every
+step. Writing the body that keeps this promise is one of the
+practice problems, so we leave it there. The same `plus` justifies
+an O(n) length-preserving reverse.
 
 The technique scales to other arithmetic. *Multiplication*,
 `('m, 'n, 'o) mult` meaning `m * n = o`, is built from `plus`,
@@ -465,8 +458,10 @@ type (_, _, _) min =
   | MinSucc  : ('m, 'n, 'o) min -> ('m s, 'n s, 'o s) min
 ```
 
-The price is the same throughout: *you* supply the proof by hand
-(`two_plus_three` above). Languages built for this (Agda, Idris,
+The price is the same throughout: *you* supply the proof by hand.
+Appending a 2-vector to a 3-vector needs the value
+`PlusSucc (PlusSucc PlusZero)`, a proof that `2 + 3 = 5`, passed in
+explicitly. Languages built for this (Agda, Idris,
 F\*) construct such proofs automatically; in OCaml it is manual. The
 [Module 8 practice](M08-L08-practice.html) puts these to work,
 implementing `append` (with `plus`), `cross` (with `mult`), and a
@@ -606,9 +601,10 @@ let _ = default (T_pair (T_int, T_string))  (* = (0, "") *)
 A code quiz:
 
 :::quiz code id=M08-L05-q1
-Extend the witness GADT with a `Bool_t : bool t` constructor and
-write `convert3 : type a. a t -> a -> string` that handles all
-three.
+The witness GADT below covers three types: `String_t`, `Int_t`,
+and `Bool_t`. Implement `convert3 : type a. a t -> a -> string`
+over all three witnesses: strings rendered in quotes, ints with
+`string_of_int`, bools with `string_of_bool`.
 
 ```ocaml
 type _ t =

@@ -223,7 +223,7 @@ First, see why a plain annotation will not do. The obvious
 ## First: why the naive version fails
 
 ```ocaml skip
-let rec eval (e : 'a expr) : 'a = function
+let rec eval : 'a expr -> 'a = function
   | Int_lit n  -> n   (* this branch needs 'a = int  *)
   | Bool_lit b -> b   (* this branch needs 'a = bool *)
   (* ... and the other constructors ... *)
@@ -470,9 +470,9 @@ If the answer is "I would have to add an
 type and pattern-match in two places", they are probably not.
 
 The [next lecture](M08-L05-gadts-use-cases.html) shows real use
-cases that pull this into focus, typed pretty-printers and
-type-safe builders, and the lecture after adds heterogeneous lists
-and the GADT machinery behind `Printf`.
+cases that pull this into focus, typed pretty-printers, type-safe
+builders, and length-indexed lists, and the lecture after adds
+heterogeneous lists and the GADT machinery behind `Printf`.
 
 ## A quick check
 
@@ -591,7 +591,7 @@ let () =
 
 Reference solution:
 
-```text
+```
 let unwrap : type a. a value -> a = function
   | VInt n -> n
   | VBool b -> b
@@ -614,6 +614,7 @@ Lecture 5: **GADT use cases**.
 
 - Typed pretty-printers and type witnesses.
 - Type-safe builders.
+- Length-indexed lists: the list's length in its type.
 - Then Lecture 6 (hlists, the `Printf` trick) and the Lecture 7
   tutorial.
 

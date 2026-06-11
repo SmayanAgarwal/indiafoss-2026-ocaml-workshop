@@ -6,7 +6,7 @@ duration_target_min: 22
 concepts: [heterogeneous list, hlist, type witness, generic programming, fold over witnesses]
 keywords: [OCaml, GADT, hlist, witness, Format, printf]
 activity_question: "Write [length_hlist : type ix. ix hlist -> int] that returns the number of elements in a heterogeneous list. (No witnesses needed: counting ignores the element values.)"
-think_about_this: "[Format.printf]'s format strings have a type that depends on the literal characters in the string. That dependency is encoded with GADTs of essentially the same shape we build in this lecture. Where else have you seen a value's type depend on another value's contents?"
+think_about_this: "[Printf.printf]'s format strings have a type that depends on the literal characters in the string. That dependency is encoded with GADTs of essentially the same shape we build in this lecture. Where else have you seen a value's type depend on another value's contents?"
 reading:
   - title: "Real World OCaml, More GADTs"
     url: https://dev.realworldocaml.org/gadts.html
@@ -26,9 +26,9 @@ reading:
 
 :::
 
-[Lecture 4](M08-L04-gadts-basics.html) showed GADTs with a single
-type index (the `int expr` / `bool expr` AST).
-[Lecture 5](M08-L05-gadts-use-cases.html) built a typed
+[The GADT basics lecture](M08-L04-gadts-basics.html) showed GADTs
+with a single type index (the `int expr` / `bool expr` AST).
+[The use-cases lecture](M08-L05-gadts-use-cases.html) built a typed
 pretty-printer, `show : 'a ty -> 'a -> string`, that read a witness
 (`T_int`, `T_string`, ...) to decide how to render *one* value. This
 lecture lifts that from a single value to a whole *heterogeneous
@@ -46,14 +46,14 @@ folds across them. We will sketch the connection at the end.
 
 ## This lecture
 
-- Start from Lecture 5's typed pretty-printer `show`, lifted to a
-  *list*.
+- Start from last lecture's typed pretty-printer `show`, lifted to
+  a *list*.
 - **Heterogeneous lists** (hlists): lists with different element
   types tracked in the type.
-- **Witness list**: reuse Lecture 5's `ty` witness, one per element,
-  indexed to match the hlist.
-- `pp_hlist`: Lecture 5's `show`, folded across the whole list.
-- Aside: OCaml's `Format.printf` uses GADTs of this shape.
+- **Witness list**: reuse last lecture's `ty` witness, one per
+  element, indexed to match the hlist.
+- `pp_hlist`: last lecture's `show`, folded across the whole list.
+- Aside: OCaml's `Printf.printf` uses GADTs of this shape.
 
 :::
 
@@ -162,7 +162,7 @@ call site: you cannot accidentally take the head of an empty hlist.
 
 To *print* an element we need to know its type at runtime, and that
 is exactly the witness `ty` from
-[Lecture 5's pretty-printer](M08-L05-gadts-use-cases.html). We reuse
+[the previous lecture's pretty-printer](M08-L05-gadts-use-cases.html). We reuse
 it unchanged. The one new idea: pair a whole *list* of those
 witnesses with the hlist, indexed by the **same** type, so each
 witness sits opposite the element it describes.
@@ -172,7 +172,7 @@ witness sits opposite the element it describes.
 ## A witness list matching the hlist
 
 ```ocaml
-type _ ty =                     (* the witness from Lecture 5 *)
+type _ ty =                     (* the witness from last lecture *)
   | T_int    : int ty
   | T_string : string ty
   | T_bool   : bool ty
@@ -206,7 +206,7 @@ lock-step, using each witness to render its element.
 ## `pp_hlist`: walking both in lock-step
 
 ```ocaml
-let pp_one : type a. a ty -> a -> string =   (* Lecture 5's show *)
+let pp_one : type a. a ty -> a -> string =  (* last lecture's show *)
   fun t v -> match t with
   | T_int    -> string_of_int v
   | T_string -> "\"" ^ v ^ "\""
@@ -220,7 +220,8 @@ let rec pp_hlist : type ix. ix tylist -> ix hlist -> string list =
         pp_one t v :: pp_hlist trest vrest
 ```
 
-- `pp_one` is Lecture 5's `show`, on the three primitive witnesses.
+- `pp_one` is last lecture's `show`, on the three primitive
+  witnesses.
 - `pp_hlist` folds it over both structures in lock-step; the shared
   index `ix` forces witness and hlist to align.
 
@@ -299,11 +300,11 @@ This is the design strength of GADTs: a single shared type
 parameter across two structures pins down a constraint that would
 otherwise be a runtime "I hope the types match" assertion.
 
-## Closing aside: `Format.printf` does the same thing
+## Closing aside: `Printf.printf` does the same thing
 
-OCaml's `Format.printf` (and `Printf.printf`) work by exactly this
-mechanism, but the witness list is encoded inside the format
-string. When you write `Format.printf "%d %s %b\n"`, the compiler
+OCaml's `Printf.printf` (and its `Format` cousin) work by exactly
+this mechanism, but the witness list is encoded inside the format
+string. When you write `Printf.printf "%d %s %b\n"`, the compiler
 parses the format string into a witness list of essentially the
 shape `TyCons (T_int, TyCons (T_string, TyCons (T_bool, TyNil)))`
 and uses it to insist on `int -> string -> bool -> unit` as the
@@ -311,10 +312,10 @@ type of the remaining call.
 
 :::slide
 
-## `Format.printf`: a witness list in disguise
+## `Printf.printf`: a witness list in disguise
 
-```ocaml skip
-let _ = Format.printf "%d %s %b\n" 42 "hi" true
+```ocaml
+let _ = Printf.printf "%d %s %b\n" 42 "hi" true   (* prints 42 hi true *)
 ```
 
 - The compiler reads `"%d %s %b\n"` and synthesises an internal
@@ -495,11 +496,11 @@ Lecture 7: the **Module 8 tutorial**.
 
 :::
 
-The [tutorial in lecture 7](M08-L07-tutorial.html) brings monads
+The [closing tutorial](M08-L07-tutorial.html) brings monads
 and GADTs together one more time. We build a small typed AST
 (GADTs), evaluate it with an option monad (`let*`), and close by
 showing how the GADT version rejects the
-[M05-L06](M05-L06-tutorial.html) `bad1` example
+[Module 5 tutorial's](M05-L06-tutorial.html) `bad1` example
 (`Add (Bool true, _)`) at compile time, sealing the forward
 pointer that opened Module 8.
 

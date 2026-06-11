@@ -5,7 +5,7 @@ week: 8
 duration_target_min: 28
 concepts: [GADT-driven AST, type-safe evaluator, optional + result monad in evaluation]
 keywords: [OCaml, GADT, evaluator, AST, tutorial, capstone]
-activity_question: "Add a [Less : int expr * int expr -> bool expr] constructor. Update [eval]. What does the type system require, and what would change if the new constructor were [Less : 'a expr * 'a expr -> bool expr] (using parametric 'a)?"
+activity_question: "The tutorial fixes [Less] to [int expr * int expr -> bool expr]. Change it to the polymorphic [Less : 'a expr * 'a expr -> bool expr] and rebuild [eval]. Does it still compile? What does [Less (Bool_lit false, Bool_lit true)] evaluate to, and is the looser language an improvement?"
 think_about_this: "The evaluator we build cannot construct an ill-typed program. The cost: more setup. The benefit: the runtime *cannot* fail with a type error. Is that the right trade for a calculator? For a real compiler? For your own domain code?"
 reading:
   - title: "Real World OCaml, Building a typed AST"
@@ -31,13 +31,15 @@ reading:
 ## Why this tutorial
 
 - Capstone for the OCaml half (M01-M08).
-- One worked example that ties together:
+- One small expression language that ties together:
   - The [monad pattern](M08-L01-option-monad.html) (option, result, state).
   - [GADTs](M08-L04-gadts-basics.html) for type-indexed ASTs.
   - [Pattern matching](M05-L01-basic-patterns.html) with type
     refinement.
 - Builds the GADT-typed interpreter that the
   [Module 5 tutorial](M05-L06-tutorial.html) forward-pointed to.
+- Adds an option-monad failure layer (division by zero), a
+  pretty-printer, and an extension exercise (adding `<`).
 - By the end: `Add (Bool_lit true, _)` is a compile error, not a
   runtime `None`.
 
@@ -56,7 +58,7 @@ everything we have seen in Module 8:
   [option-monad style](M08-L01-option-monad.html), that
   short-circuits when evaluation has a runtime problem (such as
   division by zero).
-- Two pretty-printers and an extension exercise (adding `<`).
+- A pretty-printer and an extension exercise (adding `<`).
 
 The exercise serves two purposes. First, it is a useful piece of
 code on its own: a typed mini-interpreter is the foundation of
@@ -71,23 +73,6 @@ of the course.
 By the end of this lecture you should be able to read GADT-typed
 ASTs comfortably, write evaluators over them, and extend the
 language with new constructors without confusion.
-
-:::slide
-
-## What this tutorial does
-
-- Capstone for the OCaml half of the course.
-- Build a small expression language combining almost everything
-  from Module 8:
-  - A GADT for the AST (ill-typed programs cannot be built).
-  - A pattern-matching evaluator using GADT type refinement.
-  - An optional-failure layer (option-monad style) for runtime
-    problems like division by zero.
-  - Two pretty-printers and an extension exercise (adding `<`).
-- Ties together monads, GADTs, and pattern matching in one
-  worked example.
-
-:::
 
 ## The typed AST
 
@@ -159,15 +144,9 @@ an `'a`:
 
 ## The evaluator
 
-```ocaml
-type _ expr =
-  | Int_lit  : int -> int expr
-  | Bool_lit : bool -> bool expr
-  | Add      : int expr * int expr -> int expr
-  | Mul      : int expr * int expr -> int expr
-  | If       : bool expr * 'a expr * 'a expr -> 'a expr
-  | Eq_int   : int expr * int expr -> bool expr
+`expr` is the GADT from the previous slide.
 
+```ocaml
 let rec eval : type a. a expr -> a = function
   | Int_lit  n  -> n
   | Bool_lit b  -> b
@@ -402,7 +381,7 @@ purpose.
 So far our `eval` cannot fail: every constructor evaluates
 cleanly. Real interpreters have runtime failures (division by
 zero, missing variable, stack overflow). The
-[option monad (Lecture 1)](M08-L01-option-monad.html) is the
+[option monad](M08-L01-option-monad.html) is the
 natural way to add a layer of fallibility:
 
 :::slide
@@ -455,18 +434,21 @@ way; together they cover the full spectrum.
 
 ## The "polymorphic less-than" question
 
-The activity for this lecture is an extension: add a `Less`
-constructor and consider what would change if it were polymorphic
-in its argument types rather than fixed to `int expr * int expr`.
+The activity for this lecture: we fixed `Less` to
+`int expr * int expr`. What changes if its arguments are
+polymorphic instead?
 
 :::slide
 
 ## Activity
 
-Add a `Less : int expr * int expr -> bool expr` constructor (we
-did this above). Then think about: what if we made it polymorphic,
-`Less : 'a expr * 'a expr -> bool expr`? Why does that not work
-for arbitrary `'a`?
+We added `Less : int expr * int expr -> bool expr` above. Change
+it to the polymorphic `Less : 'a expr * 'a expr -> bool expr` and
+rebuild `eval`.
+
+- Does it still compile? (Try it; the answer may surprise you.)
+- What does `Less (Bool_lit false, Bool_lit true)` evaluate to?
+- Is the looser language an improvement? Why or why not?
 
 :::
 
@@ -478,16 +460,20 @@ for arbitrary `'a`?
 Less : 'a expr * 'a expr -> bool expr
 ```
 
-- Polymorphic `Less : 'a expr * 'a expr -> bool expr` builds fine.
-- The evaluator fails: `<` needs a concrete type.
-- Inside the GADT branch, `a` and `b` have abstract type `'a`.
-- The compiler cannot compile the comparison.
+- It compiles, `eval` included: OCaml's `<` is the *polymorphic*
+  structural comparison, defined at every type.
+- `Less (Bool_lit false, Bool_lit true)` now builds, and evaluates
+  to `true` (structurally, `false < true`).
+- The improvement is illusory: the type stopped encoding intent.
+  - "Only ints are ordered" is no longer a rule of the language.
+  - With function values in the language, `<` would *raise* at
+    runtime: the failure class GADTs exist to remove.
 
-Two fixes:
+To order only some types, two designs:
 
-- **Witness:** pass a comparator alongside (GADT for ordered
-  types).
-- **Specialise:** one constructor per numeric type (`Less`,
+- **Witness:** pass an ordering witness alongside (a GADT of
+  ordered types).
+- **Specialise:** one constructor per ordered type (`Less`,
   `Less_float`).
 
 A GADT encodes the constraints you actually need. Pick precisely.
@@ -495,20 +481,24 @@ A GADT encodes the constraints you actually need. Pick precisely.
 :::
 
 The deeper lesson: GADT type indices are about *what the compiler
-knows*. If you parameterise too loosely (`'a expr` everywhere),
-you lose the ability to write functions that need a specific type
-(like `<`, which needs to know it has two integers). If you
-parameterise too tightly (one constructor per OCaml type), you
-have more code to write. The right balance is application-specific.
+knows*, and this one is subtle because OCaml's `<` happens to be
+defined at every type. Parameterise too loosely (`'a expr`
+everywhere) and operations either stop compiling (`+` genuinely
+needs `int`s) or, worse, silently weaken (`<` falls back to
+structural comparison, ordering booleans and raising
+`Invalid_argument` on function values at runtime). Parameterise
+too tightly (one constructor per OCaml type) and you have more
+code to write. The right balance is application-specific.
 For a calculator, "tight" is fine. For a richer language, you may
 need ordering witnesses or other extensions.
 
 A code quiz to put it together:
 
 :::quiz code id=M08-L07-q3
-Add a `Neg : int expr * int expr -> int expr` constructor that
-represents subtraction (despite its name; let us call it `Sub`).
-Write the evaluator that handles `Int_lit`, `Add`, and `Sub`.
+The starter `expr` type already has a
+`Sub : int expr * int expr -> int expr` constructor for
+subtraction. Complete `eval_arith` so that the `Int_lit`, `Add`,
+and `Sub` cases evaluate correctly.
 
 ```ocaml
 type _ expr =

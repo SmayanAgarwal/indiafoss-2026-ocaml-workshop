@@ -348,6 +348,13 @@ end
 
 :::
 
+Read `bind`'s indices the way you would a relay race: the first
+step carries the state from `'p` to `'q`, hands the baton to the
+continuation, which carries it from `'q` to `'r`, and the composite
+runs from `'p` to `'r`. The middle type `'q` has to match exactly,
+and that handover check is what will let the compiler chain
+preconditions step by step.
+
 The implementation is a plain module, not a functor: there is no
 single state type to parameterise over, since the type changes per
 operation. Otherwise it mirrors `State` exactly, abstract carrier and
@@ -426,7 +433,19 @@ let add : (int * (int * 's), int * 's, unit) PState.t =
 
 `push x` always succeeds: any stack accepts a value on top. `add`
 is fussier: its type `int * (int * 's)` demands at least two `int`s
-on top. Run two pushes and an add and the types line up:
+on top.
+
+One piece of fine print about that `'s`. `push` is a function, but
+`add` is a `bind` application, so the
+[value restriction](M07-L01-references.html) leaves its `'s` only
+*weakly* polymorphic (the toplevel reports `'_s`). Every program in
+this lecture uses `add` on stacks with the same tail type, so
+nothing notices; if one session reused it at two different
+stack-tail types, OCaml would complain at the second use. The fix
+is the usual one, making it a function: `let add () = ...`, applied
+as `add ()` (the same applies to any instruction defined this way).
+
+Run two pushes and an add and the types line up:
 
 :::slide
 

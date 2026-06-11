@@ -26,8 +26,8 @@ reading:
 
 :::
 
-[Lecture 1](M08-L01-option-monad.html) built the option monad and
-the `let*` notation. We said a monad is "a type plus `return` and
+[The previous lecture](M08-L01-option-monad.html) built the option
+monad and the `let*` notation. We said a monad is "a type plus `return` and
 `bind`". That is not quite the whole story: a *lawful* monad's
 `return` and `bind` also satisfy three equations, the *monad laws*.
 This lecture states them quickly, then spends its time where the

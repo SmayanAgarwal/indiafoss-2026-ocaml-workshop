@@ -19,10 +19,10 @@ These are stretch problems, harder than the lectures and book-only
 references* without any real mutation; Part 2 pushes
 [length-indexed lists](M08-L05-gadts-use-cases.html) to operations
 that carry the [type-level proofs](M08-L05-gadts-use-cases.html#aside-type-level-arithmetic)
-from the L05 aside; Part 3 returns to the
+from the use-cases lecture's aside; Part 3 returns to the
 [tutorial's](M08-L07-tutorial.html) typed interpreter, combining
-witnesses with the evaluator. Attempt them once Lectures 1 to 7 are
-comfortable.
+witnesses with the evaluator. Attempt them once the module's
+lectures are comfortable.
 
 Each problem is a fill-in-the-blank cell with a `Check` button; the
 reference solution sits in a collapsed block below it. The problems
@@ -97,9 +97,9 @@ one packer unpacks to `None` through any other.
 
 ### Type-level numbers and proofs
 
-Part 2 reuses the church numerals, length-indexed vector, and the
+Part 2 reuses the Peano numerals, length-indexed vector, and the
 `plus` / `mult` / `min` proof types from the
-[L05 aside](M08-L05-gadts-use-cases.html#aside-type-level-arithmetic).
+[type-level-arithmetic aside](M08-L05-gadts-use-cases.html#aside-type-level-arithmetic).
 They are repeated here so the cells compile.
 
 ```ocaml
@@ -290,7 +290,7 @@ the `unpack` always matches the `pack` that stored the value.
 ## Part 2: GADTs
 
 These problems extend the length-indexed `vec`. Recall that
-`('a, 'n) vec` is a list of `'a`s whose length `'n` is a church
+`('a, 'n) vec` is a list of `'a`s whose length `'n` is a Peano
 numeral, and that `plus` / `mult` / `min` are proofs about those
 numerals.
 
@@ -425,24 +425,28 @@ vector of length `o`.
 
 :::
 
-### Problem 6: `zip`
+### Problem 6: `last`
 
-`zip` pairs two vectors element by element. Sharing one length index
-`n` makes zipping vectors of *different* lengths a compile error, no
-runtime `Invalid_argument`.
+The stdlib has no `List.last`; a hand-rolled one returns an
+`'a option` (or raises) because the list might be empty. On
+vectors the *type* can demand non-emptiness: an index of `n s`
+means length at least one, so `last` returns a bare `'a`.
 
 :::quiz code id=M08-L08-q6
-Implement `zip : ('a, n) vec -> ('b, n) vec -> ('a * 'b, n) vec`.
+Implement `last : ('a, n s) vec -> 'a`, the last element of a
+non-empty vector. (Hint: a non-empty vector is either a singleton
+`Cons (x, Nil)` or has a non-empty tail; the recursive call needs
+the tail's *pattern* to say so.)
 
 ```ocaml
-let zip : type n. ('a, n) vec -> ('b, n) vec -> ('a * 'b, n) vec =
-  fun _ _ -> failwith "not implemented"
+let last : type n. ('a, n s) vec -> 'a =
+  fun _ -> failwith "not implemented"
 ```
 
 ```ocaml skip
 let () =
-  let r = zip (Cons (1, Cons (2, Nil))) (Cons ("a", Cons ("b", Nil))) in
-  if r <> Cons ((1, "a"), Cons ((2, "b"), Nil)) then failwith "wrong";
+  if last (Cons (1, Cons (2, Cons (3, Nil)))) <> 3 then failwith "wrong";
+  if last (Cons ("only", Nil)) <> "only" then failwith "one element";
   print_endline "all tests passed"
 ```
 :::
@@ -452,21 +456,31 @@ let () =
 Reference solution:
 
 ```
-let rec zip : type n. ('a, n) vec -> ('b, n) vec -> ('a * 'b, n) vec =
-  fun a b -> match a, b with
-  | Nil, Nil -> Nil
-  | Cons (x, xs), Cons (y, ys) -> Cons ((x, y), zip xs ys)
+let rec last : type n. ('a, n s) vec -> 'a = function
+  | Cons (x, Nil) -> x
+  | Cons (_, (Cons _ as tl)) -> last tl
 ```
 
-The shared `n` forces both vectors to the same length, so a `Nil`
-paired with a `Cons` cannot occur; the two cases are exhaustive.
+No `Nil` case is needed: the input index is `n s`, and
+`Nil : ('a, z) vec` can never have a successor index, so the
+compiler refutes it by itself; the two cases are exhaustive. The
+second pattern must be `Cons (_, (Cons _ as tl))`, not a bare
+`Cons (_, tl)`: a bare `tl` only has the abstract length `n`,
+and `last` demands a successor index. Matching the tail against
+`Cons _` refines its length to a successor, which is exactly the
+proof the recursive call needs. And `last Nil` does not compile
+at all, so the empty-list crash of a list-based `last` cannot be
+written.
 
 :::
 
 ### Problem 7: `zip_matching`
 
-To zip vectors of *unequal* length, stopping at the shorter one, the
-result length is `min m n`. `zip_matching` takes a `min` proof.
+The equal-length `zip` from the
+[use-cases lecture](M08-L05-gadts-use-cases.html) rejects vectors
+of unequal length outright. To zip *unequal* vectors, stopping at
+the shorter one, the result length is `min m n`; `zip_matching`
+takes a `min` proof.
 
 :::quiz code id=M08-L08-q7
 Implement `zip_matching`, matching the three cases of the `min`
@@ -525,7 +539,7 @@ re-running the bound expression on each use. To run it exactly once,
 we evaluate it to a value and then turn that value *back* into an
 expression, and the snag was knowing which leaf to use, `Int_lit` or
 `Bool_lit`. A *type witness*
-([from L05](M08-L05-gadts-use-cases.html#use-1-typed-pretty-printers))
+([from the typed pretty-printer](M08-L05-gadts-use-cases.html#use-1-typed-pretty-printers))
 settles it: `Let` carries an `'a ty`, and matching on it chooses the
 constructor.
 
@@ -663,11 +677,11 @@ let rec simplify : type a. a expr -> a expr = function
 Every branch returns an expression of the *same* index it received
 (`Add` stays `int expr`, `Eq_int` stays `bool expr`), so the type
 `'a expr -> 'a expr` holds throughout: the optimiser cannot
-accidentally change a program's type. OCaml flags the inner matches
-as a "fragile match" (warning 4): the catch-all `x', y'` would keep
-absorbing cases if new constructors were added to `expr`. That is a
-fair warning in production code; for this fixed little language it is
-harmless.
+accidentally change a program's type. With warning 4 enabled (off
+by default; pass `-w +4`), OCaml would flag the inner matches as
+"fragile": the catch-all `x', y'` would keep absorbing cases if new
+constructors were added to `expr`. That is a fair caution for
+production code; for this fixed little language it is harmless.
 
 :::
 
@@ -676,11 +690,13 @@ harmless.
 Problems 1 and 2 are the [CS3100](https://kcsrk.info/cs3100_m21/)
 monad assignment: a state monad rich enough to *be* a reference
 implementation, first monomorphic, then polymorphic via a universal
-type. Problems 3 to 7 are the GADT assignment: every length-changing
-operation carries a type-level proof, so the compiler checks the
+type. Problems 3 to 7 build on the GADT assignment: every
+length-changing operation carries a type-level proof, and the
+non-empty index makes `last` total, so the compiler checks the
 shapes that ordinary lists check (if at all) only at runtime.
 Problems 8 and 9 extend the tutorial's interpreter: a witness-driven
-`let` (resolving the re-injection puzzle from L07's HOAS aside) and a
+`let` (resolving the re-injection puzzle from the tutorial's HOAS
+aside) and a
 type-preserving optimiser. This is the far end of what we do with
 types in this course; if you enjoyed it, the dependently typed
 languages (Agda, Idris, F\*) make this style the default.
