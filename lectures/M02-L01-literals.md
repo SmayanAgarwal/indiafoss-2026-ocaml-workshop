@@ -122,8 +122,10 @@ the four that dominate everyday code: integers, floating-point
 numbers, booleans, and strings. `char` (a single byte, written
 `'a'`) shows up briefly in the strings section, and `unit` (the
 single value `()`, used as a placeholder when there is nothing
-meaningful to return) is covered in Module 3 alongside
-unit-taking functions. The choice of "primitive" is the language
+meaningful to return) was introduced in
+[the hello-world lecture](M01-L04-hello-world.html#what-is-unit)
+and returns in Module 3 alongside unit-taking functions. The
+choice of "primitive" is the language
 designer's: these are the kinds the compiler knows about
 intrinsically, with dedicated syntax and built-in operators.
 Every other value in the language, from a list of pairs to a
@@ -299,11 +301,14 @@ answer out for a couple of inputs and check that you have the
 convention you wanted.
 
 Integer overflow in OCaml is silent. `max_int + 1` does not raise
-an exception or produce a runtime error; it just wraps around. This
-is the same behaviour as C on 64-bit integers, and is a deliberate
-choice for performance. If you are doing arithmetic where overflow
-might happen and would matter, the discipline is the same as in C:
-use a wider type (`Int64`) or check explicitly.
+an exception or produce a runtime error; it wraps around, and the
+language *defines* that wrap-around as the result. This is a
+deliberate choice for performance. C is different in a way worth
+flagging: signed-integer overflow in C is *undefined behaviour*,
+so the compiler may assume it never happens (a distinction a later
+module returns to). If you are doing arithmetic where overflow
+might happen and would matter, the discipline is: use a wider
+type (`Int64`) or check explicitly.
 
 The stakes of "check explicitly" can be absolute. On 4 June
 1996, the maiden Ariane 5 rocket tore itself apart 37 seconds
@@ -418,7 +423,7 @@ let _ = float_of_int 1 +. 2.0
 This is the design choice that, in my experience, catches the
 greatest number of students. After ten minutes of writing OCaml,
 someone will try to write `let area r = 3.14 * r * r` and the
-compiler will refuse: `This expression has type float but an
+compiler will refuse: `The constant 3.14 has type float but an
 expression was expected of type int`. The fix is to write
 `3.14 *. r *. r` instead.
 
@@ -465,7 +470,7 @@ One more property of `float` that is worth flagging now, because
 students rediscover it the hard way: floating-point arithmetic is
 *approximate*. The number `0.1` cannot be represented exactly in
 binary floating point; neither can `0.2`. So `0.1 +. 0.2` does
-not give `0.3`; it gives `0.30000000000000004`. This is not
+not give `0.3`; it gives `0.300000000000000044`. This is not
 a bug in OCaml; it is a fundamental property of IEEE 754, and
 the same anomaly appears in Python, Java, JavaScript, and
 essentially every mainstream language. We saw the same example in
@@ -530,8 +535,8 @@ is only attempted when `x` is nonzero. We will lean on this
 behaviour later when we want to guard expensive computations.
 
 The comparison operators (`=`, `<>`, `<`, `<=`, `>`, `>=`) all
-return `bool`. We will look at them properly in
-[M02-L04 (operators)](M02-L04-operators.html#comparison-and-equality),
+return `bool`. We will look at them properly in the
+[operators lecture](M02-L04-operators.html#comparison-and-equality),
 where the *structural* vs *physical* equality distinction also
 gets its own treatment. For now: use `=` for equality, the way you
 would use `==` in C.
@@ -652,19 +657,19 @@ and `int`, or between `char` and `string`. The standard library
 provides explicit conversion functions wherever they make sense:
 
 ```ocaml
-let _ = string_of_int 42
-let _ = float_of_int 7
-let _ = int_of_float 3.7      (* truncates toward zero -> 3 *)
-let _ = int_of_string "123"
-let _ = string_of_bool true
+let _ = string_of_int 42      (* = "42" *)
+let _ = float_of_int 7        (* = 7. *)
+let _ = int_of_float 3.7      (* = 3, truncates toward zero *)
+let _ = int_of_string "123"   (* = 123 *)
+let _ = string_of_bool true   (* = "true" *)
 ```
 
 These names follow a predictable pattern: `xxx_of_yyy` returns an
-`xxx` given a `yyy`. The functions that parse from a string,
-`int_of_string` and `float_of_string`, raise an exception if the
-string does not represent a number of that type. There is no
-`bool_of_string` of the parsing variety in the older standard
-library; check the docs for your stdlib version.
+`xxx` given a `yyy`. The functions that parse from a string
+(`int_of_string`, `float_of_string`, `bool_of_string`) raise an
+exception if the string does not represent a value of that type.
+`bool_of_string` is the strictest of the three: it accepts exactly
+`"true"` and `"false"`, nothing else.
 
 ## Putting it together
 
@@ -682,7 +687,7 @@ let password_strength len =
   else if len < 16 then "good"
   else "strong"
 
-let _ = password_strength 14
+let _ = password_strength 14  (* = "good" *)
 ```
 
 - Function of type `int -> string`.
@@ -702,8 +707,9 @@ a single type annotation. Second, the body is a chain of nested
 expression*. This is the same point we made earlier about OCaml
 being expression-based: even something that looks like a multi-way
 branch is a value-producing expression you can pass to a function
-or bind to a name. We give `if` its own dedicated lecture later in
-this module ([M02-L05](M02-L05-if-expressions.html)). Third, every
+or bind to a name. We give `if` its
+[own dedicated lecture](M02-L05-if-expressions.html) later in
+this module. Third, every
 comparison is against the same type: `len < 8`, where `len` is
 `int` and `8` is `int`, never mixing `int` and `float`.
 
@@ -767,7 +773,7 @@ let _ = 1 + 2.0
 **Why:** OCaml never inserts implicit conversions between `int`
 and `float`. The operator `+` takes two `int`s and returns an
 `int`; the second operand `2.0` is a `float`, so the compiler
-rejects the expression with "this expression has type float but
+rejects the expression with "the constant 2.0 has type float but
 an expression was expected of type int." Both the int-side and
 the float-side framings are wrong: there is no preferred side, the
 language simply refuses the call and asks you to insert a

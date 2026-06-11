@@ -56,7 +56,7 @@ let response_class ms =
   else if ms < 1000.0 then "noticeable"
   else "slow"
 
-let _ = response_class 180.0
+let _ = response_class 180.0  (* = "fast" *)
 ```
 
 :::slide
@@ -109,10 +109,10 @@ by 4).
 let is_leap y =
   (y mod 4 = 0 && y mod 100 <> 0) || y mod 400 = 0
 
-let _ = is_leap 2024
-let _ = is_leap 2025
-let _ = is_leap 1900
-let _ = is_leap 2000
+let _ = is_leap 2024  (* = true *)
+let _ = is_leap 2025  (* = false *)
+let _ = is_leap 1900  (* = false *)
+let _ = is_leap 2000  (* = true *)
 ```
 
 :::slide
@@ -168,7 +168,7 @@ let shipping_label weight =
   else if cost < 25.0 then "standard"
   else "premium"
 
-let _ = shipping_label 2.5
+let _ = shipping_label 2.5  (* = "standard" *)
 ```
 
 :::slide
@@ -239,9 +239,9 @@ let clamp lo hi x =
   else if x > hi then hi
   else x
 
-let _ = clamp 0 10 7
-let _ = clamp 0 10 (-3)
-let _ = clamp 0 10 25
+let _ = clamp 0 10 7     (* = 7 *)
+let _ = clamp 0 10 (-3)  (* = 0 *)
+let _ = clamp 0 10 25    (* = 10 *)
 ```
 
 :::slide
@@ -273,8 +273,8 @@ right argument order; this one mirrors the conceptual reading
 ("clamp into the range lo..hi, the value x"). Another defensible
 order is `x lo hi`; both are fine, just be consistent.
 
-The parenthesisation `(-3)` is the unary-minus pitfall from
-[M02-L04](M02-L04-operators.html#pitfall-3-subtraction-looks-like-unary-minus)
+The parenthesisation `(-3)` is the
+[unary-minus pitfall from the operators lecture](M02-L04-operators.html#pitfall-3-subtraction-looks-like-unary-minus)
 (without parens it would parse as subtraction). Worth remembering.
 
 ## Problem 5: tying it together
@@ -289,8 +289,8 @@ let safe_divide a b =
 let scaled value scale offset =
   safe_divide (value +. offset) scale
 
-let _ = scaled 100.0 4.0 5.0
-let _ = scaled 100.0 0.0 5.0
+let _ = scaled 100.0 4.0 5.0  (* = 26.25 *)
+let _ = scaled 100.0 0.0 5.0  (* = 0. *)
 ```
 
 :::slide
@@ -354,8 +354,8 @@ let bad r = 3.14 * r * r
 ```
 
 ```
-Error: This expression has type float but an expression was expected
-       of type int
+Error: The constant 3.14 has type float
+       but an expression was expected of type int
 ```
 
 - Compiler points at `3.14`: type `float`, expected `int`.
@@ -377,11 +377,11 @@ nearby; that's where the constraint came from.
 Two more error shapes you have already seen elsewhere in the
 module are worth re-skimming when you hit them:
 
-- [M02-L04, Pitfall 2](M02-L04-operators.html#pitfall-2-implicit-conversion-that-isnt-there):
+- [The operators lecture, Pitfall 2](M02-L04-operators.html#pitfall-2-implicit-conversion-that-isnt-there):
   `"value: " ^ 5` fails because OCaml does not silently coerce
   `int` to `string`. Convert with `string_of_int` or use
   `Printf.sprintf`.
-- [M02-L05, mismatched branches](M02-L05-if-expressions.html#why-the-branches-must-agree):
+- [The `if` lecture, mismatched branches](M02-L05-if-expressions.html#why-the-branches-must-agree):
   `if ... then "positive" else 0` fails because the two branches
   must share a type. Decide which type you want and rewrite the
   other branch.
@@ -397,7 +397,7 @@ type errors. After enough repetition the muscle memory takes over.
 ## Activity
 
 Re-implement
-[`sign` from M02-L05](M02-L05-if-expressions.html#a-quick-check),
+[`sign` from the `if` lecture](M02-L05-if-expressions.html#nested-ifs),
 then write the float twin:
 
 - `sign : int -> int` returning `-1`, `0`, `1`.
@@ -487,21 +487,21 @@ rule. The benefit is that anyone reading either function knows
 unambiguously what types are involved.
 
 A small philosophical aside, since the *think about this* prompt
-invites it. Could you write `sign` using arithmetic alone, no
-`if`? Sure:
+invites it. Could you replace the three-way `if` in `sign` with
+arithmetic? Almost; one `if` survives, to guard the zero case:
 
 ```ocaml
 let sign_arith x =
   if x = 0 then 0 else x / abs x
 
-let _ = sign_arith 5
-let _ = sign_arith (-3)
-let _ = sign_arith 0
+let _ = sign_arith 5     (* = 1 *)
+let _ = sign_arith (-3)  (* = -1 *)
+let _ = sign_arith 0     (* = 0 *)
 ```
 
 This works: `x / abs x` is `1` for positive and `-1` for negative,
 and we handle the `0` case separately to avoid division by zero.
-It is a more compact than the three-branch `if`, but arguably
+It is more compact than the three-branch `if`, but arguably
 less clear: a reader has to think to convince themselves that
 the formula gives the right answer. The three-branch version
 *reads* like the specification.

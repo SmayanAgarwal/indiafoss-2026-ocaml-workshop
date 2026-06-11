@@ -135,21 +135,68 @@ errors. Internalise: `+` for ints, `+.` for floats; `*` for ints,
 floats; if you need float remainder, use `Float.rem a b` from the
 standard library.
 
-Comparison (`<`, `<=`, `>`, `>=`, `=`, `<>`) and the logical
-operators (`&&`, `||`, `not`) were introduced in
-[M02-L01](M02-L01-literals.html#booleans). The pertinent facts for
-this lecture are recap: `=` and `<>` are *structural* (compare by
-content) and *polymorphic* (work on any first-order type); `==`
-and `!=` are *physical* identity and almost never what you want;
-`&&` and `||` short-circuit, exactly as in C / Java / Python; and
-negation is the keyword `not`, not the symbol `!`.
+## Comparison and equality
+
+The comparison operators (`<`, `<=`, `>`, `>=`) and the logical
+operators (`&&`, `||`, `not`) were introduced with
+[booleans](M02-L01-literals.html#booleans). A quick recap of the
+logical side: `&&` and `||` short-circuit, exactly as in C / Java
+/ Python, and negation is the standard-library function `not`,
+not the symbol `!`.
+
+Equality deserves the fuller treatment we promised back in the
+[tour of OCaml](M01-L03-ocaml-tour.html). OCaml has *two* equality
+operators, and they answer different questions:
+
+- `=` is **structural** equality: do the two values have the same
+  *contents*? It compares recursively (two ints are `=` when they
+  are the same number, two strings when they have the same bytes,
+  two pairs when their components are correspondingly `=`) and it
+  is *polymorphic*: the one operator works on ints, floats,
+  strings, pairs, and most other data. Its negation is `<>`.
+- `==` is **physical** equality: are the two values the *same
+  object in memory*? Its negation is `!=`.
+
+Structural equality is the question everyday code asks (is the
+input the string `"quit"`?), so the rule for beginners is simple:
+always write `=`. Physical equality only matters in advanced code
+that cares about sharing and mutation; when you meet `==` in the
+wild, read it as a deliberate, expert-level choice.
+
+The two operators can disagree. A *pair* like `(1, 2)` bundles two
+values into one (pairs get a proper introduction later in the
+course); here are two pairs built separately, with the same
+contents:
+
+```ocaml
+let p = (1, 2)
+let q = (1, 2)
+
+let _ = p = q    (* = true  : same contents *)
+let _ = p == q   (* = false : two distinct objects in memory *)
+let _ = p == p   (* = true  : literally the same object *)
+```
+
+`p` and `q` are structurally equal but physically distinct: each
+`(1, 2)` allocated its own pair. This is the trap for programmers
+arriving from C or Java, where `==` *is* the everyday equality
+operator: an OCaml `==` test compiles fine and then returns
+`false` for values you can plainly see are equal. If an equality
+test in your code is mysteriously failing, check the operator
+first.
+
+One caveat to file away: structural equality works on *data*, but
+it raises a runtime exception (`Invalid_argument "compare:
+functional value"`) if the values being compared contain
+functions, because there is no general way to decide whether two
+functions behave identically.
 
 ## String concatenation
 
 Strings concatenate with `^`, not `+`:
 
 ```ocaml
-let _ = "first" ^ " " ^ "second"
+let _ = "first" ^ " " ^ "second"  (* = "first second" *)
 ```
 
 :::slide
@@ -181,6 +228,7 @@ For many, use `String.concat`:
 
 ```ocaml
 let _ = String.concat ", " ["apple"; "banana"; "cherry"]
+(* = "apple, banana, cherry" *)
 ```
 
 `String.concat sep xs` joins the elements of `xs` with `sep`
@@ -191,7 +239,7 @@ have dozens or hundreds of pieces.
 For formatted output, `Printf.sprintf` is the standard tool:
 
 ```ocaml
-let _ = Printf.sprintf "value: %d" 5
+let _ = Printf.sprintf "value: %d" 5  (* = "value: 5" *)
 ```
 
 The format string `"%d"` is the C-style integer specifier. We
@@ -204,9 +252,9 @@ function next to its arguments, separated by spaces. No parentheses
 or commas.
 
 ```ocaml
-let _ = succ 5
-let _ = max 3 7
-let _ = String.length "hello"
+let _ = succ 5                  (* = 6 *)
+let _ = max 3 7                 (* = 7 *)
+let _ = String.length "hello"   (* = 5 *)
 ```
 
 :::slide
@@ -240,7 +288,7 @@ Function application is *left-associative*: `f x y` means `(f x)
 y`. So when you nest calls, you need parentheses to group:
 
 ```ocaml
-let _ = succ (max 3 7)
+let _ = succ (max 3 7)  (* = 8 *)
 ```
 
 Without the parentheses, OCaml would parse this as `succ max 3 7`,
@@ -318,8 +366,8 @@ let area r = 3.14159 * r * r
 The compiler refuses with:
 
 ```
-Error: This expression has type float but an expression was expected
-       of type int
+Error: The constant 3.14159 has type float
+       but an expression was expected of type int
 ```
 
 :::slide
@@ -333,8 +381,8 @@ let area r = 3.14159 * r * r
 OCaml refuses:
 
 ```
-Error: This expression has type float but an expression was expected
-       of type int
+Error: The constant 3.14159 has type float
+       but an expression was expected of type int
 ```
 
 Fix: `3.14159 *. r *. r`. The operator drives the type.
@@ -343,9 +391,9 @@ Fix: `3.14159 *. r *. r`. The operator drives the type.
 
 The fix is `3.14159 *. r *. r` (note the three dots). The error
 message is helpful once you can read it: it says "expected `int`"
-because `*` is the integer-multiplication operator; it says
-"found `float`" because `3.14159` is a float literal. The
-mismatch tells you which operator is wrong.
+because `*` is the integer-multiplication operator; it names the
+constant `3.14159` and says it has type `float` because that is a
+float literal. The mismatch tells you which operator is wrong.
 
 ## Pitfall 2: implicit conversion that isn't there
 
@@ -365,7 +413,7 @@ let _ = "value: " ^ 5
 ```
 
 ```
-Error: This expression has type int but an expression was expected
+Error: The constant 5 has type int but an expression was expected
        of type string
 ```
 
@@ -435,10 +483,11 @@ in argument position, parenthesise it.
 
 In Python, `0 < x < 10` reads as you'd hope: "x is between 0 and
 10." Python is unusual in supporting this; OCaml (like most
-languages) does not:
+languages) does not (we bind `x` to `5` so the chain itself is
+the only error):
 
 ```ocaml skip
-let _ = 0 < x < 10
+let _ = let x = 5 in 0 < x < 10
 ```
 
 :::slide
@@ -446,27 +495,29 @@ let _ = 0 < x < 10
 ## Pitfall 4: comparison chains aren't a thing
 
 ```ocaml skip
-let _ = 0 < x < 10
+let _ = let x = 5 in 0 < x < 10
 ```
 
-- Parses as `(0 < x) < 10`: `bool` vs `int`. Type error.
+- Parses as `(0 < x) < 10`: compares a `bool` to `10`.
+- Error: constant `10` has type `int` but expected `bool`.
 - Spell it out with `&&`:
 
-```text
-let _ = 0 < x && x < 10
+```ocaml
+let _ = let x = 5 in 0 < x && x < 10  (* = true *)
 ```
 
 - Python supports chains; OCaml (like most languages) does not.
 
 :::
 
-OCaml parses this as `(0 < x) < 10`: first compare `0 < x` (which
-gives `bool`), then compare that `bool` to `10`. Comparing a `bool`
-to an `int` is a type error. The fix is to write the bounded check
-with `&&`:
+OCaml parses this as `(0 < x) < 10`: first compare `0 < x`, which
+gives `bool`, then compare that `bool` to `10`. The polymorphic
+`<` wants both operands at the same type, so the compiler refuses
+with *"The constant 10 has type int but an expression was expected
+of type bool"*. The fix is to write the bounded check with `&&`:
 
-```text
-let x = 5 in 0 < x && x < 10
+```ocaml
+let _ = let x = 5 in 0 < x && x < 10  (* = true *)
 ```
 
 This idiom (`a < x && x < b`) is so common that you internalise it

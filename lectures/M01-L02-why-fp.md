@@ -554,7 +554,7 @@ workhorse data structure of every ML-family language.
 ```ocaml
 let xs = [1; 2; 3]
 let ys = 0 :: xs
-let _ = xs
+let _ = xs  (* = [1; 2; 3] *)
 ```
 
 :::slide

@@ -5,7 +5,7 @@ week: 1
 duration_target_min: 20
 concepts: [print_endline, top-level evaluation, let bindings as statements, the unit type]
 keywords: [OCaml, hello world, print_endline, unit, let, beginner OCaml]
-activity_question: "If [let () = print_endline \"hi\"] prints \"hi\", what does [let () = ()] do? Predict before running."
+activity_question: "A file has two top-level [let ()] bindings: the first prints [A] then [B] (sequenced with [;]), the second prints [C]. In what order do the three lines appear? Predict before running."
 think_about_this: "Why does OCaml use the unit value [()] for the result of [print_endline] instead of returning a void / null / None?"
 reading:
   - title: "Real World OCaml, Chapter 1: A Guided Tour"
@@ -68,11 +68,13 @@ Here is the shortest interesting OCaml program. Click Run.
 let () = print_endline "hello, world"
 ```
 
-The toplevel prints `hello, world` on its own line, then reports `-
-: unit = ()` (or just `val () : unit = ()` depending on the toplevel
-version). The output of the program is the string. The toplevel's
-report tells us the *binding* produced a value of type `unit`,
-namely `()`.
+The cell prints `hello, world` on its own line, and that is all:
+there is no `val ...` report. Every `let` binding you ran in the
+previous lecture earned an echo like `val x : int = 42`, but a
+`let ()` binding binds *no names*, so there is nothing for the
+toplevel to report. The output of the program is the string; the
+absence of a `val` line tells us the binding exists purely for
+its side effect.
 
 :::slide
 
@@ -84,7 +86,8 @@ let () = print_endline "hello, world"
 
 Click **Run**.
 
-The toplevel prints `hello, world` and reports `val () : unit = ()`.
+- Prints `hello, world`, and nothing else.
+- No `val ...` report: `let () = ...` binds no name.
 
 We just wrote an executable program.
 
@@ -189,9 +192,10 @@ pattern-match against it), it's just the only one of its type.
 :::
 
 The closest analogue in other languages is C's `void`, Java's
-`void`, Python's `None`, Go's `()` (empty value). All of these mean
-"this function does not return a useful value." The difference is
-that in OCaml, `unit` is a real type with a real value `()`. You
+`void`, Python's `None`, Rust's `()` (which Rust took from the ML
+family). All of these mean "this function does not return a useful
+value." The difference from `void` is that in OCaml (as in Rust),
+`unit` is a real type with a real value `()`. You
 can store `()` in a list (`[(); (); ()]` is a valid OCaml list of
 length 3) or return `()` from a function. Storing and returning
 are unusual; the value carries no information so it is hard to
@@ -504,7 +508,6 @@ let greet name =
 ```
 
 ```ocaml skip
-let buf = Buffer.create 32
 let () = greet "world"
 (* If the implementation calls print_endline, the test below cannot
    capture its output. Instead we verify the function type-checks
@@ -600,8 +603,8 @@ real (if small) functions in OCaml comfortably.
 
 ## What's next
 
-- **Next:** [M01-L05](M01-L05-tutorial-recap.html), Module 1's
-  tutorial: worked temperature-conversion problems end to end.
+- **Next:** [Module 1's tutorial](M01-L05-tutorial-recap.html):
+  worked temperature-conversion problems end to end.
 - **Then Module 2:** the type system in detail (`int`, `float`,
   `string`, `bool`), type inference, `if` as an expression.
 

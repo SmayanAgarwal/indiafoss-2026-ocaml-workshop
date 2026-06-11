@@ -87,10 +87,10 @@ in Kelvin.
 :::
 
 ```ocaml
-let _ = kelvin_of_celsius 100.0
+let _ = kelvin_of_celsius 100.0  (* = 373.15 *)
 ```
 
-`float = 373.15`, the boiling point of water in Kelvin. The `let _
+That is the boiling point of water in Kelvin. The `let _
 = ...` is a binding that throws the name away (we just want the
 toplevel to print the value).
 
@@ -152,8 +152,8 @@ let original = 36.6
 let there_and_back = celsius_of_kelvin (kelvin_of_celsius original)
 ```
 
-Run it. The toplevel reports `there_and_back : float = 36.6`. Or
-close to. Read on.
+Run it. The toplevel reports `there_and_back : float =
+36.6000000000000227`. Not the `36.6` we started with. Read on.
 
 :::slide
 
@@ -170,8 +170,8 @@ let original = 36.6
 let there_and_back = celsius_of_kelvin (kelvin_of_celsius original)
 ```
 
-* Run it. Toplevel reports `there_and_back = 36.6`.
-* Or thereabouts (see next slide).
+* Run it. Toplevel reports `there_and_back = 36.6000000000000227`.
+  * Not exactly `36.6` (see next slide).
 
 :::
 
@@ -190,16 +190,16 @@ left-to-right like a Unix pipe. For now, parentheses will do.
 
 ## A float precision aside
 
-Sometimes `there_and_back` is *not* exactly `36.6`. Floats are
-stored with finite precision, and the round-trip `+. 273.15 -.
-273.15` can introduce a tiny rounding error in the last digit. Try
-this:
+As we just saw, `there_and_back` is *not* exactly `36.6`. Floats
+are stored with finite precision, and the round-trip `+. 273.15
+-. 273.15` introduces a tiny rounding error in the last digits.
+Try this:
 
 ```ocaml
-let _ = 0.1 +. 0.2
+let _ = 0.1 +. 0.2  (* = 0.300000000000000044 *)
 ```
 
-You get `float = 0.30000000000000004`, not `0.3`. This is true in
+You get `0.300000000000000044`, not `0.3`. This is true in
 every language that uses IEEE 754 floats: Python, JavaScript, Java,
 C, OCaml. The standard binary representation of `0.1` is not
 exact (`0.1` has a non-terminating binary expansion, like `1/3` has
@@ -216,9 +216,9 @@ is the standard reference if you want the details.
 
 ## Float precision aside
 
-* `there_and_back` may not be *exactly* `36.6`.
-* Floats are finite-precision; `+. 273.15 -. 273.15` can drift in
-  the last digit.
+* `there_and_back` is not *exactly* `36.6`.
+* Floats are finite-precision; `+. 273.15 -. 273.15` drifts in
+  the last digits.
 
 ```ocaml
 let _ = 0.1 +. 0.2
@@ -276,11 +276,11 @@ let is_comfortable c = c >= 15.0 && c <= 30.0
 ```
 
 ```ocaml
-let _ = is_comfortable 22.0
+let _ = is_comfortable 22.0  (* = true *)
 ```
 
 ```ocaml
-let _ = is_comfortable 38.0
+let _ = is_comfortable 38.0  (* = false *)
 ```
 
 The first call gives `true`, the second `false`. The inferred type
@@ -333,10 +333,10 @@ let is_comfortable c = c >= 15.0 && c <= 30.0
 let is_comfortable_kelvin k =
   is_comfortable (celsius_of_kelvin k)
 
-let _ = is_comfortable_kelvin 295.15  (* 22 °C *)
+let _ = is_comfortable_kelvin 295.15  (* 22 °C; = true *)
 ```
 
-`true`. The point of this problem is that
+The point of this problem is that
 `is_comfortable_kelvin` introduces *no new logic*. It is built by
 *applying* `is_comfortable` to the *result* of `celsius_of_kelvin`.
 This is what people mean by "function composition": building larger
@@ -526,13 +526,14 @@ let _ = bmi 70.0 1.75
 :::
 
 The reference solution: `let bmi mass height = mass /. (height *.
-height)`. The parentheses around `height *. height` are not
-necessary (multiplication binds tighter than division, so OCaml
-parses `mass /. height *. height` as `(mass /. height) *. height`,
-which is *wrong*); you want `mass /. (height *. height)`. This is
-a small but real gotcha: operator precedence in OCaml matches the
-familiar conventions for `+`, `-`, `*`, `/`, but you still have to
-think about it when you have several operators in a row.
+height)`. The parentheses around `height *. height` are necessary:
+`*.` and `/.` have *equal* precedence and associate to the left,
+so without them OCaml parses `mass /. height *. height` as
+`(mass /. height) *. height`, which is *wrong* (it multiplies by
+the height instead of dividing by it). This is a small but real
+gotcha: operator precedence in OCaml matches the familiar
+conventions for `+`, `-`, `*`, `/`, but you still have to think
+about it when you have several operators in a row.
 
 ## What you should be able to do now
 

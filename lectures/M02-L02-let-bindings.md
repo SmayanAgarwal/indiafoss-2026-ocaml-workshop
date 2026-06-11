@@ -72,7 +72,7 @@ scope. The whole `let ... in` form is itself an expression: it
 denotes the value $e_2$ evaluates to.
 
 ```ocaml
-let _ = let y = 5 in y + 5
+let _ = let y = 5 in y + 5  (* = 10 *)
 ```
 
 The toplevel reports `int = 10`. The name `y` is bound to `5` inside
@@ -336,7 +336,7 @@ values:
 let _ =
   let x = 5 in
   let y = 10 in
-  x + y
+  x + y  (* = 15 *)
 ```
 
 Result: `int = 15`. The parsing is right-associative: the chain
@@ -413,7 +413,7 @@ let _ =
   let y =
     let z = 10 in z + z
   in
-  x + y
+  x + y  (* = 25 *)
 ```
 
 Result: `int = 25`. The inner `let z = 10 in z + z` evaluates to
@@ -455,7 +455,7 @@ Shadowing works for `let ... in` too:
 let _ =
   let x = 5 in
   let x = x + 5 in
-  x
+  x  (* = 10 *)
 ```
 
 Result: `int = 10`. The right-hand side of the inner `let x = x +
@@ -486,9 +486,11 @@ let _ =
 The clearest demonstration that shadowing is not mutation comes
 from [closures](M03-L01-functions-as-values.html#a-function-value-remembers-its-environment),
 which we will study in Module 3 but can already use in a simple
-example. The `()` in `f ()` is the unit value: `f` is defined to
-take no useful argument, and we call it by passing the placeholder
-`()`. Full treatment of unit-taking functions comes in Module 3.
+example. The `()` in `f ()` is the unit value, which we met in
+[the hello-world lecture](M01-L04-hello-world.html#what-is-unit):
+`f` is defined to take no useful argument, and we call it by
+passing the placeholder `()`. Full treatment of unit-taking
+functions comes in Module 3.
 
 ```ocaml
 let x = 1
@@ -552,9 +554,9 @@ let x = 100
 
 let _ =
   let x = 1 in
-  x
+  x  (* = 1 *)
 
-let _ = x
+let _ = x  (* = 100 *)
 ```
 
 The first `let _ = ...` evaluates to `1`: inside the expression,
@@ -595,7 +597,7 @@ let _ =
   let s = "  Hello World  " in
   let s = String.trim s in
   let s = String.lowercase_ascii s in
-  s
+  s  (* = "hello world" *)
 ```
 
 Result: `string = "hello world"`. Each `let s = ... in` introduces
@@ -611,7 +613,7 @@ let _ =
   let raw      = "  Hello World  " in
   let trimmed  = String.trim raw in
   let lowered  = String.lowercase_ascii trimmed in
-  lowered
+  lowered  (* = "hello world" *)
 ```
 
 Same computation; three distinct names. Whether you prefer
@@ -628,7 +630,7 @@ need to bind a name.
 
 ```ocaml
 let _ = print_endline "hi"
-let _ = 3 + 4
+let _ = 3 + 4  (* = 7 *)
 ```
 
 :::slide
@@ -637,7 +639,7 @@ let _ = 3 + 4
 
 ```ocaml
 let _ = print_endline "hi"
-let _ = 3 + 4
+let _ = 3 + 4  (* = 7 *)
 ```
 
 - `_` matches any value and discards it.
@@ -668,7 +670,7 @@ When you want to evaluate two expressions in order and keep only
 the result of the second, OCaml offers a short form:
 
 ```ocaml
-let _ = print_endline "hi"; 6
+let _ = print_endline "hi"; 6  (* = 6 *)
 ```
 
 The semicolon is the *sequencing operator*. `e1; e2` is an
@@ -830,7 +832,7 @@ let () =
 
 One sample solution:
 
-```
+```ocaml
 let four_step n =
   let x = n + 1 in
   let x = x * 2 in

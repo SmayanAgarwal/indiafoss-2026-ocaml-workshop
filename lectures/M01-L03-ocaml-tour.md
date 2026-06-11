@@ -120,10 +120,11 @@ The expression evaluates to `14`, of type `int`.
 
 Integer division uses `/`, but in OCaml as in C and Java (and unlike
 in Python 3), it *truncates*: it throws away any fractional part.
-You will see `let _ = ...` in cells from here on; the `_` is a
-"don't-care" name that just lets the toplevel print the value
-without binding it to anything. We cover the pattern in
-[M02-L02](M02-L02-let-bindings.html#underscore-i-dont-care-about-the-name).
+Later cells in this lecture write `let _ = ...` in front of an
+expression; the `_` is a "don't-care" name that just lets the
+toplevel print the value without binding it to anything. We cover
+the pattern in
+[the lecture on `let` bindings](M02-L02-let-bindings.html#underscore-i-dont-care-about-the-name).
 
 ```ocaml
 17 / 5
@@ -167,9 +168,9 @@ Integer division truncates:
 OCaml's `int` is a *machine integer*: on a 64-bit machine it is 63
 bits wide (not 64). The missing bit is used by the runtime to
 distinguish `int` values from pointers, which is part of how the
-garbage collector stays fast. We will see the full story in the
-secure-systems half of the course (Module 9); for now, just know
-that the range is about ±4.6 × 10^18, which is plenty for almost
+garbage collector stays fast. We will see the full story in a
+later module on memory safety; for now, just know that the range
+is about ±4.6 × 10^18, which is plenty for almost
 any practical computation. If you need bigger, the
 [`zarith`](https://github.com/ocaml/Zarith) library gives you
 arbitrary precision.
@@ -191,8 +192,8 @@ The result is `3.5`, of type `float`. Try this without the dots:
 1.0 + 2.5
 ```
 
-This refuses to compile with an error message like *"This expression
-has type float but an expression was expected of type int"*. OCaml
+This refuses to compile with an error message like *"The constant
+1.0 has type float but an expression was expected of type int"*. OCaml
 is telling you that `+` expects two `int` arguments, and `1.0` is a
 `float`, so the call is ill-typed. If you wanted float addition,
 you had to use `+.`.
@@ -244,7 +245,7 @@ If you genuinely want to mix integer and float arithmetic in one
 expression, you convert explicitly:
 
 ```ocaml
-let _ = float_of_int 1 +. 2.5
+let _ = float_of_int 1 +. 2.5  (* = 3.5 *)
 ```
 
 `float_of_int` is the OCaml function that turns an `int` into a
@@ -393,7 +394,7 @@ Same syntax for functions. `let name args = body` defines a function
 separate `function` keyword, no `def`, no `void`, no `public static`.
 
 ```ocaml
-let _ = area_of_circle 2.0
+let _ = area_of_circle 2.0  (* = 12.56636 *)
 ```
 
 Calling a function is just juxtaposition: `area_of_circle 2.0`. No
@@ -415,7 +416,7 @@ let area_of_circle r = pi *. r *. r
 ```
 
 ```ocaml
-let _ = area_of_circle 2.0
+let _ = area_of_circle 2.0  (* = 12.56636 *)
 ```
 
 - Bindings are **immutable** by default.
@@ -457,7 +458,7 @@ enclosing expression (in this case, the body of `circle_area`).
 Outside that scope, `r_sq` does not exist.
 
 ```ocaml
-let _ = circle_area 5.0
+let _ = circle_area 5.0  (* = 78.53975 *)
 ```
 
 This is the local-binding form. `let ... in` is an *expression*: the
@@ -479,7 +480,7 @@ let circle_area r =
 ```
 
 ```ocaml
-let _ = circle_area 5.0
+let _ = circle_area 5.0  (* = 78.53975 *)
 ```
 
 The name `r_sq` is in scope inside the body of `circle_area` and

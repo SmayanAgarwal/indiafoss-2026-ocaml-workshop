@@ -148,7 +148,7 @@ with three sub-expressions:
 - The whole expression has type $t$.
 
 ```ocaml
-let _ = if true then 13 else 14
+let _ = if true then 13 else 14  (* = 13 *)
 ```
 
 :::slide
@@ -224,7 +224,7 @@ The fix is to bring both branches to the same type. Either both
 floats:
 
 ```ocaml
-let _ = if true then 13.0 else 13.4
+let _ = if true then 13.0 else 13.4  (* = 13. *)
 ```
 
 :::slide
@@ -251,7 +251,7 @@ let _ = if true then 13 else int_of_float 13.4
 Or both ints:
 
 ```ocaml
-let _ = if true then 13 else int_of_float 13.4
+let _ = if true then 13 else int_of_float 13.4  (* = 13 *)
 ```
 
 The compiler will not pick for you. You decide which type you want
@@ -348,7 +348,7 @@ let grade_letter score =
   else if score >= 60 then "D"
   else "F"
 
-let _ = grade_letter 87
+let _ = grade_letter 87  (* = "B" *)
 ```
 
 :::slide
@@ -414,7 +414,7 @@ let warn_if_negative x =
 
 :::
 
-The function `warn_if_negative : int -> unit` has type `unit` (no
+The function `warn_if_negative : int -> unit` returns `unit` (no
 useful value, like C's `void`). The branches must both be `unit`:
 the then-branch prints (returns `()`), and the implicit else is
 `()`. For non-negative inputs, nothing is printed; the function
@@ -572,7 +572,7 @@ Branches don't share a type:
 Rule: both branches need a single type `T`. Compiler reports:
 
 ```
-Error: This expression has type int but an expression was expected
+Error: The constant 0 has type int but an expression was expected
        of type string
 ```
 
@@ -582,7 +582,7 @@ To fix: decide on `string` or `int`.
 
 ## What's next
 
-Module 2 ends with the [tutorial](M02-L06-tutorial.html) (M02-L06),
+Module 2 ends with the [tutorial](M02-L06-tutorial.html),
 where we work through several small problems end to end, combining
 literals, `let`, types, operators, and `if`. After that,
 [Module 3](M03-L01-functions-as-values.html) starts on functions in

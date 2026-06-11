@@ -61,7 +61,7 @@ execute the code: the *value* it produces (and any side effects on
 the way).
 
 ```ocaml
-let _ = 23 + 45
+let _ = 23 + 45  (* = 68 *)
 ```
 
 - Static semantics: this expression is the application of `(+)`
@@ -206,7 +206,7 @@ runs.
 Compare with this:
 
 ```ocaml
-let _ = 23 = 45
+let _ = 23 = 45  (* = false *)
 ```
 
 :::slide
@@ -554,7 +554,7 @@ $$
 ## When to write annotations
 
 Type annotations were introduced in
-[M01-L03](M01-L03-ocaml-tour.html#type-annotations-when-you-want-them):
+[the tour of OCaml](M01-L03-ocaml-tour.html#type-annotations-when-you-want-them):
 they are optional, and the compiler checks them against what
 inference would have produced. Now that we have seen what
 inference actually does, the practical question is *when* to
@@ -565,7 +565,7 @@ write them.
 ## When to write annotations
 
 - Introduced in
-  [M01-L03](M01-L03-ocaml-tour.html#type-annotations-when-you-want-them):
+  [the tour of OCaml](M01-L03-ocaml-tour.html#type-annotations-when-you-want-them):
   optional, and they must agree with what inference would
   produce.
 - **Use annotations** to:
@@ -704,9 +704,10 @@ and reading inferred types should feel manageable. The
 [next lecture](M02-L04-operators.html) goes through the operators
 in detail: precedence, the ones that catch beginners out, and the
 small set of operators you will use 95% of the time. After that,
-[M02-L05](M02-L05-if-expressions.html) covers `if`/`then`/`else` as
-an expression (a small but real shift from imperative languages),
-and [M02-L06](M02-L06-tutorial.html) is the tutorial.
+the [`if` expressions lecture](M02-L05-if-expressions.html) covers
+`if`/`then`/`else` as an expression (a small but real shift from
+imperative languages), and the module ends with the
+[tutorial](M02-L06-tutorial.html).
 
 :::slide
 

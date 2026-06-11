@@ -132,11 +132,18 @@ security story. The reason we can talk about "undefined behaviour"
 precisely in week 10 is that we will have spent eight weeks
 pinning down what *defined* behaviour even means; week 10 names
 the C memory bugs (use-after-free, buffer overflow, uninitialised
-read, double-free), shows how they become CVEs (the now-famous
-Microsoft 70%, Android 90%, Fish-in-a-Barrel 80% statistics and
-the [White House February 2024
-memorandum](M10-L01-memory-safety-and-security.html) on memory-safe
-languages), and shows how OCaml rules each one out by construction.
+read, double-free) and shows how they become CVEs. The industry
+numbers are stark: roughly 70% of the vulnerabilities Microsoft
+fixes each year are memory-safety bugs (MSRC, 2019); the Chromium
+project found about the same 70% share among its high-severity
+bugs (2020); 76% of Android's vulnerabilities in 2019 were
+memory-safety bugs in its native (C/C++) code (Google, *Memory
+Safe Languages in Android 13*, 2022); and Google's Project Zero
+found that roughly two-thirds of the 0-days exploited in the wild
+in 2021 were memory-corruption bugs. The [White House February 2024
+memorandum](M10-L01-memory-safety-and-security.html) urged the
+industry toward memory-safe languages. Week 10 then shows how
+OCaml rules each of these bug classes out by construction.
 We also walk a [Heartbleed-style
 example](M10-L05-tutorial.html) end to end. Module 11 picks up
 where the vanilla type system stops:
