@@ -164,7 +164,7 @@ emit_privacy() {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="quiz-api" content="https://nptel-quiz.kc-7c7.workers.dev">
   <title>Privacy — Functional Programming with OCaml</title>
-  <link rel="stylesheet" href="/assets/css/chapter.css">
+  <link rel="stylesheet" href="__ASSET_ROOT__/assets/css/chapter.css">
   <style>
     .privacy { max-width: 760px; margin: 2rem auto; padding: 0 1rem 4rem; }
     .privacy h1 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 1.8rem; }
@@ -396,6 +396,11 @@ emit_privacy() {
 </body>
 </html>
 PRIVACY
+  # The heredoc is quoted (lots of literal $ in the inline JS), so
+  # expand the asset-root placeholder in a separate pass.
+  local tmp
+  tmp="$(mktemp)"
+  sed "s|__ASSET_ROOT__|${ASSET_ROOT}|g" "$out" > "$tmp" && mv "$tmp" "$out"
   printf 'built _site/privacy.html\n'
 }
 emit_privacy
@@ -414,7 +419,7 @@ emit_dashboard() {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="quiz-api" content="https://nptel-quiz.kc-7c7.workers.dev">
   <title>Quiz analytics &middot; Functional Programming with OCaml</title>
-  <link rel="stylesheet" href="/assets/css/chapter.css">
+  <link rel="stylesheet" href="__ASSET_ROOT__/assets/css/chapter.css">
   <style>
     .dash { max-width: 980px; margin: 2rem auto; padding: 0 1rem 4rem; }
     .dash h1 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 1.8rem; }
@@ -934,6 +939,10 @@ emit_dashboard() {
 </body>
 </html>
 DASHBOARD
+  # Same placeholder expansion as emit_privacy (quoted heredoc).
+  local tmp
+  tmp="$(mktemp)"
+  sed "s|__ASSET_ROOT__|${ASSET_ROOT}|g" "$out" > "$tmp" && mv "$tmp" "$out"
   printf 'built _site/dashboard.html\n'
 }
 emit_dashboard
