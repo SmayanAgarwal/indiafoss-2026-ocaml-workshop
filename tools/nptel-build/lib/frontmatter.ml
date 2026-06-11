@@ -155,7 +155,16 @@ let parse_value t key value rest_lines =
         take [] rest_lines
       in
       ({ t with reading = parse_reading_block block }, rest)
-  | _ -> (t, rest_lines)
+  | _ ->
+      (* A typo'd key is consequential: [week] selects the in-browser
+         bundle, [activity_question] feeds the index. Fail loudly
+         instead of silently dropping the field. *)
+      failwith
+        (Printf.sprintf
+           "frontmatter: unknown key %S (known: title, lecture_no, week, \
+            duration_target_min, concepts, keywords, activity_question, \
+            think_about_this, reading)"
+           key)
 
 let parse_lines lines =
   let rec loop t = function
@@ -163,9 +172,16 @@ let parse_lines lines =
     | line :: rest ->
         let s = trim_str line in
         if s = "" || (String.length s > 0 && s.[0] = '#') then loop t rest
+        else if line.[0] = ' ' || line.[0] = '\t' then
+          (* Indented continuation lines belong to a block key that the
+             key's own handler consumes (e.g. [reading]); a stray one is
+             tolerated rather than misread as a top-level key. *)
+          loop t rest
         else
           match String.index_opt s ':' with
-          | None -> loop t rest
+          | None ->
+              failwith
+                (Printf.sprintf "frontmatter: malformed line %S (expected key: value)" s)
           | Some i ->
               let key = trim_str (String.sub s 0 i) in
               let value = String.sub s (i + 1) (String.length s - i - 1) in

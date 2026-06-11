@@ -41,9 +41,39 @@ let rewrite_asset_urls ~asset_root html =
     done;
     Buffer.contents buf
 
+(* Lecture files (M<nn>-L<nn>-*.md) must carry frontmatter that agrees
+   with the filename: [week] selects the in-browser bundle (a typo'd
+   week would silently hand an OxCaml lecture the vanilla runtime) and
+   [lecture_no] drives the header label. Non-lecture inputs (the smoke
+   fixture) are exempt. *)
+let check_lecture_frontmatter ~src (fm : Nptel_build.Frontmatter.t) =
+  match Nptel_build.Manifest.parse_filename (Filename.basename src) with
+  | None -> ()
+  | Some (m, l, _) ->
+      let fail msg =
+        Printf.eprintf "%s: %s\n" src msg;
+        exit 1
+      in
+      if String.trim fm.title = "" then fail "frontmatter: missing title";
+      (match fm.week with
+      | Some w when w = m -> ()
+      | Some w ->
+          fail
+            (Printf.sprintf
+               "frontmatter: week %d does not match filename module M%02d" w m)
+      | None -> fail "frontmatter: missing week");
+      (match fm.lecture_no with
+      | Some n when n = l -> ()
+      | Some n ->
+          fail
+            (Printf.sprintf
+               "frontmatter: lecture_no %d does not match filename L%02d" n l)
+      | None -> fail "frontmatter: missing lecture_no")
+
 let render_one ~src ~dst ~asset_root =
   let raw = read_file src in
   let fm, body = Nptel_build.Frontmatter.parse raw in
+  check_lecture_frontmatter ~src fm;
   (* The body has had the YAML frontmatter stripped off; shift the
      line numbers we record in [data-quiz-line] back up to match
      the original file. The offset is (lines in raw) - (lines in body). *)

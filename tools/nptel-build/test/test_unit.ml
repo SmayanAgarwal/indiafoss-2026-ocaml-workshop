@@ -50,6 +50,25 @@ let fm_no_frontmatter () =
   check_string "title is empty" "" fm.title;
   check_string "body preserved" "# Just a heading\n\nno frontmatter\n" body
 
+let fm_unknown_key_rejected () =
+  let src = {|---
+title: "ok"
+weeek: 3
+---
+body
+|} in
+  let raised =
+    try
+      ignore (Frontmatter.parse src);
+      false
+    with Failure msg ->
+      check_bool "message names the key" true
+        (try ignore (Str.search_forward (Str.regexp_string "weeek") msg 0); true
+         with Not_found -> false);
+      true
+  in
+  check_bool "unknown top-level key fails" true raised
+
 let fm_quoted_strings () =
   let src = {|---
 title: 'single quoted'
@@ -371,6 +390,32 @@ let divs_quiz_mix_ids () =
     (try ignore (Str.search_forward (Str.regexp_string "data-quiz-id=\"q2\"") out 0); true
      with Not_found -> false)
 
+(* ---- Divs hardening -------------------------------------------------- *)
+
+let divs_marker_inside_code_fence_is_literal () =
+  let src = "```\n:::slide\n:::\n```\nafter\n" in
+  let out = Divs.preprocess src in
+  check_bool "no section emitted for ::: inside a code fence" true
+    (try ignore (Str.search_forward (Str.regexp_string "<section") out 0); false
+     with Not_found -> true);
+  check_bool ":::slide preserved literally" true
+    (try ignore (Str.search_forward (Str.regexp_string ":::slide") out 0); true
+     with Not_found -> false)
+
+let divs_unclosed_fails () =
+  let src = ":::slide\n\n# Heading\n" in
+  let raised =
+    try
+      ignore (Divs.preprocess src);
+      false
+    with Failure msg ->
+      check_bool "message says unclosed" true
+        (try ignore (Str.search_forward (Str.regexp_string "unclosed") msg 0); true
+         with Not_found -> false);
+      true
+  in
+  check_bool "unclosed div fails the build" true raised
+
 (* ---- Run ----------------------------------------------------------- *)
 
 let () =
@@ -381,6 +426,7 @@ let () =
           Alcotest.test_case "basic" `Quick fm_basic;
           Alcotest.test_case "missing" `Quick fm_no_frontmatter;
           Alcotest.test_case "quoted strings" `Quick fm_quoted_strings;
+          Alcotest.test_case "unknown key rejected" `Quick fm_unknown_key_rejected;
         ] );
       ( "divs",
         [
@@ -396,6 +442,9 @@ let () =
           Alcotest.test_case "vm-terminal dir arg" `Quick divs_vm_terminal_dir;
           Alcotest.test_case "vm-terminal malformed" `Quick divs_vm_terminal_malformed;
           Alcotest.test_case "vm-terminal max one" `Quick divs_vm_terminal_max_one;
+          Alcotest.test_case "::: inside code fence is literal" `Quick
+            divs_marker_inside_code_fence_is_literal;
+          Alcotest.test_case "unclosed div fails" `Quick divs_unclosed_fails;
         ] );
       ( "parse",
         [

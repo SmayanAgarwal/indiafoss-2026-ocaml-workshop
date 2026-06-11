@@ -302,6 +302,15 @@ let preprocess ?(line_offset = 0) src =
         let s = String.trim line in
         String.length s >= 3 && String.sub s 0 3 = "```"
       in
+      if !in_code_block then begin
+        (* Inside a fenced code block, [:::] lines are literal content
+           (e.g. a lecture showing the fenced-div syntax itself); only
+           the closing fence is structural. *)
+        if is_fence_line then in_code_block := false;
+        Buffer.add_string buf line;
+        Buffer.add_char buf '\n'
+      end
+      else
       match parse_open ~quiz_counter ~line_no line with
       | Some k ->
           stack := k :: !stack;
@@ -347,17 +356,34 @@ let preprocess ?(line_offset = 0) src =
             Buffer.add_char buf '\n'
           end
       | None when is_fence_line ->
-          in_code_block := not !in_code_block;
+          (* Reached only when not already inside a code block (the
+             in-block case is handled above), so this opens one. *)
+          in_code_block := true;
           Buffer.add_string buf line;
           Buffer.add_char buf '\n'
       | None ->
           Buffer.add_string buf line;
           Buffer.add_char buf '\n')
     lines;
-  List.iter
-    (fun k ->
-      Buffer.add_string buf "\n";
-      Buffer.add_string buf (close_tag k);
-      Buffer.add_string buf "\n")
-    !stack;
+  (* A forgotten [:::] used to be silently auto-closed here, which
+     shifted every subsequent slide boundary without a diagnostic.
+     Fail loudly instead. *)
+  (match !stack with
+  | [] -> ()
+  | ks ->
+      let name = function
+        | Slide -> "slide"
+        | Subslide -> "subslide"
+        | Fragment -> "fragment"
+        | Notes -> "notes"
+        | Solution -> "solution"
+        | Quiz_mcq (id, l) -> Printf.sprintf "quiz mcq %s (line %d)" id l
+        | Quiz_code (id, l) -> Printf.sprintf "quiz code %s (line %d)" id l
+        | Cols -> "cols"
+        | Col _ -> "col"
+        | Vm_terminal _ -> "vm-terminal"
+      in
+      failwith
+        (Printf.sprintf "unclosed fenced div(s) at end of file: %s"
+           (String.concat ", " (List.map name ks))));
   Buffer.contents buf

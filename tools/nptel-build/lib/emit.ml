@@ -28,7 +28,15 @@ let bundle_hash rel_path =
           let s = really_input_string ic len in
           close_in ic;
           String.sub (Digest.to_hex (Digest.string s)) 0 8
-        with Sys_error _ -> "missing"
+        with Sys_error _ | End_of_file ->
+          (* [rel_path] is cwd-relative; running the renderer from
+             outside the repo root used to silently emit ?v=missing
+             cache-busters. Warn so the misconfiguration is visible. *)
+          Printf.eprintf
+            "warning: bundle_hash: cannot read %s (run from the repo \
+             root?); emitting ?v=missing\n"
+            rel_path;
+          "missing"
       in
       Hashtbl.add bundle_hash_cache rel_path h;
       h
@@ -90,6 +98,9 @@ let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
      but browsers still hold a copy across visits). *)
   let chapter_css_v = bundle_hash "assets/css/chapter.css" in
   let slides_css_v = bundle_hash "assets/css/slides.css" in
+  let katex_css_v = bundle_hash "assets/katex/katex.min.css" in
+  let katex_js_v = bundle_hash "assets/katex/katex.min.js" in
+  let katex_auto_v = bundle_hash "assets/katex/contrib/auto-render.min.js" in
   (* The in-browser VM terminal loads only on the rare lecture that
      carries a [:::vm-terminal] div. The component itself fetches
      nothing further until the student clicks Start. *)
@@ -114,17 +125,15 @@ let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
   <link rel="stylesheet" href="%s/assets/reveal/dist/theme/white.css" id="reveal-theme">
   <link rel="stylesheet" href="%s/assets/css/chapter.css?v=%s">
   <link rel="stylesheet" href="%s/assets/css/slides.css?v=%s">
-  <!-- KaTeX for inline / display math. Auto-render walks the DOM after
-       load and rewrites $...$ and \(...\) inline and $$...$$ / \[...\]
+  <!-- KaTeX for inline / display math (vendored 0.16.10 under
+       assets/katex/, so math also renders offline, e.g. in the
+       recording studio). Auto-render walks the DOM after load and
+       rewrites $...$ and \(...\) inline and $$...$$ / \[...\]
        display delimiters into rendered math. We skip <x-ocaml>, <code>,
        <pre> so OCaml source / shell output never gets math-rendered. -->
-  <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"
-    crossorigin="anonymous">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"
-    crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
-    crossorigin="anonymous"
+  <link rel="stylesheet" href="%s/assets/katex/katex.min.css?v=%s">
+  <script defer src="%s/assets/katex/katex.min.js?v=%s"></script>
+  <script defer src="%s/assets/katex/contrib/auto-render.min.js?v=%s"
     onload="renderMathInDocument()"></script>
   <script>
     function renderMathInDocument() {
@@ -151,6 +160,7 @@ let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
     (Parse.html_escape quiz_api_url)
     (Parse.html_escape (if fm.title = "" then "(untitled lecture)" else fm.title))
     asset_root asset_root asset_root chapter_css_v asset_root slides_css_v
+    asset_root katex_css_v asset_root katex_js_v asset_root katex_auto_v
     asset_root bundle_dir main_v asset_root bundle_dir worker_v
     src_load_attr vm_script
 
