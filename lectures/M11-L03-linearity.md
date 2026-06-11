@@ -796,7 +796,8 @@ end
 | **Linearity** | Future uses | `close`-style protocols; sequence-of-ops |
 
 For `free`-like APIs, **uniqueness is more appropriate**. Often
-combined: the module's tutorial builds an API that uses both.
+combined: the module's tutorial reads a production API that
+uses both.
 
 :::
 
@@ -1048,9 +1049,9 @@ without ever using it is not caught either.
 
 With the three resource axes in hand (locality, uniqueness, and
 now linearity), the module turns to concurrency. The next lecture
-is **portability**: which values may cross a domain
-boundary at all. Its sibling **contention** governs how
-a value may be touched once it is shared. The two together
+is **contention**: how a value may be touched once it is shared
+across domains. Its sibling **portability** governs which values
+may cross a domain boundary at all. The two together
 deliver compile-time data-race freedom, and the tutorial
 then combines the axes in one resource-management API.
 
@@ -1058,8 +1059,8 @@ then combines the axes in one resource-management API.
 
 ## What's next
 
-- Lecture 4: **portability**. Cross-domain crossing.
-- Lecture 5: **contention**. Cross-domain access.
+- Lecture 4: **contention**. Cross-domain access.
+- Lecture 5: **portability**. Cross-domain crossing.
 - Lecture 6: tutorial. A resource-management API combining the
   axes.
 

@@ -3,10 +3,10 @@ title: "Tutorial: a resource-management API"
 lecture_no: 6
 week: 11
 duration_target_min: 25
-concepts: [tutorial, file handle, linearity, locality, manual resource management, API design]
-keywords: [OCaml, OxCaml, tutorial, file handle, malloc, buffer, once, local, exclave_]
-activity_question: "Design a buffer API where [alloc] produces a heap buffer, [read] and [write] take the buffer, and [free] releases it. Which OxCaml mode(s) would prevent a use-after-free of the buffer?"
-think_about_this: "You are writing a library with a C-style [malloc]/[free] interface, but in OxCaml. Sketch the signatures of [malloc], [read], [write], [free] so that the compiler statically refuses double-free, use-after-free, and escape of the buffer beyond its allocation scope."
+concepts: [tutorial, file handle, bracket, with_handle, locality, linearity, uniqueness, resource management, API design]
+keywords: [OCaml, OxCaml, tutorial, file handle, with_handle, bracket, local, once, unique]
+activity_question: "Why does [with_handle] take its callback at [@ once], and which mode stops the handle from being stashed in a global [ref] for later use?"
+think_about_this: "C's [fopen]/[fclose] protocol relies on every programmer pairing the two calls, on every path, including the error paths. Sketch a [with_file] combinator whose *type alone* makes the pairing automatic and the handle impossible to retain."
 reading:
   - title: "OxCaml documentation, modes overview"
     url: https://oxcaml.org/documentation/modes/
@@ -29,30 +29,26 @@ reading:
 :::
 
 The previous five lectures introduced the five mode axes and
-worked small examples for each. This tutorial brings them
-together in a single API: a file-handle module that uses
-**linearity** to make a second `close` unwritable and
-**locality** to keep the handle from escaping its scope, with
-the concurrency axes joining when the API goes cross-domain. We
-will design the signature, write the implementation, and then
-try to break the API in three different ways. Two attempts die
-as type errors; the third teaches an honest lesson.
-
-The lecture closes with a design exercise: a `malloc`-style buffer
-API, with the same shape, that you design and the type system
-checks.
+worked small examples for each. This tutorial puts the resource
+axes to work in one production-shaped API: a **bracketed**
+file-handle module, where the library opens the file, hands your
+callback a handle that *cannot leave the callback*, and
+guarantees the close, even when your code raises. We design the
+signature, write the implementation, attack it three ways, and
+close by reading a real signature from the OxCaml ecosystem that
+scales the same idea up using every axis this module taught.
 
 :::slide
 
 ## Today's plan
 
-1. Design a `Handle` module: linearity + locality.
-2. Write the implementation.
-3. Break the API three ways.
-4. Compare to the C version.
-5. Extend the design for portability + contention.
-6. A design note: where uniqueness fits.
-7. Design exercise: a `malloc`-style buffer API.
+1. The design problem: a file-handle protocol.
+2. The trick: do not expose `open` and `close`.
+3. The bracketed signature.
+4. The implementation: a sealed module.
+5. Attack the API three ways.
+6. Why the callback is `@ once`.
+7. Compare to C's `FILE *`.
 
 :::
 
@@ -60,91 +56,72 @@ checks.
 
 We want a file-handle module that delivers four guarantees:
 
-1. **Open mints a fresh handle.** Every successful `open`
-   produces a brand-new handle.
-2. **No double close.** Closing the same handle twice is an
-   error.
-3. **No use after close.** Reading or writing after close is an
-   error.
-4. **No handle escape.** The handle cannot leak out of the scope
-   where the file was opened. It cannot be stored in a global
-   `ref`, captured in a closure that outlives the scope, or
-   returned by enclosing functions.
+1. **Open and close are always paired.** Every successful open is
+   followed by exactly one close, on every path, including the
+   paths where the client's code raises an exception.
+2. **No handle escape.** The handle cannot outlive its file: no
+   stashing it in a global `ref`, no returning it, no capturing
+   it in a closure that runs later.
+3. **No double close.**
+4. **No use after close.**
 
-Guarantees (2) and (3) are *linearity*. Guarantee (4) is
-*locality*. (1) falls out automatically: each successful call to
-`open_` constructs a brand-new handle. And one guarantee is
-deliberately absent from the list: "every handle *is* closed."
-That is the leak, and as the linearity lecture showed, an
-at-most-once discipline does not chase it.
-
-The two axes compose. A `t @ once local` is the combination: at
-most one further use *and* may not escape the current scope.
+The resource lectures earlier in the course built these from
+runtime discipline: the positional `fun_protect` combinator
+paired the open with the close, and convention did the rest. The
+locality lecture then showed the compiler rejecting an escaping
+handle. This tutorial assembles the full package, and the key
+design move is the first guarantee's: **do not expose `open` and
+`close` at all.** If the client can never call `close`, the
+client can never call it twice, never use a handle after it, and
+never forget it. The library brackets the resource; the client
+only ever sees the middle.
 
 :::slide
 
-## The four guarantees
+## The design problem
 
-| Guarantee | Axis |
+| Guarantee | Delivered by |
 |---|---|
-| Open mints a fresh handle | (automatic) |
-| No double close | linearity |
-| No use after close | linearity |
-| No handle escape | locality |
-| Handle is always closed | **not enforced** (the leak) |
+| Open and close always paired | the bracket |
+| No handle escape | locality (`@ local`) |
+| No double close | unwritable: `close` is not exposed |
+| No use after close | unwritable, for the same reason |
 
-Combined annotation: `t @ once local`.
+The design move: the client never sees `open` or `close`. The
+library brackets the resource; the client writes the middle.
 
 :::
 
 ## The signature
 
-Here is the module type, in the OxCaml dialect we have been using:
+Here is the whole module type; press Run:
 
 ```ocaml
 module type Handle = sig
   type t
-
-  val open_ : string -> t @ once local
-  (** [open_ path] opens a file at [path] and returns a
-      once-usable, local handle. *)
-
-  val read : t @ once local
-             -> int -> string Modes.Global.t * t @ once local
-  (** [read t n] consumes the handle, reads [n] bytes, returns
-      the bytes and a fresh handle. *)
-
-  val write : t @ once local -> string -> t @ once local
-  (** [write t s] consumes the handle, writes [s], returns a
-      fresh handle. *)
-
-  val close : t @ once local -> unit
-  (** [close t] consumes the handle and closes the file. *)
+  val with_handle : string -> (t @ local -> 'a) @ once -> 'a
+  val read  : t @ local -> int -> string
+  val write : t @ local -> string -> unit
 end
 ```
 
-Read each line carefully; this is the centrepiece of the tutorial.
+Read each piece:
 
-- `open_` returns a *fresh* `t @ once local`. The handle is
-  once-usable (linearity guarantee) and local (cannot escape the
-  scope of the caller of `open_`). Note the spelling: one `@`,
-  then the list of modes.
-- `read` *consumes* the handle (takes it at mode `once`) and
-  returns the bytes plus a *fresh* handle for chaining further
-  operations. The returned handle is again `once local`. The
-  string travels in a `Modes.Global.t` wrapper: the returned pair
-  lives in the caller's region, so it is local, and a component
-  of a local tuple is local too; the wrapper opts the string out,
-  exactly as `Modes.Aliased.t` opted a component out of deep
-  uniqueness in the uniqueness lecture.
-- `write` is parallel to `read`: consume, return a fresh handle.
-- `close` consumes the handle and returns `unit`. No fresh handle.
-  After `close`, no handle exists.
-
-The combined `once local` means: each operation takes a handle
-that is in this scope and has at most one more use; each
-non-close operation returns a fresh one for the next step; `close`
-ends the chain.
+- `with_handle path f` is the only way in. It opens the file,
+  runs `f` on the fresh handle, closes the file, and returns
+  whatever `f` returned. There is no `open_` and no `close` for
+  the client to misuse: the bracket owns both ends.
+- The callback receives the handle at **`t @ local`**: the
+  handle belongs to the callback's region and cannot leave it.
+  Locality is what turns "please don't keep the handle" into a
+  compile-time fact.
+- `read` and `write` accept the handle at `@ local`, so they can
+  be called freely *inside* the bracket; their results (`string`,
+  `unit`) are ordinary global values that may flow out.
+- The callback itself is **`@ once`**: the bracket promises to
+  run it at most one time. There is a deeper reason this
+  annotation matters, and it is easier to appreciate after we
+  have attacked the API, so we return to it below.
 
 :::slide
 
@@ -153,651 +130,571 @@ ends the chain.
 ```ocaml
 module type Handle = sig
   type t
-  val open_ : string -> t @ once local
-  val read  : t @ once local -> int -> string Modes.Global.t * t @ once local
-  val write : t @ once local -> string -> t @ once local
-  val close : t @ once local -> unit
+  val with_handle : string -> (t @ local -> 'a) @ once -> 'a
+  val read  : t @ local -> int -> string
+  val write : t @ local -> string -> unit
 end
 ```
 
-- `once`: at most one further use. `local`: cannot escape.
-- `Modes.Global.t`: lets the string out of the local pair.
+- `with_handle` is the only way in: no `open_`, no `close`.
+- The handle is `@ local`: it cannot leave the callback.
+- The callback is `@ once`: the bracket runs it at most once.
 
 :::
 
 ## The implementation
 
-The implementation is mostly mechanical. We need a representation
-type for the handle and four operations.
+The implementation is a *sealed* module: `open_` and `close`
+exist inside, but the signature ascription hides them, so no
+client can name them. The bracket pairs them with the
+`match ... with exception` shape that the `fun_protect`
+combinator used earlier in the course, so the close happens on
+the exception path too.
 
-A note on the body. In a production setting you would wrap a
-`Unix.file_descr`: `open_` would call `Unix.openfile`, `read`
-would call `Unix.read`, `write` would call `Unix.write_substring`,
-and `close` would call `Unix.close`. The browser toplevel we are
-using does not ship a real `Unix` module, so the cell below uses
-an **in-memory mock**: the handle carries a mutable `Bytes`
-buffer plus a position cursor; `read` slices bytes out, `write`
-appends, `close` is a no-op. The mode discipline we are studying
-is entirely independent of the backing: swapping the body for
-real I/O would not change a single mode annotation. The compiler
-checks the signature; the runtime can be trivial.
-
-:::slide
-
-## The implementation
+As in the rest of the module, the backing is an **in-memory
+mock** (the browser toplevel has no real file system): the handle
+carries a mutable buffer and a cursor, and `open_` and `close`
+print a tag so you can *see* the bracket doing its job in every
+demo below. In production they would be `Unix.openfile` and
+`Unix.close`; not one mode annotation would change.
 
 ```ocaml
 module Handle : Handle = struct
   type t = { mutable buf : Bytes.t; mutable pos : int }
-  let open_ _path =                   (* prod: Unix.openfile *)
-    exclave_ { buf = Bytes.create 0; pos = 0 }
-  let read t n =                      (* prod: Unix.read *)
+  let open_ _path = print_endline "[open]";
+    { buf = Bytes.create 0; pos = 0 }       (* prod: Unix.openfile *)
+  let close _t = print_endline "[close]"    (* prod: Unix.close *)
+  let with_handle path f =
+    let t = open_ path in
+    match f t with
+    | result -> close t; result
+    | exception e -> close t; raise e
+  let read (t @ local) n =                  (* prod: Unix.read *)
     let avail = Bytes.length t.buf - t.pos in
     let take = if n < avail then n else avail in
     let s = if take <= 0 then "" else Bytes.sub_string t.buf t.pos take in
     t.pos <- t.pos + take;
-    exclave_ (Modes.Global.{ global = s }, t)
-  let write t s =                     (* prod: Unix.write *)
-    t.buf <- Bytes.cat t.buf (Bytes.of_string s);
-    exclave_ t
-  let close _t = ()                   (* prod: Unix.close *)
+    s
+  let write (t @ local) s =                 (* prod: Unix.write *)
+    t.buf <- Bytes.cat t.buf (Bytes.of_string s)
 end
 ```
 
-:::
-
-A few points to note.
-
-First, `open_` *allocates* a fresh record using `exclave_`. The
-`exclave_` keyword places the record in the *caller's* region, not
-in `open_`'s own region. The caller's region is the scope where
-the handle is to be used; the handle therefore lives long enough.
-
-Second, `read` returns a pair. By the locality rules the pair
-and the `t` inside it live in the caller's region; the `exclave_`
-on the return takes care of that, and the `Modes.Global` wrapper
-is what lets the string component escape further.
-
-Third, `close` does not return a fresh handle, and does not need
-`exclave_`. The handle is consumed; nothing flows back.
-
-Fourth, mutation of `t.pos` is fine because `t` arrives at the
-default `uncontended` mode on the contention axis: the function
-has exclusive access, so reads and writes of its mutable fields
-are allowed. (`once` is not what licenses the write; linearity
-only guarantees that a second *use* of the handle is rejected.)
-
-The implementation type-checks against the signature. The compiler
-verifies that each function respects the mode annotations:
-specifically, that the handle threads through correctly, that
-nothing escapes its scope, and that the locality story holds for
-returned values.
+A few points to note. The handle record is created as an ordinary
+global value inside `with_handle` and *coerces* to `local` when
+passed to `f` (`global ⊑ local`, from the locality lecture): the
+implementation keeps full rights, the callback gets restricted
+ones. `read` and `write` accept `(t @ local)` and freely read and
+write its mutable fields; `local` restricts where a value may
+*go*, not what you may do with it while it is in scope. And the
+`string` that `read` returns is fresh global data, so it flows
+out of the bracket without ceremony.
 
 ## Correct usage
 
-Here is a client that opens a file, writes some bytes, reads them
-back, and closes:
+A client opens, uses, and never thinks about closing:
 
 ```ocaml
 let example () =
-  let t = Handle.open_ "scratch.txt" in
-  let t = Handle.write t "hello" in
-  let { Modes.Global.global = s }, t = Handle.read t 5 in
-  Handle.close t;
-  s
+  Handle.with_handle "scratch.txt" (fun h ->
+    Handle.write h "hello";
+    Handle.read h 5)
 
-let () = print_endline (example ())  (* hello *)
+let () = print_endline (example ())
+(* [open]
+   [close]
+   hello *)
 ```
 
-Each line threads the handle through. The handle never leaves
-`example`'s scope (locality is satisfied). The handle is used
-once at each step, and is finally consumed by `close` (linearity
-is satisfied). The string rides out inside `Modes.Global.t`; the
-pattern `{ Modes.Global.global = s }` unwraps it, and from there
-`s` is an ordinary global string that returns to the caller of
-`example` cleanly.
+The `[open]` / `[close]` tags from the mock show the bracket
+pairing the two ends. Now the path that runtime discipline always
+gets wrong: the client's callback *raises*. The bracket still
+closes:
+
+```ocaml
+let () =
+  try Handle.with_handle "boom.txt" (fun _h -> failwith "boom")
+  with Failure _ -> print_endline "caught"
+(* [open]
+   [close]
+   caught *)
+```
+
+This is the first guarantee, delivered: open and close are
+paired on every path, and no client code can unpair them. The
+forgotten-`close` leak that the linearity lecture honestly
+admitted it could not chase is simply gone; there is nothing for
+the client to forget.
 
 :::slide
 
-## Correct usage
+## Correct usage: the bracket closes, always
 
 ```ocaml
 let example () =
-  let t = Handle.open_ "scratch.txt" in
-  let t = Handle.write t "hello" in
-  let { Modes.Global.global = s }, t = Handle.read t 5 in
-  Handle.close t;
-  s
+  Handle.with_handle "scratch.txt" (fun h ->
+    Handle.write h "hello";
+    Handle.read h 5)
+
+let () = print_endline (example ())
 ```
 
-- Handle never escapes `example`.
-- Each step consumes and rebinds the handle.
-- `close` ends the chain.
-  - the string rides out via `Modes.Global.t`.
+```ocaml
+let () =
+  try Handle.with_handle "boom.txt" (fun _h -> failwith "boom")
+  with Failure _ -> print_endline "caught"
+```
+
+- The forgotten-`close` leak is gone: there is nothing to
+  forget.
 
 :::
 
-## Three bugs, three type errors
+## Attack the API
 
-Now the misuse cases. Each is a real bug pattern in C, with its
-own entry in the Common Weakness Enumeration catalogue. Each is a
-type error in OxCaml.
+Now try to break it. Three attacks, in increasing order of
+sneakiness.
 
-### Bug 1: double-close
+### Attack 1: stash the handle for later
 
-```ocaml
-(* Press Run; linearity rejects the second close. *)
-let double () =
-  let t = Handle.open_ "scratch.txt" in
-  Handle.close t;
-  Handle.close t;
-  ()
-```
-
-The compiler responds with a message of the form
-
-> Error: This value is used here, but it is defined as once and
-> has already been used.
-
-The first `close t` consumed the handle. The second `close t` is
-attempting to use it again. Linearity rejects it. (The trailing
-`()` keeps the second `close` out of tail position, so the error
-you see is the linearity one rather than a tail-call locality
-complaint about the local argument.)
-
-The C version of this bug is the standard `fclose` / `fclose`
-pattern. On Linux, the second close may close some *other* file
-descriptor that the kernel has reassigned to the same integer.
-The class is catalogued as
-[CWE-1341, "Multiple Releases of the Same Resource or Handle"](https://cwe.mitre.org/data/definitions/1341.html);
-its more famous sibling, double-`free` of heap memory, is
-[CWE-415](https://cwe.mitre.org/data/definitions/415.html). The
-OCaml signature above forbids the double-close at compile time.
-
-### Bug 2: escape attempt
+Store the handle in a global `ref` during the callback, to use
+after the bracket returns. In C, saving the `FILE *` in a global
+works, and is the root of every use-after-close. Here:
 
 ```ocaml
-(* Press Run; locality refuses to let a local handle land in a
-   long-lived global cell. *)
-let bad_storage : Handle.t ref = ref (Handle.open_ "init.txt")
+(* Press Run; locality refuses to let the handle out. *)
+let stash : Handle.t option ref = ref None
+let () = Handle.with_handle "f" (fun h -> stash := Some h)
+(* Error: This value is "local" to the parent region but is
+   expected to be "global" because it is contained (via
+   constructor "Some") in the value ... which is expected to be
+   "global". *)
 ```
 
-The declaration fails: `Handle.open_` returns a local handle,
-and a top-level mutable cell is global. The compiler's verdict:
+The handle is `local` to the callback's region; the global `ref`
+demands a global value; the assignment is rejected. The compiler
+even names the route: the handle would have escaped *via the
+constructor `Some`*.
 
-> Error: This value is "local" but is expected to be "global".
+### Attack 2: return the handle
 
-The same refusal fires on every other escape route: assigning
-the handle into an existing global `ref` from inside a function,
-returning it from the enclosing function, or capturing it in a
-closure that outlives the scope.
-
-The C version of this is "save the `FILE *` in a global so we can
-close it later." It works in C: file descriptors persist across
-function boundaries. The OxCaml locality story disallows it,
-because the locality contract on the handle says the handle's
-scope is the opening function. If you want a longer-lived handle,
-you would need a different API: one that returns the handle at
-mode `global`, accepting that it may now be aliased and escape.
-The point of the `local` annotation is that the *protocol* of
-this particular API is "open and close in one scope."
-
-### Bug 3: use-after-close
+Skip the `ref`; just return the handle as the callback's result:
 
 ```ocaml
-(* Press Run; same shape as bug 1, different surface form. *)
-let uaf () =
-  let t = Handle.open_ "scratch.txt" in
-  Handle.close t;
-  let _, _t = Handle.read t 10 in
-  ()
+(* Press Run; the result must be global, the handle is not. *)
+let leaked = Handle.with_handle "f" (fun h -> h)
+(* Error: This value is "local" to the parent region but is
+   expected to be "global". *)
 ```
 
-The compiler responds with the same "used as once, already used"
-shape of error. `close` consumed the handle, and `read t` is
-trying to use it. Linearity rejects.
+The signature says `f : t @ local -> 'a`, and a plain `'a` is a
+global result. A local handle cannot be the result, so the
+callback cannot smuggle it out as its return value. The same
+refusal catches the closure variant (returning
+`fun () -> Handle.read h 10`), because the closure captures the
+local handle and becomes local itself.
 
-The C version of use-after-close is one of the most common
-practical bugs (its memory flavour is
-[CWE-416, "Use After Free"](https://cwe.mitre.org/data/definitions/416.html)):
-a logging library closes its file descriptor on
-shutdown, but another thread is still trying to write logs. The
-behaviour is unpredictable: bytes go to /dev/null, or to a *different*
-file the kernel has reassigned to the same number, or the program
-SIGSEGVs. With OxCaml, the bug does not compile.
+### Attack 3: close it twice
+
+In the threading designs we sketched earlier in the module, a
+double-close was a *type error*. Here it is something better:
+
+```ocaml
+(* Press Run. *)
+let () = Handle.with_handle "f" (fun h ->
+  ignore (Handle.read h 1);
+  Handle.close h)
+(* Error: Unbound value "Handle.close" *)
+```
+
+`Unbound value`. The misuse is not rejected; it is
+*unwritable*. There is no `close` in the signature, so there is
+no program text that closes twice, or closes early and reads
+after. The C bug classes catalogued as CWE-1341 (double release)
+and CWE-416 (use after free) have no spelling in this API.
 
 :::slide
 
-## Three bugs, three type errors
+## Attack 1: stash the handle
 
-| Bug | C version | OxCaml verdict |
-|---|---|---|
-| Double-close | `fclose(f); fclose(f)` | Linearity error |
-| Escape | save `FILE *` in a global | Locality error |
-| Use-after-close | `fclose(f); fread(...,f)` | Linearity error |
+```ocaml
+(* Press Run; locality refuses to let the handle out. *)
+let stash : Handle.t option ref = ref None
+let () = Handle.with_handle "f" (fun h -> stash := Some h)
+```
 
-The C versions ship to production. The OxCaml versions fail at
-compile time.
+- The handle is `local` to the callback's region.
+- The global `ref` demands a global value.
+- The error names the escape route: via constructor `Some`.
+
+:::
+
+:::slide
+
+## Attacks 2 and 3: return it, close it
+
+```ocaml
+(* Press Run; the result must be global, the handle is not. *)
+let leaked = Handle.with_handle "f" (fun h -> h)
+```
+
+```ocaml
+(* Press Run. *)
+let () = Handle.with_handle "f" (fun h ->
+  ignore (Handle.read h 1);
+  Handle.close h)
+```
+
+- Returning the handle: a plain `'a` result is global. Rejected.
+- Closing it: `Unbound value Handle.close`.
+  - not rejected: **unwritable**. The signature has no `close`.
+
+:::
+
+## Why is the callback `@ once`?
+
+One annotation in the signature is still unexplained: the
+callback is declared `@ once`. Why?
+
+Suppose it were not. The callback parameter would sit at the
+default `many`, meaning "I may call this any number of times,"
+and a `many` function may not touch `once` values. The
+consequence: **you could not call any `@ once` function in the
+body of the bracket.** Perfectly reasonable client code would be
+rejected.
+
+To see it, here is `Handle_many`: exactly the same signature,
+except the `@ once` annotation on the callback has been dropped.
+Press Run:
+
+```ocaml
+module type Handle_many = sig
+  type t
+  val with_handle : string -> (t @ local -> 'a) -> 'a
+  val read  : t @ local -> int -> string
+  val write : t @ local -> string -> unit
+end
+```
+
+The implementation behind it is `Handle`'s, unchanged, sealed
+behind this weaker signature:
+
+```ocaml
+module Handle_many : Handle_many = struct
+  type t = { mutable buf : Bytes.t; mutable pos : int }
+  let open_ _p = print_endline "[open]"; { buf = Bytes.create 0; pos = 0 }
+  let close _t = print_endline "[close]"
+  let with_handle path f =
+    let t = open_ path in
+    match f t with
+    | result -> close t; result
+    | exception e -> close t; raise e
+  let read (t @ local) n =
+    let avail = Bytes.length t.buf - t.pos in
+    let take = if n < avail then n else avail in
+    let s = if take <= 0 then "" else Bytes.sub_string t.buf t.pos take in
+    t.pos <- t.pos + take;
+    s
+  let write (t @ local) s =
+    t.buf <- Bytes.cat t.buf (Bytes.of_string s)
+end
+```
+
+Now a dummy `unit -> unit` function carrying the `@ once`
+annotation. Calling it inside `Handle_many`'s bracket is
+rejected:
+
+```ocaml
+(* Press Run; the many-callback may not touch a once value. *)
+let () =
+  let (dummy @ once) = fun () -> () in
+  Handle_many.with_handle "f" (fun _h -> dummy ())
+(* Error: The value "dummy" is "once" but is expected to be
+   "many" because it is used inside the function ... which is
+   expected to be "many". *)
+```
+
+The same call inside our `Handle`, whose callback is declared
+`@ once`, goes through:
+
+```ocaml
+(* The once-callback bracket accepts the same body. Press Run. *)
+let () =
+  let (dummy @ once) = fun () -> () in
+  Handle.with_handle "f" (fun _h -> dummy ())
+(* [open]
+   [close] *)
+```
+
+So the annotation is the bracket telling the truth about itself:
+it calls the callback at most one time, and saying so is what
+lets the body use `once` values. And since `many ⊑ once`,
+ordinary callbacks are accepted as before; the annotation only
+*adds* legal clients, it never subtracts.
+
+:::slide
+
+## Why is the callback `@ once`?
+
+Suppose it were not: the callback would be `many`, and a `many`
+function may not touch `once` values.
+
+```ocaml
+module type Handle_many = sig
+  type t
+  val with_handle : string -> (t @ local -> 'a) -> 'a
+  val read  : t @ local -> int -> string
+  val write : t @ local -> string -> unit
+end
+```
+
+Identical to `Handle`, except the `@ once` has been dropped: the
+callback is now `many`.
+
+:::
+
+:::slide
+
+## A `once` function cannot enter a `many` bracket
+
+```ocaml
+(* Press Run; the many-callback may not touch a once value. *)
+let () =
+  let (dummy @ once) = fun () -> () in
+  Handle_many.with_handle "f" (fun _h -> dummy ())
+```
+
+```ocaml
+(* The once-callback bracket accepts the same body. Press Run. *)
+let () =
+  let (dummy @ once) = fun () -> () in
+  Handle.with_handle "f" (fun _h -> dummy ())
+```
+
+- `f @ once` is the bracket telling the truth: one call, at most.
+  - the truth is what admits `once` values into the body.
 
 :::
 
 ## Comparison to C's `FILE *`
 
-A direct comparison may help cement the lesson. Here is the
-file-handle protocol in C:
+Here is the file protocol C gives you:
 
 ```c
 FILE *fopen(const char *path, const char *mode);
 size_t fread(void *ptr, size_t size, size_t count, FILE *stream);
-size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
 int fclose(FILE *stream);
 ```
 
-What does C's type system tell you about these functions? Each
-takes a `FILE *`. Each returns something. Nothing in the type says
-"this pointer must be closed once," "this pointer must not be used
-after close," "this pointer must not escape any particular scope."
-The protocol is a programmer convention, enforced by code review
-and runtime checking (or, far more often, by the bug reports that
-arrive after deployment).
+Nothing in these types says "pair `fopen` with `fclose` on every
+path," "do not keep the pointer," or "do not close twice." The
+protocol lives in the documentation, and every C codebase
+re-implements the bracket by hand, with `goto cleanup` chains and
+code review standing in for the type checker. The libc runtime
+checks are partial at best: `fclose` on a closed stream is
+undefined behaviour, and the stale-pointer reads that follow a
+missed pairing are this course's oldest enemies.
 
-The C standard library does provide *some* runtime checks. `fclose`
-sets `errno` and returns `EOF` if you close a handle that was
-already closed. Some libc implementations harden against double-
-free of `FILE` structs. But all of this is opt-in: a program that
-ignores the return value of `fclose` (most programs do) gets no
-benefit. And none of it catches the use-after-close pattern, which
-is the most dangerous of the three.
+The OxCaml bracket moves the whole protocol into one type:
 
-Compare with the OxCaml signature (the same `Handle` module type
-from above, repeated here side by side with the C prototypes):
-
-```ocaml
-module type Handle = sig
-  type t
-  val open_ : string -> t @ once local
-  val read  : t @ once local
-              -> int -> string Modes.Global.t * t @ once local
-  val write : t @ once local -> string -> t @ once local
-  val close : t @ once local -> unit
-end
+```text
+val with_handle : string -> (t @ local -> 'a) @ once -> 'a
 ```
 
-The signature *is* the protocol. Reading the signature is reading
-the rules. Violating the rules fails to compile. There is no
-"hope the programmer reads the docs"; the type checker is the doc
-reader.
+Pairing is the library's code, written once. Retention is a
+locality error. Double-close has no syntax. The type checker is
+the code review.
 
 :::slide
 
-## C vs OxCaml: the type-system delta
+## C vs the OxCaml bracket
 
-| Property | C `FILE *` | OxCaml `Handle.t` |
+| Property | C `FILE *` | `with_handle` |
 |---|---|---|
-| "No double close" | docs + hope | linearity |
-| "No use after close" | runtime check (sometimes) | linearity |
-| "Local to scope" | not expressible | locality |
-| Bugs found at | runtime, in production | compile time |
+| open/close paired | discipline, every path | the bracket, incl. exceptions |
+| handle retention | compiles, crashes later | locality error |
+| double close | undefined behaviour | unwritable: no `close` |
+| bugs found at | runtime, in production | compile time, or no spelling |
 
-The protocol of use is now part of the type signature.
+The protocol of use became one type. The type checker is the
+code review.
 
 :::
 
-## What this style buys you in practice
+## Where this pattern recurs
 
 A short list of where this kind of API discipline pays off.
 
-**Database connections.** A pooled connection has the same
-protocol as a file handle: borrow from pool, use, return. A
-`Pool.conn @ once local` enforces the protocol at the type
-level. Forgetting to return a connection or returning it twice is
-a type error.
+**Database connections.** A pooled connection is borrowed, used,
+returned: `with_connection pool use`. The bracket returns the
+connection to the pool; locality keeps the callback from keeping
+a copy.
 
-**Cryptographic keys.** A key material handle should not be
-captured in a long-lived closure (locality), should be destroyed
-in a known scope (linearity), should not be duplicated (a
-combination of uniqueness and linearity, depending on the
-threat model).
+**Cryptographic keys.** Key material is loaned to a signing
+callback and zeroed by the bracket afterwards; a retained
+reference would defeat the zeroing.
 
 **Mapped memory.** A `mmap`'d region must be `munmap`'d exactly
-once. Sound familiar? Same protocol; same `once local`
-signature.
+once; `with_mapped` owns both ends, and the region's pointer
+must not survive the unmap.
 
-**Iterators over external state.** A cursor into an external
-database, an iterator over a file's directory entries, a handle
-to a network stream that produces messages: each is a candidate
-for the linearity/locality treatment.
+**Iterators over external state.** A cursor into a database or a
+directory walk holds OS resources; the bracket frees them when
+the walk ends, and locality stops the cursor from being used
+after.
 
-The pattern recurs because the underlying *protocol* recurs.
-OxCaml's mode system lets you express the protocol in the type.
-Once you have the type, the compiler enforces it.
+The pattern recurs because the underlying *protocol* recurs:
+acquire, lend, release. The bracket is the shape of "lend."
 
 :::slide
 
 ## Where this pattern recurs
 
-- Database connection pools
-- Cryptographic key material
-- `mmap`'d memory regions
-- External-state iterators
-- TLS / TCP sockets
-- DMA buffers from device drivers
-- Lock handles in capsule-based concurrency
+- Database connection pools: `with_connection`.
+- Cryptographic key material: loaned, then zeroed.
+- `mmap`'d memory regions: `with_mapped`.
+- Cursors and directory walks: freed when the walk ends.
 
-Same protocol; same `once local` signature.
+Acquire, lend, release. The bracket is the shape of "lend."
 
 :::
 
-## Adding portability and contention
+## The production pattern: where `unique` fits
 
-The `Handle` API above is `once local`: linearity + locality.
-A real system that is *also* shared across domains needs the
-other two axes too. Suppose we want to expose a connection pool
-that any domain may borrow from. The API now has to:
+One axis from the module did not appear in our API:
+**uniqueness**. It is not an accident: inside a single bracket,
+the library owns the resource and the callback merely borrows it,
+so `local` and `once` carry the whole design. Uniqueness earns
+its keep when *ownership itself must travel*: between brackets,
+across data structures, from one part of a program to another.
 
-- ship the pool to other domains (**portability**),
-- allow safe concurrent reads of the pool's bookkeeping
-  (**contention**),
-- still reject a second close (**linearity**),
-- still keep the handle in its caller's region for the duration
-  of the borrow (**locality**).
+You do not have to take that on faith. Here is a signature from
+the `capsule` library that ships with the OxCaml toolchain (the
+compile-time lock discipline mentioned in the further reading),
+lightly abridged:
 
-The cross-domain-aware signature; press Run:
-
-```ocaml
-module type Conn = sig
-  type t
-  type pool
-  val pool   : pool @@ portable
-  val borrow : pool @ portable -> t @ once local
-  val read   : t @ once local
-               -> string Modes.Global.t * t @ once local
-  val close  : t @ once local -> unit
-end
+```text
+val with_password
+  :  'k Key.t @ unique
+  -> f:('k Password.t @ local -> 'a) @ local once
+  -> 'a * 'k Key.t @ unique
 ```
 
-The `pool` value is exposed at the `portable` modality (note the
-`@@`: in a signature, the mode a *value* is exported at is
-written with a double at-sign): any domain can hold it. The
-`borrow` operation returns a fresh `t @ once local`: a handle
-that is local to the borrowing scope and cannot be closed twice.
-The pool's internal counter would be a `Portable.Atomic.t`
-(mode-crossing contention, so the borrow is race-free).
+Every idea in this tutorial is in that type, plus the one we
+deferred:
 
-The four-axis API expresses the *whole* protocol: who can hold
-the pool, who can hold a handle, how often it may be closed,
-whether the handle may leak. The compiler enforces each piece.
+- the **bracket**: `with_password ... ~f` lends a capability and
+  takes it back;
+- the **`local`** capability: the `Password.t` exists only inside
+  the callback, exactly like our handle;
+- the **`once`** callback: the bracket runs `f` at most once;
+- and **`unique` ownership that travels**: the `Key.t` is the
+  long-lived ownership of the protected state. It arrives
+  `unique`, and the bracket hands it back in the result, the
+  ownership-chain threading from the uniqueness lecture, used
+  across brackets rather than inside one.
 
-:::slide
+The library's documentation says it in one line: the uniqueness
+of the key "guarantees that only one thread can access the
+capsule at a time." Our tutorial API is the same design one size
+smaller; when your resource's ownership needs to move around,
+the unique-threaded key is the next size up.
 
-## A cross-domain-aware connection pool
+## Activity
 
-```ocaml
-module type Conn = sig
-  type t
-  type pool
-  val pool   : pool @@ portable
-  val borrow : pool @ portable -> t @ once local
-  (* read: the ownership chain, as in Handle *)
-  val close  : t @ once local -> unit
-end
+:::quiz mcq id=M11-L06-q1
+`with_handle` declares its callback at `@ once`:
+
+```text
+val with_handle : string -> (t @ local -> 'a) @ once -> 'a
 ```
 
-- `portable` pool: any domain may hold it.
-- Internal counter: `Portable.Atomic.t` mode-crosses contention.
+What would break if the callback were left at the default
+`many`?
 
+- [ ] Nothing; `many` and `once` are interchangeable here.
+- [x] The body of the bracket could not call any `@ once`
+      function: a `many` callback may not touch `once` values,
+      so reasonable client code would be rejected.
+- [ ] The handle could escape the callback.
+- [ ] The bracket might run the callback twice.
+
+**Why:** a `many` function is one that may be called any number
+of times, so it may not touch `once` values; the `Handle_many`
+demo shows the rejection ("once but is expected to be many").
+Declaring `f @ once` is the bracket telling the truth, it calls
+the callback at most one time, and that truth is what admits
+`once` values into the body. Escape is locality's job, not
+linearity's, and the bracket's own code determines how many
+times it runs `f`, not the annotation. Since `many ⊑ once`,
+ordinary callbacks are accepted either way; the annotation only
+adds legal clients.
 :::
-
-## A design note: where is uniqueness?
-
-One axis from the module is conspicuously absent from this API:
-**uniqueness**. The uniqueness lecture argued that `free`-style
-operations are most naturally typed `t @ unique -> unit`, because
-the signature alone then proves no aliases survive. Why does the
-tutorial run on `once local` instead?
-
-Two reasons, one practical and one principled.
-
-The practical one: deep uniqueness taxes every operation that
-returns data *alongside* the handle. A unique handle threaded
-through `read : t @ unique -> int -> string * t @ unique` style
-signatures trips over the rule that every component of a unique
-result must itself be unique or be explicitly wrapped; the
-uniqueness lecture's `Unique_ref` paid that tax in `get`, with
-`Modes.Aliased.t`, and an API with many such operations pays it
-everywhere.
-
-The principled one: within this design, linearity already makes
-the double-close and use-after-close unwritable *through the
-binding the compiler tracks*. Even aliasing the handle by
-`let u = t` counts as `t`'s one use, so there is no way to
-conjure a second usable name for the same handle. What
-`@ unique` would add is the modular, signature-level guarantee
-that no alias exists *anywhere*, which earns its keep when
-handles are stored in data structures, shared between modules,
-or freed by code that did not create them.
-
-A production buffer API, with handles that travel, would say
-`val free : t @ unique -> unit` and accept the wrapping tax. The
-tutorial keeps the lighter discipline so the protocol shape
-stays in focus. Sketching the unique variant of the `Buffer`
-signature below is a good exercise after you finish the assigned
-one.
-
-:::slide
-
-## Where is uniqueness?
-
-- This API: `once local`. Double-close and use-after-close are
-  already unwritable through the tracked binding.
-- `@ unique` adds *modular* no-alias proof: right when handles
-  are stored, shared, or freed far from their creation site.
-  - Cost: deep uniqueness wraps every data-carrying result
-    (`Modes.Aliased.t`).
-- Production `free`: `val free : t @ unique -> unit`.
-
-:::
-
-## A quick check
 
 :::quiz mcq id=M11-L06-q2
-Which mode does each guarantee in the `Handle` API correspond
-to?
+Match the misuse to what stops it. A client (a) stores the handle
+in a global `ref` during the callback, (b) calls `Handle.close`
+twice. What stops each?
 
-| Guarantee                         | Mode |
-|-----------------------------------|------|
-| No double close                   | ?    |
-| No use after close                | ?    |
-| Handle cannot escape its scope    | ?    |
+- [ ] (a) linearity, (b) linearity.
+- [ ] (a) locality, (b) linearity.
+- [x] (a) locality: the handle is `local` and cannot flow into a
+      global `ref`; (b) nothing needs to stop it: `close` is not
+      in the signature, so the program cannot be written.
+- [ ] (a) the bracket, (b) locality.
 
-- [ ] all three are `local`
-- [ ] all three are `portable`
-- [x] "no double close" and "no use after close" are
-      *linearity* (`once`); "no escape" is *locality*
-      (`local`).
-- [ ] "no double close" is `unique`; "no use after close"
-      is `portable`; "no escape" is `once`.
-
-**Why:** linearity (`once`) is about the *future*: how many
-more times the value will be used. A `t @ once` may be used at
-most one more time, which forces "no double close" and "no
-use after close": the second `close` or any `read` after
-`close` is a second use, and the compiler rejects it. Locality
-(`local`) is about the *region*: a `t @ local` cannot escape
-the current scope, so it cannot be stored in a global `ref` or
-returned from the enclosing function.
-:::
-
-:::quiz mcq id=M11-L06-q3
-Why does each operation other than `close` *return a fresh
-handle* (`-> ... * t @ once local`) rather than just consuming
-the handle and returning the result?
-
-- [ ] To copy the handle so two threads can use it
-      concurrently.
-- [ ] To allow the GC to free the old handle sooner.
-- [x] Linearity means the input handle is *consumed* by the
-      call; returning a fresh handle gives the caller something
-      to thread into the next operation. Without the fresh
-      handle, the caller could not call `read`, `write`, or
-      `close` again.
-- [ ] To let the implementation change the file descriptor
-      number underneath.
-
-**Why:** the `@ once` annotation says the input is consumed: it
-cannot be used again. To express a *protocol* (open, then
-read/write some number of times, then close), each step must
-hand back a fresh, still-`once local` handle. The chain of
-returned handles is the ownership thread the type system
-follows. `close` is the only operation that does not return a
-fresh handle, because nothing should happen after it; ending
-the chain there is exactly how "close terminates the protocol"
-becomes a compile-time fact.
-:::
-
-## Design exercise: a `malloc`-style buffer
-
-Now your turn. Design the OxCaml signature for a buffer API with
-this informal description:
-
-- `Buffer.alloc n` allocates an `n`-byte buffer.
-- `Buffer.read b i` reads byte at index `i`.
-- `Buffer.write b i x` writes byte `x` at index `i`.
-- `Buffer.free b` frees the buffer.
-
-The type system should statically prevent:
-
-1. Double-free.
-2. Use-after-free.
-3. The buffer escaping the scope it was allocated in.
-
-A skeleton signature is provided below. Fill in the modes.
-
-:::slide
-
-## Design exercise
-
-Add modes in the cell; press Run until your signature
-type-checks:
-
-```ocaml
-module type Buffer_todo = sig
-  type t
-  val alloc : int -> t          (* add modes here *)
-  val read  : t -> int -> char * t
-  val write : t -> int -> char -> t
-  val free  : t -> unit
-end
-```
-
-- Must reject: double-free, use-after-free, escape from the
-  allocation scope.
-
-:::
-
-:::quiz code id=M11-L06-q1
-Fill in the `Buffer` signature with the right OxCaml mode
-annotations so that the API enforces "no double-free, no
-use-after-free, no escape." The signature shape (one operation per
-line) is provided; only the annotations need to change. Replace
-each `failwith "..."` with the correct line.
-
-```ocaml
-(* For grading, return a list of strings representing the lines
-   of the module signature, in order. Each string is one line
-   of the signature, with the right mode annotations. *)
-let buffer_signature : string list =
-  failwith "not implemented"
-```
-
-```ocaml skip
-let check b m = if not b then failwith m
-
-let () =
-  let lines = buffer_signature in
-  check (List.length lines = 4)
-    "expected four signature lines";
-  let l1 = List.nth lines 0 in
-  let l2 = List.nth lines 1 in
-  let l3 = List.nth lines 2 in
-  let l4 = List.nth lines 3 in
-  let has substring s =
-    let lsub = String.length substring in
-    let ls = String.length s in
-    let rec scan i =
-      if i + lsub > ls then false
-      else if String.sub s i lsub = substring then true
-      else scan (i + 1)
-    in scan 0
-  in
-  let once_local l = has "@" l && has "once" l && has "local" l in
-  check (has "alloc" l1 && once_local l1)
-    "line 1 must declare alloc returning a once+local buffer";
-  check (has "read" l2 && once_local l2)
-    "line 2 must declare read consuming and returning once+local";
-  check (has "write" l3 && once_local l3)
-    "line 3 must declare write consuming and returning once+local";
-  check (has "free" l4 && once_local l4)
-    "line 4 must declare free consuming a once+local buffer";
-  print_endline "all tests passed"
-```
+**Why:** the stash is a mode error: the handle is `@ local` to
+the callback's region, and a global `ref` cell can only hold
+global values; the compiler points at the escape route ("via
+constructor `Some`"). The double-close needs no mode at all: the
+signature exposes no `close`, so there is no program text that
+performs it, once or twice. Sealing the module turns a whole bug
+class from "rejected" into "unwritable," which is the strongest
+guarantee in this lecture.
 :::
 
 :::solution
 
-The intended answer looks roughly like this (the test cell only
-checks that the right modes appear on each line; you can phrase
-the types however you like, but each operation should accept a
-buffer at `once local`, and the non-`free` operations should
-return a fresh `once local` buffer):
+Q1: `once` on the callback is for the *caller's* benefit. The
+closure rule makes once-capturing callbacks `once`; a bracket
+demanding `many` would reject them, and `f @ once` welcomes them
+while still accepting every ordinary callback (`many ⊑ once`).
 
-```ocaml
-module type Buffer = sig
-  type t
-  val alloc : int -> t @ once local
-  val read  : t @ once local -> int -> char * t @ once local
-  val write : t @ once local -> int -> char -> t @ once local
-  val free  : t @ once local -> unit
-end
-```
-
-Read off what each annotation buys:
-
-- `alloc` returns a fresh `t @ once local`. The buffer cannot
-  escape the calling scope (locality); it has at most one further
-  use (linearity).
-- `read` consumes the buffer and hands back a fresh `once local`
-  one, plus the value at the index. The ownership chain threads
-  through. (`char`, like `int`, is immediate, so it rides out of
-  the local pair without a wrapper.)
-- `write` is parallel to `read`.
-- `free` consumes the buffer, returns `unit`. No fresh buffer.
-  After `free`, no `once local` binding exists.
-
-Double-free: linearity error (same as double-close in the
-file-handle example). Use-after-free: linearity error. Escape:
-locality error.
-
-:::slide
-
-## The intended buffer signature
-
-```ocaml
-module type Buffer = sig
-  type t
-  val alloc : int -> t @ once local
-  val read  : t @ once local -> int -> char * t @ once local
-  val write : t @ once local -> int -> char -> t @ once local
-  val free  : t @ once local -> unit
-end
-```
-
-Same shape as `Handle`. The compiler rejects every bug class we
-listed.
+Q2: the stash is stopped by locality (`local` handle, global
+`ref`, no flow). The double-close is stopped by the seal: no
+`close` in the signature means the misuse has no spelling at all.
 
 :::
 
-:::
+## Common pitfalls
+
+**Pitfall 1: "`local` makes the handle read-only."** No.
+`read` and `write` mutate the handle's fields freely. Locality
+restricts where a value may *go* (it cannot leave its region),
+not what you may do with it while it is in scope.
+
+**Pitfall 2: "The bracket plus `local` made linearity
+redundant."** Inside one bracket, mostly yes, and that is the
+point of the design. But `once` still does two jobs here: it is
+the honest type of the callback (the bracket runs it at most
+once), and it admits callbacks that capture once/unique values.
+And when ownership must travel between brackets, the
+unique-threaded key pattern is exactly the linearity-style chain
+again.
+
+**Pitfall 3: "Sealing is just hiding; a determined client can
+still misuse the resource."** Within the language, no: there is
+no `Handle.close` to call and no way to conjure a `t` outside a
+callback. The guarantee is as strong as the abstraction boundary,
+which is why the signature, not the implementation, is the
+security review surface.
+
+**Pitfall 4: "The mock makes the demo unrealistic."** The mode
+discipline never mentions the backing. Swap the mock's body for
+`Unix.openfile` / `Unix.read` / `Unix.close` and not one
+annotation changes; the bracket, the locality wall, and the seal
+are identical. (That swap is exactly what the production
+libraries do.)
 
 ## Module summary
 
@@ -805,25 +702,26 @@ We have spent the module on five OxCaml mode axes:
 
 - **Locality**: tracks whether a value escapes its
   scope. Replaces the C `return &x` bug. Lets you stack-allocate
-  short-lived values safely.
+  short-lived values safely, and walls a lent resource into its
+  bracket.
 - **Uniqueness**: tracks whether a value has been
-  aliased in the past. Replaces use-after-free and double-free for
-  manually managed resources. Gives modular reasoning from
-  signatures alone.
+  aliased in the past. Gives modular reasoning from signatures
+  alone, and lets ownership travel safely.
 - **Linearity**: tracks whether a value will be used
   again in the future. Replaces use-after-close and double-close
   (and is honest about the leak: at most once, not exactly once).
   Provides the protocol vocabulary for resource APIs.
-- **Portability**: tracks whether a value can cross
-  a domain boundary. Closures that mutate captured state are
-  `nonportable`; `Domain.Safe.spawn` requires `portable`.
 - **Contention**: tracks whether a value is being
   shared across domains. `Atomic.t` mode-crosses contention so it
   can be hammered on by many domains safely.
+- **Portability**: tracks whether a value can cross
+  a domain boundary. Closures that mutate captured state are
+  `nonportable`; `Domain.Safe.spawn` requires `portable`.
 
 Five axes, eleven modes in all (`global`/`local`,
-`unique`/`aliased`, `many`/`once`, `portable`/`nonportable`,
-`uncontended`/`shared`/`contended`), each independent. The
+`unique`/`aliased`, `many`/`once`,
+`uncontended`/`shared`/`contended`, `portable`/`nonportable`),
+each independent. The
 compiler checks all of them simultaneously. The cost is zero at
 runtime; the benefit is whole categories of bugs becoming
 impossible. This is the two-sided promise the module opened with:
@@ -847,8 +745,8 @@ comprehensive treatment of the deeper end of the design
 | Locality | `global` | `local` | Escape | `return &x` |
 | Uniqueness | `aliased` | `unique` | Past aliasing | use-after-free, double-free |
 | Linearity | `many` | `once` | Future use | use-after-close, double-close |
-| Portability | `nonportable` | `portable` | Cross-domain crossing | shared `ref` racing |
 | Contention | `uncontended` | `shared`, `contended` | Cross-domain access | racy reads on shared mutable state |
+| Portability | `nonportable` | `portable` | Cross-domain crossing | shared `ref` racing |
 
 Five axes, zero runtime cost, whole categories of bugs become
 type errors.
@@ -905,11 +803,12 @@ next module's operating systems.
 
 ## Sources
 
-The `Handle` API shape, the three-bug walkthrough, and the
-`Buffer` design exercise are original to this course, structured
-to combine the locality material from CS6868 Part 1 and the
-linearity / uniqueness material from CS6868 Part 3 (the
-instructor's own teaching material, freely reusable). The C-versus-
-OxCaml comparison and the module-summary recap are original. See
+The bracketed `Handle` design, the sealed-module implementation,
+the three-attack walkthrough, and the C comparison are original
+to this course, assembling the locality, linearity, and
+uniqueness material of CS6868 Parts 1 and 3 (the instructor's own
+teaching material, freely reusable) into one API. The
+`with_password` signature is quoted (abridged) from the `capsule`
+library distributed with the OxCaml toolchain. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

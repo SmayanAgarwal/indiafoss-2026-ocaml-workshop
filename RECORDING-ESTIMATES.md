@@ -471,18 +471,41 @@ restructured as per-signature slides (`Free_unique` then
 "three bugs" summary table and the Girard history slide dropped.
 Echo-aware overflow checks (navigate per slide; bulk reads
 under-measure past reveal's viewDistance) forced three splits.
-Estimate uses slide_count x 1.5 min.
+
+Later the same day, KC reordered the concurrency pair to match
+CS6868: **contention is now L04 and portability is L05**, with
+both lectures realigned to the CS6868 Part 2 slides. Contention
+gained the deep-contention rule (Rule 2, the `box`/array
+laundering demo), a brief two-axes naming slide, and a live
+write-to-a-contended-atomic demo; it lost the parallel-counter
+section (redundant with M10's counter and the gensym payoff) and,
+per KC ("this is not a concurrency course"), the vanilla-mutex
+motivation and the capsules arc. Portability now states the
+capture rule in its real vocabulary (captures are treated as
+`contended`), gained the two-step data-race argument slide and
+the `Portable.Atomic` "first working program" (with the
+stdlib-Atomic-lacks-annotations takeaway), and lost the
+stdlib-atomic non-fix station and the portability mode-crossing
+table. Finally, L06 was rewritten around a single BRACKETED
+example (KC): `with_handle` with a sealed module (no exposed
+open/close), the handle at `@ local`, the callback at `@ once`;
+three attack demos (stash, return, close: the last is unwritable,
+"Unbound value Handle.close"); the buffer design exercise and the
+Conn-pool extension were cut, and the capstone now reads the real
+`capsule` `with_password` signature as the production pattern
+where `unique` ownership travels between brackets. Estimate uses
+slide_count x 1.5 min.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
 | M11-L01 | Locality: safe stack allocation (opens with OxCaml/modes intro) | 22 | 2 | 0 | 33 | 46 |
 | M11-L02 | Uniqueness: the only reference | 12 | 2 | 0 | 18 | 25 |
 | M11-L03 | Linearity: use at most once (+ uniqueness synthesis) | 19 | 2 | 0 | 29 | 41 |
-| M11-L04 | Portability: data-race freedom across domains | 16 | 2 | 0 | 24 | 34 |
-| M11-L05 | Contention: synchronisation at compile time | 18 | 2 | 0 | 27 | 38 |
-| M11-L06 | Tutorial: a resource-management API | 16 | 2 | 1 | 24 | 33 |
-| **M11 total** | | **103** | **12** | **1** | **155** | **217** |
-| | | | | | **(2.6 h)** | **(3.6 h)** |
+| M11-L04 | Contention: synchronisation at compile time | 15 | 2 | 0 | 23 | 32 |
+| M11-L05 | Portability: data-race freedom across domains | 13 | 2 | 0 | 20 | 28 |
+| M11-L06 | Tutorial: a resource-management API | 14 | 2 | 0 | 21 | 29 |
+| **M11 total** | | **95** | **12** | **0** | **144** | **201** |
+| | | | | | **(2.4 h)** | **(3.4 h)** |
 
 L01 is now 22 slides / ~33 video min, over the NPTEL 30-min ceiling
 after KC's 2026-06-09 review additions (the live M10 escaping-handle

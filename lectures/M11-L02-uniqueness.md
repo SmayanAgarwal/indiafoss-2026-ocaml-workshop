@@ -740,10 +740,10 @@ that suits it, and takes up the question this lecture deferred:
 when you design a resource API, which axis do you reach for?
 
 After linearity, the module turns to the two concurrency axes,
-portability and contention, and then the module closes with the
+contention and portability, and then the module closes with the
 tutorial, where we design a resource-management API end to
-end and walk through three attempts to misuse it. Each attempt is
-a type error.
+end and walk through three attempts to misuse it. Each attempt
+dies at compile time.
 
 :::slide
 
@@ -751,8 +751,8 @@ a type error.
 
 - Lecture 3: **linearity**. Future-use tracking, `once` and `many`.
   - resolves today's closure puzzle.
-- Lecture 4: **portability**. Cross-domain crossing.
-- Lecture 5: **contention**. Cross-domain access.
+- Lecture 4: **contention**. Cross-domain access.
+- Lecture 5: **portability**. Cross-domain crossing.
 - Lecture 6: tutorial. A resource-management API combining the
   axes.
 

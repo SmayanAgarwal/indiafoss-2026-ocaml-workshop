@@ -1099,8 +1099,8 @@ Locality protected values that must not outlive a scope;
 uniqueness is about proving a reference is the *only* one to its
 target, and the privileges that proof licenses, starting with
 releasing the resource exactly once. Then M11-L03 covers
-**linearity**, M11-L04 covers **portability**, M11-L05 covers
-**contention**, and M11-L06 is the tutorial that combines
+**linearity**, M11-L04 covers **contention**, M11-L05 covers
+**portability**, and M11-L06 is the tutorial that combines
 everything.
 
 :::slide
