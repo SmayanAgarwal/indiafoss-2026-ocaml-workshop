@@ -9,9 +9,14 @@
 #                                    or blocker comments KC drops
 #                                    in lecture markdown. KC! and
 #                                    KC? block; plain KC: warns.
-#   3. dune runtest                -- mdx code blocks compile
-#   4. tools/build-site.sh         -- rebuild + smoke pages
-#   5. tools/playwright-check.mjs  -- end-to-end browser test
+#   3. tools/check-links.py        -- cross-lecture links, heading
+#                                    anchors, asset refs
+#   4. dune runtest                -- mdx code blocks compile
+#   5. tools/build-site.sh         -- rebuild + smoke pages
+#   6. tools/playwright-check.mjs  -- end-to-end browser test
+#   7. playwright VM playground    -- dune-in-browser boot check
+#   8. dashboard smoke             -- dashboard renders against the
+#                                    live worker (skipped offline)
 #
 # Exits non-zero on any failure. Run from anywhere.
 
@@ -25,10 +30,10 @@ red()   { printf '\033[31m%s\033[0m\n' "$*"; }
 green() { printf '\033[32m%s\033[0m\n' "$*"; }
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
 
-bold '[1/6] activity-fresh-code audit'
+bold '[1/8] activity-fresh-code audit'
 python3 tools/audit-activities.py
 
-bold '[2/6] KC-comment sweep'
+bold '[2/8] KC-comment sweep'
 # `KC:` (silent fix) is allowed to linger; `KC?:` and `KC!:` are
 # blockers per CLAUDE.md. Surface all three so the user sees them.
 KC_HITS=$(grep -rEn '<!--[[:space:]]*KC[!?]?:' \
@@ -47,50 +52,85 @@ else
   green '  no KC comments outstanding'
 fi
 
-bold '[3/6] dune runtest (mdx + OCaml tests)'
+bold '[3/8] link + anchor check'
+python3 tools/check-links.py
+
+bold '[4/8] dune runtest (mdx + OCaml tests)'
 opam exec -- dune runtest
 
-bold '[4/6] build site'
+bold '[5/8] build site'
 tools/build-site.sh
 
-bold '[5/6] playwright end-to-end'
-SMOKE_URL=http://localhost:8765/_site/test/smoke.html
+bold '[6/8] playwright end-to-end'
+# Find a server rooted at the repo (so /_site/... resolves): reuse one
+# that already serves the smoke page correctly, else bind the first
+# free port from the candidate list. A stale server squatting a port
+# from the wrong document root no longer fails the run; we just move
+# to the next port.
+PORT=""
 SERVER_PID=""
-if ! curl -sf -o /dev/null "$SMOKE_URL"; then
-  green "  starting http.server on 8765 for the duration of the test"
-  python3 -m http.server 8765 --directory . >/dev/null 2>&1 &
-  SERVER_PID=$!
-  # give it a moment to bind
-  for _ in 1 2 3 4 5; do
-    sleep 0.3
-    curl -sf -o /dev/null "$SMOKE_URL" && break
-  done
-fi
+for p in 8765 8766 8867 8964; do
+  url="http://localhost:$p/_site/test/smoke.html"
+  if curl -sf -o /dev/null "$url"; then
+    PORT=$p
+    break
+  fi
+  if ! lsof -nP -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then
+    green "  starting http.server on $p for the duration of the test"
+    python3 -m http.server "$p" --directory . >/dev/null 2>&1 &
+    SERVER_PID=$!
+    for _ in 1 2 3 4 5; do
+      sleep 0.3
+      curl -sf -o /dev/null "$url" && break
+    done
+    if curl -sf -o /dev/null "$url"; then
+      PORT=$p
+      break
+    fi
+    kill "$SERVER_PID" 2>/dev/null || true
+    SERVER_PID=""
+  fi
+done
 trap '[ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true' EXIT
-
-# Fail fast with an actionable message rather than letting playwright-check.mjs
-# time out for 90s waiting for x-ocaml on a page that 404s. The usual cause is a
-# stale http.server already squatting on :8765 from a different document root, so
-# /_site/test/smoke.html resolves to 404 and our own server can't bind the port.
-if ! curl -sf -o /dev/null "$SMOKE_URL"; then
-  red "  $SMOKE_URL is not reachable (HTTP non-2xx)."
-  red "  Something is likely already serving :8765 from the wrong root."
-  red "  Free the port (e.g. 'lsof -nP -iTCP:8765 -sTCP:LISTEN' then kill it)"
-  red "  and re-run, or start the server from the repo root."
+if [ -z "$PORT" ]; then
+  red "  could not reach or start a repo-rooted http.server on any of"
+  red "  the candidate ports (8765 8766 8867 8964)."
   exit 1
 fi
+SMOKE_URL="http://localhost:$PORT/_site/test/smoke.html"
 
-node "$SCRIPT_DIR/playwright-check.mjs"
+node "$SCRIPT_DIR/playwright-check.mjs" "$SMOKE_URL"
 
-bold '[6/6] playwright VM playground'
+bold '[7/8] playwright VM playground'
 # Boot the in-browser dune VM and build hello end-to-end. Use the
 # local VM data when the build scratch dir is present (fast, no
 # network); otherwise fall back to the production
 # fplaunchpad/ocaml-browser-vm Pages site baked into the component.
 if [ -f "$REPO_ROOT/_vm-prototype/images/ocaml-state.bin.zst" ]; then
-  export VMBASE="http://localhost:8765/_vm-prototype/images"
+  export VMBASE="http://localhost:$PORT/_vm-prototype/images"
   green "  using local VM data ($VMBASE)"
 fi
-node "$SCRIPT_DIR/playwright-vm-check.mjs"
+node "$SCRIPT_DIR/playwright-vm-check.mjs" \
+  "http://localhost:$PORT/_site/playground.html"
+
+bold '[8/8] dashboard smoke'
+# The dashboard JS needs the live worker; skip (don't fail) when it
+# is unreachable, e.g. recording offline in the studio.
+QUIZ_API="https://nptel-quiz.kc-7c7.workers.dev"
+if curl -sf -o /dev/null --max-time 10 "$QUIZ_API/quiz/agg"; then
+  node "$SCRIPT_DIR/playwright-dashboard-check.mjs" \
+    "http://localhost:$PORT/_site/dashboard.html"
+else
+  red "  quiz worker unreachable (offline?); skipping dashboard smoke."
+fi
+
+# Optional: full 78-deck slide-overflow scan (~15 min). Run with
+# CHECK_OVERFLOW=1, or directly:
+#   node tools/playwright-overflow-check.mjs http://localhost:8765/_site [page.html ...]
+if [ "${CHECK_OVERFLOW:-0}" = "1" ]; then
+  bold '[extra] slide-overflow scan (all decks)'
+  node "$SCRIPT_DIR/playwright-overflow-check.mjs" \
+    "http://localhost:$PORT/_site"
+fi
 
 green 'All tests passed.'

@@ -121,6 +121,33 @@ async function main() {
   for (const e of events) console.log('  ' + e);
 
   await browser.close();
+
+  // Assert. Logging alone let a broken Run-all / slide mode pass the
+  // pre-recording gate; collect expectations and fail on any miss.
+  const consoleErrors = events.filter(e =>
+    e.startsWith('console.error') || e.startsWith('pageerror'));
+  const expectations = [
+    [cellCount > 0, `cells upgraded (${cellCount})`],
+    [vmPlaceholder, 'vm-terminal placeholder rendered'],
+    [chapterVisible, 'chapter visible in chapter mode'],
+    [slideHidden, 'chapter hidden in slide mode'],
+    [slidesInReveal > 0, `slides inside reveal wrapper (${slidesInReveal})`],
+    [afterIdx > startIdx, `reveal navigation advanced (${startIdx} -> ${afterIdx})`],
+    [totalFragments === 0 || visibleFragments > 0,
+      `fragments revealed (${visibleFragments}/${totalFragments})`],
+    [slidesRestoredInChapter, 'slide sections restored to chapter'],
+    [ranCells > 0, `cells with output after Run all (${ranCells})`],
+    [afterClear === 0, `cells cleared after Clear all (${afterClear} left)`],
+    [consoleErrors.length === 0,
+      `no console errors (${consoleErrors.length} seen)`],
+  ];
+  const failures = expectations.filter(([ok]) => !ok).map(([, what]) => what);
+  if (failures.length > 0) {
+    console.error('FAILED checks:');
+    for (const f of failures) console.error('  - ' + f);
+    process.exit(1);
+  }
+  console.log('all checks passed');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
