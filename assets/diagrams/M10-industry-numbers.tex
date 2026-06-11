@@ -7,10 +7,10 @@
 \begin{tikzpicture}[m10, x=1mm, y=-1mm, font=\large]
   \def\barmax{110}
   \foreach \y/\pct/\lbl in {
-      0/70/{Microsoft (MSRC)},
-      18/70/{Chrome},
-      36/90/{Android (native)},
-      54/80/{0-days in the wild}} {
+      0/70/{Microsoft (2019)},
+      18/70/{Chrome (2020)},
+      36/86/{Android critical (2022)},
+      54/67/{0-days in the wild (2021)}} {
     \node[note, anchor=east, font=\large] at (-4,\y+7) {\lbl};
     \draw[draw=labelgrey!30, line width=0.4pt, fill=white]
       (0,\y) rectangle (\barmax,\y+14);
@@ -22,6 +22,6 @@
   \node[note, anchor=north west, font=\large\itshape] at (-46,76)
     {Share of severe bugs that are memory-safety bugs.};
   \node[note, anchor=north west, font=\large\itshape] at (-46,86)
-    {Roughly two-thirds, flat for over a decade.};
+    {Microsoft's share was flat for over a decade.};
 \end{tikzpicture}
 \end{document}

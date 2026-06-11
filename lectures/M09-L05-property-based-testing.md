@@ -178,10 +178,14 @@ down the exact answer.
 The third, permutation, is even more specific: it says the
 *elements* are the same, just in a different order. Combined with
 length preservation, it pins down a much smaller space of
-possible behaviours. ("Returns a list with the same elements in
-the same multiset" plus "involution under composition with
-itself" essentially fixes `rev` uniquely, up to handling of
-non-comparable elements.)
+possible behaviours. Smaller, but not a single point: the
+identity function preserves the multiset and is its own inverse,
+so it passes all three properties and is clearly not `rev`. What
+none of them mention is *order*; a property that does, say
+relating `rev (x :: xs)` to `rev xs @ [x]`, is what separates
+`rev` from the impostors. Properties constrain the behaviour;
+they rarely characterise it, and noticing which behaviours
+slip through is part of the craft.
 
 :::slide
 
@@ -368,7 +372,8 @@ The basic generators are exactly what you expect:
 - `QCheck.small_int`: small positive `int`s (handy for sizes).
 - `QCheck.bool`: `true` or `false`.
 - `QCheck.string`: a random string.
-- `QCheck.float`: a random `float`, including `infinity` and `nan`.
+- `QCheck.float`: a random `float`, including `infinity` and `nan`
+  (but only rarely; do not count on a run hitting them).
 
 And combinators that build bigger generators out of smaller ones:
 
@@ -401,7 +406,7 @@ configuration work.
 | `QCheck.small_int` | small positive `int` |
 | `QCheck.bool` | `true` / `false` |
 | `QCheck.string` | random string |
-| `QCheck.float` | random `float` (incl. `nan`, `infinity`) |
+| `QCheck.float` | random `float` (incl. `nan`, `infinity`, rarely) |
 
 Combinators:
 

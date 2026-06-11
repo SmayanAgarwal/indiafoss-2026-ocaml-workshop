@@ -14,6 +14,10 @@ reading:
     url: https://msrc.microsoft.com/blog/2019/07/a-proactive-approach-to-more-secure-code/
   - title: "Chromium project, Memory safety"
     url: https://www.chromium.org/Home/chromium-security/memory-safety/
+  - title: "Google security blog, Memory Safe Languages in Android 13 (December 2022)"
+    url: https://security.googleblog.com/2022/12/memory-safe-languages-in-android-13.html
+  - title: "Google Project Zero, The More You Know, The More You Know You Don't Know (review of 0-days exploited in 2021)"
+    url: https://projectzero.google/2022/04/the-more-you-know-more-you-know-you.html
   - title: "CISA, NSA, FBI et al., The Case for Memory Safe Roadmaps (December 2023)"
     url: https://www.cisa.gov/resources-tools/resources/case-memory-safe-roadmaps
   - title: "White House ONCD, Future Software Should Be Memory Safe (February 2024)"
@@ -395,7 +399,7 @@ the heap-spray step in the exploit pipeline below.
 
 **Real-world incident.** The Chromium team reported in 2020 that
 [70 percent of high-severity Chrome bugs were memory-safety issues,
-and roughly half of those were
+and the largest single category, about 36 percent, was
 use-after-free](https://www.chromium.org/Home/chromium-security/memory-safety/).
 
 :::slide
@@ -452,7 +456,8 @@ Segmentation fault
 The `0x41414141` is four `A`s (`0x41`) sitting where the canary
 used to be: the write went straight off the end of `buf`.
 
-**Real-world incident.** The canonical buffer-overflow CVE is
+**Real-world incident.** The canonical CVE on the *read* side of
+buffer overflow (an out-of-bounds read, or over-read) is
 **Heartbleed** (CVE-2014-0160) in OpenSSL, where a length field was
 used to copy bytes from a buffer without checking it against the
 buffer's real size. We walk it end to end in the tutorial that
@@ -597,10 +602,11 @@ proportion had not moved.
 <img src="/assets/diagrams/M10-industry-numbers.svg" alt="Memory-safety share of severe bugs across four studies" style="height: 380px;">
 
 - Each bar: the share of *severe* bugs that are memory-safety bugs.
-- ~70% at Microsoft and Chrome, 90% in Android's C/C++, 80% of
-  in-the-wild 0-days.
-- Flat for over a decade despite heavy C tooling: "be more careful"
-  does not scale.
+- ~70% at Microsoft (2019) and Chrome (2020); 86% of Android's
+  critical-severity bugs (2022); 67% of in-the-wild 0-days
+  (Project Zero, 2021).
+- Flat at Microsoft for over a decade despite heavy C tooling:
+  "be more careful" does not scale.
 
 :::
 
@@ -608,28 +614,41 @@ proportion had not moved.
 
 The cleanest evidence is Google's Android team. Android ships a
 large layer of *managed* code (Java, Kotlin) over a lower layer of
-*native* code (C and C++). The team reported *more than 90 percent
-of native vulnerabilities were memory-safety issues*, and a
-negligible proportion in the managed layer of the *same product*,
-shipped by the *same team* with the *same* process. The variable
-that explains the difference is the language, not the discipline.
+*native* code (C and C++), and from 2019 the team began moving new
+code to memory-safe languages, with Rust entering the native
+layer. Their report *Memory Safe Languages in Android 13* (Google
+security blog, 2022) shows what happened: memory-safety bugs
+dropped from *76 percent of Android's vulnerabilities in 2019 to
+35 percent in 2022*, tracking the fall in new C and C++ code, and
+the team had found *zero* memory-safety vulnerabilities in
+Android's Rust code. Same product, same team, same release
+process. The variable that explains the difference is the
+language, not the discipline. The bugs that remain are still the
+worst ones: in 2022, memory-safety issues were a minority of
+Android's bugs but *86 percent of its critical-severity
+vulnerabilities*.
 
-A fourth data point comes from Google's Project Zero: roughly *80
-percent of zero-day exploits observed in the wild* target
-memory-safety bugs. That is a different selection: these are the
-bugs attackers actually chose to invest in. They keep choosing
-memory-safety bugs because they keep working.
+A fourth data point comes from Google's Project Zero, which tracks
+zero-day exploits detected in actual use. Its review of 2021 (*The
+More You Know, The More You Know You Don't Know*, 2022) found that
+39 of the 58 in-the-wild 0-days that year, *about 67 percent*,
+were memory-corruption bugs. That is a different selection: these
+are the bugs attackers actually chose to invest in. They keep
+choosing memory-safety bugs because they keep working.
 
 :::slide
 
 ## Same team, two languages
 
-- Android: > 90 percent of **native** (C/C++) vulnerabilities are
-  memory safety.
-- Negligible in the **managed** (Java / Kotlin) layer of the same
-  product.
+- Android: managed (Java / Kotlin) over native (C / C++); from
+  2019, new code shifts to memory-safe languages, Rust in native.
+- Google, *Memory Safe Languages in Android 13* (2022):
+  - memory-safety bugs: 76% of Android's vulnerabilities (2019)
+    down to 35% (2022).
+  - zero memory-safety bugs found in Android's Rust code.
+  - still 86% of 2022's **critical**-severity vulnerabilities.
 - Same team, same culture, same release process.
-- In-the-wild 0-days: ~80 percent target memory-safety bugs.
+- In-the-wild 0-days: 67% memory corruption (Project Zero, 2021).
 - *The language is the variable.*
 
 :::
@@ -902,6 +921,12 @@ pointers, block headers, and the GC's job.
   <https://msrc.microsoft.com/blog/2019/07/a-proactive-approach-to-more-secure-code/>
 - **The Chromium project**, *Memory safety*:
   <https://www.chromium.org/Home/chromium-security/memory-safety/>
+- **Google security blog**, *Memory Safe Languages in Android 13*
+  (December 2022):
+  <https://security.googleblog.com/2022/12/memory-safe-languages-in-android-13.html>
+- **Google Project Zero**, *The More You Know, The More You Know
+  You Don't Know* (review of 0-days exploited in 2021, April 2022):
+  <https://projectzero.google/2022/04/the-more-you-know-more-you-know-you.html>
 - **CISA / NSA / FBI et al.**, *The Case for Memory Safe Roadmaps*
   (December 2023):
   <https://www.cisa.gov/resources-tools/resources/case-memory-safe-roadmaps>
@@ -914,8 +939,9 @@ pointers, block headers, and the GC's job.
 
 This lecture's prose, worked examples, C demos, and quizzes are
 original to this course. The industry reports (Microsoft MSRC,
-Chromium, Google Android) and government memoranda (White House
-ONCD, the CISA/NSA/FBI joint publication) are public documents
+Chromium, Google Android, Google Project Zero) and government
+memoranda (White House ONCD, the CISA/NSA/FBI joint publication)
+are public documents
 authored by their respective agencies and vendors; we quote and link
 to them rather than reproducing them. The exploit description is
 deliberately conceptual and includes no working exploit code. See

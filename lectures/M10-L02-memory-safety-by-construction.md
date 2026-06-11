@@ -105,7 +105,8 @@ print_char (Bytes.get buf 0)
 - GC reclaims memory only when nothing reachable refers to it.
 - "Live pointer to freed memory" is unreachable as a program state.
 
-**Closes Chromium's largest single bug category (36 percent).**
+**Closes Chromium's largest single bug category (about 36
+percent).**
 
 :::
 

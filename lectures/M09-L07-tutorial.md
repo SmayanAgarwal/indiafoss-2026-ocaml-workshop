@@ -802,7 +802,7 @@ How does our test suite catch this?
 buggy evaluator, the report reads (log-file lines elided):
 
 ```text
-.F...F.
+..F..F.
 ==============================================================
 Error: expr evaluator:1:binary operators:1:sub.
 

@@ -12,6 +12,8 @@ reading:
     url: https://heartbleed.com/
   - title: "CVE-2014-0160 in the National Vulnerability Database"
     url: https://nvd.nist.gov/vuln/detail/CVE-2014-0160
+  - title: "Netcraft, Half a million widely trusted websites vulnerable to Heartbleed bug (April 2014)"
+    url: https://www.netcraft.com/blog/half-a-million-widely-trusted-websites-vulnerable-to-heartbleed-bug
   - title: "OpenSSL commit 96db9023, the Heartbleed fix"
     url: https://github.com/openssl/openssl/commit/96db9023b881d7cd9f379b0c154650d6c108e9a3
   - title: "Cstruct, type-safe byte buffer slicing in OCaml"
@@ -37,8 +39,10 @@ categories of memory bugs and why they matter, how OCaml rules them
 out by construction, data races, and the honest boundary where OCaml
 itself admits UB. This tutorial lands all of it on one concrete,
 exhaustively-documented case study: **Heartbleed**, CVE-2014-0160,
-the OpenSSL bug that affected an estimated two-thirds of the public
-internet in 2014.
+the 2014 OpenSSL bug. OpenSSL ran on roughly two-thirds of the
+web's servers at the time, and the vulnerable releases (1.0.1
+through 1.0.1f) exposed an estimated 17 percent of TLS-enabled web
+servers, around half a million machines (Netcraft, April 2014).
 
 The choice is deliberate: it is the best-documented memory-safety
 incident in computing history. The bug is two lines of code, the
@@ -604,6 +608,9 @@ consistently.
 ## Reading
 
 - **Heartbleed**, the canonical writeup: <https://heartbleed.com/>
+- **Netcraft**, *Half a million widely trusted websites vulnerable
+  to Heartbleed bug* (April 2014):
+  <https://www.netcraft.com/blog/half-a-million-widely-trusted-websites-vulnerable-to-heartbleed-bug>
 - **CVE-2014-0160** in the NVD:
   <https://nvd.nist.gov/vuln/detail/CVE-2014-0160>
 - **OpenSSL fix commit**:
@@ -619,8 +626,8 @@ This lecture's prose, code examples, C demo, and exercises are
 original to this course. The OpenSSL code excerpt is reproduced for
 educational purposes from the public OpenSSL source tree under the
 fair-use exemption for critical commentary and teaching. The
-Heartbleed writeup, the NVD CVE entry, and the OpenSSL fix commit are
-public documents; the `Bytes.sub` contract is from the OCaml manual.
+Heartbleed writeup, the Netcraft survey, the NVD CVE entry, and the
+OpenSSL fix commit are public documents; the `Bytes.sub` contract is from the OCaml manual.
 See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.
