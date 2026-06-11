@@ -5,7 +5,7 @@ week: 11
 duration_target_min: 25
 concepts: [contention, uncontended, contended, shared, Atomic, mode crossing, capsule, parallel counter]
 keywords: [OCaml, OxCaml, contention, uncontended, contended, Atomic, mode crossing, parallel counter, capsule]
-activity_question: "A record has one immutable and one mutable field and is shared between two domains: which accesses does OxCaml reject, and why does even a *read* of the mutable field get refused on a contended value?"
+activity_question: "A record has one immutable and one mutable field and is shared between two domains: which accesses does OxCaml reject, and why does even a *read* of the mutable field get refused on a contended value? And if a team swaps an `int ref` for an `Atomic.t` so the program compiles, is it true that atomics mode-cross *all* the axes, or does the capturing closure still need `Portable.Atomic`?"
 think_about_this: "Portability said you could *send* a value to another domain. Contention says how you can *access* it once it gets there. What kind of value is safe to read from two domains without locking?"
 reading:
   - title: "OxCaml documentation, modes"
@@ -55,7 +55,7 @@ together deliver compile-time data-race freedom.
 
 ## A new question: how do shared values get accessed?
 
-- M11-L04's portability: can the value *cross* a domain
+- Previous lecture's portability: can the value *cross* a domain
   boundary?
 - This lecture's contention: how can the value *be accessed*
   once it has been shared?
@@ -82,10 +82,10 @@ together deliver compile-time data-race freedom.
 
 ## Portability vs contention, in one slide
 
-- **Portability** (M11-L04): can this value *get to* another
-  domain at all?
-- **Contention** (M11-L05): once it gets there, how can it be
-  *accessed*?
+- **Portability** (previous lecture): can this value *get to*
+  another domain at all?
+- **Contention** (this lecture): once it gets there, how can it
+  be *accessed*?
 - Portability is about closures crossing boundaries.
 - Contention is about reads and writes of mutable fields.
 - Both axes are independent. A race needs both to be wrong;
@@ -112,7 +112,8 @@ when you forget.
 
 OxCaml's mode system attacks ingredients 2 and 3 directly:
 
-- **Portability** (M11-L04) attacks ingredient 2: by rejecting
+- **Portability** (the previous lecture) attacks ingredient 2: by
+  rejecting
   the spawn, the shared location never becomes shared in the
   first place, or it becomes shared only through types
   (`Portable.Atomic.t`) that mode-cross both axes.
@@ -128,7 +129,7 @@ OxCaml's mode system attacks ingredients 2 and 3 directly:
 | Ingredient | What it is | Which axis catches it |
 |---|---|---|
 | 1 | Two domains | (You wrote the spawn) |
-| 2 | Shared location | **Portability** (M11-L04) |
+| 2 | Shared location | **Portability** (previous lecture) |
 | 3 | At least one write | **Contention** (this lecture) |
 | 4 | Not atomic | Mode crossing (`Atomic.t`) |
 
@@ -249,7 +250,7 @@ that one domain updates periodically and many domains read.
 
 ## Reads and writes on a contended record
 
-```ocaml
+```text
 type thing = { price : float; mutable mood : mood }
 ```
 
@@ -478,7 +479,7 @@ A capsule is a *branded* container for mutable state:
 
 Three pieces work together:
 
-- `Capsule.Mutex.t`: a mutex carrying a brand;
+- `Await_capsule.Mutex`: a mutex carrying a brand;
 - `Capsule.Data.t`: the encapsulated data, sharing the same brand;
 - an `access` token: proof that you hold the lock, required to
   unwrap the data, and handed to you only inside `with_lock`.
@@ -539,8 +540,8 @@ let gensym =
   fun w prefix -> prefix ^ "_" ^ Int.to_string (fetch_and_incr w)
 ```
 
-- `Capsule.Mutex.t` (brand) + `Capsule.Data.t` (same brand) +
-  `access` token.
+- `Await_capsule.Mutex` (brand) + `Capsule.Data.t` (same brand)
+  + `access` token.
 - The `ref` lives *inside* the capsule.
   - unreachable without a matching `access`.
 - `access` is granted only inside `with_lock`. Forgetting the
@@ -591,10 +592,14 @@ mode-crosses contention (its whole point) but not portability
 mutable state). For a closure that needs to be `portable` *and*
 read the counter from multiple domains, the right type is
 `Portable.Atomic.t`, which mode-crosses both axes. This is the
-same point made in M11-L02 from the portability side.
+same point the portability lecture made from the other side.
 :::
 
 :::solution
+
+:::slide
+
+## Activity solution
 
 Q1: reading the *immutable* field of a `contended` value is fine;
 reading or writing its *mutable* field is rejected (a `contended`
@@ -603,6 +608,8 @@ off-limits without synchronisation).
 
 Q2: mode crossing is per-axis. Stdlib `Atomic.t` crosses contention
 but not portability; `Portable.Atomic.t` crosses both.
+
+:::
 
 :::
 
@@ -642,7 +649,7 @@ race-free.
 - **Capsules** make the mutex discipline structural: the data is
   unreachable without an `access` token, granted only inside
   `with_lock`.
-- Together with portability (M11-L04), all four race
+- Together with portability (previous lecture), all four race
   ingredients are addressed by the type system.
 
 The cost is zero at runtime. The benefit is "the program does
@@ -652,7 +659,7 @@ not compile" instead of "the program races under load."
 
 ## What's next
 
-The next (and final) lecture of M11 is the tutorial (M11-L06).
+The next (and final) lecture of the module is the tutorial.
 It puts the resource axes (locality, uniqueness, linearity)
 together with the concurrency axes (portability, contention) in
 a single API: a resource-management module that is safe to use

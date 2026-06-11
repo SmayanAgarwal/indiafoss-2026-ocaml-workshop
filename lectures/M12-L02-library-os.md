@@ -147,7 +147,7 @@ directly from the application.
 
 :::slide
 
-## Conventional kernel (M12-L01)
+## Conventional kernel (recap)
 
 ```
 +-------------------------------+
@@ -248,12 +248,14 @@ linked into the image.
   is only one process.
 - **Network stack.** Ethernet framing, ARP, IP, TCP, UDP, plus
   whatever application protocols (HTTP, DNS, TLS) you choose to
-  link. We will see in [M12-L05](M12-L05-mirageos.html) that
+  link. We will see in
+  [the MirageOS lecture](M12-L05-mirageos.html) that
   MirageOS implements all of these in OCaml.
 - **File system.** If the workload needs persistent storage; if
   it does not, the file system is simply not in the image.
 - **Device drivers.** The bottom of the stack: how the library
-  OS talks to network cards, block devices, consoles. M12-L03
+  OS talks to network cards, block devices, consoles. The next
+  lecture (virtualisation)
   will simplify this enormously by routing all driver work through
   a hypervisor's virtual-device interface.
 
@@ -265,7 +267,7 @@ linked into the image.
 - **Scheduler** (fibers / threads / effect handlers).
 - **Network stack** (Ethernet, ARP, IP, TCP, UDP, HTTP, TLS).
 - **File system** (only if the app uses persistent storage).
-- **Device drivers** (radically simplified by M12-L03).
+- **Device drivers** (radically simplified next lecture).
 
 The application picks the set it actually uses. Nothing else
 ships.
@@ -285,7 +287,8 @@ packets at near-line-rate on a 10 Gbps link, and runs the entire
 network function as a single-purpose unikernel.
 
 The interesting result from ClickOS is operational: a single
-commodity x86 server, with KVM and ClickOS guests, can replace
+commodity x86 server, running ClickOS guests on the Xen
+hypervisor, can replace
 a rack of dedicated middlebox appliances. The library-OS
 approach pays off precisely when the workload is one specialised
 network function repeated many times: each instance ships only
@@ -414,8 +417,8 @@ had to give.
 :::
 
 That "something had to give" is the cliffhanger this lecture leaves
-on, and it is what M12-L03 (virtualisation) and M12-L05 (MirageOS plus
-Solo5) resolve. For now, we hold the library-OS idea steady and look
+on, and it is what the virtualisation lecture and the MirageOS
+(plus Solo5) lecture resolve. For now, we hold the library-OS idea steady and look
 at its strengths and weaknesses on their own terms.
 
 ## Pros: what a library OS buys you
@@ -433,8 +436,9 @@ measurable. This is precisely the niche where library OSes survived
 commercially.
 
 **Small attack surface.** This is the answer to the iceberg from
-M12-L01. The runtime contains only the libraries the application
-uses. A library-OS web server has no USB stack, no BlueTooth driver,
+the previous lecture. The runtime contains only the libraries the
+application
+uses. A library-OS web server has no USB stack, no Bluetooth driver,
 no parallel-port driver. The TCB shrinks from "the entire Linux
 kernel" to "the libraries this application actually links."
 Less code, fewer bugs, fewer CVEs.
@@ -445,7 +449,8 @@ save/restore, no privilege transition. The second is that the
 compiler can see through the boundary that used to be opaque, inlining
 the network-send call into the application loop and removing dead
 code that would have been latent in the kernel. We will see in
-[M12-L05](M12-L05-mirageos.html) that MirageOS unikernels routinely
+[the MirageOS lecture](M12-L05-mirageos.html) that MirageOS
+unikernels routinely
 boot in milliseconds, fit in a few megabytes of memory, and
 outperform conventional Linux processes on networking benchmarks.
 
@@ -490,7 +495,8 @@ itself to a tiny hardware target (Exokernel demos).
 
 Both cons are real. Neither is fatal, but the library-OS approach
 *on its own* will not become a production system that anyone outside
-a research lab actually runs. That is the gap M12-L03 closes by
+a research lab actually runs. That is the gap the next lecture
+closes by
 adding virtualisation. We do not need a library OS that can drive
 every piece of hardware; we need a library OS that can run as a
 guest on top of a hypervisor, and let the hypervisor (and its host
@@ -507,7 +513,7 @@ hypervisor's small, stable virtual-device interface.
   drivers wholesale. The driver-ecosystem problem is what killed
   Nemesis and Exokernel commercially.
 
-**Hold these. M12-L03 fixes both with virtualisation.**
+**Hold these. The next lecture fixes both with virtualisation.**
 
 :::
 
@@ -515,7 +521,8 @@ hypervisor's small, stable virtual-device interface.
 
 There is a third, subtler cost to library OSes that is not a "bug"
 in the same sense as the previous two. The monolithic kernel
-makes a lot of *policy* decisions for you. Which scheduler? CFS.
+makes a lot of *policy* decisions for you. Which scheduler? EEVDF
+(CFS until 2023).
 Which network buffer size? 64 KiB. Which TCP congestion-control
 algorithm? Cubic. Which memory allocator? `kmalloc`. You inherit
 those choices whether you want them or not.
@@ -596,7 +603,8 @@ this one VM/process, which is a *win* on the isolation axis between
 applications; but inside the library OS there is no MMU wall, so
 the bug can corrupt other parts of *that* unikernel freely. The
 upshot: virtualisation gives us isolation between unikernels, and
-the language (M12-L04) gives us safety within a unikernel.
+the language (the OCaml-for-systems lecture) gives us safety
+within a unikernel.
 :::
 
 :::quiz mcq id=M12-L02-q2
@@ -616,7 +624,8 @@ library-OS idea?
 deployment problem was that hardware changes constantly and each
 new device needs a driver. A research group cannot keep pace with
 the driver-development volume of the global Linux community. The
-fix, which we'll see in M12-L03, is to outsource the driver work to
+fix, which we'll see in the next lecture, is to outsource the
+driver work to
 a hypervisor: the library OS only has to speak the small, stable
 virtual-device interface.
 :::
@@ -633,11 +642,11 @@ Q2: why Nemesis and Exokernel did not become production OSes.
   cross-process blast radius). But **inside** that unikernel,
   there's no MMU wall.
 - We'll close the within-unikernel gap with **OCaml's type
-  safety** (M12-L04).
+  safety** (the OCaml-for-systems lecture).
 - We'll close the between-unikernel gap with **virtualisation**
-  (M12-L03).
+  (next lecture).
 - We'll close the driver-burden gap with **the hypervisor's
-  virtio drivers** (also M12-L03).
+  virtio drivers** (also next lecture).
 
 :::
 

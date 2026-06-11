@@ -469,7 +469,7 @@ not consumed.
 
 The compiler's answer: a closure that captures a unique value is
 itself given the mode **`once`** (which is on the *linearity* axis,
-the topic of the next lecture, M11-L03). Once-mode means "use at most once." The
+the topic of the next lecture). Once-mode means "use at most once." The
 second call to `f` is then rejected, not because `t` was already
 freed (the linearity check fires before any value-level reasoning
 about `t`), but because `f` itself has already been used.
@@ -657,7 +657,7 @@ may have been aliased in the *past*. These are different
 properties.
 
 For most resource-management APIs, you want both. The next lecture
-(M11-L03) develops linearity; the tutorial at the end of the
+develops linearity; the tutorial at the end of the
 module puts the two together.
 
 :::slide
@@ -872,6 +872,10 @@ consumption, but it is enough to downgrade the closure.
 
 :::solution
 
+:::slide
+
+## Activity solution
+
 Q1: C is rejected. `a_ok` and `b_ok` thread the unique binding
 correctly; `c_bad` calls `get r` (which consumes `r` and returns a
 fresh handle), then underscores that fresh handle and calls `free r`
@@ -893,6 +897,8 @@ let c_bad (r : int t @ unique) =
 Q2: capturing (not consuming) a unique reference in a closure forces
 the closure to `once`; capture alone downgrades it. That is the
 bridge into the next lecture.
+
+:::
 
 :::
 
@@ -923,7 +929,7 @@ the unsafe version; the type checker has just proven it safe.
 
 ## What's next
 
-The next lecture (M11-L03) is **linearity**. We will treat it on
+The next lecture is **linearity**. We will treat it on
 its own terms: a separate axis that tracks *future* use rather
 than past aliasing, a separate set of modes (`many` and `once`),
 a separate set of compile errors. We will see why some APIs are
@@ -932,8 +938,8 @@ more naturally written with linearity than uniqueness (the
 shape that puts the two together.
 
 After linearity, the module turns to the two concurrency axes,
-portability (M11-L04) and contention (M11-L05), and then M11-L06
-is the tutorial, where we design a resource-management API end to
+portability and contention, and then the module closes with the
+tutorial, where we design a resource-management API end to
 end and walk through three attempts to misuse it. Each attempt is
 a type error.
 

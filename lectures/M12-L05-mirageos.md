@@ -30,13 +30,16 @@ reading:
 
 :::
 
-We have the three ingredients now. [M12-L02](M12-L02-library-os.html)
+We have the three ingredients now.
+[The library-OS lecture](M12-L02-library-os.html)
 shrank the kernel into a set of libraries.
-[M12-L03](M12-L03-virtualisation.html) used a hypervisor to put a
+[The virtualisation lecture](M12-L03-virtualisation.html) used a
+hypervisor to put a
 strong protection boundary between guest images. And
-[M12-L04](M12-L04-ocaml-for-systems.html) chose OCaml as the
+[the OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
+chose OCaml as the
 implementation language so that the inside of each image is
-memory-safe without needing the MMU. This last lecture puts the three
+memory-safe without needing the MMU. This lecture puts the three
 ingredients together. MirageOS is the result.
 
 There is no live code here. MirageOS is statically compiled to an ELF
@@ -46,7 +49,7 @@ walking the pipeline (what does the build actually do?), looking at
 the catalogue of libraries that ship with MirageOS, looking at one
 specific case study (the OCaml TLS implementation, whose engineering
 quality is the strongest single argument for the whole approach), and
-then closing the course.
+then stepping back over the course's safety story.
 
 This lecture has five parts. First, the synthesis ("here is what
 MirageOS *is*"). Second, the build pipeline (`config.ml` to `mirage
@@ -79,7 +82,8 @@ together so there is no separate kernel underneath. The "uni" in
 *unikernel* is the single image: one binary, one address space,
 one OS-and-application combined unit.
 
-The library OS part is exactly the M12-L02 story: a collection of
+The library OS part is exactly the library-OS lecture's story: a
+collection of
 OCaml libraries that, between them, implement the functionality
 that used to be in the kernel. The compiler part is the
 interesting addition: MirageOS has its own build tool, `mirage`,
@@ -321,7 +325,8 @@ in re-engineering a security protocol specification and
 implementation*. The paper's contributions are technical, but the
 *engineering* approach is what is worth describing here.
 
-Three properties stand out:
+Three properties of the OCaml-TLS stack stand out (the first and
+third are from the paper; the second has been strengthened since):
 
 1. **Same pure code generates test oracles, verifies against
    real-world TLS traces, and serves as the real implementation.**
@@ -333,17 +338,21 @@ Three properties stand out:
    production server, (b) generate test inputs, and (c) validate
    against recorded traces from other TLS stacks. The lack of
    side effects in the core makes this consolidation possible.
-2. **Cryptographic primitives use Fiat-Crypto, extracted from Rocq
-   proofs.** The constant-time arithmetic that underpins
-   elliptic-curve operations is notoriously fiddly: subtle
-   side-channel leaks have produced multiple CVEs in mainstream
-   implementations. Fiat-Crypto is a project that *proves*, in the
-   Rocq proof assistant, that the C code implementing these
-   primitives matches a mathematical specification, and then
-   *extracts* the verified C automatically. OCaml-TLS uses these
-   extracted primitives. The trust story for the cryptographic
-   core is no longer "we audited the C very carefully"; it is
-   "we have a machine-checked proof."
+2. **A clean-slate crypto stack, now with machine-checked
+   primitives.** The 2015 paper built on `nocrypto`, a
+   from-scratch OCaml cryptography library written for this
+   stack. Its successor, **mirage-crypto**, is what MirageOS
+   ships today, and it raises the bar. The constant-time
+   arithmetic that underpins elliptic-curve operations is
+   notoriously fiddly: subtle side-channel leaks have produced
+   multiple CVEs in mainstream implementations. Fiat-Crypto is a
+   project that *proves*, in the Rocq proof assistant, that the
+   code implementing these primitives matches a mathematical
+   specification, and then *extracts* the verified C
+   automatically. mirage-crypto uses these extracted primitives
+   for its elliptic curves. The trust story for that core is no
+   longer "we audited the C very carefully"; it is "we have a
+   machine-checked proof."
 3. **Strong types track state-machine validity.** TLS has a state
    machine with dozens of states and constrained transitions. In
    OCaml-TLS, those states are encoded as variant types, and the
@@ -369,8 +378,9 @@ audit means something.
 
 - **Same pure OCaml code** drives the server, generates test
   oracles, and validates against real-world TLS traces.
-- **Cryptographic primitives extracted from Rocq via Fiat-Crypto:
-  machine-checked correctness for the constant-time arithmetic.**
+- **Clean-slate crypto**: `nocrypto` in the 2015 paper.
+  - Today's `mirage-crypto` extracts its elliptic-curve
+    arithmetic from machine-checked Rocq proofs (Fiat-Crypto).
 - **Variant types encode the protocol state machine; invalid
   transitions are unrepresentable.**
 
@@ -568,10 +578,10 @@ this course; the talk is the right starting point for the curious.
 
 :::
 
-## Closing the course
+## The course, end to end
 
-This is the last lecture, and the safety story has come a long way
-since `let x = 1`.
+We are one lecture from the end of the course, and the safety
+story has come a long way since `let x = 1`.
 
 In [M01](M01-L02-why-fp.html) we argued that values and types are
 the unit of reasoning in OCaml. In M02 to M08 we built the core
@@ -606,11 +616,10 @@ gives back the inter-application isolation; OCaml gives back the
 intra-application safety. The result is a coherent, minimal, fast,
 auditable platform.
 
-That is the journey, end to end. Thirty hours of lecture, a hundred
-runnable cells, several hundred quizzes, two textbook chapters in
-each lecture: all of it adds up to one idea, that safety is something
-you can *build into* your software at every level if you take the
-language seriously.
+That is the journey, end to end. Twelve modules of lectures,
+runnable cells, and quizzes: all of it adds up to one idea, that
+safety is something you can *build into* your software at every
+level if you take the language seriously.
 
 :::slide
 
@@ -644,9 +653,10 @@ on KVM. The build produces an ELF image (`dist/<name>.hvt`); you
 run it with `solo5-hvt -- dist/<name>.hvt`, which starts a KVM VM
 whose only contents are this unikernel. There is no Linux guest
 inside the VM; the unikernel *is* the OS. Containers share the host
-kernel and would not give us the isolation guarantees M12-L03
-discussed; bytecode is the development backend, not the production
-one.
+kernel and would not give us the isolation guarantees the
+virtualisation lecture established; bytecode plays no role in the
+pipeline, since even the development backend
+(`mirage configure -t unix`) is a native-compiled Unix executable.
 :::
 
 :::quiz mcq id=M12-L05-q2
@@ -656,16 +666,19 @@ in a way that conventional TLS libraries typically are not?
 - [ ] It runs ten times faster than OpenSSL.
 - [ ] It is written in a much smaller number of lines.
 - [x] The same pure OCaml code drives the server, generates test
-  oracles, and validates against recorded TLS traces; the
-  cryptographic primitives are extracted from machine-checked Rocq
-  proofs (Fiat-Crypto); and the protocol state machine is encoded
-  in types so invalid transitions are unrepresentable.
+  oracles, and validates against recorded TLS traces; the protocol
+  state machine is encoded in types so invalid transitions are
+  unrepresentable; and today's mirage-crypto stack extracts its
+  elliptic-curve primitives from machine-checked Rocq proofs
+  (Fiat-Crypto).
 - [ ] It is written by a different vendor from OpenSSL.
 
-**Why:** the three engineering moves listed are precisely what the
-USENIX Security 2015 paper documents. The result is a stack whose
-correctness story is fundamentally different from "we wrote it
-carefully": it is "we built the abstractions so the bugs cannot
+**Why:** the first two engineering moves are what the USENIX
+Security 2015 paper documents (its crypto provider was `nocrypto`,
+a clean-slate OCaml library); the Rocq-extracted primitives came
+later, in the successor mirage-crypto stack. The result is a stack
+whose correctness story is fundamentally different from "we wrote
+it carefully": it is "we built the abstractions so the bugs cannot
 occur." Speed and size are secondary; the safety argument is the
 news.
 :::
@@ -682,8 +695,8 @@ TLS libraries are not.
 - `mirage configure -t hvt && make` produces a **statically-linked
   ELF** that runs as a **KVM VM via Solo5**.
 - OCaml-TLS's rigorous engineering: same pure code drives prod,
-  tests, and oracle; crypto from Rocq; types encode the state
-  machine.
+  tests, and oracle; types encode the state machine; today's
+  crypto adds Rocq-extracted primitives.
 
 :::
 
@@ -714,6 +727,27 @@ stdout (in the Unix backend) or via Solo5's console output (in the
 hvt backend). Production deployments capture those logs the same
 way they capture any container's stdout.
 
+## What's next
+
+The final lecture is the hands-on companion to this one: **Bob
+the Bin Man**, one small HTTP unikernel walked end to end. You
+will see the two files you actually write (`unikernel.ml` and
+`config.ml`), the artefacts `mirage configure` generates, the
+`dune build` that links the static ELF, the `solo5-hvt` boot, a
+`curl` against the running VM, and the footprint numbers that
+fall out.
+
+:::slide
+
+## What's next
+
+- Lecture 6: **Bob the Bin Man**, one unikernel end to end.
+  - `unikernel.ml` + `config.ml`: the two files you write.
+  - `mirage configure -t hvt`, `make`: the build.
+  - `solo5-hvt`: boot it, `curl` it, measure it.
+
+:::
+
 ## Reading
 
 - **MirageOS project home**: <https://mirage.io/>
@@ -726,7 +760,8 @@ way they capture any container's stdout.
   <https://www.usenix.org/system/files/conference/usenixsecurity15/sec15-paper-kaloper-mersinjak.pdf>
 - **Robur**, a non-profit deploying MirageOS in production:
   <https://robur.coop/>
-- **Fiat-Crypto** (Rocq-extracted cryptographic primitives):
+- **Fiat-Crypto** (Rocq-extracted cryptographic primitives, used
+  by mirage-crypto for its elliptic curves):
   <https://github.com/mit-plv/fiat-crypto>
 - KC Sivaramakrishnan, *Securing the foundations* (CAIR / DRDO,
   Nov 2024), for the hardware-assisted-unikernels pointer.

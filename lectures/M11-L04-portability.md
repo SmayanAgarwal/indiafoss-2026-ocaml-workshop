@@ -69,7 +69,7 @@ reaches runtime, because the program never compiles.
 
 ## Where we are
 
-- M11-L01 to L04: the resource axes. Locality, uniqueness,
+- M11-L01 to L03: the resource axes. Locality, uniqueness,
   linearity.
 - This lecture (M11-L04): **portability**. Which values may
   cross a domain boundary.
@@ -157,7 +157,7 @@ let gensym =
 
 Remove any one ingredient and the race disappears. OxCaml's plan:
 attack ingredient 2 with **portability** (this lecture) and
-ingredient 3 with **contention** (M11-L05).
+ingredient 3 with **contention** (next lecture).
 
 :::
 
@@ -346,7 +346,8 @@ let _ = Domain.Safe.spawn (fun () -> gensym_atomic "x")
 Same error shape as before. Why?
 
 The reason is that `Atomic.t` from the standard library
-mode-crosses the **contention** axis (the topic of M11-L05): it is
+mode-crosses the **contention** axis (the topic of the next
+lecture): it is
 safe to access concurrently from many domains without locking.
 But it does *not* mode-cross the **portability** axis. A closure
 capturing a top-level `Atomic.t` is still capturing thread-local
@@ -371,7 +372,7 @@ let gensym_atomic =
 
 - Runtime race: gone. Atomic increments serialise.
 - Compile-time portability: still rejected.
-- `Atomic.t` mode-crosses *contention* (M11-L05).
+- `Atomic.t` mode-crosses *contention* (next lecture).
 - It does *not* mode-cross *portability*.
 
 The closure still captures a top-level mutable cell, so the
@@ -515,8 +516,10 @@ let factorial_portable n =
 ```
 
 Here `loop` is portable: it captures nothing from outside. It
-accepts `a` as a parameter at mode `@ uncontended` and mutates it
-freely. The caller (the outer function) holds `a` and passes it
+accepts `a` as a parameter at mode `@ uncontended` (vocabulary
+from the *contention* axis, the next lecture's topic; here it
+just means the parameter may be freely read and written) and
+mutates it freely. The caller (the outer function) holds `a` and passes it
 in. This split is the way to write portable callbacks that still
 need to read or write to a mutable accumulator.
 
@@ -630,8 +633,8 @@ through, because there is nothing mutable to race on.
 **Pitfall 3: "Portability and contention are the same axis."**
 They are not. Portability tracks crossing domain boundaries (the
 closure goes to another domain). Contention tracks how a value
-is accessed (one domain or many). M11-L05 develops the contention
-axis on its own terms.
+is accessed (one domain or many). The next lecture develops the
+contention axis on its own terms.
 
 **Pitfall 4: "I can mutate a parameter inside a portable
 closure."** Yes; portability constrains captures, not parameters.
@@ -650,16 +653,18 @@ and mutate it freely.
 - Cost: zero. The runtime is exactly what you would write
   by hand.
 
-The next axis (contention, M11-L05) attacks race ingredient 3.
+The next axis (contention, next lecture) attacks race
+ingredient 3.
 
 :::
 
 ## What's next
 
-The next lecture (M11-L05) is **contention**, the other half of
+The next lecture is **contention**, the other half of
 the data-race-freedom story: portability decided whether a value
 may reach another domain; contention decides what any domain may
-do with a value once it is shared. Then M11-L06 is the tutorial
+do with a value once it is shared. The module then closes with
+the tutorial
 that combines the resource axes (locality, uniqueness, linearity)
 with portability and contention in a single API.
 
@@ -692,6 +697,6 @@ stdlib-vs-`Portable.Atomic` story, and the
 captures-versus-parameters explanation are adapted from the
 CS6868 OxCaml handout, Part 2 (the instructor's own teaching
 material, freely reusable). The framing as a sequel to
-M11-L01's locality is original to this course. See
+the locality lecture is original to this course. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

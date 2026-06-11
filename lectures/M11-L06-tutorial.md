@@ -225,9 +225,11 @@ is what lets the string component escape further.
 Third, `close` does not return a fresh handle, and does not need
 `exclave_`. The handle is consumed; nothing flows back.
 
-Fourth, mutation of `t.pos` is fine because `t` is `once` at the
-function boundary: the compiler knows there is no parallel reader
-or writer.
+Fourth, mutation of `t.pos` is fine because `t` arrives at the
+default `uncontended` mode on the contention axis: the function
+has exclusive access, so reads and writes of its mutable fields
+are allowed. (`once` is not what licenses the write; linearity
+only guarantees that a second *use* of the handle is rejected.)
 
 The implementation type-checks against the signature. The compiler
 verifies that each function respects the mode annotations:
@@ -755,6 +757,8 @@ let () =
 ```
 :::
 
+:::solution
+
 The intended answer looks roughly like this (the test cell only
 checks that the right modes appear on each line; you can phrase
 the types however you like, but each operation should accept a
@@ -807,25 +811,27 @@ listed.
 
 :::
 
+:::
+
 ## Module summary
 
 We have spent the module on five OxCaml mode axes:
 
-- **Locality** (M11-L01): tracks whether a value escapes its
+- **Locality**: tracks whether a value escapes its
   scope. Replaces the C `return &x` bug. Lets you stack-allocate
   short-lived values safely.
-- **Uniqueness** (M11-L02): tracks whether a value has been
+- **Uniqueness**: tracks whether a value has been
   aliased in the past. Replaces use-after-free and double-free for
   manually managed resources. Gives modular reasoning from
   signatures alone.
-- **Linearity** (M11-L03): tracks whether a value will be used
+- **Linearity**: tracks whether a value will be used
   again in the future. Replaces use-after-close and double-close
   (and is honest about the leak: at most once, not exactly once).
   Provides the protocol vocabulary for resource APIs.
-- **Portability** (M11-L04): tracks whether a value can cross
+- **Portability**: tracks whether a value can cross
   a domain boundary. Closures that mutate captured state are
   `nonportable`; `Domain.Safe.spawn` requires `portable`.
-- **Contention** (M11-L05): tracks whether a value is being
+- **Contention**: tracks whether a value is being
   shared across domains. `Atomic.t` mode-crosses contention so it
   can be hammered on by many domains safely.
 
@@ -905,8 +911,11 @@ next module's operating systems.
   <https://github.com/kayceesrk/cs6868_s26>
 - **OxCaml ICFP 2025 tutorial**, the hands-on exercises:
   <https://github.com/oxcaml/tutorial-icfp25>
-- The two blog posts that anchored M11-L01 and M11-L03 / L05
-  (linked in those lectures).
+- The blog posts that anchored the locality lecture (Jane
+  Street's *Oxidizing OCaml: locality*) and the uniqueness and
+  linearity lectures (KC Sivaramakrishnan's *Uniqueness for
+  behavioural types* and *Linearity and uniqueness*), linked in
+  those lectures.
 
 ## Sources
 

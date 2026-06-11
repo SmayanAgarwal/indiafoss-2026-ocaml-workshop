@@ -1070,8 +1070,9 @@ boxed-float computation deep in the call graph will still allocate.
 
 **Pitfall 4: "Locality and reference-counting / linear types are
 the same thing."** They are not. Locality is about *scope*: where
-does this value live? Linearity (M11-L04) is about *number of
-uses*: how many times can this be invoked? Some C++ / Rust idioms
+does this value live? Linearity (see
+[the linearity lecture](M11-L03-linearity.html)) is about *number
+of uses*: how many times can this be invoked? Some C++ / Rust idioms
 blur the two; OxCaml keeps them separate, on separate axes.
 
 ## What's next

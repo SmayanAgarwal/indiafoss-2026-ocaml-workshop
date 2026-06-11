@@ -39,9 +39,9 @@ The answer, by the end of the module, is yes: that is exactly what
 MirageOS does. ("Unikernel" is the name for the kind of artefact
 MirageOS produces: a single binary that contains the application
 *and* the operating-system pieces it needs, bundled together as one
-unit. We will define it carefully in the synthesis lecture
-M12-L05; for now, treat it as shorthand for "what we are building
-toward.") But to get there we first have to understand what an
+unit. We will define it carefully in the synthesis lecture on
+MirageOS; for now, treat it as shorthand for "what we are
+building toward.") But to get there we first have to understand what an
 operating system actually is, why monolithic kernels are so large, and
 where the security cost of that size lives. This first lecture sets up
 the problem the rest of the module solves. It is deliberately
@@ -274,7 +274,8 @@ is well-reviewed, the *total* attack surface grows mechanically
 with the codebase.
 
 The empirical evidence we will revisit in
-[M12-L04](M12-L04-ocaml-for-systems.html) is that for over a
+[the OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
+is that for over a
 decade roughly 70 percent of high-severity CVEs in major C/C++
 codebases (Microsoft, Chromium, Android) have been memory-safety
 bugs. That ratio has not budged despite enormous investment in
@@ -288,7 +289,7 @@ CVEs out the other end.
 
 - **~70%** of high-severity CVEs in major C/C++ codebases are
   memory-safety bugs (Microsoft 2019, Chromium 2020).
-- **~90%** for Android.
+- **76%** of Android's 2019 vulnerabilities (Google, 2022).
 - **~80%** of exploited 0-days, 2014 to 2019 (Fish in a Barrel).
 - The percentage has been flat for a decade.
 - More C in the TCB = more memory-safety CVEs.
@@ -350,7 +351,7 @@ newsgroup. Defending the monolithic design choice for Linux, he wrote:
 >
 > Linus Torvalds, 1992
 
-In 1992 the kernel was 200 KB compressed. Two and a half decades
+In 1992 the kernel was 200 KB compressed. Over three decades
 later, it is 30 million lines. The *kernel itself* is no longer a
 "minuscule part" of anything. It is the largest single component of
 the stack by an enormous margin, and most of that bulk is drivers for
@@ -406,7 +407,8 @@ application is the smallest piece. The kernel is the largest. And
 every line of code in the TCB is a line that, if compromised, can
 defeat the whole stack.
 
-We will see in [Module 12 Lecture 4](M12-L04-ocaml-for-systems.html)
+We will see in
+[the OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
 that the proportion of CVEs that come from memory safety bugs in
 TCB-level C code has been stuck at around 70 percent for over a
 decade, across multiple major vendors. The size of the TCB matters,
@@ -576,7 +578,7 @@ reducing the TCB. They are a packaging story, not a safety story.
 
 ## What's next
 
-The next lecture, M12-L02, takes the first ingredient of the recipe:
+The next lecture takes the first ingredient of the recipe:
 breaking the kernel into libraries. We will look at the history of
 library operating systems (Nemesis at Cambridge and Glasgow in the
 1990s, Exokernel at MIT around the same time), why those projects did

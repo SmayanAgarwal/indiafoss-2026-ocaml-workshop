@@ -28,11 +28,14 @@ reading:
 
 :::
 
-We have a library OS ([M12-L02](M12-L02-library-os.html)) that
+We have a library OS
+([the library-OS lecture](M12-L02-library-os.html)) that
 collapses the kernel into ordinary function calls and a hypervisor
-([M12-L03](M12-L03-virtualisation.html)) that isolates one library
+([the virtualisation lecture](M12-L03-virtualisation.html)) that
+isolates one library
 OS from another. Between them, two of the three problems from
-[M12-L01](M12-L01-why-an-os.html) are solved: the iceberg is gone
+[the opening lecture](M12-L01-why-an-os.html) are solved: the
+iceberg is gone
 (only the libraries you use ship in your image), and the
 cross-application protection boundary is back (the hypervisor
 provides it).
@@ -115,19 +118,22 @@ revisiting:
 - **The Chromium project, 2020**: in the high-severity bug bucket
   for Google's browser engine, **around 70 percent** are memory-
   safety problems, of which roughly half are use-after-free.
-- **Google Android, 2022**: of Android security vulnerabilities,
-  **around 90 percent** are memory-safety issues.
+- **Google Android, 2022**: per the *Memory Safe Languages in
+  Android 13* report, memory-safety bugs were **76 percent** of
+  Android's vulnerabilities in 2019, falling to 35 percent by
+  2022 as new code shifted to memory-safe languages.
 - **Fish in a Barrel project**: of *exploited zero-day*
   vulnerabilities tracked between 2014 and 2019, **roughly 80
   percent** were memory-safety bugs. The annual proportion swung
   between 45 percent and 100 percent year to year, but the total
   across the period was 87 of 108 exploited 0-days.
 
-We covered these numbers carefully in
-[M10-L02](M10-L01-memory-safety-and-security.html), and the four
+We covered these numbers carefully, and the four
 canonical bugs that drive them (use-after-free, buffer overflow,
-uninitialised read, double-free) in
-[M10-L01](M10-L01-memory-safety-and-security.html). The reason to re-encounter
+uninitialised read, double-free), in
+[the memory-safety-and-security
+lecture](M10-L01-memory-safety-and-security.html). The reason to
+re-encounter
 them here is that they are *the* argument for the third ingredient
 of MirageOS. If your TCB is mostly C, your TCB will keep producing
 memory-safety CVEs no matter how well-managed it is. The only
@@ -142,7 +148,7 @@ memory-safe.
   memory-safety bugs. Stable for over a decade.
 - **Chromium 2020**: ~70% high-severity, half of those use-
   after-free.
-- **Android 2022**: ~90% of security vulnerabilities.
+- **Android (Google 2022)**: 76% of 2019 vulnerabilities.
 - **Fish in a Barrel, 2014-2019**: ~80% of exploited 0-days.
 - **White House, Feb 2024**: "Future Software Should Be Memory
   Safe."
@@ -176,7 +182,9 @@ but it is worth re-anchoring the four pieces here.
 `free` in OCaml. The garbage collector reclaims memory only after
 every reference to it has gone out of scope. Use-after-free is not
 just unlikely; it is a category-error in the language. We saw in
-[M10-L01](M10-L01-memory-safety-and-security.html) that use-after-free is the
+[the memory-safety-and-security
+lecture](M10-L01-memory-safety-and-security.html) that
+use-after-free is the
 single most common source of high-severity browser CVEs.
 
 **Types eliminate aliasing-via-cast.** OCaml's type system is sound:
@@ -185,7 +193,8 @@ every value has one statically known type, and there is no way to
 safe code. The C `union`, the `void*` cast, the strict-aliasing
 violation, the type-confusion CVE: all of these are simply
 unexpressible. (The `Obj` module gives an unsafe escape; we cover
-when that matters in [M10-L04](M10-L04-where-ocaml-has-ub.html).)
+when that matters in
+[the lecture on where OCaml has UB](M10-L04-where-ocaml-has-ub.html).)
 
 **Exhaustive pattern matching catches null-deref.** The `option` type
 is the canonical case: every consumer of a value-that-might-be-
@@ -200,16 +209,19 @@ structures the application builds (lists, records, variants, tuples)
 cannot be mutated, so reasoning about whether some other piece of
 code might have changed your value while you weren't looking is
 unnecessary. We saw this in
-[M03-L02](M03-L02-recursion.html) and through Module 4.
+[the recursion lecture](M03-L02-recursion.html) and through
+Module 4.
 
 A handful of caveats are honest. OCaml has *some* internal UB,
 mostly in `Obj`, in `Marshal`, and in races on `ref` cells under
-multicore. [M10-L04](M10-L04-where-ocaml-has-ub.html) covers them;
+multicore.
+[The lecture on where OCaml has UB](M10-L04-where-ocaml-has-ub.html)
+covers them;
 the standard advice is to avoid those features in security-sensitive
 code, or to wrap them in audited library boundaries. Neither
 caveat undermines the basic claim: OCaml's TCB-relevant memory
 properties are dramatically better than C's, and the categories of
-bugs that drive the 70/80/90 percent statistics are essentially
+bugs that drive the 70-to-80 percent statistics are essentially
 impossible in safe OCaml.
 
 :::slide
@@ -223,7 +235,7 @@ impossible in safe OCaml.
 - **Immutability by default**: less aliasing to reason about.
 
 Honest caveats: `Obj.magic`, `Marshal`, ref races. Covered in
-[M10-L04](M10-L04-where-ocaml-has-ub.html).
+[the where-OCaml-has-UB lecture](M10-L04-where-ocaml-has-ub.html).
 
 :::
 
@@ -239,8 +251,9 @@ existence is the answer to "is this just a research toy?":
 
 - **Jane Street.** Probably the single largest deployment of OCaml in
   the world. Operates one of the largest equities trading
-  operations on Wall Street; reportedly about 20 percent of Wall
-  Street trade volume passes through systems written in OCaml.
+  operations on Wall Street; by some estimates a double-digit
+  share of US equity volume (and a larger share of ETF volume)
+  passes through systems written in OCaml.
   Maintains a fork of the compiler (which is the basis of OxCaml,
   the subject of Module 11) and contributes much of the upstream
   ecosystem.
@@ -249,8 +262,9 @@ existence is the answer to "is this just a research toy?":
   OCaml-multicore project.
 - **Bloomberg.** Internal financial-analytics infrastructure.
 - **Ahrefs.** SEO crawling and analytics infrastructure at scale.
-- **Docker.** The original `docker` CLI for Mac was an OCaml program
-  using a MirageOS-derived networking stack.
+- **Docker.** Docker for Mac ships VPNKit, the VM-to-host
+  networking layer, an OCaml program built from MirageOS
+  networking libraries.
 - **Tezos.** A production blockchain whose entire core protocol is
   written in OCaml.
 - **Facebook (Meta).** Multiple internal tools, including the Hack
@@ -259,7 +273,7 @@ existence is the answer to "is this just a research toy?":
   originally from the FBInfer team), all OCaml.
 - **Semgrep.** A widely-used code-analysis tool implemented largely
   in OCaml.
-- **SimCorp, Microsoft (parts of F\* and Lean tooling), CompCert
+- **SimCorp, Microsoft (parts of F\*), CompCert
   (the formally verified C compiler).** And more.
 
 This list matters because production OS work is hard, and using a
@@ -273,11 +287,11 @@ package manager (opam), and a community of professional engineers.
 
 ## OCaml is industrial
 
-- **Jane Street**: ~20% of Wall Street trade volume goes through
-  OCaml.
+- **Jane Street**: a double-digit share of US equity volume
+  through OCaml, by some estimates.
 - **Tarides**: maintains MirageOS, Irmin, ocaml-multicore.
-- **Bloomberg, Ahrefs, Docker, Tezos, Meta** (Hack, Flow, Pyre,
-  Infer), **Semgrep, SimCorp, CompCert, F\*, Lean tooling**,
+- **Bloomberg, Ahrefs, Docker (VPNKit), Tezos, Meta** (Hack,
+  Flow, Pyre, Infer), **Semgrep, SimCorp, CompCert, F\***,
   and more.
 - Working FFI to C, native code on x86 / ARM / Power / RISC-V,
   JavaScript and WebAssembly backends.
@@ -441,7 +455,8 @@ of C, maintained by the upstream OCaml team) plus a small set of
 audited FFI calls into Solo5 (~5,000 lines of C, maintained by the
 Solo5 project) and into the cryptography library (a few hundred lines
 of carefully-audited C extracted from Rocq, which we will see in
-[M12-L05](M12-L05-mirageos.html)). The C surface of a MirageOS
+[the MirageOS lecture](M12-L05-mirageos.html)). The C surface of
+a MirageOS
 unikernel is on the order of 40,000 lines, compared with Linux's
 30 million. Three orders of magnitude smaller. Same memory-safety
 risk per line of C, but a thousand times less C.
@@ -452,8 +467,8 @@ risk per line of C, but a thousand times less C.
 
 - **OCaml runtime in C**: ~30k lines, maintained upstream.
 - **Solo5 in C**: ~5k lines, maintained by the Solo5 project.
-- **Audited crypto C** (Fiat-Crypto extraction, see M12-L05): low
-  hundreds of lines.
+- **Audited crypto C** (Fiat-Crypto extraction, see the MirageOS
+  lecture): low hundreds of lines.
 
 Total **TCB-C ~ 40,000 lines**, vs Linux's **~30,000,000**.
 
@@ -505,7 +520,8 @@ unikernel constraints.
 
 ## Memory safety as first line of defence
 
-Recall from [M12-L03](M12-L03-virtualisation.html) that a
+Recall from
+[the virtualisation lecture](M12-L03-virtualisation.html) that a
 MirageOS unikernel runs inside a VM, and inside that VM there is
 no MMU boundary between the application and what used to be
 "kernel" code. The unikernel's code runs at the guest's highest
@@ -547,10 +563,10 @@ itself. Both are necessary; neither is sufficient.
 
 :::
 
-## Forward pointers: M10 and M11
+## Where the safety story came from
 
 The story of this lecture sits between two other modules that
-make the safety argument concrete. It is worth pointing forward
+make the safety argument concrete. It is worth pointing back
 to them explicitly, because their machinery is what gives
 MirageOS its safety budget:
 
@@ -576,15 +592,16 @@ that safety budget when you spend it on the OS itself.
 
 :::slide
 
-## Forward pointers to M10 and M11
+## Where the safety story came from
 
 - [**M10**](M10-L01-memory-safety-and-security.html): the four C memory
   bugs (UAF, BOF, uninit, double-free) ruled out by
   construction. MirageOS is what you build once the floor is
   gone.
 - [**M11**](M11-L01-locality.html): uniqueness modes
-  prevent UAF at the *type* level; linearity forces exactly-once
-  use; portability is compile-time data-race freedom.
+  prevent UAF at the *type* level; linearity makes a second use
+  unwritable (at most once); portability is compile-time
+  data-race freedom.
 - MirageOS spends the M10 + M11 safety budget at the OS layer.
 
 :::
@@ -605,7 +622,7 @@ are worth naming separately:
   allocation patterns, GC pauses sit in the sub-millisecond
   range. They are not zero, but they are small enough not to
   surprise the 99th-percentile latency that a server cares about.
-  The famous quote we reuse from M12-L04's GC discussion: *"if
+  The famous quote from the performance discussion above: *"if
   your application can tolerate 1 ms of latency, OCaml is a good
   fit."*
 
@@ -679,11 +696,12 @@ decade?
 
 - [ ] About 10 percent.
 - [ ] About 30 percent.
-- [x] About 70 to 90 percent, depending on the codebase.
+- [x] About 70 to 80 percent, depending on the codebase.
 - [ ] About 50 percent, evenly split between memory safety and
   logic bugs.
 
-**Why:** Microsoft reports ~70%, Chromium ~70%, Android ~90%, Fish-
+**Why:** Microsoft reports ~70%, Chromium ~70%, Android 76% in
+2019 (Google, 2022), and Fish-
 in-a-Barrel reports ~80% of exploited 0-days. The proportion has
 been stable for over a decade despite enormous investment in static
 analysis, fuzzing, and sandboxing of C code. This empirical
@@ -718,7 +736,7 @@ Q1: proportion of high-severity bugs in major C/C++ codebases
 that are memory-safety issues.
 Q2: relative HTTP throughput, OCaml `httpaf_eio` vs Rust Hyper.
 
-- **70-90% of high-severity CVEs** in major C/C++ codebases are
+- **70-80% of high-severity CVEs** in major C/C++ codebases are
   memory-safety bugs. Stable for over a decade.
 - OCaml's HTTP throughput is **competitive with Rust** and far
   above Go's stdlib.
@@ -751,15 +769,18 @@ unsafe surface is zero, it is that it is small.
 same memory-safe-languages bucket. The reason MirageOS is in OCaml is
 partly historical (the Cambridge / Tarides community), partly
 ecosystem (the existing libraries listed in
-[M12-L05](M12-L05-mirageos.html)), partly the natural fit between
+[the MirageOS lecture](M12-L05-mirageos.html)), partly the
+natural fit between
 OCaml's GC and the kind of long-running server workloads MirageOS
 targets. Both languages exist; neither needs to be wrong for the
 other to be right.
 
 ## What's next
 
-We have now seen the three ingredients separately. The last lecture,
-[M12-L05](M12-L05-mirageos.html), puts them together: MirageOS as the
+We have now seen the three ingredients separately. The next
+lecture,
+[the MirageOS synthesis](M12-L05-mirageos.html), puts them
+together: MirageOS as the
 sum of library OS plus virtualisation plus OCaml, with a walk-through
 of the compiler pipeline (`config.ml` to `mirage configure` to `dune
 build` to a static ELF binary), the available libraries, the TLS
@@ -804,8 +825,10 @@ House / CISA citations, OCaml's industrial pedigree, the web-server
 benchmark) follows KC Sivaramakrishnan's January 2025 IIT Madras
 talk *Towards smaller, safer, bespoke OSes with Unikernels*, slides
 19 to 26. The memory-safety statistics are drawn from public
-industry reports (Microsoft 2019, Chromium 2020, Android, Fish in
+industry reports (Microsoft 2019, Chromium 2020, Google's Android
+report 2022, Fish in
 a Barrel) that we covered with citations in
-[M10-L02](M10-L01-memory-safety-and-security.html). See
+[the memory-safety-and-security
+lecture](M10-L01-memory-safety-and-security.html). See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

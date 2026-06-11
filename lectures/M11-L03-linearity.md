@@ -624,7 +624,7 @@ OxCaml ships.
 - **OxCaml, 2024+**: linearity as one of five mode axes,
   cooperating with the rest.
 
-The intuition has been around for thirty-five years. The
+The intuition has been around for nearly four decades. The
 production deployment is recent.
 
 :::
@@ -700,6 +700,10 @@ force `once`.
 
 :::solution
 
+:::slide
+
+## Activity solution
+
 Q1: C is rejected. B threads the handle correctly (the ownership-chain
 shape). A *compiles* (the discarded final handle is a silent leak;
 at-most-once has no opinion on zero uses). C reads the *original* `t`
@@ -717,6 +721,8 @@ let c () =
 
 Q2: a closure that captures a `once` value itself becomes `once`;
 capturing is enough to downgrade it.
+
+:::
 
 :::
 
@@ -739,21 +745,26 @@ type is `t @ once` produces a once-handle for the caller to
 consume; the caller must respect the discipline or the program
 fails to type-check.
 
-**Pitfall 4: "Linearity prevents efficient mutation."** Quite the
-opposite: a `once`-mode binding can be safely destructively
-updated in place, because the compiler has guaranteed there is no
-later use. Linearity *enables* in-place updates that would
-otherwise be unsafe.
+**Pitfall 4: "A `once` value can be safely updated in place,
+since no one will use it later."** That safety story belongs to
+*uniqueness* (see [the uniqueness
+lecture](M11-L02-uniqueness.html)): in-place update is safe when
+the compiler has proven there are *no other references*. `once`
+proves less. It guarantees a second *use* of this binding is
+rejected, but aliases made before the value became `once` may
+still exist, so linearity alone does not license destructive
+update. And recall the affine softening: dropping a `once` value
+without ever using it is not caught either.
 
 ## What's next
 
 With the three resource axes in hand (locality, uniqueness, and
 now linearity), the module turns to concurrency. The next lecture
-(M11-L04) is **portability**: which values may cross a domain
-boundary at all. Its sibling **contention** (M11-L05) governs how
+is **portability**: which values may cross a domain
+boundary at all. Its sibling **contention** governs how
 a value may be touched once it is shared. The two together
 deliver compile-time data-race freedom, and the tutorial
-(M11-L06) then combines the axes in one resource-management API.
+then combines the axes in one resource-management API.
 
 :::slide
 

@@ -6,7 +6,7 @@ duration_target_min: 22
 concepts: [unikernel walkthrough, mirage configure, dune build, solo5-hvt, deployment footprint, HTTP unikernel, end-to-end MirageOS]
 keywords: [OCaml, MirageOS, unikernel, Bob the Bin Man, mirage configure, solo5-hvt, HTTP unikernel, dune build, robur]
 activity_question: "Given the Bob unikernel that responds to GET / with a plain-text bin-day reminder, what changes if you want it to instead return JSON on /api/next and keep a plain-text /? Which file in the unikernel changes; which build artifacts have to be regenerated?"
-think_about_this: "The previous lecture (M12-L05) walked through what MirageOS is and what ships with it. What does it actually feel like to build, run, and inspect one? What is the smallest unit of running software you can deploy, and what compromises do you make to get there?"
+think_about_this: "The previous lecture walked through what MirageOS is and what ships with it. What does it actually feel like to build, run, and inspect one? What is the smallest unit of running software you can deploy, and what compromises do you make to get there?"
 reading:
   - title: "MirageOS project home"
     url: https://mirage.io/
@@ -30,15 +30,15 @@ reading:
 
 :::
 
-[Lecture 5](M12-L05-mirageos.html) walked you through what
+[The previous lecture](M12-L05-mirageos.html) walked you through what
 MirageOS is, what its compiler pipeline does, and what libraries
 ship with it. This lecture is the companion: one small unikernel
 walked end to end, from the `unikernel.ml` you write through the
 build commands you run to the running VM that serves a request.
 
-The example is a unikernel I will call **Bob the Bin Man**, after
-the small "bin-day reminder" service that has become a running
-joke in the MirageOS community. The shape of the service is
+The example is a unikernel I will call **Bob the Bin Man**: a
+small "bin-day reminder" service invented for this course as a
+worked example. The shape of the service is
 simple: an HTTP endpoint that, when you hit it with `curl`,
 returns a one-line text answer telling you when the next bin
 collection is. The point of the example is not the bin schedule;
@@ -110,8 +110,6 @@ chosen backend.
 The application body (lightly elided to fit on a slide) is:
 
 ```text
-open Lwt.Infix
-
 module Bob (Http : Cohttp_mirage.Server.S) = struct
   let next_pickup_text =
     "Next bin pickup: Tuesday."
@@ -125,7 +123,7 @@ module Bob (Http : Cohttp_mirage.Server.S) = struct
   let start http =
     let port = 8080 in
     let server = Http.make ~callback:handler () in
-    Http.listen http (`TCP port) server
+    http (`TCP port) server
 end
 ```
 
@@ -137,7 +135,11 @@ A few things to notice without running the code:
 - `handler` is a plain function with no global state. Every
   request is independent.
 - `start` is the entry point. The generated `main.ml` (which
-  you do not write) calls it once at boot.
+  you do not write) calls it once at boot. Its lowercase `http`
+  argument *is* the listen function the platform hands in:
+  applying it to a port specification and a server configuration
+  is what starts the service. (This is the shape the
+  mirage-skeleton HTTP examples use.)
 - There is no `main`, no `if __name__ == "__main__"`, no shell
   parsing of `argv`. The unikernel image *is* the program.
 
@@ -146,8 +148,6 @@ A few things to notice without running the code:
 ## `unikernel.ml`
 
 ```text
-open Lwt.Infix
-
 module Bob (Http : Cohttp_mirage.Server.S) = struct
   let next_pickup_text =
     "Next bin pickup: Tuesday."
@@ -161,12 +161,13 @@ module Bob (Http : Cohttp_mirage.Server.S) = struct
   let start http =
     let port = 8080 in
     let server = Http.make ~callback:handler () in
-    Http.listen http (`TCP port) server
+    http (`TCP port) server
 end
 ```
 
 - Functor over `Cohttp_mirage.Server.S`.
 - Pure handler; one entry point.
+- The `http` argument of `start` *is* the listen function.
 - No `main`, no shell, no `argv`.
 
 :::
@@ -187,7 +188,7 @@ let http_srv =
 
 let main =
   main "Unikernel.Bob"
-    (cohttp_server @-> job)
+    (http @-> job)
 
 let () =
   register "bob"
@@ -199,10 +200,14 @@ What this file is telling the `mirage` build tool:
 - "I need a generic IPv4/IPv6 network stack on top of the default
   network device."
 - "Layer a plain HTTP server on top of that stack (no TLS for
-  this minimal example)."
-- "The application functor is `Unikernel.Bob`, parameterised
-  over the HTTP server signature."
-- "Register the resulting unikernel under the name `bob`."
+  this minimal example)." That is `http_srv`, the concrete
+  *implementation*.
+- "The application functor is `Unikernel.Bob`, and its *type* is
+  `http @-> job`: give it something satisfying the HTTP-server
+  signature (`http` is the type witness, not an implementation)
+  and you get a runnable unikernel (`job`)."
+- "Register the unikernel under the name `bob`, plugging the
+  concrete `http_srv` into the functor with `$`."
 
 This is *not* the application; it is the wiring diagram. The
 `mirage` tool will read it, work out which packages need to be
@@ -223,7 +228,7 @@ let http_srv =
 
 let main =
   main "Unikernel.Bob"
-    (cohttp_server @-> job)
+    (http @-> job)
 
 let () =
   register "bob"
@@ -233,6 +238,8 @@ let () =
 - The **wiring diagram**, not the application.
 - "Generic v4/v6 stack on the default network, plain HTTP on
   top, hand it to `Unikernel.Bob`."
+- `http @-> job` is the functor's *type* (`http` is a witness).
+  - `main $ http_srv` plugs in the *implementation*.
 
 :::
 
@@ -303,7 +310,7 @@ dune build --root . --profile release
 $ ls dist/
 bob.hvt
 $ file dist/bob.hvt
-dist/bob.hvt: ELF 64-bit LSB executable, x86-64, static-pie
+dist/bob.hvt: ELF 64-bit LSB executable, x86-64, statically linked
 $ ls -lh dist/bob.hvt
 -rwxr-xr-x  1 kc kc  6.4M  bob.hvt
 ```
@@ -377,7 +384,7 @@ Solo5: Memory map: 128 MB addressable:
 ```
 
 - `solo5-hvt` is the **KVM-backed Solo5 tender** from
-  [M12-L03](M12-L03-virtualisation.html).
+  [the virtualisation lecture](M12-L03-virtualisation.html).
 - `--net:service=tap0` wires Bob's virtual NIC to the host's
   `tap0`.
 - Boot to listening: **~30 ms** on this host.
@@ -434,10 +441,10 @@ Putting the operational numbers in one place:
 
 The "Bob" column is a single unikernel image. The "Typical Linux"
 column is a stock cloud VM running a containerised version of the
-same app. The footprint difference is three orders of magnitude
-on RAM and boot time, and two orders of magnitude on disk. The
-attack-surface difference is in the same direction: Bob has one
-process, one open port, and no shell.
+same app. By these numbers the footprint difference is roughly an
+order of magnitude on disk and RAM, and two to three orders of
+magnitude on boot time. The attack-surface difference points the
+same way: Bob has one process, one open port, and no shell.
 
 :::slide
 
@@ -452,7 +459,7 @@ process, one open port, and no shell.
 | Open ports | 1 | several |
 | Shell | none | yes |
 
-Three orders of magnitude smaller, in roughly every dimension.
+Roughly 10x smaller on disk and RAM; 100-1000x faster to boot.
 
 :::
 
@@ -466,8 +473,8 @@ MirageOS library:
   HTTP. Flip `~tls:false` to a `~tls:true` configuration in
   `config.ml`, ship a certificate and key as `mirage-kv`
   read-only key-value stores, and the build pulls in
-  `ocaml-tls` (the [M12-L05 rigorous-engineering
-  case study](M12-L05-mirageos.html)).
+  `ocaml-tls` (the rigorous-engineering case study of
+  [the MirageOS lecture](M12-L05-mirageos.html)).
 - **Persistent storage**, if Bob needs to remember anything
   across restarts. `mirage-block` (the Solo5 block device) plus
   a tiny on-disk format (or `irmin`, the MirageOS git-style
@@ -519,9 +526,9 @@ cluster's storage nodes. The trade is a sharp one and it pays
 off in exactly the place we have been pointing at: long-running,
 single-purpose, security-sensitive network services.
 
-That is the journey of Module 12: from the iceberg in
-[M12-L01](M12-L01-why-an-os.html) to a 6 MiB binary that boots
-in 30 ms.
+That is the journey of Module 12: from the iceberg of
+[the opening lecture](M12-L01-why-an-os.html) to a 6 MiB binary
+that boots in 30 ms.
 
 :::slide
 
@@ -644,17 +651,19 @@ there is no host kernel to expose one.
   <https://github.com/mirage/mirage-skeleton>
 - **Robur**, a non-profit deploying MirageOS in production:
   <https://robur.coop/>
-- **Solo5**, the unikernel tender (see M12-L03):
-  <https://github.com/Solo5/solo5>
-- The full Bob skeleton (with TLS and storage variants) lives
-  in `mirage-skeleton`'s `applications/` directory.
+- **Solo5**, the unikernel tender (see the virtualisation
+  lecture): <https://github.com/Solo5/solo5>
+- Bob itself is a course-built example. The closest real
+  starting points are `mirage-skeleton`'s HTTP example
+  (`applications/static_website_tls`, the cohttp static-website
+  unikernel) and its `tutorial/` unikernels.
 
 ## Sources
 
 This lecture's prose, code excerpts, and quizzes are original to
-this course. The framing "Bob the Bin Man" is community-folklore
-shorthand in the MirageOS world for a tiny worked example; the
-specific code skeleton above is built around the standard
+this course. The "Bob the Bin Man" framing and the bin-day
+service are invented for this course as a tiny worked example;
+the specific code skeleton above is built around the standard
 `mirage-skeleton` HTTP examples and follows the same pipeline KC
 Sivaramakrishnan's January 2025 IIT Madras talk *Towards smaller,
 safer, bespoke OSes with Unikernels* uses for the Hello Unikernel

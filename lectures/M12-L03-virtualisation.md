@@ -42,7 +42,8 @@ different* boundary, one level up: the guest-host boundary enforced
 by the hypervisor. That boundary is just as strong as the old
 user-kernel one, but it isolates *whole guest OSes* from each other
 rather than processes from a kernel. If we treat each library-OS
-image as a guest VM, the isolation problem from M12-L02 goes away,
+image as a guest VM, the last lecture's isolation problem goes
+away,
 and the driver problem largely goes away too because the host's
 hypervisor can take care of the heterogeneous hardware and expose a
 small, stable virtual-device interface that the library OS speaks.
@@ -80,12 +81,15 @@ environment with what looks, to its guest OS, like its own CPU, its
 own memory, its own disks, and its own network cards.
 
 The hardware support that makes modern virtualisation cheap arrived in
-the early 2000s. Intel added VT-x; AMD added AMD-V. These extensions
+the mid-2000s. Intel added VT-x (2005); AMD added AMD-V (2006).
+These extensions
 gave the CPU a new privilege level above the conventional kernel
-ring, plus a hardware-managed page-table layer (extended page tables,
-or EPT, on Intel; rapid virtualisation indexing, RVI, on AMD), so the
+ring, so the
 hypervisor could enforce isolation between guests with very little
-runtime overhead. Before these extensions, software-only virtualisation
+runtime overhead. A hardware-managed page-table layer followed a
+couple of years later (extended page tables,
+or EPT, on Intel; rapid virtualisation indexing, RVI, on AMD),
+removing the last big software cost, shadow page tables. Before these extensions, software-only virtualisation
 existed (think VMware in the late 1990s) but it required heroic
 binary translation and was not cheap. After the hardware extensions,
 running a guest OS on a hypervisor costs only a few percent more than
@@ -102,7 +106,8 @@ guest OSes on a hypervisor.
 
 ## Virtualisation in one paragraph
 
-- Hardware extensions in the 2000s (Intel VT-x, AMD-V) made it cheap.
+- Hardware extensions in the mid-2000s (Intel VT-x, AMD-V) made
+  it cheap.
 - A **hypervisor** (also called a **VMM**) creates and runs virtual
   machines.
 - Multiple VMs share one physical machine, **isolated by the
@@ -257,7 +262,8 @@ unmodified on KVM, Xen, and several other hypervisors that all
 implement VirtIO. Second, because the VirtIO interface is *small and
 stable*, MirageOS only needs to implement drivers for VirtIO devices,
 not for the long tail of real hardware. The driver-burden problem
-from M12-L02 largely evaporates: the host hypervisor (or Solo5) does
+from the library-OS lecture largely evaporates: the host
+hypervisor (or Solo5) does
 the hard work of talking to the actual network card, and the
 unikernel only needs to talk to the abstract VirtIO ring.
 
@@ -270,7 +276,7 @@ unikernel only needs to talk to the abstract VirtIO ring.
 - Guest's "driver" is small, fast, hypervisor-agnostic.
 - **MirageOS unikernels target VirtIO**, which means:
   - One driver implementation works across KVM, Xen, etc.
-  - **The driver-burden problem from M12-L02 mostly goes away.**
+  - **The library-OS driver burden mostly goes away.**
 
 :::
 
@@ -279,8 +285,8 @@ unikernel only needs to talk to the abstract VirtIO ring.
 We can now answer the question the activity-question of this lecture
 opens with: if a library OS has no internal MMU protection, how is it
 secure? The answer is that *inside* one unikernel image there is no
-internal isolation, and OCaml's type system has to do that job (this
-is M12-L04's argument). *Between* unikernel images, the hypervisor's
+internal isolation, and OCaml's type system has to do that job (the
+next lecture's argument). *Between* unikernel images, the hypervisor's
 guest-host boundary provides isolation just as strong as the
 conventional user-kernel boundary, and arguably stronger because the
 hypervisor's API surface is much smaller than the Linux syscall
@@ -308,12 +314,14 @@ and that single driver suite works against every modern hypervisor.
 the whole "There is no kernel protection internally, and device
 drivers all need to be rewritten from a normal kernel" line is struck
 through in red, signalling that virtualisation (and the OCaml
-ingredient in M12-L04) collectively close out both
+ingredient in the next lecture) collectively close out both
 halves.](/assets/m12/figures/slide-23-memory-safety-strikethrough.svg)
 
 The figure above is the talk's "strike through the con" beat: the
-same Cons sentence M12-L02 ended on is reproduced and crossed out
-once virtualisation (this lecture) and language safety (M12-L04) are
+same Cons sentence the library-OS lecture ended on is reproduced
+and crossed out
+once virtualisation (this lecture) and language safety (the next
+lecture) are
 both in hand.
 
 :::slide
@@ -325,7 +333,7 @@ both in hand.
 - **Driver burden**: drastically reduced. Implement VirtIO drivers
   once; they work on KVM, Xen, anything VirtIO-aware.
 
-The original M12-L02 cons:
+The original library-OS cons:
 
 > Cons: There is no kernel protection internally,
 > ~~and device drivers all need to be rewritten from a normal kernel.~~
@@ -361,7 +369,7 @@ target. The unikernel image is an ELF binary compiled to talk to
 Solo5's small ABI; Solo5 sets up the VM (or the seccomp sandbox), maps
 the memory, attaches the virtual network and disk, and jumps into the
 unikernel's entry point. We will look at exactly this in
-[M12-L05](M12-L05-mirageos.html).
+[the MirageOS lecture](M12-L05-mirageos.html).
 
 :::slide
 
@@ -434,7 +442,8 @@ isolation* between the unikernel and the host:
 | `solo5-muen` | Muen separation kernel | High-assurance / formally verified hosts. |
 | `solo5-xen` | Xen hypervisor | Xen-based clouds and historic Xen deployments. |
 
-Picking the backend at build time is the M12-L05 specialisation
+Picking the backend at build time is the MirageOS lecture's
+specialisation
 story: `mirage configure -t hvt` produces the KVM image,
 `mirage configure -t spt` produces the seccomp-sandboxed image,
 and so on. The application code does not change.
@@ -473,8 +482,9 @@ one you should picture by default. The reasons are practical:
 
 In short, "MirageOS unikernel in production" almost always means
 "`solo5-hvt` on KVM on some Linux host." We will assume this
-combination by default in [M12-L05](M12-L05-mirageos.html) and
-[M12-L06](M12-L06-bob-the-bin-man.html).
+combination by default in
+[the MirageOS lecture](M12-L05-mirageos.html) and
+[the Bob unikernel walkthrough](M12-L06-bob-the-bin-man.html).
 
 :::slide
 
@@ -555,7 +565,8 @@ distribution."
 ## Activity
 
 :::quiz mcq id=M12-L03-q1
-The conventional library-OS criticism from M12-L02 was that it has no
+The conventional library-OS criticism from the previous lecture
+was that it has no
 internal kernel protection and that device drivers all need to be
 rewritten. Which of the following best describes how adding
 virtualisation changes those criticisms?
@@ -573,7 +584,8 @@ virtualisation changes those criticisms?
 
 **Why:** the hypervisor isolates *guests* from each other, not parts
 *within* one guest; for protection inside one unikernel we still need
-the type-system story from M12-L04. The driver problem is reduced to
+the type-system story from the next lecture. The driver problem
+is reduced to
 "implement VirtIO once," which is feasible. The combination of
 library-OS plus virtualisation is genuinely deployable; adding OCaml
 gives us the third ingredient.
@@ -646,7 +658,8 @@ and skips the syscall boundary entirely.
 ## What's next
 
 We have now seen two of the three ingredients. The third, in
-[M12-L04](M12-L04-ocaml-for-systems.html), is OCaml itself. The
+[the next lecture](M12-L04-ocaml-for-systems.html), is OCaml
+itself. The
 question that lecture answers: given that the library-OS approach
 gives up the internal MMU boundary, what *does* protect one part of
 the unikernel from another? The answer is: a memory-safe language
