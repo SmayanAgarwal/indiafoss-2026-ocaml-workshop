@@ -1180,7 +1180,10 @@ The body of the test should be a function `xs -> bool` returning
 
 ```ocaml
 let test_concat_empty_right =
-  failwith "not implemented"
+  QCheck.Test.make
+    ~name:"empty is right identity for @"
+    QCheck.(list int)
+    (fun _xs -> failwith "not implemented")
 ```
 
 ```ocaml skip

@@ -2,7 +2,25 @@
 ; ocaml-mdx. Each `ocaml` fenced block in a .md file is compiled
 ; and (where applicable) evaluated.
 
+; Cap the bytecode stack for the mdx runs (the limit is in words).
+; The browser worker overflows at ~3-10k frames, so lecture demos
+; that rely on Stack_overflow (e.g. the buggy mergesort in
+; M09-L05) trip it instantly there; with the native default limit
+; the same demo grows the stack for minutes (the GC rescans the
+; ever-deeper stack on every minor collection) before overflowing,
+; once per QCheck shrink step. 200k words still allows ~25k-deep
+; recursion, far beyond anything a legitimate cell needs.
+(env
+ (_
+  (env-vars
+   (OCAMLRUNPARAM "l=200000"))))
+
+; A single stanza: dune allows only one mdx toplevel per directory.
+; The libraries are needed by the M09 cells only (the browser pages
+; load them via m09-extras.js); linking them is harmless for M01-M08.
 (mdx
+ (libraries qcheck-core qcheck ounit2 ounit2.advanced)
+ (preludes mdx_prelude.ml)
  (files
   M01-L01-course-intro.md
   M01-L02-why-fp.md
@@ -57,4 +75,11 @@
   M08-L05-gadts-use-cases.md
   M08-L06-hlists-witnesses.md
   M08-L07-tutorial.md
-  M08-L08-practice.md))
+  M08-L08-practice.md
+  M09-L01-why-test-typed-code.md
+  M09-L02-specifications-invariants.md
+  M09-L03-test-design.md
+  M09-L04-unit-testing.md
+  M09-L05-property-based-testing.md
+  M09-L06-model-based-testing.md
+  M09-L07-tutorial.md))

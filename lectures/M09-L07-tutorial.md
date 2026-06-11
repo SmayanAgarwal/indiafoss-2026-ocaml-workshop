@@ -1171,7 +1171,11 @@ let same_float a b =
   (Float.is_nan a && Float.is_nan b) || a = b
 
 let test_neg_anchored =
-  failwith "TODO: same_float (eval (Neg e)) (-. (eval e))"
+  QCheck.Test.make
+    ~name:"eval (Neg e) = -. (eval e)"
+    ~count:1000
+    (QCheck.make (gen_expr 4))
+    (fun _e -> failwith "TODO: same_float (eval (Neg e)) (-. (eval e))")
 ```
 
 ```ocaml skip
