@@ -60,6 +60,15 @@ _references/textbooks/
 # Reference papers (LaTeX sources, PDFs, supporting assets): consulted
 # during authoring, not part of the course content.
 _references/profiling_a_programming_language/
+_references/PLDI18-Memory/
+_references/cs6868_s26/
+_references/mirage_iitm_jan_2025.pdf
+
+# Stray slide screenshots parked under _references/: referenced by no
+# lecture, kept local-only. (Some _references files ARE tracked, e.g.
+# the MOOC proposal PDFs and _video transcripts, so we enumerate
+# instead of ignoring the whole directory.)
+_references/*.png
 
 # Internal sanity-check notes. The course's published licensing posture
 # is in LICENSE and LICENSES.md; LICENSING_AUDIT.md is the private

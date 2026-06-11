@@ -1,4 +1,4 @@
 [submodule "vendor/x-ocaml"]
 	path = vendor/x-ocaml
 	url = https://github.com/kayceesrk/x-ocaml.git
-	branch = master
+	branch = nptel
