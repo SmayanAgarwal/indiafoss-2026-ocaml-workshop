@@ -764,11 +764,8 @@ comprehensive treatment of the deeper end of the design
 | Contention | `uncontended` | `shared`, `contended` | Cross-domain access | racy reads on shared mutable state |
 | Portability | `nonportable` | `portable` | Cross-domain crossing | shared `ref` racing |
 
-Five axes, zero runtime cost, whole categories of bugs become
-type errors.
-
-- Tests sampled runs; M10 mapped the gaps; modes prove, for
-  every run.
+Five axes, zero runtime cost: what testing sampled and M10
+mapped, modes now prove, for every run.
 
 :::
 

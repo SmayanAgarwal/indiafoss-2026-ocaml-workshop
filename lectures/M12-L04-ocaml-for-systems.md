@@ -70,12 +70,20 @@ does not mean "slow."
 
 ## Where we are
 
+:::cols
+:::col 55%
 - M12-L02 broke the kernel into libraries. **No internal
   protection.**
 - M12-L03 added a hypervisor for between-unikernel isolation.
-- This lecture: a **safe language** to do the internal-protection
-  job the MMU used to do.
+- This lecture, **ingredient 3**: a safe language to do the
+  internal-protection job the MMU used to do.
 - Specifically, **OCaml**: memory-safe, type-safe, fast, pragmatic.
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-08-ingredients.jpg"
+     alt="Salad ingredients laid out in separate bowls">
+:::
+:::
 
 :::
 
@@ -107,6 +115,19 @@ document is longer (~30 pages) and aimed at executive audiences who
 want to understand why their CISO is asking to fund a language-
 migration project.
 
+:::cols
+:::col 50%
+<img src="/assets/m12/figures/slide-22-cisa-roadmaps.png"
+     alt="Cover of The Case for Memory Safe Roadmaps, CISA, NSA,
+     FBI and international partners, December 2023">
+:::
+:::col 50%
+<img src="/assets/m12/figures/slide-22-white-house.png"
+     alt="White House press release: Future Software Should Be
+     Memory Safe, February 26, 2024">
+:::
+:::
+
 Both documents land on essentially the same set of statistics, and
 those statistics are the empirical core of the case. They are worth
 revisiting:
@@ -128,6 +149,40 @@ revisiting:
   between 45 percent and 100 percent year to year, but the total
   across the period was 87 of 108 exploited 0-days.
 
+These are the headlines as the world saw them: the Microsoft 70
+percent report and the Chromium project's own memory-safety page,
+side by side:
+
+:::cols
+:::col 50%
+<img src="/assets/m12/figures/slide-20-microsoft-70pct.png"
+     alt="ZDNet headline: Microsoft: 70 percent of all security
+     bugs are memory safety issues">
+:::
+:::col 50%
+<img src="/assets/m12/figures/slide-20-chromium-memory-safety.png"
+     alt="Chromium project memory-safety page: around 70 percent of
+     serious security bugs are memory safety problems, with a
+     use-after-free pie chart">
+:::
+:::
+
+And the Android breakdown next to the Fish in a Barrel 0-day
+tally:
+
+:::cols
+:::col 50%
+<img src="/assets/m12/figures/slide-21-android-vulns.png"
+     alt="Android vulnerabilities by cause: out-of-bounds writes
+     and reads and use-after-free dominate the pie">
+:::
+:::col 50%
+<img src="/assets/m12/figures/slide-21-fish-in-a-barrel.png"
+     alt="Fish in a Barrel post tallying memory-unsafety in public
+     0-days by year, totalling 87 of 108 from 2014 to 2019">
+:::
+:::
+
 We covered these numbers carefully, and the four
 canonical bugs that drive them (use-after-free, buffer overflow,
 uninitialised read, double-free), in
@@ -142,19 +197,46 @@ memory-safe.
 
 :::slide
 
-## The case for memory safety
+## The case for memory safety: the numbers
 
+:::cols
+:::col 50%
+<img src="/assets/m12/figures/slide-20-microsoft-70pct.png"
+     alt="ZDNet: Microsoft 70 percent of security bugs are memory
+     safety issues">
+:::
+:::col 50%
 - **Microsoft 2019**: ~70% of high-severity CVEs are
-  memory-safety bugs. Stable for over a decade.
-- **Chromium 2020**: ~70% high-severity, half of those use-
-  after-free.
+  memory-safety bugs.
+  - stable for over a decade.
+- **Chromium 2020**: ~70%; half are use-after-free.
 - **Android (Google 2022)**: 76% of 2019 vulnerabilities.
-- **Fish in a Barrel, 2014-2019**: ~80% of exploited 0-days.
-- **White House, Feb 2024**: "Future Software Should Be Memory
-  Safe."
-- **CISA / NSA / FBI**, Dec 2023: "Memory Safe Roadmaps."
+- **Fish in a Barrel**: ~80% of exploited 0-days, 2014 to 2019.
+:::
+:::
 
-The world has finally noticed.
+:::
+
+:::slide
+
+## The governments noticed
+
+:::cols
+:::col 50%
+<img src="/assets/m12/figures/slide-22-cisa-roadmaps.png"
+     alt="The Case for Memory Safe Roadmaps cover, CISA NSA FBI and
+     partners">
+:::
+:::col 50%
+<img src="/assets/m12/figures/slide-22-white-house.png"
+     alt="White House press release: Future Software Should Be
+     Memory Safe">
+:::
+:::
+
+- **CISA / NSA / FBI + allies**, Dec 2023: *Memory Safe Roadmaps*.
+- **White House**, Feb 2024: *Future Software Should Be Memory
+  Safe*.
 
 :::
 
@@ -262,9 +344,10 @@ existence is the answer to "is this just a research toy?":
   OCaml-multicore project.
 - **Bloomberg.** Internal financial-analytics infrastructure.
 - **Ahrefs.** SEO crawling and analytics infrastructure at scale.
-- **Docker.** Docker for Mac ships VPNKit, the VM-to-host
-  networking layer, an OCaml program built from MirageOS
-  networking libraries.
+- **Docker.** For years Docker Desktop's VM-to-host networking
+  layer was VPNKit, an OCaml program built from MirageOS
+  networking libraries, on millions of laptops (replaced by a
+  gVisor-based stack in 2023).
 - **Tezos.** A production blockchain whose entire core protocol is
   written in OCaml.
 - **Facebook (Meta).** Multiple internal tools, including the Hack
@@ -287,13 +370,16 @@ package manager (opam), and a community of professional engineers.
 
 ## OCaml is industrial
 
+<img src="/assets/m12/figures/slide-24-ocaml-industry.png"
+     alt="Industry users (Facebook, Tarides, Bloomberg, Docker,
+     Ahrefs, SimCorp, Microsoft, Tezos, Jane Street) and projects
+     (Hack, Flow, Infer, Coq, F-star, CompCert) built on OCaml"
+     style="max-width: 96%;">
+
 - **Jane Street**: a double-digit share of US equity volume
   through OCaml, by some estimates.
 - **Tarides**: maintains MirageOS, Irmin, ocaml-multicore.
-- **Bloomberg, Ahrefs, Docker (VPNKit), Tezos, Meta** (Hack,
-  Flow, Pyre, Infer), **Semgrep, SimCorp, CompCert, F\***,
-  and more.
-- Working FFI to C, native code on x86 / ARM / Power / RISC-V,
+- Native code on x86 / ARM / Power / RISC-V, fast FFI to C,
   JavaScript and WebAssembly backends.
 - Not a research toy.
 
@@ -323,7 +409,16 @@ Two facts soften the OCaml-vs-C gap:
    well below the tail-latency budget. The famous quote from the
    ocaml-multicore developers is that "if your application can
    tolerate 1 ms of latency, OCaml is a good fit." That covers
-   roughly 95 percent of the code most engineers write.
+   roughly 95 percent of the code most engineers write. A GC is
+   always a space-time trade-off, and the pacing is tunable: the
+   curves below plot memory against run time for one program under
+   the collector's two allocation policies; you choose the point on
+   the curve.
+
+   <img src="/assets/m12/figures/slide-25-gc-pacing.png"
+        alt="Memory in GiB against run time in seconds for next-fit
+        and best-fit GC policies: less memory costs more time"
+        style="max-width: 70%; height: auto;">
 2. **OCaml has a fast FFI to C.** For the small unsafe core where C
    really is the right answer (cryptographic primitives that need
    constant-time operations, raw hardware DMA descriptors, a few
@@ -376,18 +471,25 @@ requests per second:
 - **`nethttp_go`**: Go, the standard library `net/http`.
 
 The shape of the result, as measured by the ocaml-multicore eio
-team's harness around 2023-2024 (full numbers in the talk's slide
-26; absolute numbers will drift over time as the libraries are
-tuned, but the relative ordering has been stable):
+team's harness around 2023-2024 (absolute numbers will drift over
+time as the libraries are tuned, but the relative ordering has
+been stable):
+
+<img src="/assets/m12/figures/slide-26-eio-webserver.png"
+     alt="Serviced requests per second against offered load for six
+     HTTP servers: httpaf_eio on top around 200k, rust_hyper around
+     175k, httpaf with effects and Lwt around 125-145k, Go net/http
+     just under 60k, cohttp at the bottom around 40k"
+     style="max-width: 90%; height: auto;">
 
 | Stack | Peak serviced requests/sec | Position |
 | --- | --- | --- |
 | `httpaf_eio` (OCaml) | ~200,000 req/s | best |
 | `rust_hyper` (Rust) | ~175,000 req/s | second |
-| `httpaf_lwt` (OCaml) | ~120,000 req/s | mid |
-| `httpaf_effects` (OCaml) | ~115,000 req/s | mid |
-| `cohttp_lwt_unix` (OCaml) | ~62,000 req/s | low |
-| `nethttp_go` (Go) | ~53,000 req/s | low |
+| `httpaf_effects` (OCaml) | ~140,000 req/s | mid |
+| `httpaf_lwt` (OCaml) | ~125,000 req/s | mid |
+| `nethttp_go` (Go) | ~57,000 req/s | low |
+| `cohttp_lwt_unix` (OCaml) | ~40,000 req/s | lowest |
 
 A few observations from this chart are worth pulling out:
 
@@ -396,12 +498,13 @@ A few observations from this chart are worth pulling out:
 - The fastest Rust HTTP library outperforms most of the OCaml
   field. Rust is in the same performance bracket; this is not a
   story of OCaml beating Rust by an order of magnitude.
-- Go is *slower* than every OCaml option here. The single-language
+- Go's stdlib lands below every `httpaf`-based OCaml stack. The
   generalisation "managed languages are slow" does not hold up to
   the numbers.
-- Old-style OCaml (`cohttp_lwt_unix`) is at the bottom alongside
-  Go. Modern OCaml (`httpaf_eio`) is the chart-topping
-  implementation.
+- Old-style OCaml (`cohttp_lwt_unix`) sits at the very bottom,
+  below Go. Modern OCaml (`httpaf_eio`) is the chart-topping
+  implementation: a **5x** spread within one language; ecosystem
+  matters.
 
 The takeaway is not "OCaml is the fastest HTTP server"; it is *"OCaml
 is in the same competitive bracket as Rust on the same kind of
@@ -410,22 +513,23 @@ budget MirageOS gets to spend on safety.
 
 :::slide
 
-## Web-server benchmark (talk slide 26)
+## Web-server benchmark: serviced requests per second
 
-```
-~200k r/s  httpaf_eio        (OCaml + eio)
-~175k r/s  rust_hyper        (Rust)
-~120k r/s  httpaf_lwt        (OCaml + Lwt)
-~115k r/s  httpaf_effects    (OCaml direct effects)
- ~62k r/s  cohttp_lwt_unix   (OCaml older stack)
- ~53k r/s  nethttp_go        (Go stdlib)
-```
-
-- The best OCaml stack **beats Rust Hyper** here.
-- The OCaml-old vs OCaml-modern spread is **3x**: ecosystem
-  matters.
-- Go's stdlib HTTP is slower than all of these. "Safe = slow" is
-  not true.
+:::cols
+:::col 60%
+<img src="/assets/m12/figures/slide-26-eio-webserver.png"
+     alt="Throughput curves: httpaf_eio about 200k requests per
+     second, rust_hyper about 175k, effects and Lwt stacks
+     mid-field, Go net/http and cohttp at the bottom">
+:::
+:::col 40%
+- Best OCaml stack (`httpaf_eio`, ~200k r/s) **beats Rust Hyper**
+  (~175k) here.
+- OCaml-old vs OCaml-modern spread is **5x**: ecosystem matters.
+- Go's stdlib lands below every `httpaf` stack.
+  - "safe = slow" is not true.
+:::
+:::
 
 :::
 
@@ -710,7 +814,8 @@ level.
 :::
 
 :::quiz mcq id=M12-L04-q2
-On the HTTP server benchmark from the talk, which best describes the
+On the eio project's HTTP server benchmark from this lecture, which
+best describes the
 relative performance of the fastest OCaml stack (`httpaf_eio`) and
 the leading Rust stack (`rust_hyper`)?
 
@@ -720,28 +825,23 @@ the leading Rust stack (`rust_hyper`)?
 - [x] OCaml httpaf_eio is slightly faster (~200k vs ~175k
   req/s), and both are far above Go's standard `net/http`.
 
-**Why:** the chart in the talk's slide 26 shows OCaml's modern
+**Why:** the benchmark chart shows OCaml's modern
 stack peaking around 200k requests/second, just above Rust Hyper's
-~175k, and both substantially above Go's ~53k. The headline result
+~175k, and both substantially above Go's ~57k. The headline result
 is not that OCaml dominates Rust everywhere, but that the modern
 OCaml stack is in the same competitive bracket. Performance is not
 the reason to avoid OCaml at the OS layer.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: 70 to 80 percent of high-severity CVEs in major C/C++
+codebases are memory-safety bugs, stable for over a decade.
 
-Q1: proportion of high-severity bugs in major C/C++ codebases
-that are memory-safety issues.
-Q2: relative HTTP throughput, OCaml `httpaf_eio` vs Rust Hyper.
-
-- **70-80% of high-severity CVEs** in major C/C++ codebases are
-  memory-safety bugs. Stable for over a decade.
-- OCaml's HTTP throughput is **competitive with Rust** and far
-  above Go's stdlib.
-- The performance argument for staying in C, at the OS layer, is
-  weaker than the safety argument against it.
+Q2: OCaml's modern HTTP stack is competitive with Rust (slightly
+ahead on this benchmark) and far above Go's stdlib. At the OS
+layer, the performance argument for staying in C is weaker than
+the safety argument against it.
 
 :::
 
@@ -829,6 +929,9 @@ industry reports (Microsoft 2019, Chromium 2020, Google's Android
 report 2022, Fish in
 a Barrel) that we covered with citations in
 [the memory-safety-and-security
-lecture](M10-L01-memory-safety-and-security.html). See
+lecture](M10-L01-memory-safety-and-security.html). The page and
+chart reproductions (ZDNet, Chromium, Google, the Fish in a Barrel
+post, the CISA and White House documents, the eio benchmark) are
+shown as citations of their named sources. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

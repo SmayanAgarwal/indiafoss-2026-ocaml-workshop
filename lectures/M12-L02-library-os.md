@@ -53,16 +53,32 @@ kernels at the time. Third, the honest pros and cons of the library-OS
 model, including the cons that we will need a *second* ingredient to
 fix.
 
+A word on the module's running metaphor. The answer this module
+builds is a recipe: three *ingredients*, prepared separately, then
+tossed together into one dish. The library OS is ingredient 1;
+virtualisation and OCaml are ingredients 2 and 3; MirageOS is the
+salad. The ingredient photos that open these lectures are the
+metaphor made literal.
+
 :::slide
 
 ## Where we are
 
+:::cols
+:::col 55%
 - M12-L01 set up the problem: kernels are huge, TCBs are huge,
   security suffers.
+- The module's answer is a recipe: three ingredients, one salad.
 - This lecture: **ingredient 1**, the **library OS**.
 - The kernel is broken from monolith into individual libraries.
-- No "kernel mode"; just function calls.
+  - no "kernel mode"; just function calls.
 - Wins and costs, in that order.
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-08-ingredients.jpg"
+     alt="Salad ingredients laid out in separate bowls">
+:::
+:::
 
 :::
 
@@ -88,48 +104,21 @@ privilege mode.
 
 Picture the two side by side. The conventional kernel:
 
-![Conventional layout: a Process box containing Jars, Application,
-Java VM, libc, libssl, libm sits on a separate horizontal Kernel
-band, which in turn sits on
-Hardware.](/assets/m12/figures/slide-10-process-conventional.svg)
-
-```
-+-------------------------------+
-| Process                       |
-|  [Jars] [Application]         |
-|     [Java VM]                 |
-|  [libc][libssl][libm]         |
-+-------------------------------+
-+-------------------------------+
-| Kernel                        |   <-- separate, privileged
-+-------------------------------+
-+-------------------------------+
-| Hardware                      |
-+-------------------------------+
-```
+![Conventional layout: a Process box containing the Application,
+opam packages, the OCaml runtime, libc, libssl, libm sits on a
+separate horizontal Kernel band, which in turn sits on
+Hardware.](/assets/diagrams/M12-stack-conventional.svg)
 
 A hard line between process and kernel; every device touch goes
 through a syscall.
 
 The library OS:
 
-![Library OS layout: one big Kernel box containing Jars, Application,
-Java VM, libc, libssl, libm and the new libsched, libnet, libfs all
-in the same address space, sitting directly on
-Hardware.](/assets/m12/figures/slide-12-libos-kernel-as-libraries.svg)
-
-```
-+-------------------------------+
-| Kernel (just a name)          |
-|  [Jars] [Application]         |
-|     [Java VM]                 |
-|  [libc][libssl][libm]         |
-|  [libsched][libnet][libfs]    |
-+-------------------------------+
-+-------------------------------+
-| Hardware                      |
-+-------------------------------+
-```
+![Library OS layout: one big box labelled Kernel, just a name,
+containing the Application, opam packages, the OCaml runtime, libc,
+libssl, libm and the new libsched, libnet, libfs all in the same
+address space, sitting directly on
+Hardware.](/assets/diagrams/M12-stack-libos.svg)
 
 One box, one address space, one privilege mode. The "Kernel" label
 is now just the name for the union of the libraries the application
@@ -137,9 +126,8 @@ chose to link. The thin line that used to live inside the picture is
 gone.
 
 ![The same library-OS layout annotated with the three consequences:
-"application runs in a single address space", "single calling
-convention", and "drive hardware directly from
-application".](/assets/m12/figures/slide-13-libos-single-address-space.svg)
+"single address space", "single calling convention", and "drive
+hardware directly".](/assets/diagrams/M12-stack-libos-annotated.svg)
 
 Three callouts on the picture name the three consequences spelled out
 below: one address space, one calling convention, hardware driven
@@ -149,23 +137,19 @@ directly from the application.
 
 ## Conventional kernel (recap)
 
-```
-+-------------------------------+
-| Process                       |
-|  [Jars] [Application]         |
-|     [Java VM]                 |
-|  [libc][libssl][libm]         |
-+-------------------------------+
-+-------------------------------+
-| Kernel                        |  <-- separate, privileged
-+-------------------------------+
-+-------------------------------+
-| Hardware                      |
-+-------------------------------+
-```
-
+:::cols
+:::col 55%
+<img src="/assets/diagrams/M12-stack-conventional.svg"
+     alt="Process box with application and libraries above a
+     separate privileged kernel band on hardware"
+     style="width: 100%;">
+:::
+:::col 45%
 - A hard line between process and kernel.
+  - the kernel is a separate, privileged band.
 - Every device touch goes through a syscall.
+:::
+:::
 
 :::
 
@@ -173,21 +157,19 @@ directly from the application.
 
 ## Library OS
 
-```
-+-------------------------------+
-| Kernel (just a name)          |
-|  [Jars] [Application]         |
-|     [Java VM]                 |
-|  [libc][libssl][libm]         |
-|  [libsched][libnet][libfs]    |
-+-------------------------------+
-+-------------------------------+
-| Hardware                      |
-+-------------------------------+
-```
-
+:::cols
+:::col 55%
+<img src="/assets/diagrams/M12-stack-libos.svg"
+     alt="One kernel box containing the application, its libraries,
+     and libsched, libnet, libfs, directly on hardware"
+     style="width: 100%;">
+:::
+:::col 45%
 - One address space, one mode.
 - "Kernel" is just the name for the union of the libraries.
+  - libsched, libnet, libfs are linked like libssl.
+:::
+:::
 
 :::
 
@@ -220,12 +202,21 @@ shrinks to what the application actually exercises.
 
 ## What changes when the kernel is a library
 
-1. **Single address space.** No MMU wall between "kernel" and
-   "application."
-2. **Single calling convention.** Network send is a function call,
-   not a syscall.
-3. **Application picks the libraries it needs.** No disk used means
-   no filesystem driver shipped.
+:::cols
+:::col 55%
+<img src="/assets/diagrams/M12-stack-libos-annotated.svg"
+     alt="Library OS box annotated with single address space, single
+     calling convention, and drive hardware directly"
+     style="width: 100%;">
+:::
+:::col 45%
+1. **Single address space.** No MMU wall.
+2. **Single calling convention.** A send is a function call, not a
+   syscall.
+3. **The app picks its libraries.** No disk used means no
+   filesystem shipped.
+:::
+:::
 
 **The "kernel" in the binary is only the parts the app uses.**
 
@@ -277,8 +268,9 @@ ships.
 ## Concrete library-OS example: ClickOS
 
 If you want a real-world point on the library-OS map, look at
-**ClickOS**, a project from NEC Labs Europe and the University
-of Cambridge. ClickOS is a minimalistic unikernel-style guest
+**ClickOS**, a project from NEC Labs Europe and University
+Politehnica of Bucharest (NSDI 2014). ClickOS is a minimalistic
+unikernel-style guest
 based on the *Click modular router* configuration language, designed
 to run network middleboxes (routers, load balancers, NATs,
 firewalls) as tiny VMs. A typical ClickOS instance is a few
@@ -299,7 +291,8 @@ and the boot time is short enough that scaling out is cheap.
 
 ## ClickOS: a library OS in production
 
-- A minimal unikernel guest from NEC Labs / Cambridge.
+- A minimal unikernel guest from NEC Labs / Politehnica
+  Bucharest.
 - Runs the **Click modular router** language: middleboxes
   (routers, NAT, firewall, load balancer) as tiny VMs.
 - A few megabytes on disk; tens of milliseconds boot.
@@ -630,23 +623,17 @@ a hypervisor: the library OS only has to speak the small, stable
 virtual-device interface.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: a library OS contains a fault to its own unikernel (no
+cross-process blast radius), but inside that unikernel there is no
+MMU wall. The within-unikernel gap is closed by OCaml's type
+safety (the OCaml-for-systems lecture); the between-unikernel gap
+by virtualisation (the next lecture).
 
-Q1: a wild-pointer bug in the network library, library OS vs
-Linux kernel module: where does the blast radius land?
-Q2: why Nemesis and Exokernel did not become production OSes.
-
-- Library OS contains a fault **to its own unikernel** (no
-  cross-process blast radius). But **inside** that unikernel,
-  there's no MMU wall.
-- We'll close the within-unikernel gap with **OCaml's type
-  safety** (the OCaml-for-systems lecture).
-- We'll close the between-unikernel gap with **virtualisation**
-  (next lecture).
-- We'll close the driver-burden gap with **the hypervisor's
-  virtio drivers** (also next lecture).
+Q2: the driver-maintenance burden outside the Linux mainline is
+what kept Nemesis and Exokernel in the lab; the hypervisor's
+virtio drivers (also the next lecture) are what removes it.
 
 :::
 

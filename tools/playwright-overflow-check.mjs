@@ -49,23 +49,39 @@ async function checkPage(page, url) {
         .every(c => c.shadowRoot?.querySelector('.run_btn button')),
       null, { timeout: 20_000 })
     .catch(() => {});
+  // Images contribute zero height until decoded; an early measure
+  // silently under-reports (caught on the M12 functor-graph
+  // slides). Wait for every <img> to decode before measuring.
+  await page
+    .evaluate(() => Promise.all(
+      Array.from(document.images).map(i => i.decode().catch(() => {}))))
+    .catch(() => {});
+  await page.evaluate(() => window.Reveal?.layout?.());
   await page.waitForTimeout(500);
 
+  // Reveal keeps non-current slides at display:none (scrollHeight
+  // 0), so measuring them in place silently passes everything.
+  // Navigate to each slide and measure it while it is current.
   return await page.evaluate(([W, H, SLACK]) => {
     const R = window.Reveal;
     const total = R.getTotalSlides();
     const bad = [];
-    const slides = document.querySelectorAll('.reveal .slides section');
+    const slides = Array.from(
+      document.querySelectorAll('.reveal .slides section'))
+      .filter(s => !s.querySelector('section')); // skip subslide containers
     let n = 0;
     for (const s of slides) {
-      if (s.querySelector('section')) continue; // container of subslides
       n++;
       const heading = s.querySelector('h1,h2,h3')?.textContent?.trim() ?? `#${n}`;
+      const { h, v } = R.getIndices(s);
+      R.slide(h, v ?? 0);
+      R.layout();
       const sw = s.scrollWidth, sh = s.scrollHeight;
       if (sw > W + SLACK || sh > H + SLACK) {
         bad.push(`${heading} (${sw}x${sh})`);
       }
     }
+    R.slide(0, 0);
     return { total, bad };
   }, [W, H, SLACK]);
 }

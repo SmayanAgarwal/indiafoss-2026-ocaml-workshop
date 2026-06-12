@@ -2,9 +2,9 @@
 title: "MirageOS = Library OS + Virtualisation + OCaml"
 lecture_no: 5
 week: 12
-duration_target_min: 25
-concepts: [MirageOS, unikernel, mirage configure, Solo5, mirage-skeleton, OCaml libraries for networking, OCaml TLS, Fiat-Crypto, hardware-assisted unikernels]
-keywords: [OCaml, MirageOS, unikernel, mirage, Solo5, TLS, OCaml-TLS, Fiat-Crypto, KVM, ELF, dune build]
+duration_target_min: 30
+concepts: [MirageOS, unikernel, mirage configure, Solo5, mirage-skeleton, OCaml libraries for networking, OCaml TLS, Fiat-Crypto, functor graphs, Robur, Unikraft, Bitcoin Pinata, hardware-assisted unikernels]
+keywords: [OCaml, MirageOS, unikernel, mirage, Solo5, TLS, OCaml-TLS, Fiat-Crypto, KVM, ELF, dune build, Robur, dnsvizor, Unikraft, Firecracker, VPNKit, NetHSM]
 activity_question: "If a MirageOS unikernel is a single statically-compiled ELF binary that contains its own OS, what file system, network stack, and TLS library does it use? Where does that code come from, and what is the trust story for it?"
 think_about_this: "The course began with `let x = 1` and ends with an entire operating system written in the same language. What stayed true across those eleven modules of distance, and what changed?"
 reading:
@@ -63,11 +63,21 @@ stack lands.
 
 ## Where we are
 
+:::cols
+:::col 52%
 - M12-L01 named the problem (kernel TCB is huge).
 - M12-L02 gave ingredient 1 (library OS).
 - M12-L03 gave ingredient 2 (virtualisation).
 - M12-L04 gave ingredient 3 (OCaml).
 - **This lecture: the synthesis.**
+  - the ingredients, tossed: the salad.
+:::
+:::col 48%
+<img src="/assets/m12/figures/slide-27-salad.jpg"
+     alt="A tossed salad in a serving bowl: the three ingredients
+     combined">
+:::
+:::
 
 :::
 
@@ -151,26 +161,29 @@ small footprint.
 The starting point is a small OCaml file called `config.ml`. This is
 *not* the application; it is a *manifest* that describes which
 libraries the unikernel needs and how they should be wired together.
-The manifest uses combinators from the `mirage` package. A trivial
-example for the "Hello, Unikernel" might say "I need a `Mirage_time`
-module; please wire it to the platform's time implementation."
+The manifest uses combinators from the `mirage` package. The
+manifest for an HTTP service might say "a network stack on the
+default network device, an HTTP server on top, hand the result to
+my application functor" (the next lecture writes exactly that
+manifest).
 
 You then run `mirage configure -t <target>`. The target picks the
 backend: `unix` for a plain Unix process, `hvt` for Solo5 on KVM,
 `xen` for Solo5 on Xen, and so on. The `mirage configure` command
-reads `config.ml`, decides which OCaml packages need to be installed
-to satisfy its dependencies, and generates several files:
+reads `config.ml`, decides which OCaml packages this configuration
+needs, and generates the build context:
 
-- A **`Makefile`** that orchestrates the rest of the build.
-- An **opam file** listing the packages needed at this configuration.
-- A **`main.ml`** that ties the application module to the chosen
-  backend implementations of every library in the manifest. This
-  `main.ml` is generated; you do not write it.
-- One or more `mirage_*_<target>.ml` files that adapt the chosen
-  libraries to the target backend.
+- A **`Makefile`** and the **dune build files**, at the project
+  root.
+- A **`mirage/` directory** holding the generated pieces: a
+  **`main.ml`** that ties the application module to the chosen
+  backend implementations (generated; you do not write it), and an
+  **opam file** named for the configuration, e.g.
+  `hello-hvt.opam`, listing the packages this target needs.
 
-The next stage is `make`, which essentially calls `opam install`
-(pulling in the right backend libraries) and then `dune build`. The
+The next stage is `make depend`, which locks and fetches those
+packages (MirageOS builds vendor their dependencies into the
+project), and then `make`, which runs `dune build`. The
 `dune build` is where the OCaml compiler does its real work: it
 compiles the application source, the generated `main.ml`, and every
 library, links them all into one image, and runs the OCaml linker's
@@ -179,44 +192,33 @@ in `dist/<name>`.
 
 Picture the pipeline as boxes connected by arrows. Far left: a green
 `config.ml`. An arrow labelled `mirage configure` points at a stack
-of files: `Makefile`, `opam`, `main.ml`. Below that stack, two more
-generated `.ml` files: `mirage_net_XXX.ml`, `mirage_tcpip.ml`, and
-so on. The two paths converge: `make` runs the opam install, `dune
-build` runs the compile-and-link, and the output is a blue box
+of generated files: `Makefile`, the opam file, `main.ml`, and the
+backend wiring. The paths converge: `make depend` fetches the
+target's packages, `dune build` runs the compile-and-link, and the
+output is a blue box
 labelled `image`. Off to the side, a green `unikernel.ml` (the
 application code you actually wrote) also feeds into the dune build.
 
-![MirageOS compiler pipeline diagram: a green config.ml feeds into
-mirage configure, which generates Makefile, opam, main.ml, and per-
-backend mirage_net_XXX.ml / mirage_tcpip.ml stubs; make plus dune
-build then combine these with the user's unikernel.ml to produce a
-single image (ELF binary).](/assets/m12/figures/slide-31-mirageos-compiler-pipeline.svg)
-
-The ASCII rendering below is the same pipeline for slide-mode and
-screen-reader use.
+![MirageOS compiler pipeline diagram: config.ml feeds into mirage
+configure, which generates the Makefile and dune files plus
+mirage/main.ml and the per-target opam file; make depend fetches
+the packages into duniverse, and dune build combines them with the
+user's unikernel.ml to produce a single image (ELF
+binary).](/assets/diagrams/M12-pipeline.svg)
 
 :::slide
 
 ## MirageOS multi-stage pipeline
 
-```
-config.ml  ---- mirage configure ----+-- Makefile
-                                     +-- opam
-                                     +-- main.ml
-                                     +-- mirage_net_XXX.ml
-                                     +-- mirage_tcpip.ml
-                                     +-- ...
-
-unikernel.ml  ------------+
-                          v
-            make + dune build
-                          |
-                          v
-                       image (ELF binary)
-```
+<img src="/assets/diagrams/M12-pipeline.svg"
+     alt="config.ml through mirage configure to the generated build
+     context; make depend fetches packages; dune build links
+     unikernel.ml and main.ml into one ELF image"
+     style="max-height: 46vh; width: auto;">
 
 - `config.ml` is a **manifest**, not the application.
 - The pipeline generates the wiring; you write `unikernel.ml`.
+- `make depend` fetches the target's packages.
 - `dune build` produces a single statically-linked ELF.
 
 :::
@@ -255,17 +257,6 @@ functionality the application needs has to come from an OCaml library
 inside the binary. The MirageOS ecosystem is large enough that this
 is feasible for many real applications.
 
-![Talk slide "Available Libraries": five blocks listing the OCaml
-libraries that ship with MirageOS, namely Network (Ethernet, IP,
-UDP, TCP, HTTP 1.0/1.1/2.0, ALPN, DNS, ARP, DHCP, SMTP, IRC, cap-n-
-proto, emails), Storage (block device, ramdisk, qcow, B-trees, VHD,
-zlib, gzip, lzo, git, tar, FAT32), Data-structures (LRU, Rabin's
-fingerprint, bloom filters, adaptive radix trees, DIET trees),
-Security (x.509, ASN.1, TLS, SSH), and Crypto (hashes, ciphers, AEAD
-primitives, public-key, Fortuna); plus a side note that TLS uses
-"rigorous engineering" via Fiat-Crypto extracted from
-Rocq.](/assets/m12/figures/slide-29-available-libraries.svg)
-
 Roughly catalogued, the available libraries are:
 
 - **Network.** Ethernet, IP (v4 and v6), UDP, TCP, HTTP 1.0 / 1.1 /
@@ -294,7 +285,7 @@ glibc.
 
 :::slide
 
-## Available libraries (talk slide 29)
+## Available libraries: the OCaml OS catalogue
 
 | Area | Libraries |
 | --- | --- |
@@ -372,20 +363,20 @@ audit means something.
 
 ## OCaml TLS: rigorous engineering
 
-> *Not-quite-so-broken TLS: lessons in re-engineering a security
-> protocol specification and implementation*,
-> Kaloper-Meršinjak, Mehnert, Madhavapeddy, Sewell, USENIX Security 2015.
+<img src="/assets/m12/figures/slide-29-tls-paper.png"
+     alt="Title block: Not-quite-so-broken TLS, Kaloper-Mersinjak,
+     Mehnert, Madhavapeddy, Sewell, University of Cambridge,
+     USENIX Security 2015"
+     style="max-width: 55%;">
 
 - **Same pure OCaml code** drives the server, generates test
   oracles, and validates against real-world TLS traces.
 - **Clean-slate crypto**: `nocrypto` in the 2015 paper.
-  - Today's `mirage-crypto` extracts its elliptic-curve
-    arithmetic from machine-checked Rocq proofs (Fiat-Crypto).
-- **Variant types encode the protocol state machine; invalid
-  transitions are unrepresentable.**
-
-This is what M01-M11's safety toolkit applied to a security
-protocol looks like.
+  - today's `mirage-crypto` extracts its elliptic curves from
+    machine-checked Rocq proofs (Fiat-Crypto).
+- **Variant types encode the state machine**: invalid transitions
+  are unrepresentable.
+- The course's safety toolkit, applied to a security protocol.
 
 :::
 
@@ -404,26 +395,26 @@ result bound to `x`."
 ```text
 open Lwt.Infix
 
-module Hello (Time : Mirage_time.S) = struct
-  let start _time =
-    let rec loop = function
-      | 0 -> Lwt.return_unit
-      | n ->
-          Logs.info (fun f -> f "hello");
-          Time.sleep_ns (Duration.of_sec 1) >>= fun () -> loop (n - 1)
-    in
-    loop 4
-end
+let start () =
+  let rec loop = function
+    | 0 -> Lwt.return_unit
+    | n ->
+        Logs.info (fun f -> f "hello");
+        Mirage_sleep.ns (Duration.of_sec 1) >>= fun () -> loop (n - 1)
+  in
+  loop 4
 ```
 
-A few things worth noticing, even without running it:
+(That is the current `mirage-skeleton` hello, for mirage 4.9 and
+later.) A few things worth noticing, even without running it:
 
-- The unikernel is a **functor**: `module Hello (Time :
-  Mirage_time.S) = struct ... end`. The `Time` parameter is a
-  module that implements the abstract time signature. At build
-  time, `mirage configure -t unix` will plug in a Unix
-  implementation; `mirage configure -t hvt` will plug in the
-  Solo5 implementation. The unikernel does not know or care which.
+- `Mirage_sleep.ns` is a platform service. The application calls
+  one name; *which implementation* answers (the Unix one, the
+  Solo5 one) is decided by which backend packages
+  `mirage configure -t <target>` selects, and resolved when the
+  image is linked. For simple ambient services like time, clocks,
+  and randomness, MirageOS wires the backend in at link time;
+  nothing in the application changes between targets.
 - The body uses `Lwt`, the cooperative-concurrency library, and
   `Logs`, the structured logging library. Both are normal OCaml
   packages; in a Linux process they would do the same thing they
@@ -433,6 +424,14 @@ A few things worth noticing, even without running it:
 - There is no `main`. There is no `printf` to stdout. There is no
   Unix shell waiting for the binary's exit status. The image is
   the program, and `start` is the only entry point.
+
+Hello is too small to show the *functor* side of MirageOS: it
+consumes no real device. The moment an application takes a device
+worth abstracting (an HTTP server, a key-value store, a network
+stack), it is written as a functor over that device's signature,
+and `mirage configure` picks the implementation. The next lecture's
+HTTP unikernel is exactly that shape, and the section after this
+one shows the functor graphs of a full website doing it at scale.
 
 Configured for the **Unix backend** (`mirage configure -t unix`),
 the build produces a `dist/hello` executable. Running it on a Linux
@@ -482,30 +481,30 @@ runs as a VM on KVM, with no Linux guest inside it.
 ```text
 open Lwt.Infix
 
-module Hello (Time : Mirage_time.S) = struct
-  let start _time =
-    let rec loop = function
-      | 0 -> Lwt.return_unit
-      | n ->
-          Logs.info (fun f -> f "hello");
-          Time.sleep_ns (Duration.of_sec 1)
-          >>= fun () -> loop (n - 1)
-    in
-    loop 4
-end
+let start () =
+  let rec loop = function
+    | 0 -> Lwt.return_unit
+    | n ->
+        Logs.info (fun f -> f "hello");
+        Mirage_sleep.ns (Duration.of_sec 1)
+        >>= fun () -> loop (n - 1)
+  in
+  loop 4
 ```
 
-- A **functor over Mirage_time.S**: the same code runs against the
-  Unix-backed implementation, the Solo5-backed implementation, etc.
-- `mirage configure -t unix`: runs as a Linux process.
-- `mirage configure -t hvt`: runs as a VM on KVM.
+- `Mirage_sleep.ns`: one name; the backend implementation is
+  chosen by the target's packages, at link time.
+- Same source: `-t unix` runs as a process, `-t hvt` as a VM.
+- Real devices (HTTP, storage, network) arrive as **functors**:
+  next slides and next lecture.
 
 :::
 
 A downloadable hands-on example: this minimal unikernel skeleton
 plus a `dune-project`, `config.ml`, and `unikernel.ml` is bundled as
-`/assets/m12/hello-mirage.tar.gz`. Clone, `mirage configure -t unix`,
-`make`, and you have a working development setup on your own
+`/assets/m12/hello-mirage.tar.gz`. Clone, `mirage configure -t
+unix`, `make depend`, `make`, and you have a working development
+setup on your own
 machine. (To run the Solo5 backends you need KVM on Linux, or one of
 the Solo5 alternatives.)
 
@@ -516,33 +515,316 @@ the Solo5 alternatives.)
 - Download `/assets/m12/hello-mirage.tar.gz`.
 - `tar xzf hello-mirage.tar.gz && cd hello-mirage`.
 - `opam install mirage`.
-- `mirage configure -t unix && make`.
+- `mirage configure -t unix && make depend && make`.
 - `./dist/hello`.
 
-For the KVM target: `mirage configure -t hvt && make && solo5-hvt --
-dist/hello.hvt`.
+For the KVM target: `mirage configure -t hvt && make depend &&
+make && solo5-hvt -- dist/hello.hvt`.
 
 :::
 
-## What MirageOS is used for
+## The module system is the OS
 
-MirageOS is not vapourware. Production users include:
+Hello is a toy, so it is worth seeing what the wiring
+mechanism looks like at full scale. The `mirage` tool can draw the
+graph of modules it assembles, and for a real unikernel that graph
+*is* the operating system's architecture diagram. Every box below
+is an OCaml module; every arrow is a functor application; the
+whole picture is computed by `mirage configure` from the manifest.
+This is the course's module-system material (signatures, functors,
+sealing) doing literal OS construction.
 
-- **mirage.io itself.** The web server hosting the MirageOS
-  documentation is a MirageOS unikernel, around 10 MiB on disk.
-- **Robur.io**, a non-profit collective that ships several
-  production MirageOS deployments, including a CalDAV server,
-  several DNS servers, and email infrastructure.
-- **OPAM mirrors and OCaml infrastructure** (some of the package
-  signing and mirror servers).
-- **Tezos baking infrastructure**, in part. Tezos is the blockchain
-  whose protocol is written in OCaml; some of the supporting
-  network services are MirageOS unikernels.
+Take the mirage.io website, a full HTTPS server. Configured with
+`mirage configure -t unix --net=host`, the network is provided by
+the host's sockets, and the assembled graph is already a real
+system: the unikernel functor applied to certificate stores, key
+stores, a DNS client, happy-eyeballs connection logic, clocks, and
+a socket-backed TCP/IP stack:
 
-The deployments are small in number but real, and the niche is
-clear: long-running network services where the operational benefits
-(small attack surface, fast restart, predictable resource use) pay
-for the limited library ecosystem outside the supported areas.
+<img src="/assets/m12/figures/slide-36-mirage-io-host-functors.png"
+     alt="Functor dependency graph of the mirage.io unikernel with
+     net=host: about twenty modules, with the unikernel functor
+     applied to certificates, keys, DNS client, happy-eyeballs and
+     a socket-backed TCP/IP stack"
+     style="max-width: 100%; height: auto;">
+
+Now change one flag: `--net=direct`. The *same* `unikernel.ml`,
+re-wired against MirageOS's own network stack instead of the
+host's sockets. The graph grows by exactly the OS code that just
+entered the image: Ethernet, ARP, IPv4, IPv6, ICMP, UDP, TCP, all
+as functor applications:
+
+<img src="/assets/m12/figures/slide-37-mirage-io-direct-functors.png"
+     alt="Functor dependency graph of the same unikernel with
+     net=direct: around thirty modules, now including Ethernet,
+     ARP, IPv4, IPv6, ICMP, UDP and TCP functors"
+     style="max-width: 100%; height: auto;">
+
+Zooming into the lower half of that graph shows the TCP/IP stack
+being assembled module by module, down to the network interface:
+
+<img src="/assets/m12/figures/slide-38-mirage-io-direct-zoom.png"
+     alt="Zoom into the direct-stack graph: Tcpip_stack_direct
+     applied to UDP, TCP flow, ICMPv4, static IPv4, IPv6, ARP,
+     Ethernet and Netif modules"
+     style="max-width: 100%; height: auto;">
+
+Pause on what this means. In the modules material you sealed a
+two-list queue behind a signature and parameterised code with a
+functor. Here the *entire operating system* is built the same way:
+`Tcpip_stack_direct.MakeV4V6` is a functor over an Ethernet
+module, which is a functor over a network interface, and so on
+down to the device. Swapping the host's sockets for a from-scratch
+TCP/IP stack is not a port; it is a different functor application,
+chosen by one flag in the manifest. That is the precise sense in
+which MirageOS is "what you can do with the language": the module
+system you learned for code organisation turns out to be an OS
+construction kit.
+
+(One dating note: these graphs were generated with mirage 4.8.
+Since mirage 4.9 the small ambient services, the clock and time
+nodes in the corners, are wired at link time instead and drop out
+of the picture; the network-stack functors, the substance of the
+graphs, are unchanged.)
+
+:::slide
+
+## The module system is the OS
+
+<img src="/assets/m12/figures/slide-36-mirage-io-host-functors.png"
+     alt="mirage.io unikernel functor graph with the host socket
+     stack"
+     style="max-height: 50vh; width: auto;">
+
+- The mirage.io HTTPS server, `-t unix --net=host`.
+- Every box is a **module**; every arrow a **functor
+  application**.
+- `mirage configure` computes this graph from the manifest.
+
+:::
+
+:::slide
+
+## One flag later: the OS enters the image
+
+<img src="/assets/m12/figures/slide-37-mirage-io-direct-functors.png"
+     alt="mirage.io unikernel functor graph with net=direct: the
+     full OCaml TCP/IP stack appears"
+     style="max-height: 50vh; width: auto;">
+
+- Same `unikernel.ml`, configured `--net=direct`.
+- The growth is exactly the OS: Ethernet, ARP, IPv4/v6, ICMP,
+  UDP, TCP.
+
+:::
+
+:::slide
+
+## Zoom: the TCP/IP stack as functor applications
+
+<img src="/assets/m12/figures/slide-38-mirage-io-direct-zoom.png"
+     alt="Zoom of the direct stack: Tcpip_stack_direct down to
+     Ethernet and Netif"
+     style="max-height: 50vh; width: auto;">
+
+- `Tcpip_stack_direct.MakeV4V6` over UDP, TCP, ICMP, IP, ARP,
+  Ethernet, Netif.
+- The sealed-module discipline from the FP half, building an OS.
+
+:::
+
+## MirageOS in 2026
+
+MirageOS is an active project, and the 2025-2026 releases moved it
+forward on three fronts worth knowing about.
+
+**OCaml 5.** MirageOS runs on OCaml 5 (the ocaml-solo5 1.0 release,
+February 2025, moved the Solo5 backends to OCaml 5.2). Solo5
+itself remains single-core, so unikernels get OCaml 5's effects
+machinery but not parallelism yet.
+
+**New targets: Unikraft, QEMU, and Firecracker.** Since mirage
+4.10 (September 2025), the tool has `unikraft-qemu` and
+`unikraft-firecracker` targets, built on an OCaml cross-compiler
+to Unikraft, a CNCF library-OS project (announced by Tarides,
+November 2025). This brings MirageOS to two new VMMs (plain QEMU
+and AWS's Firecracker), to arm64 as well as x86_64, and, as
+Unikraft's multicore support matures, opens a path to true
+multicore OCaml unikernels. The backend is young, but it is the
+direction of travel.
+
+**A swappable TCP stack.** mirage 4.11 (May 2026) added `--utcp`,
+which swaps the classic mirage-tcpip stack for uTCP, Robur's
+from-scratch TCP implementation informed by a formal TCP
+specification. One flag in the manifest, exactly like `--net`
+above: the module graph re-wires, the application code does not
+change.
+
+:::slide
+
+## MirageOS in 2026
+
+- **OCaml 5** under every unikernel (ocaml-solo5 1.0, Feb 2025).
+  - effects yes; multicore not yet (Solo5 is single-core).
+- **Unikraft targets** since mirage 4.10 (Sep 2025).
+  - `-t unikraft-qemu`, `-t unikraft-firecracker`.
+  - QEMU + Firecracker, x86_64 + arm64; a path to multicore.
+- **`--utcp`** since mirage 4.11 (May 2026).
+  - Robur's spec-informed TCP, swapped in by one manifest flag.
+
+:::
+
+## Who runs unikernels in production
+
+MirageOS is not vapourware, and the clearest evidence in 2026 is
+**Robur**, a worker-owned cooperative that runs its infrastructure
+on MirageOS and ships production unikernels:
+
+- **dnsvizor**: a DNS resolver and DHCP server in one unikernel, a
+  drop-in replacement for dnsmasq and Pi-hole, with DNSSEC,
+  DNS-over-TLS/HTTPS, ad-blocklists, and a web UI (all landed in
+  2025, EU NGI-funded).
+- **miragevpn**: an OpenVPN-compatible VPN client and server,
+  including a QubesOS client.
+- **albatross** and **mollymawk**: the operations layer; a daemon
+  that deploys and monitors fleets of unikernels, and its web UI.
+  Unikernels grew an ops story: consoles, metrics, DHCP
+  auto-configuration, multi-server fleets.
+- **ptt**: an email stack; since 2026 a real public mailing list
+  runs on it in production.
+- **builds.robur.coop**: reproducible binary builds of all of the
+  above, plus **opam-mirror**, a unikernel that mirrors the opam
+  package archive.
+
+Beyond Robur: **qubes-mirage-firewall** is the standard-bearer
+deployment (the firewall VM many QubesOS users run, maintained
+since 2015); **mirage.io** serves its own website. (Tezos, the
+OCaml blockchain, funded experiments in packaging its nodes as
+MirageOS unikernels; that work stayed experimental.) And the
+container
+world is meeting unikernels halfway: **urunc** (from the
+virtualisation lecture) launches solo5 unikernels under
+Kubernetes.
+
+The niche is clear: long-running network services where the
+operational benefits (small attack surface, fast restart,
+reproducible builds, predictable resource use) pay for the
+narrower library ecosystem.
+
+:::slide
+
+## Who runs unikernels in production
+
+- **Robur** (cooperative, runs on MirageOS):
+  - **dnsvizor**: dnsmasq/Pi-hole replacement; DNSSEC, DoH,
+    blocklists.
+  - **miragevpn**: OpenVPN-compatible client and server.
+  - **albatross + mollymawk**: fleet deployment and monitoring.
+  - **ptt**: a production mailing list, run as unikernels.
+  - **builds.robur.coop**: reproducible builds; opam-mirror.
+- **qubes-mirage-firewall**: the QubesOS firewall VM.
+- **mirage.io** serves itself; **urunc** brings unikernels to
+  Kubernetes.
+
+:::
+
+## Three stories
+
+Three short stories make the safety-and-footprint argument
+concrete; each was a real deployment.
+
+**The Bitcoin Pinata.** In 2015 the OCaml-TLS authors put their
+money where their stack was: an 8.2 MB MirageOS unikernel holding
+the private key to 10 bitcoins (peak value around 165,000 euros).
+Anyone who could break the TLS stack, the unikernel, or the
+hypervisor isolation could take the coins; the attack surface and
+the bounty were both public. It ran from 2015 to 2018: over half a
+million visits, more than 150,000 connection attempts at the
+bounty. The bitcoins were never taken. As a security argument this
+is stronger than any benchmark: a standing, funded, public bounty
+against precisely the stack this lecture describes.
+
+:::cols
+:::col 55%
+**Nitrokey NetHSM.** A commercial hardware security module (the
+appliance that guards an organisation's cryptographic keys) whose
+entire software stack is a MirageOS unikernel running on the Muen
+separation kernel, the high-assurance Solo5 backend from the
+virtualisation lecture. Open source, auditable end to end, and
+sold as a product: unikernels passing a commercial-credibility
+test.
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-42-nethsm.png"
+     alt="Nitrokey NetHSM rack appliance">
+:::
+:::
+
+:::cols
+:::col 55%
+**Docker for Mac.** The widest deployment of MirageOS code is one
+most users never saw: for years, Docker Desktop's VM-to-host
+networking layer was VPNKit, the component that
+translates between the Linux VM's Ethernet packets and macOS's
+network calls, built from MirageOS networking libraries. The
+functor-assembled network stack from the graphs above shipped
+on millions of developer laptops. (Docker Desktop swapped in a
+gVisor-based stack in 2023; VPNKit is still maintained and used
+elsewhere.)
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-43-docker-for-mac.png"
+     alt="Docker for Mac about box and its open-source license list
+     crediting the MirageOS tcpip library">
+:::
+:::
+
+:::slide
+
+## The Bitcoin Pinata: a funded, public bounty
+
+:::cols
+:::col 55%
+- An **8.2 MB unikernel** holding the key to **10 bitcoins**
+  (peak value about 165k euros).
+- Break the TLS stack, the unikernel, or the isolation: keep the
+  coins.
+- Ran 2015 to 2018: 500k visits, **150k+ bounty attempts**.
+- **The bitcoins were safe.**
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-41-bitcoin-pinata.png"
+     alt="Bitcoin Pinata logo: a pinata drawn as a burst star">
+:::
+:::
+
+:::
+
+:::slide
+
+## NetHSM and Docker for Mac
+
+:::cols
+:::col 50%
+<img src="/assets/m12/figures/slide-42-nethsm.png"
+     alt="Nitrokey NetHSM appliance"
+     style="max-height: 34vh; width: auto;">
+
+- A commercial HSM: MirageOS on the **Muen** separation kernel.
+- Open source, auditable end to end.
+:::
+:::col 50%
+<img src="/assets/m12/figures/slide-43-docker-for-mac.png"
+     alt="Docker for Mac credits the MirageOS tcpip library"
+     style="max-height: 40vh; width: auto;">
+
+- Docker Desktop's **VPNKit**: MirageOS networking code.
+  - shipped on millions of laptops; replaced by a gVisor stack
+    in 2023.
+:::
+:::
+
+:::
 
 ## Advanced topic: hardware-assisted unikernels
 
@@ -683,20 +965,16 @@ occur." Speed and size are secondary; the safety argument is the
 news.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: `mirage configure -t hvt && make` produces a statically-linked
+ELF that runs as a KVM VM via Solo5.
 
-Q1: `mirage configure -t hvt && make`: what's the output, what
-runs it?
-Q2: why OCaml-TLS is "rigorous engineering" in a way conventional
-TLS libraries are not.
-
-- `mirage configure -t hvt && make` produces a **statically-linked
-  ELF** that runs as a **KVM VM via Solo5**.
-- OCaml-TLS's rigorous engineering: same pure code drives prod,
-  tests, and oracle; types encode the state machine; today's
-  crypto adds Rocq-extracted primitives.
+Q2: OCaml-TLS's rigorous engineering: the same pure code drives
+production, test-oracle generation, and trace validation; variant
+types encode the state machine so invalid transitions are
+unrepresentable; and today's mirage-crypto extracts its
+elliptic-curve primitives from machine-checked Rocq proofs.
 
 :::
 
@@ -777,6 +1055,10 @@ with Unikernels*, slides 27 to 35. The pointer to hardware-assisted
 unikernels follows KC's CAIR / DRDO November 2024 talk *Securing the
 foundations*. The TLS paper (Kaloper-Meršinjak et al., USENIX
 Security 2015) is the standard academic anchor for the OCaml-TLS
-story. See
+story, and its title block is reproduced as a citation, as are the
+Bitcoin Pinata, NetHSM, and Docker for Mac images that identify
+those deployments. The 2026 ecosystem facts (mirage 4.10/4.11,
+ocaml-solo5 1.0, the Unikraft targets, Robur's fleet) are from the
+projects' own release notes and announcements. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

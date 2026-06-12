@@ -165,8 +165,7 @@ module Bob (Http : Cohttp_mirage.Server.S) = struct
 end
 ```
 
-- Functor over `Cohttp_mirage.Server.S`.
-- Pure handler; one entry point.
+- Functor over `Cohttp_mirage.Server.S`; pure handler.
 - The `http` argument of `start` *is* the listen function.
 - No `main`, no shell, no `argv`.
 
@@ -236,8 +235,6 @@ let () =
 ```
 
 - The **wiring diagram**, not the application.
-- "Generic v4/v6 stack on the default network, plain HTTP on
-  top, hand it to `Unikernel.Bob`."
 - `http @-> job` is the functor's *type* (`http` is a witness).
   - `main $ http_srv` plugs in the *implementation*.
 
@@ -251,27 +248,27 @@ like:
 
 ```text
 $ mirage configure -t hvt
-mirage: pulling configuration packages...
-mirage: generating Makefile, opam, main.ml, dune-project...
 $ ls
-config.ml      Makefile       bob.opam       dune-project
-dune           main.ml        unikernel.ml
+Makefile      config.ml     dune          dune-project
+dune-workspace  mirage/     unikernel.ml
+$ ls mirage/
+bob-hvt.opam  context       main.ml
 ```
 
 The new files are:
 
-- **`Makefile`** orchestrates the rest of the build (`make`
-  calls `opam install` then `dune build`).
-- **`bob.opam`** lists the OCaml packages this configuration
-  needs (the cohttp-mirage stack, the tcpip stack, mirage runtime,
-  Lwt, and so on).
-- **`main.ml`** is the generated glue that instantiates the
-  `Unikernel.Bob` functor against the chosen backend
+- **`Makefile`** and the **dune files** at the root orchestrate
+  the build (`make depend` fetches the packages, `make` runs
+  `dune build`).
+- **`mirage/bob-hvt.opam`** lists the OCaml packages this
+  configuration needs (the cohttp-mirage stack, the tcpip stack,
+  mirage runtime, Lwt, and so on). Note the name: the opam file
+  is per-target; reconfiguring for unix writes `bob-unix.opam`.
+- **`mirage/main.ml`** is the generated glue that instantiates
+  the `Unikernel.Bob` functor against the chosen backend
   implementations and exports the entry point Solo5 expects.
-- **`dune`** and **`dune-project`** drive the OCaml compile and
-  link.
 
-You did not write any of those four files. You wrote
+You did not write any of those files. You wrote
 `unikernel.ml` (the application) and `config.ml` (the
 manifest); the rest is generated from the manifest.
 
@@ -282,31 +279,99 @@ manifest); the rest is generated from the manifest.
 ```text
 $ mirage configure -t hvt
 $ ls
-config.ml      Makefile       bob.opam       dune-project
-dune           main.ml        unikernel.ml
+Makefile      config.ml     dune          dune-project
+dune-workspace  mirage/     unikernel.ml
+$ ls mirage/
+bob-hvt.opam  context       main.ml
 ```
 
 - **You wrote**: `config.ml` (manifest), `unikernel.ml` (app).
-- **`mirage configure` generated**: `Makefile`, `bob.opam`,
-  `main.ml`, `dune`, `dune-project`.
+- **Generated**: the Makefile and dune files, plus `mirage/` with
+  `main.ml` and the per-target `bob-hvt.opam`.
 - The boilerplate is regenerated from the manifest on every
   reconfigure.
 
 :::
 
+## What did `configure` actually rewire?
+
+The generated code is where the target choice lands, and the
+striking thing is how little of it there is. The cleanest
+illustration is a pair of module graphs of the *same* source
+configured for the two targets; Bob's graph is busy (it has a
+whole HTTP stack in it), so the graphs below are the previous
+lecture's hello unikernel, drawn with mirage 4.8, where the time
+device was still a visible node. Configured `-t unix`:
+
+<img src="/assets/m12/figures/slide-33-hello-unix-functors.png"
+     alt="Hello unikernel functor graph for the unix target:
+     Mirage_runtime over Unikernel.Hello, Mirage_logs.Make,
+     Pclock, and Unix_os.Time"
+     style="max-width: 100%; height: auto;">
+
+And configured `-t hvt`:
+
+<img src="/assets/m12/figures/slide-34-hello-hvt-functors.png"
+     alt="Hello unikernel functor graph for the hvt target:
+     identical, except Unix_os.Time is replaced by Solo5_os.Time"
+     style="max-width: 100%; height: auto;">
+
+Play spot-the-difference: the two graphs are identical except for
+exactly one node, bottom right: `Unix_os.Time` versus
+`Solo5_os.Time`. One substituted module, everything else
+untouched.
+
+In current mirage (4.9 and later) the same comparison is even
+more extreme: the ambient time device is wired at link time, so
+it is not in the graph at all, and the *only* target-dependent
+line in hello's generated `main.ml` is the one that enters the
+backend's event loop:
+
+```text
+let run t = Unix_os.Main.run t ; exit 0    (* -t unix *)
+let run t = Solo5_os.Main.run t ; exit 0   (* -t hvt  *)
+```
+
+plus the package set the target selects (`mirage-unix` versus
+`mirage-solo5`). Retargeting an entire operating-system backend
+is one substituted module and one package choice; the application
+never changes. Bob retargets the same way, with the device
+functors (the HTTP server and the network stack under it) doing
+the same swap at the manifest level.
+
+:::slide
+
+## Same source, two targets: spot the difference
+
+<img src="/assets/m12/figures/slide-33-hello-unix-functors.png"
+     alt="Hello functor graph, unix target, with Unix_os.Time"
+     style="max-height: 28vh; width: auto;">
+
+<img src="/assets/m12/figures/slide-34-hello-hvt-functors.png"
+     alt="Hello functor graph, hvt target, with Solo5_os.Time"
+     style="max-height: 28vh; width: auto;">
+
+- One node differs: `Unix_os.Time` becomes `Solo5_os.Time`
+  (graphs from mirage 4.8).
+- Today the swap is even smaller: `Unix_os.Main.run` vs
+  `Solo5_os.Main.run`, plus the target's packages.
+
+:::
+
 ## `dune build`: the unikernel ELF
 
-`make` calls `opam install` (which fetches and builds the OCaml
-packages listed in `bob.opam`) and then runs `dune build`. The
+`make depend` locks and fetches the OCaml packages listed in
+`mirage/bob-hvt.opam` (MirageOS builds vendor their dependencies
+into the project), and `make` then runs `dune build`. The
 dune step is where the OCaml compiler does the heavy lifting:
 compile `unikernel.ml`, compile `main.ml`, compile every
 dependent library, link them all into one static image, run
 whole-program dead-code elimination.
 
 ```text
+$ make depend
 $ make
-opam install -y mirage-runtime cohttp-mirage tcpip ...
-dune build --root . --profile release
+dune build --profile release --root . dist
 $ ls dist/
 bob.hvt
 $ file dist/bob.hvt
@@ -331,9 +396,9 @@ A few notes on what just happened:
 ## `dune build` -> ELF
 
 ```text
+$ make depend
 $ make
-opam install -y mirage-runtime cohttp-mirage tcpip ...
-dune build --root . --profile release
+dune build --profile release --root . dist
 $ ls -lh dist/bob.hvt
 -rwxr-xr-x  1 kc kc  6.4M  bob.hvt
 ```
@@ -368,26 +433,44 @@ Solo5:       text @ (0x100000 - 0x1c4fff)
 The `--net:service=tap0` flag wires Bob's virtual network to a
 `tap` interface on the host. KVM under the hood creates a fresh
 VM, maps the ELF, jumps to its entry point, and Bob is up.
-Boot-to-listening took, on this host, about 30 ms.
+Boot-to-listening took, on this host, about 30 ms. The picture
+on the host is the one from the virtualisation lecture: Bob and
+Solo5 in their own VM, ordinary processes alongside, the KVM
+module underneath:
+
+<img src="/assets/m12/figures/slide-34-solo5-hvt-arch.png"
+     alt="Host layering: the Hello/Bob unikernel atop Solo5 in a
+     dashed VM boundary, beside ordinary user-space processes, on
+     a Linux kernel with the kvm.ko module"
+     style="max-width: 70%; height: auto;">
 
 :::slide
 
 ## `solo5-hvt -- dist/bob.hvt`
 
+:::cols
+:::col 55%
 ```text
-$ solo5-hvt --net:service=tap0 -- dist/bob.hvt
+$ solo5-hvt --net:service=tap0 \
+    -- dist/bob.hvt
 Solo5: Bindings version v0.9.0
 Solo5: Memory map: 128 MB addressable:
 ...
-2026-05-25T11:47:10-00:00: [INFO] [application]
+2026-05-25T11:47:10-00:00:
+   [INFO] [application]
    bob listening on TCP port 8080
 ```
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-34-solo5-hvt-arch.png"
+     alt="Unikernel over Solo5 in a VM beside user-space processes
+     on a Linux/KVM host">
 
-- `solo5-hvt` is the **KVM-backed Solo5 tender** from
+- The **KVM-backed Solo5 tender** from
   [the virtualisation lecture](M12-L03-virtualisation.html).
-- `--net:service=tap0` wires Bob's virtual NIC to the host's
-  `tap0`.
-- Boot to listening: **~30 ms** on this host.
+- Boot to listening: **~30 ms**.
+:::
+:::
 
 :::
 
@@ -493,6 +576,17 @@ build into a Linux service. The difference is that each one is
 an OCaml library linked into the same single binary; there is no
 `/etc/bob/bob.conf` and no `bob.service` unit file.
 
+And Bob would not be deployed by hand. The 2026 unikernel
+ecosystem has an operations layer of its own: **albatross**
+(Robur's deployment daemon, with its mollymawk web UI) manages
+fleets of unikernels: starting, monitoring, streaming consoles,
+collecting metrics. If your organisation lives in Kubernetes,
+**urunc** runs `bob.hvt` as if it were a container, behind the
+same `kubectl` you already use. And Robur's reproducible-builds
+service demonstrates the supply-chain endgame: anyone can rebuild
+the exact binary from source and compare hashes. One ELF turns
+out to be a very convenient unit of operations.
+
 :::slide
 
 ## What "real" would add
@@ -501,6 +595,7 @@ an OCaml library linked into the same single binary; there is no
 - **Storage** via `mirage-block` or `irmin`.
 - **Observability**: `Logs`, `metrics`, tracing.
 - **Configuration** via `mirage-runtime` boot arguments.
+- **Deployment**: albatross fleets, or Kubernetes via urunc.
 
 Each is an OCaml library linked into the **same single ELF**.
 No `/etc`. No `systemd` unit. No second process.
@@ -559,7 +654,7 @@ by the MirageOS toolchain?
   everything else.
 - [x] Only `unikernel.ml` changes (the handler grows a path
   switch). The same `config.ml` already provides an HTTP server;
-  no reconfigure is needed, just `dune build` to rebuild the
+  no reconfigure is needed, just `make` to rebuild the
   ELF.
 - [ ] Both `unikernel.ml` and `config.ml` change, and
   `mirage configure` must rerun before the build.
@@ -600,18 +695,16 @@ process, a shell, a libc, several daemons, often the dynamic
 loader. None of that is in Bob.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: adding a route is pure `unikernel.ml`; the manifest already
+provides the HTTP server, so no reconfigure, just `make`.
+Reconfigure only when the library set changes.
 
-Q1: adding a JSON endpoint to Bob: which file, what rebuild?
-Q2: why is Bob so much smaller than a containerised Linux
-service?
-
-- Adding routes is pure `unikernel.ml`; same manifest, just
-  `dune build`. Reconfigure only when the library set changes.
-- Bob is small because the image contains **only the libraries
-  the app reaches**; no Linux guest, no userspace, no shell.
+Q2: Bob is small because the image contains only the libraries
+the application reaches (whole-program dead-code elimination),
+with no Linux guest, no userspace daemons, and no shell. A
+container still ships a userland.
 
 :::
 

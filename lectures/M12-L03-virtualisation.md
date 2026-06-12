@@ -60,12 +60,21 @@ modern tender built specifically for unikernels.
 
 ## Where we are
 
+:::cols
+:::col 55%
 - M12-L01: kernels are huge.
 - M12-L02: library OS shrinks the kernel but loses internal
   protection and shoulders the driver burden.
-- M12-L03: **virtualisation** restores protection between library
-  OSes, and lets the host take care of drivers.
+- M12-L03: **virtualisation**, ingredient 2.
+  - restores protection between library OSes.
+  - lets the host take care of drivers.
 - M12-L04: OCaml gives us safety **within** a library OS.
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-08-ingredients.jpg"
+     alt="Salad ingredients laid out in separate bowls">
+:::
+:::
 
 :::
 
@@ -102,10 +111,22 @@ workloads as VMs on top of some hypervisor. Your AWS EC2 instance,
 your GCP Compute Engine VM, your Azure VM: under the hood, those are
 guest OSes on a hypervisor.
 
+The canonical academic anchor for the modern hypervisor era is
+*Xen and the Art of Virtualization* (Barham et al., SOSP 2003),
+the Cambridge paper that introduced Xen and, with it, the
+deployment model the cloud still runs on:
+
+<img src="/assets/m12/figures/slide-17-xen-paper.png"
+     alt="Title block of the SOSP 2003 paper Xen and the Art of
+     Virtualization, University of Cambridge Computer Laboratory"
+     style="max-width: 80%; height: auto;">
+
 :::slide
 
 ## Virtualisation in one paragraph
 
+:::cols
+:::col 55%
 - Hardware extensions in the mid-2000s (Intel VT-x, AMD-V) made
   it cheap.
 - A **hypervisor** (also called a **VMM**) creates and runs virtual
@@ -113,8 +134,15 @@ guest OSes on a hypervisor.
 - Multiple VMs share one physical machine, **isolated by the
   hypervisor**.
 - Every cloud provider deploys their customers' workloads this way.
-- The canonical academic citation is **Xen and the Art of
-  Virtualization** (Barham et al., SOSP 2003).
+:::
+:::col 45%
+<img src="/assets/m12/figures/slide-17-xen-paper.png"
+     alt="Xen and the Art of Virtualization paper title block">
+
+- The canonical citation: **Xen and the Art of Virtualization**
+  (SOSP 2003).
+:::
+:::
 
 :::
 
@@ -204,36 +232,26 @@ fast path or kicks them out to QEMU for slower-path emulation.
 ![Linux KVM architecture: host userspace processes plus a QEMU-KVM
 process running a guest with its own kernel and userspace, all on top
 of a Linux kernel that has the KVM module loaded, on hardware with
-VT-x / AMD-V extensions. A side panel notes the library-OS "cons"
-with "device drivers all need to be rewritten" struck
-through.](/assets/m12/figures/slide-18-linux-kvm.svg)
-
-The same layering rendered as a slide-mode ASCII fallback:
+VT-x / AMD-V extensions.](/assets/diagrams/M12-kvm-layered.svg)
 
 :::slide
 
 ## Linux KVM, layered
 
-```
-+----+----+----+   +------+
-| up | up | up |   | guest|
-+----+----+----+   | user |
-                   +------+
-                   | guest|
-                   |kernel|
-                   +------+
-                   | QEMU |
-                   | KVM  |
-+----------------------------+
-| Linux Kernel  [KVM module] |
-+----------------------------+
-| Hardware  (VT-x / AMD-V)   |
-+----------------------------+
-```
-
+:::cols
+:::col 58%
+<img src="/assets/diagrams/M12-kvm-layered.svg"
+     alt="Linux KVM architecture: host processes and a QEMU-KVM
+     guest above a Linux kernel with the KVM module, on VT-x/AMD-V
+     hardware"
+     style="width: 100%;">
+:::
+:::col 42%
 - **Turns Linux into a Type-1 VMM** in practice.
 - **QEMU** emulates CPUs and missing hardware.
 - The KVM kernel module is the privileged piece.
+:::
+:::
 
 :::
 
@@ -301,28 +319,21 @@ processes on the same Linux kernel: a kernel CVE that escalates
 privilege from process A can take down or compromise the whole
 machine, including process B. The trust model is different.
 
-The slogan from the talk is that the library-OS "con" of *"no kernel
-protection internally, and device drivers all need to be rewritten
-from a normal kernel"* gets struck through twice once you add
-virtualisation. The first half ("no kernel protection internally") is
-still true *within* one unikernel, and OCaml will help with that. The
-second half ("device drivers all need to be rewritten") is no longer
+The satisfying way to record the progress is to take the
+library-OS "Cons" sentence that the library-OS lecture ended on
+and strike through what no longer holds:
+
+> **Cons:** There is no kernel protection internally,
+> ~~and device drivers all need to be rewritten from a normal
+> kernel.~~
+
+The struck-out half ("device drivers all need to be rewritten") is
+no longer
 true: VirtIO is the only device class the unikernel needs to support,
 and that single driver suite works against every modern hypervisor.
-
-![Memory-safety slide with the library-OS "Cons" panel underneath:
-the whole "There is no kernel protection internally, and device
-drivers all need to be rewritten from a normal kernel" line is struck
-through in red, signalling that virtualisation (and the OCaml
-ingredient in the next lecture) collectively close out both
-halves.](/assets/m12/figures/slide-23-memory-safety-strikethrough.svg)
-
-The figure above is the talk's "strike through the con" beat: the
-same Cons sentence the library-OS lecture ended on is reproduced
-and crossed out
-once virtualisation (this lecture) and language safety (the next
-lecture) are
-both in hand.
+The surviving half ("no kernel protection internally") is
+still true *within* one unikernel; the next lecture's ingredient,
+OCaml, is what strikes it out.
 
 :::slide
 
@@ -355,7 +366,9 @@ wasteful.
 **Solo5** is a small, modern *tender* (a host-side bootstrap and
 runtime) built specifically for unikernels. It is much lighter than
 QEMU: a few thousand lines of C, no general-purpose machine
-emulation, no virtual PCI bus. It supports multiple backend modes:
+emulation, no virtual PCI bus. It is actively maintained; the
+0.11 release (May 2026) roughly tripled its network throughput on
+Linux. It supports multiple backend modes:
 
 - `solo5-hvt` runs on top of KVM as the "hardware virtualisation
   tender."
@@ -448,6 +461,13 @@ story: `mirage configure -t hvt` produces the KVM image,
 `mirage configure -t spt` produces the seccomp-sandboxed image,
 and so on. The application code does not change.
 
+One 2026 addition to this picture is worth a sentence:
+**urunc**, an OCI container *runtime* for unikernels, launches
+`solo5-hvt` and `solo5-spt` images directly under Kubernetes and
+containerd. The unikernel slots into the container ecosystem's
+tooling while keeping the VM-grade isolation boundary; the
+MirageOS lecture returns to this when it surveys deployment.
+
 :::slide
 
 ## Solo5 backends
@@ -459,7 +479,9 @@ and so on. The application code does not change.
 | `solo5-muen` | Muen separation kernel | High-assurance |
 | `solo5-xen` | Xen | Xen-based clouds |
 
-Same unikernel ELF; backend chosen at build time.
+- Same unikernel ELF; backend chosen at build time.
+- New in 2026: **urunc**, an OCI runtime that launches these
+  under Kubernetes.
 
 :::
 
@@ -612,20 +634,16 @@ also running normal processes), in feel Type-1 (the Linux underneath
 is doing very little besides hosting guests).
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: the hypervisor closes the cross-unikernel isolation gap and
+VirtIO closes the driver-burden gap; protection *within* one
+unikernel is still missing and is the next lecture's job.
 
-Q1: how virtualisation changes the two library-OS criticisms
-(no internal protection, drivers must be rewritten).
-Q2: what most accurately distinguishes a Type-1 from a Type-2
-hypervisor.
-
-- The hypervisor closes the **cross-unikernel** isolation gap.
-- VirtIO closes the **driver-burden** gap.
-- Type-1 vs Type-2 is about *where the hypervisor sits*, not about
-  speed or features.
-- MirageOS deployments use KVM via Solo5 in practice.
+Q2: Type-1 vs Type-2 is about where the hypervisor sits (bare
+metal vs application on a host OS), not about speed or features;
+KVM is the structural Type-2 that behaves like a Type-1, and it is
+what MirageOS deployments use via Solo5 in practice.
 
 :::
 
@@ -697,6 +715,7 @@ KVM diagram, and the strike-through-the-con argument follow KC
 Sivaramakrishnan's January 2025 IIT Madras talk *Towards smaller,
 safer, bespoke OSes with Unikernels*, slides 16 to 18. The
 *Xen and the Art of Virtualization* citation is the standard
-academic anchor for the modern hypervisor era. See
+academic anchor for the modern hypervisor era; its title block is
+reproduced as a citation. See
 [`LICENSES.md`](https://github.com/fplaunchpad/ocaml_nptel/blob/main/LICENSES.md)
 at the repository root for the full source posture.

@@ -157,11 +157,11 @@ its own bugs, and its own attack surface.
 
 ![Seven-layer stack diagram with Application on top and Firmware at
 the bottom, kernel highlighted in the
-middle.](/assets/m12/figures/slide-04-kernel-core-component.svg)
+middle.](/assets/diagrams/M12-stack-ladder.svg)
 
 The kernel sits in the middle of that stack as a single highlighted
-box; the diagram above pairs the layer cake with the Torvalds 1992
-quote we will return to at the end of this lecture. The slide-mode
+box; the Torvalds 1992 quote at the end of this lecture is about
+exactly that box. The slide-mode
 table below is the same picture for screen-reader access.
 
 :::slide
@@ -240,7 +240,17 @@ project plots lines-of-code across Linux versions back to 2.4
 (early 2000s) and the curve is monotonically up. The 2.4 series
 sat around 3 to 4 million lines. 2.6 doubled it. 3.x doubled it
 again. By the 4.x series the kernel was around 20 million; by
-5.x it crossed 30. The `drivers/` band grew the fastest of all.
+5.x it crossed 30, and the 6.x series has kept climbing. The
+`drivers/` band grew the fastest of all.
+
+<img src="/assets/m12/figures/slide-05-kernel-loc-chart.png"
+     alt="Lines of code in the Linux kernel by subsystem, across
+     versions; the drivers bands dominate and grow fastest"
+     style="max-width: 100%; height: auto;">
+
+The stacked bands are the kernel's subsystems; the broad gray and
+pink mid-section is `drivers/`, swallowing the rest of the chart a
+little more with every release.
 
 Two readings of this curve are worth keeping in mind. The first
 is the optimistic one: more drivers means Linux supports more
@@ -253,13 +263,19 @@ new line is a candidate location for a CVE.
 
 ## The TCB keeps growing
 
-- Linux 2.4 (early 2000s): ~3 to 4 million LoC.
-- Linux 2.6: ~8 million.
-- Linux 3.x: ~15 million.
-- Linux 4.x: ~20 million.
+:::cols
+:::col 58%
+<img src="/assets/m12/figures/slide-05-kernel-loc-chart.png"
+     alt="Linux kernel lines of code by version and subsystem">
+:::
+:::col 42%
+- Linux 2.4 (early 2000s): 3 to 4 million LoC.
 - Linux 5.11: **30 million**.
-- `drivers/` is the fastest-growing band; the curve is monotonic.
+  - the 6.x series keeps climbing.
+- `drivers/` is the fastest-growing band.
 - **More hardware support** comes with **more TCB**.
+:::
+:::
 
 :::
 
@@ -273,27 +289,42 @@ new buffer boundaries to honour. Even when each individual line
 is well-reviewed, the *total* attack surface grows mechanically
 with the codebase.
 
-The empirical evidence we will revisit in
-[the OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
-is that for over a
-decade roughly 70 percent of high-severity CVEs in major C/C++
-codebases (Microsoft, Chromium, Android) have been memory-safety
-bugs. That ratio has not budged despite enormous investment in
-static analysis, fuzzing, and sandboxing. The mechanism is
-simple: more memory-unsafe C in the TCB, more memory-safety
-CVEs out the other end.
+You have seen the empirical evidence already: the
+[memory-safety module](M10-L01-memory-safety-and-security.html)
+opened with exactly these numbers. Roughly 70 percent of
+high-severity CVEs in major C/C++ codebases are memory-safety
+bugs (Microsoft 2019, Chromium 2020); 76 percent of Android's
+2019 vulnerabilities (Google, 2022); and the ratio has been flat
+for a decade despite enormous investment in static analysis,
+fuzzing, and sandboxing. One more datapoint joins them here: by
+Fish in a Barrel's count, around 80 percent of the exploited
+0-days from 2014 to 2019 were memory-safety bugs.
+
+What this lecture adds is the *TCB reading* of those numbers.
+The mechanism is simple: more memory-unsafe C in the TCB, more
+memory-safety CVEs out the other end. And the previous section
+showed the TCB only ever grows.
+[The OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
+returns to the same numbers as an argument about languages.
 
 :::slide
 
 ## More code in the TCB means more CVEs
 
-- **~70%** of high-severity CVEs in major C/C++ codebases are
-  memory-safety bugs (Microsoft 2019, Chromium 2020).
-- **76%** of Android's 2019 vulnerabilities (Google, 2022).
-- **~80%** of exploited 0-days, 2014 to 2019 (Fish in a Barrel).
-- The percentage has been flat for a decade.
+:::cols
+:::col 60%
+<img src="/assets/diagrams/M10-industry-numbers.svg"
+     alt="Memory-safety share of severe bugs across four studies:
+     Microsoft 70%, Chrome 70%, Android critical 86%, 0-days 67%">
+:::
+:::col 40%
+- The memory-safety module's opening numbers, recalled.
+- Plus: ~80% of exploited 0-days, 2014 to 2019 (Fish in a
+  Barrel).
 - More C in the TCB = more memory-safety CVEs.
-- The TCB grows monotonically; the CVE rate keeps pace.
+  - the TCB grows monotonically; the CVE rate keeps pace.
+:::
+:::
 
 :::
 
@@ -352,7 +383,9 @@ newsgroup. Defending the monolithic design choice for Linux, he wrote:
 > Linus Torvalds, 1992
 
 In 1992 the kernel was 200 KB compressed. Over three decades
-later, it is 30 million lines. The *kernel itself* is no longer a
+later, the compressed source tarball is around 140 *megabytes*,
+roughly seven hundred times larger, and it unpacks to 30 million
+lines. The *kernel itself* is no longer a
 "minuscule part" of anything. It is the largest single component of
 the stack by an enormous margin, and most of that bulk is drivers for
 hardware that the average production server will never touch.
@@ -371,7 +404,8 @@ hardware that the average production server will never touch.
 >
 > Linus Torvalds, 1992
 
-**1992: 200 KB compressed. Today: 30 million lines.**
+**1992: 200 KB compressed. Today: ~140 MB compressed, 700x
+larger; 30 million lines.**
 
 :::
 
@@ -389,7 +423,7 @@ quietly depends on, almost none of which you ever asked for.
 "code you want to run", a much larger mass below the waterline
 labelled "code your operating system insists you need", with a side
 annotation reading "Huge TCB means security
-concern".](/assets/m12/figures/slide-06-monolithic-iceberg.svg)
+concern".](/assets/m12/figures/slide-06-iceberg.png)
 
 A vertical scene: at the top, two small chunks of ice break the
 surface, labelled "code you want to run". Below the water, the
@@ -418,20 +452,21 @@ because every line of memory-unsafe code is a possible CVE.
 
 ## The monolithic OS iceberg
 
-```
-        Application  <-- code you want to run
-        ----------
-        libc / libssl / libm
-        Language runtime
-        Kernel
-        Hypervisor
-        Firmware    <-- code your OS insists you need
-```
-
+:::cols
+:::col 52%
+<img src="/assets/m12/figures/slide-06-iceberg.png"
+     alt="Iceberg: a small tip above the waterline labelled code
+     you want to run; a huge mass below labelled code your OS
+     insists you need; annotation: huge TCB means security concern"
+     style="max-height: 54vh; width: auto;">
+:::
+:::col 48%
 - Visible: a few thousand lines of your code.
 - Invisible: tens of millions of lines of someone else's code.
 - All of it is in your **Trusted Computing Base**.
 - Huge TCB means a huge attack surface.
+:::
+:::
 
 :::
 
@@ -534,18 +569,16 @@ TCB written in an
 unsafe language means more places for those bugs to live.
 :::
 
-:::slide
+:::solution
 
-## Activity discussion
+Q1: a small fraction. Most of a monolithic kernel is unused by any
+single workload, yet all of it sits in the workload's TCB whether
+used or not.
 
-Q1: what fraction of a typical Linux kernel does a single-purpose
-HTTPS server actually exercise?
-Q2: strongest reason to care about TCB size.
-
-- Most of a monolithic kernel is unused by any single workload.
-- The kernel is in your TCB whether you use it or not.
-- The bigger the TCB, the more CVEs.
-- This is the case for **smaller, more bespoke systems**.
+Q2: every line of the TCB is a potential vulnerability, and most
+of the kernel is memory-unsafe C; the bigger the TCB, the more
+CVEs. Together the two answers are the case for smaller, more
+bespoke systems, which is where this module is headed.
 
 :::
 
