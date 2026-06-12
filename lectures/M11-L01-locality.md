@@ -47,14 +47,20 @@ definition, so the same type can appear at different modes in
 different places (a `t` and a `t @ local` are one type at two
 modes), and the compiler checks different rules.
 
-Module 10 showed that OCaml's garbage collector and type system rule
-out a zoo of memory bugs by construction, and where that safety
-stops: stack-pointer escape, use-after-free of manually managed
-resources, and data races across domains. OxCaml's modes pick the
-argument back up at exactly those boundaries, at zero runtime cost.
-Each lecture in this module takes one mode and the bug class it
-rules out. We begin with **locality**, which makes stack allocation
-safe.
+This module is also where two long threads of the course meet.
+The first half built the language toolkit: types, signatures as
+contracts, sealed modules, higher-order combinators. The second
+half has been stress-testing it. Module 9 showed how far testing
+carries a correctness claim: a property checks the runs its
+generator produces, and no more. Module 10 showed that OCaml's
+garbage collector and type system rule out a zoo of memory bugs
+by construction, and where that safety stops: stack-pointer
+escape, use-after-free of manually managed resources, and data
+races across domains. OxCaml's modes pick the argument back up at
+exactly those boundaries, with a compile-time proof in place of
+the test's sampled evidence, at zero runtime cost. Each lecture
+in this module takes one mode and the bug class it rules out. We
+begin with **locality**, which makes stack allocation safe.
 
 :::slide
 
@@ -92,9 +98,23 @@ safe.
 
 - **Zero runtime cost**: no flag, no branch, no allocation.
 - **Caught at compile time**, not on the bad input in production.
+  - a test checks the runs its generator produces: sampled
+    evidence.
+  - a mode proof covers every run.
 - **Modular**: the signature is the contract.
-- One mode per lecture.
-  - first up: **locality**.
+
+:::
+
+:::slide
+
+## The plan for the module
+
+- L1: **locality**. Values that must not escape; stack allocation.
+- L2: **uniqueness**. The only reference; safe `free`.
+- L3: **linearity**. Use at most once; safe `close`.
+- L4: **contention**. How a shared value may be accessed.
+- L5: **portability**. What may cross a domain boundary.
+- L6: tutorial. One resource API built from the axes.
 
 :::
 

@@ -70,6 +70,7 @@ mutation legal again.
 
 ## Where we are
 
+- M10 defined the data race and left it a runtime hazard.
 - M11-L01 to L03: the resource axes. Locality, uniqueness,
   linearity.
 - This lecture (M11-L04): **contention**. How a shared value may

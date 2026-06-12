@@ -247,6 +247,12 @@ The pattern across all of these is: every operation takes the
 unique reference, the original binding is consumed, and (except
 for `free`) a fresh unique reference is returned to chain through.
 
+The delivery vehicle should look familiar. This is the sealing
+discipline from the modules material: an abstract `'a t` behind a
+module type, the signature as the contract. The only new
+ingredient is that the contract now carries modes as well as
+types.
+
 :::slide
 
 ## The `Unique_ref` signature
@@ -264,6 +270,8 @@ end
 - Every operation consumes the unique reference.
 - All but `free` return a fresh one: a **linear chain of
   ownership**.
+- The familiar sealed-signature discipline.
+  - the contract now carries modes as well as types.
 
 :::
 

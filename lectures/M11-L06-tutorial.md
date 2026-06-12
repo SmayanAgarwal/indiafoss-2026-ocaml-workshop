@@ -76,6 +76,13 @@ client can never call it twice, never use a handle after it, and
 never forget it. The library brackets the resource; the client
 only ever sees the middle.
 
+Notice what the design is made of. An abstract type behind a
+sealed module, a higher-order combinator that lends a resource to
+a callback, a signature serving as the contract: every move is
+from the first half of the course. The modes are the only new
+ingredient, and their job is to make the old moves' promises
+checkable.
+
 :::slide
 
 ## The design problem
@@ -89,6 +96,10 @@ only ever sees the middle.
 
 The design move: the client never sees `open` or `close`. The
 library brackets the resource; the client writes the middle.
+
+- Sealed module, higher-order bracket, signature as contract.
+  - all from the FP half of the course.
+  - the modes are the only new ingredient.
 
 :::
 
@@ -731,7 +742,12 @@ double-close, no data races), in one type system.
 
 The same shape of argument ran through all five: a runtime
 discipline (careful scoping, manual release protocols, locking,
-careful sharing) became a compile-time invariant. The CS6868
+careful sharing) became a compile-time invariant. That closes an
+arc that began two modules ago. The testing module sampled runs
+for evidence; the memory-safety module mapped exactly where the
+language's guarantees stop; this module moved the missing
+guarantees into the type system, where they hold for every run.
+The CS6868
 OxCaml handout linked at the top of this lecture is the most
 comprehensive treatment of the deeper end of the design
 (capsules, fork-join, parallel arrays).
@@ -750,6 +766,9 @@ comprehensive treatment of the deeper end of the design
 
 Five axes, zero runtime cost, whole categories of bugs become
 type errors.
+
+- Tests sampled runs; M10 mapped the gaps; modes prove, for
+  every run.
 
 :::
 

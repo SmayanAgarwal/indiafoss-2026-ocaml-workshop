@@ -69,6 +69,7 @@ compile-time guarantee.
 
 ## Where we are
 
+- M10 defined the data race and left it a runtime hazard.
 - M11-L01 to L03: the resource axes. Locality, uniqueness,
   linearity.
 - M11-L04: **contention**. Cross-domain access.
@@ -82,6 +83,9 @@ compile-time guarantee.
 The cleanest motivation is a small systems chore: generating
 unique symbols. A sequential `gensym` is a one-liner: hold a
 counter in a `ref`, increment on every call, format the result.
+You have built this closure before: it is
+[the ticket dispenser](M07-L01-references.html) from the
+imperative half of the course, with a prefix glued on.
 
 ```ocaml
 let gensym =
@@ -135,6 +139,8 @@ let gensym =
     prefix ^ "_" ^ string_of_int !count
 ```
 
+- The ticket-dispenser closure from the imperative half, plus a
+  prefix.
 - Sequential: fine.
 - Two domains calling `gensym` in parallel: classic data race
   on `count`.
