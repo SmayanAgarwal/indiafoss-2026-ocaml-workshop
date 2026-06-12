@@ -2,7 +2,7 @@
 title: "Uniqueness: the only reference"
 lecture_no: 2
 week: 11
-duration_target_min: 25
+duration_target_min: 18
 concepts: [uniqueness, unique, aliased, manual resource management, use-after-free, double-free, in-place update, closure capture]
 keywords: [OCaml, OxCaml, uniqueness, unique mode, aliased, free, Unique_ref, closure capture]
 activity_question: "Against the [Unique_ref] signature, decide which of three clients fails to type-check (an underscored shadow drops the fresh handle), and predict what happens when a closure captures a unique reference and is called twice."
@@ -58,8 +58,10 @@ For all of these, the garbage collector is not the manager. The
 types could express that the value was a `Unix.file_descr`, but
 not that it should be closed exactly once.
 
-The traditional OCaml mitigation is exception-safe wrappers like
-`Fun.protect ~finally:close (fun () -> ...)`. This works for the
+The traditional OCaml mitigation is an exception-safe wrapper
+like the `fun_protect` cleanup combinator from the memory-safety
+module: `fun_protect close (fun () -> ...)` closes on both exit
+paths. This works for the
 common case where the resource has a single owner. It does not
 work when the resource is passed around the program, or stored in
 a record, or captured in a closure: now the "exactly once close"
@@ -648,8 +650,8 @@ which has already been used as unique. The compiler rejects it.
 :::
 
 :::quiz mcq id=M11-L02-q2
-Suppose we wrote a closure that *aliases* (not consumes) a unique
-reference:
+Suppose we wrote a closure that *captures* (not consumes) a
+unique reference:
 
 ```ocaml
 let read_outside (r : int t @ unique) =

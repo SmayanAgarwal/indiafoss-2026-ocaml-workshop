@@ -2,7 +2,7 @@
 title: "Tutorial: a resource-management API"
 lecture_no: 6
 week: 11
-duration_target_min: 25
+duration_target_min: 21
 concepts: [tutorial, file handle, bracket, with_handle, locality, linearity, uniqueness, resource management, API design]
 keywords: [OCaml, OxCaml, tutorial, file handle, with_handle, bracket, local, once, unique]
 activity_question: "Why does [with_handle] take its callback at [@ once], and which mode stops the handle from being stashed in a global [ref] for later use?"

@@ -349,6 +349,14 @@ let runtime_script ~asset_root =
     function runAll() {
       const cells = allCells();
       if (cells.length === 0) return;
+      // If the warmup suppressor wiped the FIRST cell's output, the
+      // worker still considers that cell evaluated, so the upward
+      // cascade below skips it and the cell looks dead. Run it
+      // explicitly first when it shows no output.
+      const first = cells[0];
+      const firstHasOutput = first.shadowRoot?.querySelector(
+        '.caml_meta, .caml_stdout, .caml_stderr, .caml_html');
+      if (!firstHasOutput) clickRun(first);
       // Triggering Run on the last cell cascades upward.
       clickRun(cells[cells.length - 1]);
     }
@@ -622,8 +630,16 @@ let runtime_script ~asset_root =
     }
     whenCellsReady();
 
-    document.querySelector('.run-all')?.addEventListener('click', runAll);
-    document.querySelector('.run-up-to-here')?.addEventListener('click', runUpToHere);
+    // The toolbar run buttons count as interaction too; otherwise
+    // the warmup suppressor above can eat the FIRST cell's output
+    // when "Run all" is clicked within its 10s watch window, and
+    // the first cell looks dead until run individually.
+    document.querySelector('.run-all')?.addEventListener('click', () => {
+      userInteracted = true; runAll();
+    });
+    document.querySelector('.run-up-to-here')?.addEventListener('click', () => {
+      userInteracted = true; runUpToHere();
+    });
     document.querySelector('.clear-all')?.addEventListener('click', clearAll);
     document.querySelector('.reset-all')?.addEventListener('click', resetAll);
 

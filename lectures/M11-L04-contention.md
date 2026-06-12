@@ -2,7 +2,7 @@
 title: "Contention: synchronisation at compile time"
 lecture_no: 4
 week: 11
-duration_target_min: 25
+duration_target_min: 23
 concepts: [contention, uncontended, contended, shared, data race, Atomic, mode crossing]
 keywords: [OCaml, OxCaml, contention, uncontended, contended, shared, Atomic, mode crossing, data race]
 activity_question: "A record has one immutable and one mutable field and is shared between two domains: which accesses does OxCaml reject, and why does even a *read* of the mutable field get refused on a contended value? And can you launder the mutability out by reading an immutable field that holds an array, then writing the array?"

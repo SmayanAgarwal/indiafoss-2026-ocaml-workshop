@@ -2,7 +2,7 @@
 title: "Linearity: use at most once"
 lecture_no: 3
 week: 11
-duration_target_min: 25
+duration_target_min: 29
 concepts: [linearity, once, many, linear types, closure capture, file handle, resource discipline, linear logic]
 keywords: [OCaml, OxCaml, linearity, once, many, linear types, file handle, Linear Logic, Girard]
 activity_question: "Given the [Handle] signature, which of three clients fails to type-check? And why does a closure that captures a once-handle itself become once?"
@@ -740,8 +740,8 @@ And for some APIs, you want both. The file-handle module above is
 actually a candidate for *both* uniqueness and linearity: the
 handle should have no aliases (uniqueness) *and* be used at most
 once on each thread of execution (linearity). The minimal version
-in this lecture is the linearity-only one; the tutorial at the
-end of the module combines them.
+in this lecture is the linearity-only one; the production API the
+tutorial reads at the end of the module combines them.
 
 :::slide
 
@@ -828,9 +828,9 @@ Pick the axis by the invariant you need:
   at-most-once has no opinion on zero uses.
 
 The file-handle module in this lecture stays on the linearity
-axis alone; the tutorial at the end of the module brings
-uniqueness in as well, for APIs where the no-aliasing half also
-matters.
+axis alone; the tutorial at the end of the module closes by
+reading a production API where uniqueness joins in, for the
+cases where the no-aliasing half also matters.
 
 :::slide
 
@@ -1053,7 +1053,7 @@ is **contention**: how a value may be touched once it is shared
 across domains. Its sibling **portability** governs which values
 may cross a domain boundary at all. The two together
 deliver compile-time data-race freedom, and the tutorial
-then combines the axes in one resource-management API.
+then puts the resource axes to work in one bracketed API.
 
 :::slide
 
@@ -1061,8 +1061,8 @@ then combines the axes in one resource-management API.
 
 - Lecture 4: **contention**. Cross-domain access.
 - Lecture 5: **portability**. Cross-domain crossing.
-- Lecture 6: tutorial. A resource-management API combining the
-  axes.
+- Lecture 6: tutorial. A bracketed resource-management API,
+  designed, implemented, and attacked.
 
 :::
 

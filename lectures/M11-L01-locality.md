@@ -2,7 +2,7 @@
 title: "Locality: safe stack allocation"
 lecture_no: 1
 week: 11
-duration_target_min: 25
+duration_target_min: 33
 concepts: [OxCaml, modes, locality, local mode, stack allocation, exclave, mode crossing, regions]
 keywords: [OCaml, OxCaml, modes, locality, local, stack_, exclave_, regions, mode crossing]
 activity_question: "Does a function returning a freshly-built [point] from a [@ local] parameter compile, and is its result local or global? And why does storing a [@ local] value into a top-level [ref] fail to compile?"
@@ -622,9 +622,9 @@ let midpoint (a @ local) (b @ local) : point @ local =
   region.
 - Helpers chain: every link in the chain `exclave_`s into its
   parent.
-- Drop `exclave_` and it still typechecks (`global ⊑ local`)
-  - but the record is heap-allocated; the annotation alone buys
-    nothing
+- Drop `exclave_` and it still typechecks (`global ⊑ local`).
+  - but the record is heap-allocated.
+  - the annotation alone buys nothing.
 
 `stack_` is for syntactic allocations; `exclave_` is for returning
 locals.
@@ -770,9 +770,11 @@ let[@zero_alloc] distance (a @ local) (b @ local) : float =
 ```
 
 - `[@zero_alloc]` asks the compiler to *prove* no heap allocation.
-- Checked only in native `-O3`; the toplevel here accepts it.
+- Checked only in native `-O3`.
+  - the toplevel here accepts it.
 - Natively it *fails*: `allocation of 16 bytes for float`.
-  - the returned `float` boxes; boxing is a separate axis from locality.
+  - the returned `float` boxes.
+  - boxing is a separate axis from locality.
 
 :::
 
@@ -1109,9 +1111,10 @@ everything.
 
 - Lecture 2: **uniqueness**. The only reference. Safe `free`.
 - Lecture 3: **linearity**. Future-use tracking. Safe `close`.
-- Lecture 4: **portability**. Cross-domain crossing.
-- Lecture 5: **contention**. Cross-domain access.
-- Lecture 6: tutorial. A resource-management API combining the axes.
+- Lecture 4: **contention**. Cross-domain access.
+- Lecture 5: **portability**. Cross-domain crossing.
+- Lecture 6: tutorial. A bracketed resource-management API,
+  designed, implemented, and attacked.
 
 :::
 

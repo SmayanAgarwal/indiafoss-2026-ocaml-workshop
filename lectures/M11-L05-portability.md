@@ -2,7 +2,7 @@
 title: "Portability: data-race freedom across domains"
 lecture_no: 5
 week: 11
-duration_target_min: 22
+duration_target_min: 20
 concepts: [portability, portable, nonportable, Domain.Safe.spawn, data race, capture, contended, Portable.Atomic, gensym]
 keywords: [OCaml, OxCaml, portability, portable, nonportable, Domain, Atomic, data race, gensym]
 activity_question: "A closure captures a [Buffer.t] and appends to it; why does annotating it [@ portable] get it rejected? And why does OxCaml ship [Portable.Atomic] when the standard library already has [Atomic]?"
