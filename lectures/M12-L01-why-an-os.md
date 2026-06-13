@@ -641,6 +641,10 @@ the hypervisor.
 kernel. Every container on a Linux host is exposed to every kernel
 CVE on that host. Containers reduce *deployment* friction without
 reducing the TCB. They are a packaging story, not a safety story.
+Tellingly, Docker itself acquired Unikernel Systems, the Cambridge
+company behind much of the MirageOS tooling, in 2016: an
+acknowledgement from inside the container world that there was a
+real idea here worth owning.
 
 ## What's next
 

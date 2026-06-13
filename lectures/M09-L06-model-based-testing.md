@@ -1003,6 +1003,17 @@ Some industrial cases worth knowing:
 - John Hughes's group at Quviq applied this technique to
   industrial codebases at AUTOSAR, Volvo Cars, and Ericsson;
   see the *Experiences with QuickCheck* paper in the Reading.
+- Kyle Kingsbury's
+  [Jepsen](https://jepsen.io/) does exactly this to distributed
+  databases: it drives a cluster with random operation
+  sequences, checks the observed history against a reference
+  consistency model, and injects network partitions mid-run. It
+  has found lost writes and consistency violations in Redis,
+  MongoDB, and many other production systems. The data structure
+  is a whole database and the divergence is a violated
+  consistency guarantee, but it is the same recipe as the queue
+  above: commands, a reference, equivalence checked over the
+  history.
 - Industrial OCaml codebases lean on property tests with
   generators derived from type definitions
   (`ppx_quickcheck`); the RWO Testing chapter shows the

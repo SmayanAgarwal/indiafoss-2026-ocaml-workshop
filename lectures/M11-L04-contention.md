@@ -44,6 +44,18 @@ an `Atomic.t`; remember to lock; remember to unlock on the error
 path. Forget any one of these and you have a race that may only
 fire under load in production.
 
+The stakes can be lethal. The Therac-25 radiation-therapy machine
+(1985-87) gave six patients massive radiation overdoses, several
+fatal, and one root cause was a race condition: an experienced
+operator who typed a correction fast enough hit a timing window the
+developers never imagined, and the machine fired a high-energy beam
+with its protective hardware out of position. The defect was
+interleaving-dependent, so it passed testing and was for a long
+time impossible to reproduce; it surfaced only on the unlucky
+schedule. That is precisely the failure mode a compile-time race
+check is meant to remove: not "test harder and hope you hit the bad
+interleaving," but "the racy program does not compile."
+
 OxCaml closes the gap with two new axes that work as a pair:
 **contention** (this lecture) asks how a shared value may be
 *accessed*; **portability** (the next lecture) asks whether a

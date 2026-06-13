@@ -362,6 +362,16 @@ exactly that knowledge: a `local` point provably does not escape,
 so the compiler can put it on the stack. The rest of the lecture
 uses 2-D points to make this concrete.
 
+Latency-sensitive teams take this seriously enough to change
+languages over it. Discord published a much-read account of their
+"Read States" service: written in Go, it suffered latency spikes
+every two minutes, traced to the Go garbage collector pausing to
+scan the heap regardless of how little garbage there was. Their fix
+was to rewrite it in Rust, which has no GC, and the tail-latency
+spikes disappeared. OxCaml's locality is the same win without
+leaving OCaml or its GC: a value the compiler proves cannot escape
+goes on the stack, where the collector never has to look at it.
+
 ## How locality works, mechanically
 
 We have the intuition: `local` is scoped and stack-safe, `global`

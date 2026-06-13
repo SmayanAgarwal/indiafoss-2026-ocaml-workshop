@@ -111,6 +111,15 @@ A few properties of the resulting image are worth knowing up front:
   Xen, Solo5-spt as a seccomp-sandboxed Linux process) and can also
   run as a **plain Unix process** for debugging.
 
+That millisecond boot time is not just a smaller number than a
+Linux VM's; it enables a different deployment model. An early
+MirageOS research system, Jitsu (*Just-In-Time Summoning of
+Unikernels*, Madhavapeddy et al., NSDI 2015), booted a unikernel on
+demand in response to an incoming network request, fast enough that
+the image could be started when the request arrived and torn down
+afterwards. It is the unikernel version of serverless cold-start,
+except the cold start is tens of milliseconds rather than seconds.
+
 Drawn as a layer diagram: the host has hardware at the bottom, a
 hypervisor above it, and several side-by-side unikernels on top.
 Each unikernel is one tall column: at the very bottom of the column

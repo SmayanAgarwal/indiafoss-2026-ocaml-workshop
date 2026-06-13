@@ -411,6 +411,15 @@ A *failure* is the observable violation of intended behaviour: the
 `sort` that returns `[3; 1; 2]` when it should return `[1; 2;
 3]`; the crashed program; the wrong invoice.
 
+Dijkstra put the limit of testing in one sentence in 1970:
+"Program testing can be used to show the presence of bugs, but
+never to show their absence." A green suite does not certify the
+faults are gone; it certifies that on the inputs we happened to
+try, no fault produced a visible failure. That is exactly why the
+next two lectures are about choosing inputs deliberately: the
+value of a test is bounded by the cleverness of the input behind
+it.
+
 That pair gives the next two words one-line definitions.
 *Testing* is the craft of turning faults into failures: driving
 the program with inputs chosen so that the errors hiding in the
@@ -458,6 +467,15 @@ module. For now, the vocabulary is enough.
 - A green test suite means "we didn't trigger any fault on the
   inputs we tried", not "there are no faults".
 
+:::
+
+:::notes
+Drop Dijkstra's line here: "Program testing can be used to show the
+presence of bugs, but never to show their absence." (Notes on
+Structured Programming, 1970.) It is the one-sentence version of the
+green-suite bullet: passing means the faults we have did not fail on
+the inputs we happened to try. That is exactly why the next lectures
+are about choosing inputs deliberately.
 :::
 
 :::slide

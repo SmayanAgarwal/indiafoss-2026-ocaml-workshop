@@ -1108,6 +1108,17 @@ counterexamples small enough to debug. Together they make PBT
 genuinely productive for working programmers, not just a research
 curiosity.
 
+A recurring surprise in Hughes's later experience reports is that
+property-based testing often finds bugs not in the implementation
+but in the *specification* itself: the hand-written reference
+model that was supposed to be the oracle. Testing a real telecoms
+system against a formal model, his team repeatedly found that
+counterexamples pointed at mistakes in the model, not the code.
+This is the strongest argument for properties over hand-written
+cases: a property is forced to confront inputs you would never
+have thought to write down, including the ones that expose your
+own misunderstanding of what "correct" means.
+
 ## Activity
 
 :::quiz mcq id=M09-L05-q1

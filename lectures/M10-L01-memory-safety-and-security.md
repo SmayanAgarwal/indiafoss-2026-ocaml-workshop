@@ -456,12 +456,20 @@ Segmentation fault
 The `0x41414141` is four `A`s (`0x41`) sitting where the canary
 used to be: the write went straight off the end of `buf`.
 
-**Real-world incident.** The canonical CVE on the *read* side of
+**Real-world incident.** This bug class is as old as the networked
+internet. The 1988 Morris worm, one of the first internet worms,
+spread in part by smashing a fixed stack buffer in the BSD `finger`
+daemon: the daemon read a request with `gets`, which has no length
+argument and no bounds check, so an over-long request ran off the
+end and overwrote the return address. It disrupted a large fraction
+of the machines then on the internet and led directly to the
+founding of the first CERT. The canonical CVE on the *read* side of
 buffer overflow (an out-of-bounds read, or over-read) is
 **Heartbleed** (CVE-2014-0160) in OpenSSL, where a length field was
 used to copy bytes from a buffer without checking it against the
 buffer's real size. We walk it end to end in the tutorial that
-closes this module.
+closes this module. Thirty-six years separate the two; the bug is
+the same.
 
 :::slide
 
@@ -887,6 +895,16 @@ for C is real but small; the safety argument against it is large.
 **"Just be careful when writing C."** Decades of trying, at the cost
 of hundreds of millions of dollars, did not move Microsoft's 70
 percent. "Be more careful" is not a working mitigation at scale.
+
+**"Memory safety means secure."** It does not; it closes one large
+class, not all of them. Log4Shell (CVE-2021-44228), the 2021
+remote-code-execution flaw in the ubiquitous Java logger Log4j, was
+not a memory bug at all: a crafted log string triggered a JNDI
+lookup that fetched and ran attacker-controlled code, in a fully
+memory-safe language. The 70 percent that memory safety removes is
+the highest-leverage single intervention, but the other 30 percent,
+injection, logic errors, misused crypto, is still yours to get
+right.
 
 ## What's next
 
