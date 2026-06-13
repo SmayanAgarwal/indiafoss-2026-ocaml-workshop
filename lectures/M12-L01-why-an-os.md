@@ -5,7 +5,7 @@ week: 12
 duration_target_min: 25
 concepts: [operating system, kernel, drivers, resource management, trusted computing base, monolithic kernel]
 keywords: [OCaml, MirageOS, OS, kernel, Linux, drivers, TCB, unikernel]
-activity_question: "Linux 5.11 has about 30 million lines of code, of which roughly 60 percent are device drivers. If your application is a static HTTPS server that needs only one network card and no filesystem at all, what fraction of that kernel code is your program actually exercising at runtime?"
+activity_question: "Linux 5.11 has about 30 million lines of code, of which roughly 60 percent are device drivers. If your application is a static HTTPS server that needs only one network card and no filesystem at all, what fraction of that kernel code is your program actually exercising at runtime, and why does the size of that trusted computing base matter for security?"
 think_about_this: "A modern server-side application is often a few thousand lines of code that depends on a 30-million-line kernel. The kernel is the largest component of the runtime by a factor of thousands, and almost none of it is the thing you wrote. What would it take to ship only the parts you actually use?"
 reading:
   - title: "mirage.io: a programming framework for building type-safe, modular systems"
@@ -69,6 +69,18 @@ follows from that size.
 
 :::
 
+:::slide
+
+## The problem: a tiny app on a huge runtime
+
+- Your server: a few thousand lines of OCaml.
+- Under it: an OS kernel of **millions of lines**.
+- The kernel is most of what actually runs, not your code.
+- Almost none of it is the thing you wrote.
+- This module: can we ship only the parts we use?
+
+:::
+
 ## What an operating system is for
 
 The job of an operating system is, at its core, very small to state:
@@ -125,10 +137,10 @@ modern application is not the application; it is the OS.
 
 :::cols
 :::col 55%
-- **Stability**: applications come and go. The OS commits to an
-  interface long before the apps exist.
-- **Scalability**: one OS, many CPUs and devices. Apps cannot be
-  rewritten per device.
+- **Stability**: applications come and go.
+  - The OS commits to an interface long before the apps exist.
+- **Scalability**: one OS, many CPUs and devices.
+  - Apps cannot be rewritten per device.
 - It delivers both by **abstracting the hardware**:
   - **drivers** for each device.
   - **resource management**: CPU, memory, files, users, network.
@@ -275,7 +287,8 @@ is the optimistic one: more drivers means Linux supports more
 hardware, which is genuinely useful. The second is the security
 one: the *Trusted Computing Base* you run every day is also
 growing monotonically, with no upper bound in sight, and every
-new line is a candidate location for a CVE.
+new line is a candidate location for a CVE (a publicly catalogued
+security vulnerability).
 
 :::slide
 
@@ -359,8 +372,9 @@ back out on the wire? At minimum:
 - The scheduler picks the server process from the run queue.
 - The page-table layer maps the request buffer into the
   process's address space.
-- The VFS layer routes a `read` to the page cache, which (on a
-  cache hit) hands back the file contents without a disk touch.
+- The VFS (virtual filesystem) layer routes a `read` to the page
+  cache, which (on a cache hit) hands back the file contents
+  without a disk touch.
 - The TCP/IP stack frames the response, the network driver
   pushes packets onto the wire.
 - The scheduler suspends the process while it waits for the
@@ -378,7 +392,8 @@ request" is on the order of 1 to 10,000.
 - TCP/IP `accept` (network stack).
 - Scheduler picks the process off the run queue.
 - Page-table layer maps the request buffer.
-- VFS plus page cache reads the file (no disk on a cache hit).
+- VFS (virtual filesystem) plus page cache reads the file (no
+  disk on a cache hit).
 - TCP/IP frames the response; driver pushes packets out.
 - Scheduler suspends the process between requests.
 - **Your code**: a few hundred lines of bookkeeping.

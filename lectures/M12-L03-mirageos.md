@@ -233,9 +233,8 @@ those stacks actually exercise survive.
 - `mirage configure -t <target>` picks the backend at build time.
 - `dune build` plus the OCaml linker's **dead-code elimination**
   strips everything the application does not reach.
-
-Result: the mirage.io HTTPS server is **10 MiB**. Boot time is **a
-few ms**. The runtime fits in **a few MiB of RAM**.
+- Result: the mirage.io HTTPS server is **10 MiB**.
+  - Boots in **a few ms**; runtime fits in **a few MiB of RAM**.
 
 :::
 
@@ -488,11 +487,10 @@ let start () =
   loop 4
 ```
 
-- `let*` is the option/state monads' bind: `Lwt` is a
-  **concurrency monad**.
-- `Mirage_sleep.ns`: one name; the backend implementation is
-  chosen by the target's packages, at link time.
-- Same source: `-t unix` runs as a process, `-t hvt` as a VM.
+- `let*` is bind, as in the option and state monads.
+- It sequences `Lwt`, a **concurrency monad**.
+- `Mirage_sleep.ns`: one name, backend chosen at link time.
+- Same source: `-t unix` a process, `-t hvt` a VM.
 
 :::
 
@@ -672,6 +670,9 @@ system; the signature is all it can see. Now apply it twice:
 module Unix_app = App (Unix_time)  (* mirage configure -t unix *)
 module Hvt_app = App (Solo5_time)  (* mirage configure -t hvt  *)
 let () = Unix_app.start (); Hvt_app.start ()
+(* prints:
+   hello at 12:00, host kernel clock
+   hello at 12:00, hypervisor clock *)
 ```
 
 These two module bindings are the unikernel build in miniature:
@@ -715,6 +716,9 @@ end
 module Unix_app = App (Unix_time)  (* mirage configure -t unix *)
 module Hvt_app = App (Solo5_time)  (* mirage configure -t hvt  *)
 let () = Unix_app.start (); Hvt_app.start ()
+(* prints:
+   hello at 12:00, host kernel clock
+   hello at 12:00, hypervisor clock *)
 ```
 
 - The two bindings are `-t unix` / `-t hvt`, in miniature.

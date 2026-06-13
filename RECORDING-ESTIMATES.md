@@ -547,11 +547,11 @@ the old L05/L06 renamed to L03/L04. M12 is now four lectures.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
-| M12-L01 | Why do we need an OS? | 12 | 2 | 0 | 18 | 25 |
+| M12-L01 | Why do we need an OS? | 13 | 2 | 0 | 20 | 28 |
 | M12-L02 | MirageOS Unikernel Background | 16 | 2 | 0 | 24 | 34 |
 | M12-L03 | MirageOS Basics | 21 | 2 | 0 | 32 | 45 |
 | M12-L04 | Suresh the Stationmaster: a worked unikernel example | 16 | 1 | 1 | 24 | 34 |
-| **M12 total** | | **65** | **7** | **1** | **98** | **138** |
+| **M12 total** | | **66** | **7** | **1** | **100** | **141** |
 | | | | | | **(1.6 h)** | **(2.2 h)** |
 
 M12-L02 and M12-L04 sit comfortably in the 20-30 min NPTEL band.

@@ -5,7 +5,7 @@ week: 12
 duration_target_min: 25
 concepts: [library operating system, single address space, virtualisation, hypervisor, KVM, Solo5, unikernel, memory safety at the OS layer]
 keywords: [OCaml, library OS, unikernel, virtualisation, hypervisor, KVM, Solo5, memory safety, tender]
-activity_question: "A buggy library function dereferences a wild pointer inside a library-OS image. What is the blast radius, compared with the same bug in a kernel module on Linux? Which ingredient contains the damage, and which gap remains open?"
+activity_question: "A buggy library function dereferences a wild pointer inside a library-OS image. What is the blast radius, compared with the same bug in a kernel module on Linux? Which ingredient contains the damage, and which gap remains open? And how does adding virtualisation change the two library-OS cons (no internal protection, drivers needing a rewrite)?"
 think_about_this: "The big idea behind a library OS is that 'kernel mode' becomes a fiction. Every device driver, every scheduler decision, every storage call is an ordinary function call in your address space. The kernel is no longer ambient. What does that buy you, what does that cost, and who restores the protection you gave up?"
 reading:
   - title: "Engler, Kaashoek, O'Toole, Exokernel: An Operating System Architecture for Application-Level Resource Management (SOSP 1995)"
@@ -340,6 +340,8 @@ only a few percent over bare metal.)
 :::col 52%
 - A kernel controls processes with rings and page tables.
 - **VT-x (2005)**: the same two mechanisms, one level down.
+  - **EPT** (extended page tables): a second translation layer,
+    one per guest, that isolates each VM's memory.
 - **The hypervisor controls kernels the way a kernel controls
   processes.**
 :::
