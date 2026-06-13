@@ -5,7 +5,9 @@ Background and design rationale: `README.md`.
 
 ## Standing policies (KC decisions)
 
-- `:::vm-terminal` embeds live in module 9 (L03, L04), module 10
+- `:::vm-terminal` embeds live in module 1 (L01 course-intro: a
+  `/root/hello` taste, previewing the VM the secure-systems half
+  uses; KC signed off 2026-06-13), module 9 (L03, L04), module 10
   (the C memory-safety demos in `/root/m10`), and module 12 (the
   mirage hello project in `/root/m12/hello`: L03 edit-rebuild-run,
   L04 configure-retarget; KC signed off 2026-06-12), at most one

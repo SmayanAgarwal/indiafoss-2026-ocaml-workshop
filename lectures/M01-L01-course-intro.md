@@ -425,6 +425,59 @@ get it inline without running anything. When you are reading
 unfamiliar code, the hover is the fastest way to find out what a
 particular sub-expression has type.
 
+## A full machine for the second half
+
+The cells you have just seen are the light tier of the course
+infrastructure: an OCaml toplevel compiled to JavaScript, perfect
+for trying out an expression or a small definition without leaving
+the page. The functional-programming half of the course lives almost
+entirely in cells like these.
+
+The secure-systems half needs more than a toplevel. To run a test
+suite, measure coverage, compile and run a C program, or build and
+boot an operating system, you need a real project on a real machine:
+`dune`, several source files, a test runner, a C compiler. So the
+later lectures embed a *full Linux machine* that also boots inside
+your browser tab. The promise is the same as the cells: nothing is
+installed on your computer and nothing runs on a server; the entire
+machine runs in the page. It is heavier than a cell (it boots on a
+click and takes a few seconds to come up), so we bring it out only
+where a real build matters: [Module
+9](M09-L03-test-design.html) runs test suites and coverage reports,
+[Module 10](M10-L01-memory-safety-and-security.html) compiles and
+runs the C programs whose memory bugs we study, and [Module
+12](M12-L03-mirageos.html) builds and boots a MirageOS unikernel.
+
+Here is one now, as a taste of what is coming. Click to boot it; you
+land in a small `dune` project called `hello`. Run `dune exec
+./hello.exe` to build and run it, edit `hello.ml` with `nano`, and
+run it again.
+
+:::slide
+
+## A full machine for the second half
+
+- The toplevel cells are the **light tier**: one expression, instant.
+- Later modules need a real project: `dune`, several files, a test
+  runner, a C compiler.
+- So they embed a **full Linux machine**, also booted in your
+  browser tab (Modules 9, 10, 12).
+- Boots on a click; same promise: nothing installed, nothing on a
+  server.
+
+:::vm-terminal dir=/root/hello
+:::
+
+:::
+
+:::notes
+Click Boot live so the audience sees a real shell come up, then
+`dune exec ./hello.exe`. Stress that this is the same "nothing
+leaves your machine" promise as the cells, just a whole Linux box
+instead of a toplevel. Don't dwell: it is a teaser for the
+secure-systems half, not a `dune` tutorial.
+:::
+
 ## Anonymous quiz analytics
 
 A small operational note. The site records *anonymous* responses to
