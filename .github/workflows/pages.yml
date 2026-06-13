@@ -30,7 +30,7 @@ jobs:
           dune-cache: true
 
       - name: Install OCaml deps
-        run: opam install -y cmarkit fpath alcotest mdx
+        run: opam install -y cmarkit fpath alcotest mdx ounit2 qcheck
 
       - name: Build nptel-build
         run: opam exec -- dune build tools/nptel-build/bin/main.exe
