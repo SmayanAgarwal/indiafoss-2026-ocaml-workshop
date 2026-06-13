@@ -3,8 +3,8 @@ title: "MirageOS Basics"
 lecture_no: 3
 week: 12
 duration_target_min: 30
-concepts: [MirageOS, unikernel, mirage configure, Solo5, mirage-skeleton, OCaml libraries for networking, OCaml TLS, Fiat-Crypto, functor graphs, Robur, Unikraft, Bitcoin Pinata, hardware-assisted unikernels]
-keywords: [OCaml, MirageOS, unikernel, mirage, Solo5, TLS, OCaml-TLS, Fiat-Crypto, KVM, ELF, dune build, Robur, dnsvizor, Unikraft, Firecracker, VPNKit, NetHSM]
+concepts: [MirageOS, unikernel, mirage configure, Solo5, mirage-skeleton, OCaml libraries for networking, OCaml TLS, Fiat-Crypto, functor graphs, Robur, Unikraft, Bitcoin Pinata, hardware-assisted unikernels, Shakti FIDES, mixed-language memory safety]
+keywords: [OCaml, MirageOS, unikernel, mirage, Solo5, TLS, OCaml-TLS, Fiat-Crypto, KVM, ELF, dune build, Robur, dnsvizor, Unikraft, Firecracker, VPNKit, NetHSM, Shakti FIDES, CHERI, AsiaCCS]
 activity_question: "If a MirageOS unikernel is a single statically-compiled ELF binary that contains its own OS, what file system, network stack, and TLS library does it use? Where does that code come from, and what is the trust story for it?"
 think_about_this: "The course began with `let x = 1` and ends with an entire operating system written in the same language. What stayed true across those eleven modules of distance, and what changed?"
 reading:
@@ -920,35 +920,53 @@ elsewhere.)
 
 ## Advanced topic: hardware-assisted unikernels
 
-The argument we have built in this module relies on the hypervisor
-to isolate guests from each other. The hypervisor is itself a piece
-of software, and a complex one: Linux KVM is hundreds of thousands
-of lines of C; Xen is comparable. The hypervisor is, in the strict
-sense, also in the TCB of every unikernel on the host.
+A unikernel is not pure OCaml. The image links the OCaml runtime,
+which is C, plus any C stubs the application reaches through the
+foreign-function interface. As the memory-safety module argued,
+OCaml's guarantees stop exactly at that boundary: a bug in the C is
+unconstrained, and inside a unikernel there is a single address
+space with no kernel underneath to contain it, so corrupt C can
+scribble over the OCaml heap and everything else. Pushing the OS
+into a safe language shrinks the unsafe surface down to the runtime
+and the stubs; it does not erase it.
 
 There is an active research direction in *hardware-assisted
-unikernels*: using newer CPU features (Intel TDX, AMD SEV-SNP, ARM
-CCA) to reduce or eliminate the trust placed in the hypervisor.
-The vision is a unikernel whose memory the hypervisor cannot read
-and whose execution it cannot tamper with, even though it still
-schedules the unikernel onto a physical CPU and routes its I/O.
+unikernels* that uses CPU features to contain that residual C.
+Memory-safety hardware (CHERI capabilities, and Shakti FIDES on the
+Indian Shakti RISC-V processor) compartmentalises the C so that a
+bug in it cannot reach the OCaml heap or escape its compartment.
+Suresh the Stationmaster, written in OCaml over a runtime whose C is
+fenced in by the hardware, is the picture FIDES draws: it runs
+bare-metal MirageOS unikernels with OCaml and C side by side, each
+in its own hardware-enforced compartment.
+
+The hypervisor is a second piece of the trusted base. KVM is
+hundreds of thousands of lines of C, also in the TCB of every
+unikernel on the host. A separate line of CPU features (Intel TDX,
+AMD SEV-SNP, ARM CCA) reduces or eliminates the trust placed in the
+hypervisor: the vision there is a unikernel whose memory the
+hypervisor cannot read and whose execution it cannot tamper with.
 
 KC Sivaramakrishnan's November 2024 talk *Securing the foundations*
 at the Centre for Artificial Intelligence and Robotics (CAIR / DRDO)
-covers this in detail: the threat model, the relevant hardware
-extensions (notably the upcoming Indian CHERI-based work), and the
-implications for unikernel design. We do not cover the material in
-this course; the talk is the right starting point for the curious.
+covers the threat model and the hardware, and the FIDES paper
+(*FIDES: End-to-end Compartments for Mixed-language Systems*,
+AsiaCCS 2026) is the detailed treatment of the mixed-OCaml-and-C
+case. We do not cover this material in the course; these are the
+right starting points for the curious.
 
 :::slide
 
 ## Advanced pointer: hardware-assisted unikernels
 
-- Hypervisor is in the TCB.
-- Newer CPUs (Intel TDX, AMD SEV-SNP, ARM CCA, CHERI) can reduce
-  what the hypervisor is trusted to do.
-- KC's CAIR / DRDO Nov 2024 talk, *Securing the foundations*, is
-  the entry point.
+- A unikernel still links C: the OCaml runtime and any C stubs.
+  - A bug there is unconstrained in the single address space.
+- Memory-safety hardware fences that C in: **CHERI**, **Shakti
+  FIDES**.
+- The hypervisor is also in the TCB.
+  - **Intel TDX, AMD SEV-SNP, ARM CCA** reduce trust in it.
+- Entry points: KC's CAIR / DRDO talk *Securing the foundations*;
+  the **FIDES** paper (AsiaCCS 2026).
 
 :::
 
@@ -1135,6 +1153,10 @@ fall out.
   <https://github.com/mit-plv/fiat-crypto>
 - KC Sivaramakrishnan, *Securing the foundations* (CAIR / DRDO,
   Nov 2024), for the hardware-assisted-unikernels pointer.
+- Sai Venkata Krishnan, Arjun Menon, Chester Rebeiro, KC
+  Sivaramakrishnan, *FIDES: End-to-end Compartments for
+  Mixed-language Systems*, AsiaCCS 2026:
+  <https://kcsrk.info/papers/fides_asiaccs_2026.pdf>
 
 ## Sources
 
@@ -1145,7 +1167,11 @@ TLS-as-rigorous-engineering framing) follows KC Sivaramakrishnan's
 January 2025 IIT Madras talk *Towards smaller, safer, bespoke OSes
 with Unikernels*, slides 27 to 35. The pointer to hardware-assisted
 unikernels follows KC's CAIR / DRDO November 2024 talk *Securing the
-foundations*. The TLS paper (Kaloper-Meršinjak et al., USENIX
+foundations* and the FIDES paper (Krishnan, Menon, Rebeiro,
+Sivaramakrishnan, *FIDES: End-to-end Compartments for Mixed-language
+Systems*, AsiaCCS 2026), whose intra-process compartmentalisation on
+the Shakti RISC-V processor is the source for the in-unikernel
+C-memory-safety framing. The TLS paper (Kaloper-Meršinjak et al., USENIX
 Security 2015) is the standard academic anchor for the OCaml-TLS
 story, and its title block is reproduced as a citation, as are the
 Bitcoin Pinata, NetHSM, and Docker for Mac images that identify

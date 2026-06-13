@@ -345,11 +345,11 @@ the same swap at the manifest level.
 
 <img src="/assets/m12/figures/slide-33-hello-unix-functors.png"
      alt="Hello functor graph, unix target, with Unix_os.Time"
-     style="max-height: 28vh; width: auto;">
+     style="max-height: 22vh; width: auto;">
 
 <img src="/assets/m12/figures/slide-34-hello-hvt-functors.png"
      alt="Hello functor graph, hvt target, with Solo5_os.Time"
-     style="max-height: 28vh; width: auto;">
+     style="max-height: 22vh; width: auto;">
 
 - One node differs: `Unix_os.Time` becomes `Solo5_os.Time`
   (graphs from mirage 4.8).
@@ -358,22 +358,50 @@ the same swap at the manifest level.
 
 :::
 
-You can run the spot-the-difference yourself, on current mirage,
-in the course VM. The hello project from the previous lecture is
-baked in at `/root/m12/hello`; reconfigure it for each target and
-look at what changed. (`mirage configure` is pure rewiring, no
-network needed; only `make depend` needs one, and that was done
-when the image was built.)
+You can try this yourself, in the course VM: the hello project from
+the previous lecture is baked in at `/root/m12/hello`. The VM is
+deliberately offline and 32-bit, so it is worth knowing which steps
+work there and which do not.
+
+What works. First, reconfigure and compare, the spot-the-difference
+above: `mirage configure -t hvt` then `grep Main.run mirage/main.ml`
+shows `Solo5_os.Main.run`; reconfigure `-t unix` and the same grep
+shows `Unix_os.Main.run`. This always works, because `mirage
+configure` is pure rewiring and needs no network. Second, build and
+run the unix target: after `mirage configure -t unix`, run `make
+build` and then `./dist/hello`, and the unikernel runs as an
+ordinary process, prints its log lines, and stops on Ctrl-C. This
+works because the unix target compiles to bytecode, which the 32-bit
+VM can do, and its dependencies were vendored into the image when it
+was built.
+
+What does not, by design. The hvt target cannot be built in the VM:
+the solo5 targets compile to native code, and the 32-bit VM has no
+OCaml 5 native backend (and an hvt image would in any case need the
+Solo5 tender and KVM to run, which a browser cannot provide). So in
+the VM, hvt is configure-and-inspect only; the running hvt boot is
+the recorded one below. And do not run `make depend` or `make all`:
+those re-fetch the opam overlay repositories over the network, which
+the offline VM does not have. The locking and fetching were done at
+image-build time, so plain `make build` is all you need.
 
 :::slide
 
 ## Rewire it yourself
 
 ```text
+# reconfigure and compare (offline)
 mirage configure -t hvt
 grep Main.run mirage/main.ml    # Solo5_os.Main.run
 mirage configure -t unix
 grep Main.run mirage/main.ml    # Unix_os.Main.run
+
+# build and run the unix target (offline)
+make build
+./dist/hello                    # runs as a process; Ctrl-C to stop
+
+# hvt is configure-only here (needs native code + KVM)
+# do not run "make depend" / "make all": the VM is offline
 ```
 
 :::vm-terminal dir=/root/m12/hello
@@ -492,6 +520,23 @@ boot banner, and a `curl` answered by the running unikernel.
      on TCP port 8080', and curl returns 'Next train to Chennai
      Central: 14:20.'"
      style="max-width: 100%; height: auto;">
+
+:::slide
+
+## On the host: a guest VM beside ordinary processes
+
+<img src="/assets/m12/figures/slide-34-solo5-hvt-arch.png"
+     alt="Host layering: the Suresh unikernel atop Solo5 inside a
+     dashed VM boundary, beside ordinary user-space processes, on a
+     Linux kernel with the kvm.ko module."
+     style="max-height: 380px; width: auto; max-width: 100%;">
+
+- Suresh and Solo5 are one guest VM (the dashed box).
+- Ordinary user-space processes run alongside, unchanged.
+- Underneath: the Linux kernel with the KVM module (`kvm.ko`).
+- The same KVM that runs any VM; the unikernel is a tiny guest.
+
+:::
 
 :::slide
 
@@ -688,12 +733,16 @@ looks like.
 
 For OCaml beyond this course: [ocaml.org](https://ocaml.org/) is
 the hub for the manual, the package ecosystem, and the books
-(including *Real World OCaml*, free online), and
-[discuss.ocaml.org](https://discuss.ocaml.org/) is the community
-forum, active and beginner-friendly. The parallelism and effects
-material that Module 11 opened continues in the OCaml 5 manual
-chapters and the `ocaml-multicore` project's published
-retrospectives.
+(including *Real World OCaml*, free online). The community is
+welcoming and active in two places: the
+[discuss.ocaml.org](https://discuss.ocaml.org/) forum for longer
+questions and announcements, and the OCaml Discord for live chat
+(the invite is linked from ocaml.org's community page). The
+high-performance extensions from Module 11 have their own home at
+[oxcaml.org](https://oxcaml.org/). And these course materials, with
+the in-browser playground, live at
+[fplaunchpad.org](https://fplaunchpad.org/), which is where to go
+for more functional-programming teaching.
 
 Twelve modules ago the course started with `let`. It ends with an
 operating system whose every layer you can now read: the data
@@ -708,11 +757,15 @@ build systems with. Go build one.
 
 ## Where to go from here
 
-- Build one: **mirage-skeleton** `tutorial/`, then **mirage.io**.
-- Deploy one: **robur.coop**, production unikernels and tooling.
-- The language: **ocaml.org**; the manual, packages, *Real World
-  OCaml*.
-- The community: **discuss.ocaml.org**.
+- **MirageOS**:
+  - Build one: **mirage-skeleton** `tutorial/`, then **mirage.io**.
+  - Deploy one: **robur.coop**, production unikernels and tooling.
+- **The OCaml community**:
+  - The language: **ocaml.org** (manual, packages, *Real World
+    OCaml*).
+  - Forum **discuss.ocaml.org**; live chat on the **OCaml Discord**.
+  - High-performance extensions: **oxcaml.org**.
+  - More FP teaching and this course: **fplaunchpad.org**.
 - From `let` to a bootable OS in twelve modules.
   - **Go build one.**
 

@@ -10,4 +10,4 @@ M08: Monads and GADTs
 M09: Testing
 M10: Memory safety and security
 M11: OxCaml: type-level extensions of safety
-M12: Unikernels (MirageOS) (WIP)
+M12: Unikernels (MirageOS)
