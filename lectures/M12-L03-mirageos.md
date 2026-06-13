@@ -1,6 +1,6 @@
 ---
-title: "MirageOS = Library OS + Virtualisation + OCaml"
-lecture_no: 5
+title: "MirageOS Basics"
+lecture_no: 3
 week: 12
 duration_target_min: 30
 concepts: [MirageOS, unikernel, mirage configure, Solo5, mirage-skeleton, OCaml libraries for networking, OCaml TLS, Fiat-Crypto, functor graphs, Robur, Unikraft, Bitcoin Pinata, hardware-assisted unikernels]
@@ -16,40 +16,38 @@ reading:
     url: https://www.usenix.org/system/files/conference/usenixsecurity15/sec15-paper-kaloper-mersinjak.pdf
 ---
 
-# MirageOS = Library OS + Virtualisation + OCaml
+# MirageOS Basics
 
 
 :::slide
 
 <div class="title-slide-inner">
 <p class="title-slide-course">Functional Programming with OCaml</p>
-<h2 class="title-slide-lecture">MirageOS = Library OS + Virtualisation + OCaml</h2>
-<p class="title-slide-label">Module 12 &middot; Lecture 5</p>
+<h2 class="title-slide-lecture">MirageOS Basics</h2>
+<p class="title-slide-label">Module 12 &middot; Lecture 3</p>
 <p class="title-slide-instructor">KC Sivaramakrishnan<br>IIT Madras</p>
 </div>
 
 :::
 
 We have the three ingredients now.
-[The library-OS lecture](M12-L02-library-os.html)
-shrank the kernel into a set of libraries.
-[The virtualisation lecture](M12-L03-virtualisation.html) used a
-hypervisor to put a
-strong protection boundary between guest images. And
-[the OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
-chose OCaml as the
-implementation language so that the inside of each image is
-memory-safe without needing the MMU. This lecture puts the three
-ingredients together. MirageOS is the result.
+[The background lecture](M12-L02-unikernel-background.html)
+shrank the kernel into a set of libraries, used a hypervisor to
+put a strong protection boundary between guest images, and chose
+OCaml as the implementation language so that the inside of each
+image is memory-safe without needing the MMU. This lecture puts
+the three ingredients together. MirageOS is the result.
 
-There is no live code here. MirageOS is statically compiled to an ELF
-binary that boots inside a VM; running it in the browser is not on
-the table for this course. Instead, this lecture is structured around
-walking the pipeline (what does the build actually do?), looking at
-the catalogue of libraries that ship with MirageOS, looking at one
-specific case study (the OCaml TLS implementation, whose engineering
-quality is the strongest single argument for the whole approach), and
-then stepping back over the course's safety story.
+A real MirageOS image is statically compiled to an ELF binary
+that boots inside a VM, so the full build does not run in the
+browser; the lecture walks the pipeline (what does the build
+actually do?), looks at the catalogue of libraries that ship with
+MirageOS, looks at one specific case study (the OCaml TLS
+implementation, whose engineering quality is the strongest single
+argument for the whole approach), and then steps back over the
+course's safety story. The one thing that *does* run live here is
+the heart of the whole mechanism: the retargeting functor, in two
+cells, midway through.
 
 This lecture has five parts. First, the synthesis ("here is what
 MirageOS *is*"). Second, the build pipeline (`config.ml` to `mirage
@@ -66,9 +64,8 @@ stack lands.
 :::cols
 :::col 52%
 - M12-L01 named the problem (kernel TCB is huge).
-- M12-L02 gave ingredient 1 (library OS).
-- M12-L03 gave ingredient 2 (virtualisation).
-- M12-L04 gave ingredient 3 (OCaml).
+- M12-L02 prepped the three ingredients:
+  - library OS, virtualisation, OCaml.
 - **This lecture: the synthesis.**
   - the ingredients, tossed: the salad.
 :::
@@ -92,7 +89,7 @@ together so there is no separate kernel underneath. The "uni" in
 *unikernel* is the single image: one binary, one address space,
 one OS-and-application combined unit.
 
-The library OS part is exactly the library-OS lecture's story: a
+The library OS part is exactly the background lecture's story: a
 collection of
 OCaml libraries that, between them, implement the functionality
 that used to be in the kernel. The compiler part is the
@@ -127,19 +124,11 @@ C bindings the OCaml runtime and the crypto libraries actually need.
 
 ## MirageOS unikernel
 
-```
-+----------------+ +----------------+
-| Application    | | Application    |
-| (OCaml)        | | (OCaml)        |
-| Mirage runtime | | Mirage runtime |   <-- one unikernel
-| (OCaml + Solo5)| | (OCaml + Solo5)|
-+----------------+ +----------------+
-+------------------------------------+
-| Hypervisor (KVM via Solo5)         |
-+------------------------------------+
-| Hardware                           |
-+------------------------------------+
-```
+<img src="/assets/diagrams/M12-unikernel-stack.svg"
+     alt="Two unikernels side by side, each an application over a
+     Mirage runtime in one image, on a hypervisor (KVM via Solo5),
+     on hardware"
+     style="max-width: 78%; height: auto;">
 
 - A unikernel = **one statically-compiled ELF binary**.
 - A few MiB on disk, a few MiB of RAM, boot in milliseconds.
@@ -385,22 +374,25 @@ audit means something.
 Worth seeing the code for one concrete example. The simplest
 MirageOS unikernel is something that, every second, logs the word
 "hello" and exits after a few iterations. The actual `unikernel.ml`
-looks like this. The `open Lwt.Infix` at the top brings the `>>=`
-operator into scope: `>>=` is Lwt's monadic bind, the same shape
-as the QCheck-generator `>>=` from
-[property-based testing](M09-L05-property-based-testing.html); read `e >>= fun x -> ...`
-as "wait for the Lwt computation `e`, then continue with its
-result bound to `x`."
+looks like this, and the `open Lwt.Syntax` at the top should ring
+a loud bell: it brings `let*` into scope, the binding operator you
+defined for [the option monad](M08-L01-option-monad.html) and
+[the state monad](M08-L03-state-monad.html). Lwt is a third
+instance of the same pattern: a **concurrency monad**. An
+`'a Lwt.t` is a computation that will eventually deliver an `'a`,
+`Lwt.return` wraps a value, and `let* () = e in ...` reads "wait
+for `e` to finish, then continue."
 
 ```text
-open Lwt.Infix
+open Lwt.Syntax
 
 let start () =
   let rec loop = function
     | 0 -> Lwt.return_unit
     | n ->
         Logs.info (fun f -> f "hello");
-        Mirage_sleep.ns (Duration.of_sec 1) >>= fun () -> loop (n - 1)
+        let* () = Mirage_sleep.ns (Duration.of_sec 1) in
+        loop (n - 1)
   in
   loop 4
 ```
@@ -418,7 +410,11 @@ later.) A few things worth noticing, even without running it:
 - The body uses `Lwt`, the cooperative-concurrency library, and
   `Logs`, the structured logging library. Both are normal OCaml
   packages; in a Linux process they would do the same thing they
-  do here.
+  do here. (In the wild you will also see Lwt's bind written as
+  the infix `>>=` from `Lwt.Infix`, the same shape as the
+  QCheck-generator `>>=` in
+  [property-based testing](M09-L05-property-based-testing.html);
+  `let*` is the binding form of the same operator.)
 - The entry point is a `start` function. The build pipeline (via
   the generated `main.ml`) calls it.
 - There is no `main`. There is no `printf` to stdout. There is no
@@ -479,49 +475,60 @@ runs as a VM on KVM, with no Linux guest inside it.
 ## Hello Unikernel (`unikernel.ml`)
 
 ```text
-open Lwt.Infix
+open Lwt.Syntax
 
 let start () =
   let rec loop = function
     | 0 -> Lwt.return_unit
     | n ->
         Logs.info (fun f -> f "hello");
-        Mirage_sleep.ns (Duration.of_sec 1)
-        >>= fun () -> loop (n - 1)
+        let* () = Mirage_sleep.ns (Duration.of_sec 1) in
+        loop (n - 1)
   in
   loop 4
 ```
 
+- `let*` is the option/state monads' bind: `Lwt` is a
+  **concurrency monad**.
 - `Mirage_sleep.ns`: one name; the backend implementation is
   chosen by the target's packages, at link time.
 - Same source: `-t unix` runs as a process, `-t hvt` as a VM.
-- Real devices (HTTP, storage, network) arrive as **functors**:
-  next slides and next lecture.
 
 :::
 
-A downloadable hands-on example: this minimal unikernel skeleton
-plus a `dune-project`, `config.ml`, and `unikernel.ml` is bundled as
-`/assets/m12/hello-mirage.tar.gz`. Clone, `mirage configure -t
-unix`, `make depend`, `make`, and you have a working development
-setup on your own
-machine. (To run the Solo5 backends you need KVM on Linux, or one of
-the Solo5 alternatives.)
+You do not have to take the pipeline on faith: the course's
+in-browser VM now carries the `mirage` tool and this exact hello
+project, pre-configured for `-t unix` with its dependencies
+already vendored (the VM has no network, so the `make depend`
+step was done when the image was built; everything after it is
+yours). The loop a MirageOS developer lives in fits in the
+terminal below: open `unikernel.ml` in `nano`, change what it
+logs, `make build` to relink the unikernel (about 40 seconds in
+the emulated machine), and run it. You are rebuilding and booting
+an operating system image, in a browser tab.
 
 :::slide
 
-## Try it locally
+## Edit it, rebuild it, run it
 
-- Download `/assets/m12/hello-mirage.tar.gz`.
-- `tar xzf hello-mirage.tar.gz && cd hello-mirage`.
-- `opam install mirage`.
-- `mirage configure -t unix && make depend && make`.
-- `./dist/hello`.
+```text
+nano unikernel.ml    # change what hello logs
+make build           # dune relinks the image (~40 s here)
+./dist/hello         # run it: a unikernel as a unix process
+```
 
-For the KVM target: `mirage configure -t hvt && make depend &&
-make && solo5-hvt -- dist/hello.hvt`.
+:::vm-terminal dir=/root/m12/hello
+:::
 
 :::
+
+To do the same on your own machine: the skeleton (a
+`dune-project`, `config.ml`, and `unikernel.ml`) is bundled as
+`/assets/m12/hello-mirage.tar.gz`. Untar, `opam install mirage`,
+then `mirage configure -t unix`, `make depend`, `make`, and
+`./dist/hello`. (To run the Solo5 backends you need KVM on Linux,
+or one of the Solo5 alternatives; the `-t unix` loop works
+anywhere opam does.)
 
 ## The module system is the OS
 
@@ -633,6 +640,91 @@ graphs, are unchanged.)
 
 :::
 
+## Retargeting in miniature
+
+The graphs make the claim; the mechanism is small enough to hold
+in two cells. Strip everything else away and the trick under
+`mirage configure -t` is a single functor application. First the
+ingredients: a signature for a platform service, two
+implementations standing in for the host kernel's clock and the
+hypervisor's clock, and an application functor that cannot tell
+which one it will be given.
+
+```ocaml
+module type TIME = sig val now : unit -> string end
+
+module Unix_time : TIME = struct
+  let now () = "12:00, host kernel clock"
+end
+module Solo5_time : TIME = struct
+  let now () = "12:00, hypervisor clock"
+end
+
+module App (T : TIME) = struct
+  let start () = print_endline ("hello at " ^ T.now ())
+end
+```
+
+The body of `App` is written once and never names an operating
+system; the signature is all it can see. Now apply it twice:
+
+```ocaml
+module Unix_app = App (Unix_time)  (* mirage configure -t unix *)
+module Hvt_app = App (Solo5_time)  (* mirage configure -t hvt  *)
+let () = Unix_app.start (); Hvt_app.start ()
+```
+
+These two module bindings are the unikernel build in miniature:
+`mirage configure -t unix` makes the first choice when it
+generates the real `main.ml`, `-t hvt` makes the second, and the
+same application functor is reapplied. When you sealed the
+two-list queue behind a signature, this was the skill you were
+building; mirage applies it with an operating system on the far
+side of the signature. Swap the implementation, rerun the cell,
+and you have retargeted a (toy) system without touching its
+application code.
+
+:::slide
+
+## Retargeting in miniature
+
+```ocaml
+module type TIME = sig val now : unit -> string end
+
+module Unix_time : TIME = struct
+  let now () = "12:00, host kernel clock"
+end
+module Solo5_time : TIME = struct
+  let now () = "12:00, hypervisor clock"
+end
+
+module App (T : TIME) = struct
+  let start () = print_endline ("hello at " ^ T.now ())
+end
+```
+
+- `App` never names an OS; the signature hides the platform.
+
+:::
+
+:::slide
+
+## One functor, two systems
+
+```ocaml
+module Unix_app = App (Unix_time)  (* mirage configure -t unix *)
+module Hvt_app = App (Solo5_time)  (* mirage configure -t hvt  *)
+let () = Unix_app.start (); Hvt_app.start ()
+```
+
+- The two bindings are `-t unix` / `-t hvt`, in miniature.
+- Same application body; the OS is chosen by the functor
+  argument.
+- Swap the implementation and rerun: a retarget with no
+  application change.
+
+:::
+
 ## MirageOS in 2026
 
 MirageOS is an active project, and the 2025-2026 releases moved it
@@ -703,7 +795,7 @@ OCaml blockchain, funded experiments in packaging its nodes as
 MirageOS unikernels; that work stayed experimental.) And the
 container
 world is meeting unikernels halfway: **urunc** (from the
-virtualisation lecture) launches solo5 unikernels under
+background lecture) launches solo5 unikernels under
 Kubernetes.
 
 The niche is clear: long-running network services where the
@@ -750,7 +842,7 @@ against precisely the stack this lecture describes.
 appliance that guards an organisation's cryptographic keys) whose
 entire software stack is a MirageOS unikernel running on the Muen
 separation kernel, the high-assurance Solo5 backend from the
-virtualisation lecture. Open source, auditable end to end, and
+background lecture. Open source, auditable end to end, and
 sold as a product: unikernels passing a commercial-credibility
 test.
 :::
@@ -920,7 +1012,7 @@ level if you take the language seriously.
 
 ## Activity
 
-:::quiz mcq id=M12-L05-q1
+:::quiz mcq id=M12-L03-q1
 A MirageOS unikernel is built by running `mirage configure -t hvt`,
 then `make`. What is the *output* of this build, and what runs it?
 
@@ -936,12 +1028,12 @@ run it with `solo5-hvt -- dist/<name>.hvt`, which starts a KVM VM
 whose only contents are this unikernel. There is no Linux guest
 inside the VM; the unikernel *is* the OS. Containers share the host
 kernel and would not give us the isolation guarantees the
-virtualisation lecture established; bytecode plays no role in the
+background lecture established; bytecode plays no role in the
 pipeline, since even the development backend
 (`mirage configure -t unix`) is a native-compiled Unix executable.
 :::
 
-:::quiz mcq id=M12-L05-q2
+:::quiz mcq id=M12-L03-q2
 Why is the OCaml-TLS implementation considered "rigorous engineering"
 in a way that conventional TLS libraries typically are not?
 
@@ -1007,8 +1099,8 @@ way they capture any container's stdout.
 
 ## What's next
 
-The final lecture is the hands-on companion to this one: **Bob
-the Bin Man**, one small HTTP unikernel walked end to end. You
+The final lecture is the hands-on companion to this one: **Suresh
+the Stationmaster**, one small HTTP unikernel walked end to end. You
 will see the two files you actually write (`unikernel.ml` and
 `config.ml`), the artefacts `mirage configure` generates, the
 `dune build` that links the static ELF, the `solo5-hvt` boot, a
@@ -1019,7 +1111,7 @@ fall out.
 
 ## What's next
 
-- Lecture 6: **Bob the Bin Man**, one unikernel end to end.
+- Lecture 4: **Suresh the Stationmaster**, one unikernel end to end.
   - `unikernel.ml` + `config.ml`: the two files you write.
   - `mirage configure -t hvt`, `make`: the build.
   - `solo5-hvt`: boot it, `curl` it, measure it.

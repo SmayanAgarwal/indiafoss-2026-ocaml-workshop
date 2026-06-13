@@ -87,4 +87,6 @@
   M10-L02-memory-safety-by-construction.md
   M10-L03-data-races-are-ub.md
   M10-L04-where-ocaml-has-ub.md
-  M10-L05-tutorial.md))
+  M10-L05-tutorial.md
+  M12-L03-mirageos.md
+  M12-L04-suresh-the-stationmaster.md))

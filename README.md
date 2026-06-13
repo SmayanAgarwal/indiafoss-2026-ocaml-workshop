@@ -16,9 +16,9 @@ Live preview: <https://fplaunchpad.github.io/ocaml_nptel/>.
 ```
 lectures/
   M01-L01-course-intro.md          One .md per lecture: M<module>-L<lecture>-<slug>.md.
-  M01-L02-why-fp.md                M01-M12, with L counts 5, 6, 6, 6, 6, 7, 10, 8, 7, 5, 6, 6.
-  ...                              (78 files: 75 recorded lectures + 3 slide-free practice
-  M12-L06-bob-the-bin-man.md       chapters, M06-L07, M07-L10 and M08-L08).
+  M01-L02-why-fp.md                M01-M12, with L counts 5, 6, 6, 6, 6, 7, 10, 8, 7, 5, 6, 4.
+  ...                              (76 files: 73 recorded lectures + 3 slide-free practice
+  M12-L04-suresh-the-stationmaster.md  chapters, M06-L07, M07-L10 and M08-L08).
   modules.txt                      Module titles used in sidebar + landing page.
   dune                             ocaml-mdx stanza listing every lecture.
 

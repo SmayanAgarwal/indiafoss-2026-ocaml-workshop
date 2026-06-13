@@ -70,6 +70,19 @@ subprocesses; browser WASI shims have none).
 - `run-workflow.mjs`: headless end-to-end smoke test.
 - `prototype.html`: minimal demo page (Phase 1 prototype).
 - `setup-scratch.sh`: fetches the pinned third-party inputs.
+- `image-v6/`: the MirageOS layer (module 12). Builds FROM the
+  base image and adds mirage 4.11 plus a pre-vendored
+  `mirage configure -t unix` hello project at `/root/m12/hello`
+  (the VM is offline, so `make depend` happens at image-build
+  time; students get edit / `make build` / run, plus
+  configure-only retargeting to `-t hvt`). Its `build.sh`,
+  `make-state.mjs`, and `run-workflow.mjs` mirror the top-level
+  ones but write to `$SCRATCH/images-v6`. Both smoke tests must
+  pass on this image before it ships as `current/`: the m12 one
+  (`image-v6/run-workflow.mjs`, ends `m12 workflow complete`)
+  and the base one (`run-workflow.mjs` with `VM_SCRATCH`
+  pointing at a dir whose `images/` is the v6 output, ends
+  `workflow complete: Coverage: ...`).
 
 Heavy inputs and all build outputs live in an untracked scratch
 dir, `_vm-prototype/` at the repo root (override: `VM_SCRATCH`).

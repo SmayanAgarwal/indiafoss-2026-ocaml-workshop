@@ -39,9 +39,8 @@ The answer, by the end of the module, is yes: that is exactly what
 MirageOS does. ("Unikernel" is the name for the kind of artefact
 MirageOS produces: a single binary that contains the application
 *and* the operating-system pieces it needs, bundled together as one
-unit. We will define it carefully in the synthesis lecture on
-MirageOS; for now, treat it as shorthand for "what we are
-building toward.") But to get there we first have to understand what an
+unit. The next lecture defines it carefully; for now, treat it as
+shorthand for "what we are building toward.") But to get there we first have to understand what an
 operating system actually is, why monolithic kernels are so large, and
 where the security cost of that size lives. This first lecture sets up
 the problem the rest of the module solves. It is deliberately
@@ -103,6 +102,17 @@ and it is worth naming them separately:
    process owns which network connection. The OS arbitrates among
    competing programs for finite resources.
 
+The picture is the classic hourglass: many applications above,
+many devices below, the OS as the one layer both sides agree on.
+
+<img src="/assets/diagrams/M12-os-abstraction.svg"
+     alt="Several applications above an operating-system band
+     containing drivers and resource management, above a hardware
+     band of CPUs, memory, NICs and disks; the boundaries are
+     labelled: one stable interface of system calls above, one
+     driver per device below"
+     style="max-width: 70%; height: auto;">
+
 Both of these are deeply useful. Both come at a cost: every byte of
 driver code, every line of scheduling logic, every bit of resource-
 arbitration policy, is code your application is running on top of
@@ -113,17 +123,25 @@ modern application is not the application; it is the OS.
 
 ## What an OS is for
 
+:::cols
+:::col 55%
 - **Stability**: applications come and go. The OS commits to an
   interface long before the apps exist.
 - **Scalability**: one OS, many CPUs and devices. Apps cannot be
   rewritten per device.
-
-OS delivers these by **abstracting the hardware**:
-
-- **Drivers** for each device.
-- **Resource management**: CPU, memory, files, users, network.
-
-**Application code is a small percentage of the runtime.**
+- It delivers both by **abstracting the hardware**:
+  - **drivers** for each device.
+  - **resource management**: CPU, memory, files, users, network.
+- **Application code is a small percentage of the runtime.**
+:::
+:::col 45%
+<img src="/assets/diagrams/M12-os-abstraction.svg"
+     alt="Applications above an OS band of drivers and resource
+     management, above a hardware band of CPUs, memory, NICs and
+     disks, with the two interfaces labelled on the boundaries"
+     style="width: 100%;">
+:::
+:::
 
 :::
 
@@ -269,6 +287,8 @@ new line is a candidate location for a CVE.
      alt="Linux kernel lines of code by version and subsystem">
 :::
 :::col 42%
+- The **TCB** (Trusted Computing Base, from the memory-safety
+  module): all the code your security depends on.
 - Linux 2.4 (early 2000s): 3 to 4 million LoC.
 - Linux 5.11: **30 million**.
   - the 6.x series keeps climbing.
@@ -304,7 +324,7 @@ What this lecture adds is the *TCB reading* of those numbers.
 The mechanism is simple: more memory-unsafe C in the TCB, more
 memory-safety CVEs out the other end. And the previous section
 showed the TCB only ever grows.
-[The OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
+[The background lecture](M12-L02-unikernel-background.html)
 returns to the same numbers as an argument about languages.
 
 :::slide
@@ -442,7 +462,7 @@ every line of code in the TCB is a line that, if compromised, can
 defeat the whole stack.
 
 We will see in
-[the OCaml-for-systems lecture](M12-L04-ocaml-for-systems.html)
+[the background lecture](M12-L02-unikernel-background.html)
 that the proportion of CVEs that come from memory safety bugs in
 TCB-level C code has been stuck at around 70 percent for over a
 decade, across multiple major vendors. The size of the TCB matters,
@@ -453,14 +473,14 @@ because every line of memory-unsafe code is a possible CVE.
 ## The monolithic OS iceberg
 
 :::cols
-:::col 52%
+:::col 60%
 <img src="/assets/m12/figures/slide-06-iceberg.png"
      alt="Iceberg: a small tip above the waterline labelled code
      you want to run; a huge mass below labelled code your OS
      insists you need; annotation: huge TCB means security concern"
-     style="max-height: 54vh; width: auto;">
+     style="width: 100%;">
 :::
-:::col 48%
+:::col 40%
 - Visible: a few thousand lines of your code.
 - Invisible: tens of millions of lines of someone else's code.
 - All of it is in your **Trusted Computing Base**.
@@ -488,22 +508,20 @@ about how to build a different kind of system, where each application
 ships only the OS code it actually needs, and where the language
 itself enforces safety at the layers that used to be C.
 
-We will get there in three steps, each of which is one ingredient of
-the recipe:
+We will get there with three ingredients, prepped together in
+[the next lecture](M12-L02-unikernel-background.html):
 
-- [Lecture 2 (Library OS)](M12-L02-library-os.html): break the kernel
-  into libraries. No ambient kernel; the application links the parts
-  of the kernel it actually uses.
-- [Lecture 3 (Virtualisation)](M12-L03-virtualisation.html): use the
-  hypervisor to provide the protection boundary that a library OS
-  cannot.
-- [Lecture 4 (OCaml for systems)](M12-L04-ocaml-for-systems.html): use
-  a memory-safe language at the OS layer so the TCB stops being
-  the world's biggest pile of C.
+- **The library OS**: break the kernel into libraries. No ambient
+  kernel; the application links the parts of the kernel it
+  actually uses.
+- **Virtualisation**: use the hypervisor to provide the protection
+  boundary that a library OS cannot.
+- **The language**: use memory-safe OCaml at the OS layer so the
+  TCB stops being the world's biggest pile of C.
 
-The synthesis, in [Lecture 5](M12-L05-mirageos.html), is MirageOS.
-[Lecture 6](M12-L06-bob-the-bin-man.html) closes with one small
-unikernel walked end to end, from source to running VM.
+The synthesis is [MirageOS](M12-L03-mirageos.html). The
+[closing walkthrough](M12-L04-suresh-the-stationmaster.html) builds
+one small unikernel end to end, from source to running VM.
 
 :::slide
 
@@ -523,7 +541,7 @@ Sum: **MirageOS = Library OS + Virtualisation + OCaml**.
 
 :::quiz mcq id=M12-L01-q1
 A static HTTPS web server, deployed in production, talks HTTP and TLS
-over a single virtio network interface. It reads its TLS certificate
+over a single virtual network interface. It reads its TLS certificate
 and a few static files from a bundled archive. It does not need a
 filesystem, a USB stack, a graphics driver, a keyboard, a printer
 subsystem, or 99 percent of the other drivers in `drivers/` in the
@@ -564,7 +582,7 @@ exploit, the whole system can be compromised. Around 70 percent of
 CVEs in major C/C++ codebases are memory-safety bugs (we cover this
 properly in
 [the memory-safety module](M10-L01-memory-safety-and-security.html)
-and [later in this module](M12-L04-ocaml-for-systems.html)). A bigger
+and [later in this module](M12-L02-unikernel-background.html)). A bigger
 TCB written in an
 unsafe language means more places for those bugs to live.
 :::
@@ -611,26 +629,23 @@ reducing the TCB. They are a packaging story, not a safety story.
 
 ## What's next
 
-The next lecture takes the first ingredient of the recipe:
-breaking the kernel into libraries. We will look at the history of
-library operating systems (Nemesis at Cambridge and Glasgow in the
-1990s, Exokernel at MIT around the same time), why those projects did
-not escape academia at the time, and what changed.
+The next lecture preps all three ingredients of the recipe: the
+kernel broken into libraries (and the two cons that come with
+that), the hypervisor that restores protection and absorbs the
+drivers, and the language that guards the inside of the image.
+After that, the module is hands-on: MirageOS itself, then one
+unikernel built end to end.
 
 :::slide
 
 ## What's next
 
-- Lecture 2: **Ingredient 1, Library OS.** The kernel as
-  function calls, not syscalls. Nemesis, Exokernel, and what
-  killed them.
-- Lecture 3: **Ingredient 2, Virtualisation.** Why
-  hypervisors closed the library-OS isolation gap.
-- Lecture 4: **Ingredient 3, OCaml.** Why memory safety at
-  the OS layer matters.
-- Lecture 5: **MirageOS.** The synthesis.
-- Lecture 6: **One unikernel end to end.** From `unikernel.ml`
-  to a running VM.
+- Lecture 2: **Unikernel background.** The three ingredients:
+  library OS, virtualisation, and the language.
+- Lecture 3: **MirageOS Basics.** The synthesis: pipeline,
+  libraries, TLS, hello unikernel.
+- Lecture 4: **Suresh the Stationmaster.** One unikernel end to
+  end, from `unikernel.ml` to a running VM.
 
 :::
 

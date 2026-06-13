@@ -77,8 +77,9 @@ magick "$STAGE/pages/page-34.png" -crop 1500x720+1900+370 +repage \
   "$OUT/slide-34-solo5-hvt-arch.png"
 echo "  slide-34-solo5-hvt-arch.png  <-  page-34.png crop"
 # Monolithic-OS iceberg figure (photo + labels + TCB callout),
-# sans the slide title and page number.
-magick "$STAGE/pages/page-06.png" -crop 3256x1530+300+370 +repage \
+# cropped to the content span: label left edge to callout right
+# edge, no slide margins (they squeezed the photo on the slide).
+magick "$STAGE/pages/page-06.png" -crop 2680x1465+778+480 +repage \
   "$OUT/slide-06-iceberg.png"
 echo "  slide-06-iceberg.png  <-  page-06.png crop"
 

@@ -538,28 +538,29 @@ the Bin Man: a worked unikernel example* (13 slides) walks one
 tiny HTTP unikernel end to end. Estimate uses slide_count x 1.5
 min.
 
-Re-counted 2026-06-12 after the combined content + slide-image
-pass (deck images from KC's Jan 2025 IIT talk, activity-discussion
-slides moved off-deck into `:::solution`, L05 rewritten around the
-2026 ecosystem with the functor-graph sequence and the use-case
-trio).
+Restructured 2026-06-12 (KC): the three ingredient lectures
+(library OS, virtualisation, OCaml-for-systems) squashed into one
+background lecture, dropping the talk-era advocacy content
+(industrial OCaml, performance pitch, web-server benchmark,
+government memos as slides) that this audience does not need;
+the old L05/L06 renamed to L03/L04. M12 is now four lectures.
 
 | Lecture | Topic | Slides | MCQ | Code | Video (min) | Recording (min) |
 |---|---|---:|---:|---:|---:|---:|
 | M12-L01 | Why do we need an OS? | 12 | 2 | 0 | 18 | 25 |
-| M12-L02 | Ingredient 1: Library OS | 13 | 2 | 0 | 20 | 28 |
-| M12-L03 | Ingredient 2: Virtualisation | 13 | 2 | 0 | 20 | 28 |
-| M12-L04 | Ingredient 3: OCaml for systems | 15 | 2 | 0 | 23 | 32 |
-| M12-L05 | MirageOS = Library OS + Virtualisation + OCaml | 19 | 2 | 0 | 29 | 41 |
-| M12-L06 | Bob the Bin Man: a worked unikernel example | 13 | 2 | 0 | 20 | 28 |
-| **M12 total** | | **85** | **12** | **0** | **130** | **182** |
-| | | | | | **(2.2 h)** | **(3.0 h)** |
+| M12-L02 | MirageOS Unikernel Background | 16 | 2 | 0 | 24 | 34 |
+| M12-L03 | MirageOS Basics | 21 | 2 | 0 | 32 | 45 |
+| M12-L04 | Suresh the Stationmaster: a worked unikernel example | 15 | 1 | 1 | 23 | 32 |
+| **M12 total** | | **64** | **7** | **1** | **97** | **136** |
+| | | | | | **(1.6 h)** | **(2.2 h)** |
 
-M12-L02..L06 land in the 20-30 min NPTEL band (L05 at the top of
-it). M12-L01 (12 slides / 18 min) sits just under the 20-min
-floor after its activity-discussion slide moved off-deck; the
-image-heavy slides talk longer than the x1.5 average, so this is
-likely fine in practice.
+M12-L02 and M12-L04 sit comfortably in the 20-30 min NPTEL band.
+M12-L03 at 21 slides / ~32 min is the longest lecture in the
+course (two of those slides are quick live-cell beats, so the
+x1.5 average overstates it; still the one to watch in the
+studio). M12-L01 (12 slides / 18 min) sits just under the 20-min
+floor; its image-heavy slides talk longer than the x1.5 average,
+so this is likely fine in practice.
 
 ## Sweep: lectures with low slide counts (2026-05-25)
 
