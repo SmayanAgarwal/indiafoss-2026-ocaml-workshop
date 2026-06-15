@@ -346,6 +346,18 @@ percent on ARM.
 
 :::slide
 
+## Bounded in space and time
+
+<img src="/assets/diagrams/M10-bounded-races.svg" alt="A race confined to one location and one stretch of the run; other locations and times keep their sequential meaning" style="height: 400px;">
+
+- Every race-free *part* keeps its sequential meaning ("local DRF").
+- Read a ref twice, no concurrent writes: both reads agree.
+  - in C/C++, a race on an *unrelated* variable can break this.
+
+:::
+
+:::slide
+
 ## C UB vs OCaml bounded
 
 | | C / C++ | OCaml 5 |
@@ -358,18 +370,6 @@ percent on ARM.
 
 OCaml's racy programs give *surprising values*; C's racy programs
 give *anything at all*.
-
-:::
-
-:::slide
-
-## Bounded in space and time
-
-<img src="/assets/diagrams/M10-bounded-races.svg" alt="A race confined to one location and one stretch of the run; other locations and times keep their sequential meaning" style="height: 400px;">
-
-- Every race-free *part* keeps its sequential meaning ("local DRF").
-- Read a ref twice, no concurrent writes: both reads agree.
-  - in C/C++, a race on an *unrelated* variable can break this.
 
 :::
 
