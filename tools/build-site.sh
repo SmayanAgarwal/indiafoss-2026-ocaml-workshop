@@ -420,6 +420,14 @@ emit_dashboard() {
   <meta name="quiz-api" content="https://nptel-quiz.kc-7c7.workers.dev">
   <title>Quiz analytics &middot; Functional Programming with OCaml</title>
   <link rel="stylesheet" href="__ASSET_ROOT__/assets/css/chapter.css">
+  <!-- Vega-Lite powers the response-timeline chart. Loaded from a
+       CDN: this is an internal, no-PII analytics page, so an
+       external script is acceptable here (it is not loaded on any
+       learner-facing lecture page). Pinned versions for repeatable
+       rendering. -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.29.0"></script>
   <style>
     .dash { max-width: 980px; margin: 2rem auto; padding: 0 1rem 4rem; }
     .dash h1 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 1.8rem; }
@@ -551,6 +559,14 @@ emit_dashboard() {
       background: var(--code-bg); color: var(--muted);
       border-radius: 3px; vertical-align: 0.05em;
     }
+    #timeline-chart { width: 100%; margin-top: 0.4rem; }
+    /* Vega-Lite injects the granularity dropdown here. */
+    #timeline-chart .vega-bindings {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.85rem; color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    #timeline-chart .vega-bind select { margin-left: 0.3em; }
   </style>
 </head>
 <body class="mode-chapter">
@@ -566,6 +582,14 @@ emit_dashboard() {
 
     <section id="cards-section" hidden>
       <div class="cards" id="cards"></div>
+    </section>
+
+    <section id="timeline-section" hidden>
+      <h2>Responses over time</h2>
+      <p class="legend">Total quiz responses per period. Switch the
+        granularity (day / week / month); drag to pan and scroll to
+        zoom the time window.</p>
+      <div id="timeline-chart"></div>
     </section>
 
     <section id="lectures-section" hidden>
@@ -732,6 +756,13 @@ emit_dashboard() {
         const r2 = await fetch(API + '/quiz/agg/readers');
         if (r2.ok) readersInfo = await r2.json();
       } catch (_) { /* ignore */ }
+      // Timeline is best-effort too: an older Worker without the
+      // /quiz/timeline route should not blank out the rest.
+      let timeline;
+      try {
+        const r3 = await fetch(API + '/quiz/timeline');
+        if (r3.ok) timeline = await r3.json();
+      } catch (_) { /* ignore */ }
 
       const perQuiz = agg.per_quiz || [];
       const mcqOpts = agg.mcq_options || [];
@@ -746,13 +777,95 @@ emit_dashboard() {
 
       // Reveal the dashboard now that we know there is data.
       status.hidden = true;
-      ['cards-section', 'lectures-section', 'per-quiz-section', 'distractor-section']
+      ['cards-section', 'timeline-section', 'lectures-section',
+       'per-quiz-section', 'distractor-section']
         .forEach((id) => { document.getElementById(id).hidden = false; });
 
       renderCards(perQuiz, readersInfo);
+      renderTimeline(timeline ? (timeline.per_day || []) : []);
       renderLectures(perQuiz);
       renderPerQuiz(perQuiz);
       renderDistractors(perQuiz, mcqOpts);
+    }
+
+    // Response-timeline chart. The Worker serves daily totals; the
+    // Vega-Lite spec re-buckets day -> week -> month on the client
+    // via a bound dropdown, and an x-axis interval selection bound
+    // to the scales gives drag-to-pan / scroll-to-zoom over the
+    // window. Bucket math is in local time; for IST (UTC+5:30) a
+    // UTC-midnight day stamp lands on the same calendar day, so the
+    // day labels match the server's date(ts).
+    function renderTimeline(perDay) {
+      const section = document.getElementById('timeline-section');
+      if (typeof vegaEmbed === 'undefined') {
+        // CDN blocked / offline: leave a note instead of a blank box.
+        section.querySelector('#timeline-chart').innerHTML =
+          '<p class="note">Timeline chart could not load (the '
+          + 'Vega-Lite library is unreachable).</p>';
+        return;
+      }
+      if (!perDay.length) { section.hidden = true; return; }
+
+      const spec = {
+        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        width: 'container',
+        height: 300,
+        data: { values: perDay },
+        params: [
+          {
+            name: 'gran',
+            value: 'day',
+            bind: {
+              input: 'select',
+              name: 'Granularity ',
+              options: ['day', 'week', 'month'],
+              labels: ['Day', 'Week', 'Month'],
+            },
+          },
+          // Interval selection on x, bound to the scales: drag pans,
+          // wheel zooms. This is the time-window picker.
+          { name: 'window', select: { type: 'interval', encodings: ['x'] },
+            bind: 'scales' },
+        ],
+        transform: [
+          { calculate: 'toDate(datum.day)', as: 't' },
+          // month() is 0-based in Vega expressions, and datetime()
+          // takes a 0-based month, so they compose directly. The
+          // week bucket snaps back to the preceding Sunday via
+          // date - weekday (datetime handles the month underflow).
+          {
+            calculate:
+              "gran == 'month' ? datetime(year(datum.t), month(datum.t), 1) : "
+              + "gran == 'week' ? datetime(year(datum.t), month(datum.t), date(datum.t) - day(datum.t)) : "
+              + "datetime(year(datum.t), month(datum.t), date(datum.t))",
+            as: 'bucket',
+          },
+          { aggregate: [{ op: 'sum', field: 'n', as: 'total' }],
+            groupby: ['bucket'] },
+        ],
+        // Line + points (no area fill, linear interpolation) reads
+        // honestly at every granularity: ~70 daily points form a
+        // sparkline; the 3-4 monthly points are clearly discrete
+        // markers joined by straight segments, not a smoothed blob.
+        mark: { type: 'line', point: true, interpolate: 'linear' },
+        encoding: {
+          x: { field: 'bucket', type: 'temporal', title: null,
+               axis: { format: '%Y-%m-%d' } },
+          y: { field: 'total', type: 'quantitative', title: 'Responses' },
+          tooltip: [
+            { field: 'bucket', type: 'temporal', title: 'Period',
+              format: '%Y-%m-%d' },
+            { field: 'total', type: 'quantitative', title: 'Responses' },
+          ],
+        },
+        config: { view: { stroke: null } },
+      };
+
+      vegaEmbed('#timeline-chart', spec, { actions: false }).catch((e) => {
+        section.querySelector('#timeline-chart').innerHTML =
+          '<p class="note">Timeline chart failed to render: '
+          + (e && e.message ? e.message : e) + '</p>';
+      });
     }
 
     function renderCards(perQuiz, readersInfo) {

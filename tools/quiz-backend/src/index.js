@@ -1,6 +1,6 @@
 // Cloudflare Worker for the NPTEL OCaml course quiz analytics.
 //
-// Five routes, all CORS-permissive (the lecture pages are served
+// Six routes, all CORS-permissive (the lecture pages are served
 // from a different origin: GitHub Pages):
 //
 //   POST /quiz             body: { reader_uuid, quiz_id, page, kind,
@@ -18,6 +18,10 @@
 //                          count. Public, used by the dashboard. Split
 //                          from /quiz/agg so the heavier DISTINCT scan
 //                          does not slow the per-quiz query.
+//
+//   GET  /quiz/timeline    Per-day response totals across all time.
+//                          Public, used by the dashboard timeline
+//                          chart (which re-buckets to week/month).
 //
 //   POST /quiz/export      body: { reader_uuid }
 //                          DPDPA right-to-access: return every row
@@ -55,6 +59,9 @@ export default {
       }
       if (url.pathname === '/quiz/agg/readers' && request.method === 'GET') {
         return await handleQuizAggReaders(env);
+      }
+      if (url.pathname === '/quiz/timeline' && request.method === 'GET') {
+        return await handleQuizTimeline(env);
       }
       if (url.pathname === '/quiz/export' && request.method === 'POST') {
         return await handleQuizExport(request, env);
@@ -217,6 +224,24 @@ async function handleQuizAggReaders(env) {
   return new Response(JSON.stringify({
     readers:   row?.readers   ?? 0,
     responses: row?.responses ?? 0,
+  }), { status: 200, headers: JSON_HEADERS });
+}
+
+async function handleQuizTimeline(env) {
+  // Per-day response totals across all time, for the dashboard's
+  // timeline chart. The chart re-buckets day -> week/month
+  // client-side, so the server only needs daily granularity. ts is
+  // an ISO 8601 string, so date(ts) yields the 'YYYY-MM-DD' UTC day
+  // and idx_qr_ts keeps the group-by cheap.
+  const r = await env.DB.prepare(
+    `SELECT date(ts) AS day, COUNT(*) AS n
+       FROM quiz_response
+      GROUP BY day
+      ORDER BY day ASC`
+  ).all();
+
+  return new Response(JSON.stringify({
+    per_day: r.results,
   }), { status: 200, headers: JSON_HEADERS });
 }
 
