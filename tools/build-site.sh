@@ -659,11 +659,16 @@ emit_dashboard() {
     // commit_sha for this quiz_id).
     const REPO_BLOB_BASE = 'https://github.com/fplaunchpad/ocaml_nptel/blob';
     function lectureFileFromQuizId(quizId) {
-      // "/_site/M01-L02-why-fp.html#cons-immutability"
-      //  -> "lectures/M01-L02-why-fp.md"
-      const noSite = quizId.replace(/^\/?_site\//, '').replace(/^\/+/, '');
-      const noFrag = noSite.split('#')[0];
-      const noHtml = noFrag.replace(/\.html$/, '.md');
+      // quiz_id is the page pathname + "#" + slug, e.g.
+      // "/ocaml_nptel/M01-L02-why-fp.html#cons-immutability" on the
+      // live GitHub Pages deploy (served under the repo-name base),
+      // or "/_site/...html#..." locally. Lecture files are flat
+      // under lectures/, so only the basename matters; any leading
+      // path segment (the Pages base, "_site", a leading slash) must
+      // be dropped or the .../lectures/<base>/<file>.md link 404s.
+      const noFrag = quizId.split('#')[0];
+      const base = noFrag.split('/').pop();
+      const noHtml = base.replace(/\.html$/, '.md');
       return 'lectures/' + noHtml;
     }
     // A git sha is 7-40 hex chars. Anything else (empty, "unknown",
