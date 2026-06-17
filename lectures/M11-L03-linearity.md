@@ -365,15 +365,6 @@ resource API ends up looking like an ownership chain. The
 *meaning* differs (linearity tracks future use, uniqueness tracks
 past aliasing), but the *programming model* is the same.
 
-There is also a thread here back to the testing module. Its
-model-based testing checked a stateful API by generating random
-sequences of operations and comparing each run against a simple
-reference: a buggy sequence had to be *generated* before it could
-be caught. The `Handle` signature moves the same protocol into
-the type. The sequences that misuse the handle no longer need
-finding, because they no longer compile, as the next section
-demonstrates.
-
 :::slide
 
 ## File-handle protocol as a type
@@ -390,8 +381,6 @@ end
 - `open_` produces a fresh once-usable handle.
 - `read` consumes and re-produces a once-usable handle.
 - `close` consumes without re-producing.
-- Model-based testing *searched* for bad operation sequences.
-  - here the bad sequences do not compile.
 
 Client uses the **ownership-chain** shape: shadow `t` through
 each operation.
