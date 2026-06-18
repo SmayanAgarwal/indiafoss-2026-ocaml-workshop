@@ -522,34 +522,36 @@ faster, but the linear scan keeps the recursion simple.)
 
 ## Part 3: recursion patterns
 
-## Problem 10: `collatz_length`
+## Problem 10: `trailing_zeros`
 
-The Collatz process starts from `n >= 1` and repeats: if the number
-is even, halve it; if odd, triple it and add one; stop at `1`. Write
+Write a function
 
 ```text
-collatz_length : int -> int
+trailing_zeros : int -> int
 ```
 
-that returns *how many steps* it takes to reach `1`. For example,
-`collatz_length 1 = 0` and `collatz_length 6 = 8` (the sequence is
-`6, 3, 10, 5, 16, 8, 4, 2, 1`: eight steps).
+that returns how many times `2` divides `n` evenly, for `n >= 1`:
+equivalently, the number of trailing zeros in `n`'s binary form. For
+example, `trailing_zeros 40 = 3` (since `40 = 8 * 5` and `8 = 2^3`),
+and `trailing_zeros 7 = 0`.
 
 :::quiz code id=M03-L07-q10
-Implement `collatz_length`. Carry the step count in an accumulator.
+Implement `trailing_zeros`. Halve `n` while it stays even, counting
+the halvings in an accumulator.
 
 ```ocaml
-let collatz_length n =
+let trailing_zeros n =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let check b m = if not b then failwith m
 let () =
-  check (collatz_length 1 = 0) "already one";
-  check (collatz_length 6 = 8) "six";
-  check (collatz_length 27 = 111) "twenty-seven";
-  check (collatz_length 16 = 4) "power of two";
+  check (trailing_zeros 1 = 0) "odd: one";
+  check (trailing_zeros 12 = 2) "twelve";
+  check (trailing_zeros 8 = 3) "power of two";
+  check (trailing_zeros 40 = 3) "forty";
+  check (trailing_zeros 7 = 0) "odd: seven";
   print_endline "all tests passed"
 ```
 :::
@@ -559,19 +561,19 @@ let () =
 Reference solution:
 
 ```
-let collatz_length n =
+let trailing_zeros n =
   let rec go n acc =
-    if n <= 1 then acc
-    else go (if n mod 2 = 0 then n / 2 else 3 * n + 1) (acc + 1)
+    if n mod 2 = 1 then acc
+    else go (n / 2) (acc + 1)
   in
   go n 0
 ```
 
-This is the same shape as printing a Collatz sequence, but instead
-of a side effect each step adds one to a step-count accumulator and
-returns it at the end. The recursive call is in tail position. (No
-one has proved this terminates for *every* starting value, but it
-does for every value anyone has ever tried.)
+Keep halving while `n` is even, adding one to the accumulator each
+time, and stop the moment `n` is odd, when no factors of two remain.
+The recursive call is in tail position, so this is a constant-space
+loop. For an already-odd `n` (such as `1` or `7`) the loop stops
+immediately and the answer is `0`.
 
 :::
 

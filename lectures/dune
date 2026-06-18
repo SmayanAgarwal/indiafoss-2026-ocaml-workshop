@@ -117,4 +117,10 @@
  (enabled_if
   (= %{ocaml_version} 5.2.0+ox))
  (files
+  M11-L01-locality.md
+  M11-L02-uniqueness.md
+  M11-L03-linearity.md
+  M11-L04-contention.md
+  M11-L05-portability.md
+  M11-L06-tutorial.md
   M11-L07-practice.md))

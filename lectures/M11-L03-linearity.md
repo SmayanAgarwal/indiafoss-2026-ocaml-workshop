@@ -51,7 +51,7 @@ end
 open M
 ```
 
-```ocaml
+```ocaml skip
 (* Press Run; the rejection names a mode we have not met. *)
 let wat () =
   let t = alloc 42 in       (* t : int t @ unique *)
@@ -174,7 +174,7 @@ let () = use_once ()   (* prints 42 *)
 
 Using it twice is rejected:
 
-```ocaml
+```ocaml skip
 (* Press Run; the second call is the second use of a once value. *)
 let use_twice () =
   let f = make_once_fn () in
@@ -196,7 +196,7 @@ consumed-binding tracking as the uniqueness lecture's, applied to
 
 ## A `once` function, explicitly
 
-```ocaml
+```ocaml skip
 let make_once_fn () : (unit -> int) @ once =
   let v @ unique = 42 in
   fun () -> v
@@ -245,7 +245,7 @@ linearity is exactly the axis that can.
 
 ## Resolving the closure puzzle
 
-```ocaml
+```ocaml skip
 let wat () =
   let t = alloc 42 in       (* t : int t @ unique *)
   let f () = free t in      (* closure captures t *)
@@ -442,7 +442,7 @@ let example () =
 
 A bad client (sending twice) fails to type-check:
 
-```ocaml
+```ocaml skip
 (* Press Run; the second send is rejected. *)
 let bad () =
   let ch = Send_once_channel.make () in
@@ -486,7 +486,7 @@ let example () =
   Send_once_channel.send ch "hello"
 ```
 
-```ocaml
+```ocaml skip
 (* Press Run; the second send is rejected. *)
 let bad () =
   let ch = Send_once_channel.make () in
@@ -509,7 +509,7 @@ this lecture.
 
 ### Bug 1: double-close
 
-```ocaml
+```ocaml skip
 (* Press Run; the compiler refuses on linearity grounds. *)
 let double_close () =
   let t = Handle.open_ "data.txt" in
@@ -533,7 +533,7 @@ program does not compile.
 
 ### Bug 2: use-after-close
 
-```ocaml
+```ocaml skip
 (* Press Run; same shape as bug 1, different surface form. *)
 let read_after_close () =
   let t = Handle.open_ "data.txt" in
@@ -580,7 +580,7 @@ uses; it does not chase the missing ones.
 
 ## Double-close: rejected
 
-```ocaml
+```ocaml skip
 (* Press Run; the compiler refuses on linearity grounds. *)
 let double_close () =
   let t = Handle.open_ "data.txt" in
@@ -597,7 +597,7 @@ let double_close () =
 
 ## Use-after-close: rejected
 
-```ocaml
+```ocaml skip
 (* Press Run; the same refusal as double-close. *)
 let read_after_close () =
   let t = Handle.open_ "data.txt" in
@@ -636,7 +636,7 @@ captures just as it does to `unique` ones. A closure that
 captures the once-handle has the handle's single use built into
 it:
 
-```ocaml
+```ocaml skip
 (* Press Run; the closure captures a once-handle and is itself
    forced to mode once, so a second call fails to type-check. *)
 let use_it () =
@@ -654,7 +654,7 @@ through an ordinary function value.
 
 ## Closure capture forces `once`
 
-```ocaml
+```ocaml skip
 let use_it () =
   let t = Handle.open_ "data.txt" in
   let f = fun () -> Handle.close t in
@@ -951,7 +951,7 @@ let b () =
   Handle.close t
 ```
 
-```ocaml
+```ocaml skip
 (* C *)
 let c () =
   let t = Handle.open_ "f" in
@@ -1004,7 +1004,7 @@ at-most-once has no opinion on zero uses). C reads the *original* `t`
 twice: the first `read t` consumes `t`, so the second is a second use
 of a once-handle.
 
-```ocaml
+```ocaml skip
 (* C: rejected; the original t is read twice. Run it. *)
 let c () =
   let t = Handle.open_ "f" in

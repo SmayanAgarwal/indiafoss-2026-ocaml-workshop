@@ -269,7 +269,7 @@ let price_contended (t @ contended) = t.price
 
 Writing the mutable `mood` field, however, is rejected:
 
-```ocaml
+```ocaml skip
 (* Press Run; the write is rejected. *)
 let cheer_up_contended (t @ contended) = t.mood <- Happy
 (* Error: This value is "contended" but is expected to be
@@ -280,7 +280,7 @@ let cheer_up_contended (t @ contended) = t.mood <- Happy
 And, the surprising one, *reading* the mutable field is also
 rejected:
 
-```ocaml
+```ocaml skip
 (* Press Run; even the read is rejected. *)
 let read_mood_contended (t @ contended) = t.mood
 (* Error: This value is "contended" but is expected to be "shared"
@@ -319,12 +319,12 @@ let price_contended (t @ contended) = t.price
 
 ## Mutable field on `contended`: no write, no read
 
-```ocaml
+```ocaml skip
 (* Press Run; the write is rejected. *)
 let cheer_up_contended (t @ contended) = t.mood <- Happy
 ```
 
-```ocaml
+```ocaml skip
 (* Press Run; even the read is rejected. *)
 let read_mood_contended (t @ contended) = t.mood
 ```
@@ -350,7 +350,7 @@ Reading the field from a contended `box` is fine, exactly as
 out is still the shared array, so it comes out `contended`, and
 writing through it is rejected:
 
-```ocaml
+```ocaml skip
 (* Press Run; the write through the extracted array is rejected. *)
 let write_through (b : box @ contended) = b.arr.(0) <- 7
 (* Error: This value is "contended" because it is the field "arr"
@@ -371,7 +371,7 @@ container to an uncontended part.
 type box = { arr : int array }
 ```
 
-```ocaml
+```ocaml skip
 (* Press Run; the write through the extracted array is rejected. *)
 let write_through (b : box @ contended) = b.arr.(0) <- 7
 ```

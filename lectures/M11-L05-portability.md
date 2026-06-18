@@ -210,7 +210,7 @@ Capturing a `ref` and *mutating* it is what falls afoul. Press
 Run and read the error carefully; it points at the captured `r`
 inside the portable closure:
 
-```ocaml
+```ocaml skip
 (* Press Run; the mutation of the captured ref is rejected. *)
 let test_nonportable () =
   let r = ref 0 in
@@ -251,7 +251,7 @@ let () = Printf.printf "test_portable () = %d\n" (test_portable ())
 
 ## Capturing a mutable `ref`: rejected
 
-```ocaml
+```ocaml skip
 (* Press Run; the mutation of the captured ref is rejected. *)
 let test_nonportable () =
   let r = ref 0 in
@@ -294,7 +294,7 @@ adds the portability constraint, and the type checker enforces it.
 
 Try to spawn the racy gensym, and the compiler stops you:
 
-```ocaml
+```ocaml skip
 (* OxCaml refuses this at compile time; press Run. *)
 let _ = Domain.Safe.spawn (fun () -> gensym "x")
 (* Error: The value "gensym" is "nonportable" but is expected to
@@ -316,7 +316,7 @@ let spawn = Domain.Safe.spawn
 (* val spawn : (unit -> 'a) @ once portable -> 'a Domain.t *)
 ```
 
-```ocaml
+```ocaml skip
 (* Press Run; OxCaml refuses the racy spawn. *)
 let _ = Domain.Safe.spawn (fun () -> gensym "x")
 (* Error: The value "gensym" is "nonportable" but is
@@ -449,7 +449,7 @@ for `Portable.Atomic`.
 One packaging detail before the cell. We wrap the counter and
 `gensym` in a small module:
 
-```ocaml
+```ocaml skip
 [@@@alert "-do_not_spawn_domains"]
 
 module Gen = struct
@@ -490,7 +490,7 @@ dance is not necessary.
 
 ## The first working program: `Portable.Atomic`
 
-```ocaml
+```ocaml skip
 module Gen = struct
   open Portable
   let count = Atomic.make 0
@@ -513,7 +513,7 @@ end
 We try to annotate a logging function as portable. (Predict the
 verdict, then press Run.)
 
-```ocaml
+```ocaml skip
 let (f @ portable) =
   let log = Buffer.create 16 in
   fun x ->
@@ -571,7 +571,7 @@ Q1 is rejected: the closure captures a mutable `Buffer.t` and writes
 to it inside the body. A portable closure's captures are treated as
 `contended`, and a contended value's mutable parts cannot be touched.
 
-```ocaml
+```ocaml skip
 (* Q1: rejected. Run it. *)
 let (f @ portable) =
   let log = Buffer.create 16 in

@@ -164,7 +164,7 @@ longer-lived place, a global `ref`, say. Then the handle *escapes*
 its scope; `with_handle` still closes it on the way out, and a
 later `use` reads a closed handle. Press Run and watch it raise:
 
-```ocaml
+```ocaml skip
 let escaped = ref None
 let () = with_handle (fun h -> escaped := Some h)   (* open, close *)
 let () =
@@ -206,7 +206,7 @@ let () = with_handle (fun h -> use h)   (* prints: open, use, close *)
 
 The escaping client no longer compiles. Press Run:
 
-```ocaml
+```ocaml skip
 (* The handle cannot escape its scope: a compile-time error. *)
 let escaped : handle option ref = ref None
 let () = with_handle (fun h -> escaped := Some h)
@@ -245,7 +245,7 @@ let fun_protect finally work =
 
 ## The handle that escaped (Module 10)
 
-```ocaml
+```ocaml skip
 let with_handle (f : handle @ local -> 'a) : 'a =
   let h = my_open () in
   fun_protect (fun () -> my_close h) (fun () -> f h)
@@ -537,7 +537,7 @@ let storage : point ref = ref { x = 0.0; y = 0.0 }
 
 Then the mistake:
 
-```ocaml
+```ocaml skip
 (* Press Run; the locality checker rejects storing a local value
    into a long-lived global cell. *)
 let store_local () =
@@ -562,7 +562,7 @@ the escape is by return (as we saw) or by store.
 
 ## A second escape route: a global cell
 
-```ocaml
+```ocaml skip
 let storage : point ref = ref { x = 0.0; y = 0.0 }
 
 let store_local () =
@@ -818,7 +818,7 @@ passes. `Stdlib_upstream_compatible.Float_u` offers named operations
 operators, so we wrap it in a small module that adds infix `+.`,
 `-.`, `*.`, then `open` that inside the function:
 
-```ocaml
+```ocaml skip
 module Float_u = struct
   open Stdlib_upstream_compatible.Float_u
   let of_float = of_float
@@ -838,7 +838,7 @@ let[@zero_alloc] [@inline never] distance_u (a @ local) (b @ local) : float# =
 
 Run it:
 
-```ocaml
+```ocaml skip
 let _ =
   let a = { x = 0.0; y = 0.0 }
   and b = { x = 3.0; y = 4.0 } in
@@ -857,7 +857,7 @@ Unboxed numbers are their own topic (the OxCaml documentation's
 
 ## Unboxed floats: `float#`
 
-```ocaml
+```ocaml skip
 let[@zero_alloc] [@inline never] distance_u (a @ local) (b @ local) : float# =
   let open Float_u in
   let dx = of_float a.x -. of_float b.x in
@@ -1043,7 +1043,7 @@ that we did not leak `p` itself.
 :::quiz mcq id=M11-L01-q2
 Why does this fail to compile? (Press Run to see the error.)
 
-```ocaml
+```ocaml skip
 let cache : point ref = ref { x = 0.0; y = 0.0 }
 
 let save (p @ local) : unit =
@@ -1083,7 +1083,7 @@ Q2 is rejected: `cache` is a long-lived global cell, so it demands a
 `global` `point`. Storing the `local` `p` would let it outlive its
 region, so the compiler refuses the assignment.
 
-```ocaml
+```ocaml skip
 let cache : point ref = ref { x = 0.0; y = 0.0 }
 let save (p @ local) : unit = cache := p
 ```

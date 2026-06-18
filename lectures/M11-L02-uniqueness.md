@@ -324,7 +324,7 @@ cannot prove preserves uniqueness. Wrapping the variant in a
 module ascription against the same signature makes the failure
 concrete:
 
-```ocaml
+```ocaml skip
 (* Press Run; the ascription fails because the rewritten set does
    not satisfy 'a t @ unique -> 'a -> 'a t @ unique. *)
 module M_bad : Unique_ref = struct
@@ -388,7 +388,7 @@ exists.
 
 Now the bad cases.
 
-```ocaml
+```ocaml skip
 (* Press Run to see the use-after-free rejected at compile time. *)
 let use_after_free (r : int t @ unique) =
   free r;
@@ -407,7 +407,7 @@ longer a live unique reference. The compiler refuses.
 
 Double-free, the same way:
 
-```ocaml
+```ocaml skip
 (* Press Run to see double-free rejected at compile time. *)
 let double_free (r : int t @ unique) =
   free r;
@@ -426,13 +426,13 @@ of memory-safety bugs.
 
 ## Use-after-free and double-free: type errors
 
-```ocaml
+```ocaml skip
 let use_after_free (r : int t @ unique) =
   free r;
   get r           (* type error *)
 ```
 
-```ocaml
+```ocaml skip
 let double_free (r : int t @ unique) =
   free r;
   free r          (* type error *)
@@ -510,7 +510,7 @@ the unique `r` can be coerced down (`unique ⊑ aliased`).
 But now the two components are aliased. They can no longer be
 passed to `free`, `get`, or `set`:
 
-```ocaml
+```ocaml skip
 (* Press Run; once you alias a unique reference via `dup`, you
    cannot pass it to `free` any more. *)
 let oops () =
@@ -532,7 +532,7 @@ useful life.
 
 ## Aliasing destroys the uniqueness privilege
 
-```ocaml
+```ocaml skip
 let dup r = (r, r)
 
 let oops () =
@@ -558,7 +558,7 @@ scenario.
 Suppose we have a unique reference and write a closure that frees
 it:
 
-```ocaml
+```ocaml skip
 (* Press Run and read the error message carefully. *)
 let wat () =
   let t = alloc 42 in       (* t : int t @ unique *)
@@ -598,7 +598,7 @@ protects you, and "how many times can this be called" takes over.
 
 ## A puzzle to end on
 
-```ocaml
+```ocaml skip
 let wat () =
   let t = alloc 42 in
   let f () = free t in
@@ -636,7 +636,7 @@ let b (r : int t @ unique) =
   free r
 ```
 
-```ocaml
+```ocaml skip
 (* C *)
 let c (r : int t @ unique) =
   let _v, _r = get r in
@@ -661,7 +661,7 @@ which has already been used as unique. The compiler rejects it.
 Suppose we wrote a closure that *captures* (not consumes) a
 unique reference:
 
-```ocaml
+```ocaml skip
 let read_outside (r : int t @ unique) =
   let f () = get r in
   let _v, _r' = f () in
@@ -702,7 +702,7 @@ let b_ok (r : int t @ unique) =
   let r = set r 100 in free r
 ```
 
-```ocaml
+```ocaml skip
 (* C: rejected. Run it. *)
 let c_bad (r : int t @ unique) =
   let _v, _r = get r in free r

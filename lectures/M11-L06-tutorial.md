@@ -272,7 +272,7 @@ Store the handle in a global `ref` during the callback, to use
 after the bracket returns. In C, saving the `FILE *` in a global
 works, and is the root of every use-after-close. Here:
 
-```ocaml
+```ocaml skip
 (* Press Run; locality refuses to let the handle out. *)
 let stash : Handle.t option ref = ref None
 let () = Handle.with_handle "f" (fun h -> stash := Some h)
@@ -291,7 +291,7 @@ constructor `Some`*.
 
 Skip the `ref`; just return the handle as the callback's result:
 
-```ocaml
+```ocaml skip
 (* Press Run; the result must be global, the handle is not. *)
 let leaked = Handle.with_handle "f" (fun h -> h)
 (* Error: This value is "local" to the parent region but is
@@ -310,7 +310,7 @@ local handle and becomes local itself.
 In the threading designs we sketched earlier in the module, a
 double-close was a *type error*. Here it is something better:
 
-```ocaml
+```ocaml skip
 (* Press Run. *)
 let () = Handle.with_handle "f" (fun h ->
   ignore (Handle.read h 1);
@@ -328,7 +328,7 @@ and CWE-416 (use after free) have no spelling in this API.
 
 ## Attack 1: stash the handle
 
-```ocaml
+```ocaml skip
 (* Press Run; locality refuses to let the handle out. *)
 let stash : Handle.t option ref = ref None
 let () = Handle.with_handle "f" (fun h -> stash := Some h)
@@ -344,12 +344,12 @@ let () = Handle.with_handle "f" (fun h -> stash := Some h)
 
 ## Attacks 2 and 3: return it, close it
 
-```ocaml
+```ocaml skip
 (* Press Run; the result must be global, the handle is not. *)
 let leaked = Handle.with_handle "f" (fun h -> h)
 ```
 
-```ocaml
+```ocaml skip
 (* Press Run. *)
 let () = Handle.with_handle "f" (fun h ->
   ignore (Handle.read h 1);
@@ -415,7 +415,7 @@ Now a dummy `unit -> unit` function carrying the `@ once`
 annotation. Calling it inside `Handle_many`'s bracket is
 rejected:
 
-```ocaml
+```ocaml skip
 (* Press Run; the many-callback may not touch a once value. *)
 let () =
   let (dummy @ once) = fun () -> () in
@@ -468,7 +468,7 @@ callback is now `many`.
 
 ## A `once` function cannot enter a `many` bracket
 
-```ocaml
+```ocaml skip
 (* Press Run; the many-callback may not touch a once value. *)
 let () =
   let (dummy @ once) = fun () -> () in

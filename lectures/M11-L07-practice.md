@@ -141,35 +141,36 @@ on the stack (`stack_ [ ... ]` in the test) with no heap traffic.
 
 :::
 
-## Problem 3: `clamp_color`
+## Problem 3: `channel_range`
 
 To *return* something built locally, you allocate it in the caller's
 region with `exclave_`. Complete
 
 ```text
-clamp_color : rgb @ local -> rgb @ local
+channel_range : rgb @ local -> (float * float) @ local
 ```
 
-which forces every channel into `[0.0, 1.0]` and returns the new
-colour `@ local`. Use `exclave_` on the record literal so the result
-lives in the caller's region rather than this function's.
+which returns the pair `(smallest channel, largest channel)` of the
+colour, allocated `@ local` so it lives in the caller's region. Use
+`exclave_` on the tuple. The helpers `min3` and `max3` are provided.
 
 :::quiz code id=M11-L07-q3
-Implement `clamp_color`. The helper `clamp1` is provided.
+Implement `channel_range`. Build the result tuple with `exclave_`.
 
 ```ocaml
-let clamp1 v = if v < 0.0 then 0.0 else if v > 1.0 then 1.0 else v
+let min3 a b c = if a < b then (if a < c then a else c) else (if b < c then b else c)
+let max3 a b c = if a > b then (if a > c then a else c) else (if b > c then b else c)
 
-let clamp_color (c @ local) : rgb @ local =
+let channel_range (c @ local) : (float * float) @ local =
   failwith "not implemented"
 ```
 
 ```ocaml skip
 let test () =
-  let c = stack_ { r = -0.5; g = 0.5; b = 2.0 } in
-  let d = clamp_color c in
-  d.r +. d.g +. d.b
-let () = assert (test () = 1.5); print_endline "all tests passed"
+  let c = stack_ { r = 0.25; g = 0.75; b = 0.5 } in
+  let lo, hi = channel_range c in
+  lo = 0.25 && hi = 0.75
+let () = assert (test ()); print_endline "all tests passed"
 ```
 :::
 
@@ -178,15 +179,17 @@ let () = assert (test () = 1.5); print_endline "all tests passed"
 Reference solution:
 
 ```
-let clamp_color (c @ local) : rgb @ local =
-  exclave_ { r = clamp1 c.r; g = clamp1 c.g; b = clamp1 c.b }
+let channel_range (c @ local) : (float * float) @ local =
+  exclave_ (min3 c.r c.g c.b, max3 c.r c.g c.b)
 ```
 
-Without `exclave_`, the fresh record would be local to *this*
-function's region and could not be returned. `exclave_` allocates it
-in the caller's region instead, so it is still local (it never
-becomes a heap value) but it outlives this call. The return type says
-`@ local`, which is exactly what the caller receives.
+The tuple `(lo, hi)` is a fresh allocation. Without `exclave_` it
+would be local to *this* function's region and could not be returned;
+`exclave_` allocates it in the caller's region instead, so it is still
+local (never a heap value) but outlives this call. The return type
+`(float * float) @ local` is exactly what the caller receives. (Note
+the result has to stay `@ local`: a tuple, unlike an `int`, does not
+mode-cross locality.)
 
 :::
 
@@ -212,7 +215,7 @@ let make_red () : rgb = stack_ { r = 1.0; g = 0.0; b = 0.0 }
 is torn down when the function returns. The return type `rgb` carries
 no `@ local`, so the caller expects a global value, and the compiler
 rejects the attempt to let a region-local value escape. Contrast
-Problem 3: `clamp_color` returns its fresh record with `exclave_`,
+Problem 3: `channel_range` returns its fresh tuple with `exclave_`,
 which allocates in the *caller's* region and is typed `@ local`, so
 it is allowed to outlive the call. To return a heap value here
 instead, just drop the `stack_`: a plain record literal allocates on
