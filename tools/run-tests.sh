@@ -12,6 +12,8 @@
 #   3. tools/check-links.py        -- cross-lecture links, heading
 #                                    anchors, asset refs
 #   4. dune runtest                -- mdx code blocks compile
+#                                    (default switch for M01-M10/M12,
+#                                    plus a 5.2.0+ox pass for M11)
 #   5. tools/build-site.sh         -- rebuild + smoke pages
 #   6. tools/playwright-check.mjs  -- end-to-end browser test
 #   7. playwright VM playground    -- dune-in-browser boot check
@@ -59,7 +61,19 @@ bold '[3/9] link + anchor check'
 python3 tools/check-links.py
 
 bold '[4/9] dune runtest (mdx + OCaml tests)'
+# Pass 1 (default switch): validates M01-M10 and M12. The M11 stanza
+# in lectures/dune is gated off here (it needs the OxCaml compiler).
 opam exec -- dune runtest
+# Pass 2 (OxCaml switch): M11 mode syntax compiles only on 5.2.0+ox.
+# The non-M11 stanza is gated off there, so this checks just the M11
+# cells (and does not rebuild nptel-build on the ox switch). Skipped
+# with a warning if the switch is not installed.
+OX_SWITCH=5.2.0+ox
+if opam switch list -s 2>/dev/null | grep -qx "$OX_SWITCH"; then
+  opam exec --switch "$OX_SWITCH" -- dune build @lectures/runtest
+else
+  red "  ($OX_SWITCH switch not found; skipping M11 mdx validation)"
+fi
 
 bold '[5/9] build site'
 tools/build-site.sh

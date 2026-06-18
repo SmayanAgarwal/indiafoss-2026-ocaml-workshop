@@ -15,10 +15,22 @@
   (env-vars
    (OCAMLRUNPARAM "l=200000"))))
 
-; A single stanza: dune allows only one mdx toplevel per directory.
-; The libraries are needed by the M09 cells only (the browser pages
-; load them via m09-extras.js); linking them is harmless for M01-M08.
+; Two version-gated mdx stanzas. M01-M10 and M12 validate on the
+; default switch (currently 5.4.0); only M11 (OxCaml) validates on
+; the 5.2.0+ox switch, where the mode syntax compiles. `enabled_if`
+; routes each stanza to exactly one switch: a disabled stanza is
+; inert, so stanza 2 below need not have qcheck/ounit2 installed on
+; the ox switch, and stanza 1's libraries are not required there.
+;
+; Run both with: `dune runtest` (default switch) and
+; `dune build @lectures/runtest` under `opam exec --switch 5.2.0+ox`.
+;
+; Stanza 1 (default switch). The libraries are needed by the M09
+; cells only (the browser pages load them via m09-extras.js);
+; linking them is harmless for M01-M08.
 (mdx
+ (enabled_if
+  (<> %{ocaml_version} 5.2.0+ox))
  (libraries qcheck-core qcheck ounit2 ounit2.advanced)
  (preludes mdx_prelude.ml)
  (files
@@ -39,6 +51,7 @@
   M03-L04-tail-recursion.md
   M03-L05-local-and-mutual.md
   M03-L06-tutorial.md
+  M03-L07-practice.md
   M04-L01-tuples.md
   M04-L02-records.md
   M04-L03-variants.md
@@ -51,6 +64,7 @@
   M05-L04-guards.md
   M05-L05-exhaustiveness.md
   M05-L06-tutorial.md
+  M05-L07-practice.md
   M06-L01-functions-revisited.md
   M06-L02-map.md
   M06-L03-filter.md
@@ -83,6 +97,7 @@
   M09-L05-property-based-testing.md
   M09-L06-model-based-testing.md
   M09-L07-tutorial.md
+  M09-L08-practice.md
   M10-L01-memory-safety-and-security.md
   M10-L02-memory-safety-by-construction.md
   M10-L03-data-races-are-ub.md
@@ -90,3 +105,16 @@
   M10-L05-tutorial.md
   M12-L03-mirageos.md
   M12-L04-suresh-the-stationmaster.md))
+
+; Stanza 2 (5.2.0+ox switch). M11 (OxCaml) mode syntax compiles only
+; on the ox switch, so this stanza is gated to it. No libraries or
+; preludes: the cells lean on the bare ox stdlib (the mode keywords,
+; Modes, the stdlib Atomic, Domain.Safe). Cells that would need a
+; library not installed on the ox switch (Portable.Atomic, float#,
+; Iarray) stay `ocaml skip` and are validated in the browser instead.
+; Run with: opam exec --switch 5.2.0+ox -- dune build @lectures/runtest
+(mdx
+ (enabled_if
+  (= %{ocaml_version} 5.2.0+ox))
+ (files
+  M11-L07-practice.md))
