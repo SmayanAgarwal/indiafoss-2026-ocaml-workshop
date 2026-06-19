@@ -10,7 +10,10 @@
 
 (authors "KC Sivaramakrishnan")
 
-(license "CC-BY-NC-SA-4.0")
+; The opam package is the course toolchain (OCaml code), which is ISC.
+; The course *content* (lectures/, assets/css/, README) is CC-BY-NC-SA-4.0;
+; see LICENSE / LICENSES.md. They are deliberately different.
+(license "ISC")
 
 (source
  (github fplaunchpad/ocaml_nptel))
@@ -27,7 +30,10 @@
  (description
   "Lecture sources, the static-site toolchain, and the in-browser OCaml/OxCaml notebooks for the NPTEL course 'Functional Programming with OCaml'. This package declares only the leaf dependencies needed to validate the lecture code blocks under ocaml-mdx.")
  (depends
-  (ocaml (>= 5.2.0))
+  ; the default switch we build/test the toolchain on; the M11 OxCaml
+  ; cells validate on a separate 5.2.0+ox switch that needs no opam
+  ; deps (see tools/setup-switch.sh), so it is not described here.
+  (ocaml (>= 5.4.0))
   (mdx (>= 2.4))
   qcheck
   qcheck-core

@@ -6,12 +6,12 @@ description:
   "Lecture sources, the static-site toolchain, and the in-browser OCaml/OxCaml notebooks for the NPTEL course 'Functional Programming with OCaml'. This package declares only the leaf dependencies needed to validate the lecture code blocks under ocaml-mdx."
 maintainer: ["KC Sivaramakrishnan <kc@kcsrk.info>"]
 authors: ["KC Sivaramakrishnan"]
-license: "CC-BY-NC-SA-4.0"
+license: "ISC"
 homepage: "https://github.com/fplaunchpad/ocaml_nptel"
 bug-reports: "https://github.com/fplaunchpad/ocaml_nptel/issues"
 depends: [
   "dune" {>= "3.17"}
-  "ocaml" {>= "5.2.0"}
+  "ocaml" {>= "5.4.0"}
   "mdx" {>= "2.4"}
   "qcheck"
   "qcheck-core"
