@@ -6,6 +6,15 @@
 
 (generate_opam_files true)
 
+(maintainers "KC Sivaramakrishnan <kc@kcsrk.info>")
+
+(authors "KC Sivaramakrishnan")
+
+(license "CC-BY-NC-SA-4.0")
+
+(source
+ (github fplaunchpad/ocaml_nptel))
+
 ; Records the toolchain executably. The leaf packages below are what
 ; the lecture mdx cells need on the *default* switch (M01-M10, M12,
 ; and the M03/M05/M09 practice worksheets): mdx for the code blocks,
