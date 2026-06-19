@@ -494,17 +494,25 @@ emit_dashboard() {
     .dash tr.difficult td { background: #faecec; }
     .dash tr.difficult td:first-child { border-left: 3px solid #b35858; }
 
-    /* CSS-only horizontal accuracy bar. */
+    /* CSS-only horizontal accuracy bar, paired with its percentage.
+       The two sit in an inline-flex unit so the percentage can never
+       wrap onto its own line, and the fixed-width percentage box keeps
+       both the bars and the numbers aligned down the column. */
+    .acc-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
     .acc-bar {
       position: relative;
       display: inline-block;
+      flex: none;
       width: 110px;
       height: 0.7rem;
       background: var(--code-bg);
       border: 1px solid var(--rule);
       border-radius: 3px;
-      vertical-align: middle;
-      margin-right: 0.5rem;
       overflow: hidden;
     }
     .acc-bar > span {
@@ -514,6 +522,12 @@ emit_dashboard() {
     }
     .acc-bar.low > span { background: #b35858; }
     .acc-bar.mid > span { background: #c4923a; }
+    .acc-pct {
+      flex: none;
+      min-width: 3.6rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
 
     .dash .empty {
       padding: 2rem 1rem;
@@ -734,8 +748,10 @@ emit_dashboard() {
     function accBar(a) {
       const cls = accClass(a);
       const pct = (a == null) ? 0 : Math.max(0, Math.min(1, a)) * 100;
-      return '<span class="acc-bar ' + cls + '"><span style="width:' + pct + '%"></span></span>'
-           + fmtPct(a);
+      return '<span class="acc-cell">'
+           +   '<span class="acc-bar ' + cls + '"><span style="width:' + pct + '%"></span></span>'
+           +   '<span class="acc-pct">' + fmtPct(a) + '</span>'
+           + '</span>';
     }
 
     async function load() {
