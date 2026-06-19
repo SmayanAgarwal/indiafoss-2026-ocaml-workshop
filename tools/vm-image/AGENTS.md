@@ -18,9 +18,10 @@ Background and design rationale: `README.md`.
   history is the rollback path (the old immutable-`vN/` scheme is
   retired). `DEFAULT_BASE` in `assets/vm/vm-terminal.js` points at
   `current/` and does not change per build.
-- The terminal exists as both the chapter embed and the
-  standalone playground page; both use the same component at
-  `assets/vm/vm-terminal.js`.
+- The terminal exists only as the `:::vm-terminal` chapter embed,
+  rendered from the component at `assets/vm/vm-terminal.js` (the
+  standalone playground page was retired 2026-06-19; the `<x-ocaml>`
+  cells and the chapter embeds cover the in-browser story).
 - Student work is per-visit (reload = fresh snapshot). Accepted
   future niceties, unscheduled: save/restore to IndexedDB via
   `emulator.save_state()`, and a "download your work" button via

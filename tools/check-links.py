@@ -32,7 +32,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LECTURES = os.path.join(REPO, "lectures")
 
 # Pages emitted by tools/build-site.sh rather than from lectures/.
-BUILT_PAGES = {"index.html", "privacy.html", "dashboard.html", "playground.html"}
+BUILT_PAGES = {"index.html", "privacy.html", "dashboard.html"}
 
 
 def slugify(s: str) -> str:

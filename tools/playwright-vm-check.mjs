@@ -1,14 +1,16 @@
 #!/usr/bin/env node
-// End-to-end check for the in-browser dune VM playground: load the
-// playground page, click Start, wait for the shell prompt on the
-// serial console, build and run the hello project, assert its
-// output. The VM data normally comes from the production
+// End-to-end check for the in-browser dune VM: load a lecture page
+// that embeds :::vm-terminal (M01-L01, dir=/root/hello, by default),
+// click Start, wait for the shell prompt on the serial console, then
+// build and run the hello project and assert its output. The embed's
+// data-dir makes the component auto-cd into the project after boot,
+// so no `cd` is needed. The VM data normally comes from the production
 // fplaunchpad/ocaml-browser-vm Pages site; set VMBASE to serve it
 // locally (run-tests.sh does when the scratch dir is present).
 
 import { chromium } from 'playwright';
 
-const PAGE_URL = process.argv[2] || 'http://localhost:8765/_site/playground.html';
+const PAGE_URL = process.argv[2] || 'http://localhost:8765/_site/M01-L01-course-intro.html';
 const VMBASE = process.env.VMBASE || '';
 const url = VMBASE ? `${PAGE_URL}?vmbase=${encodeURIComponent(VMBASE)}` : PAGE_URL;
 
@@ -44,13 +46,15 @@ async function main() {
         b => { window.__serial += String.fromCharCode(b); });
   });
 
-  // Boot snapshot restore + prompt poke. Generous: CI is slow and
-  // the state download may come over the network. Match prompt by
-  // containment: the getty follows it with an ESC[6n status query
-  // in the same burst, so endsWith never fires.
+  // Boot snapshot restore, then the component auto-sends
+  // `cd /root/hello && clear` (the embed's data-dir), so the first
+  // ready prompt is in the project dir, not ~. Match `hello# ` by
+  // containment: the getty follows the prompt with an ESC[6n status
+  // query in the same burst, so endsWith never fires. Generous
+  // timeout: CI is slow and the snapshot may come over the network.
   try {
     await page.waitForFunction(
-      () => window.__serial.includes(':~# '),
+      () => window.__serial.includes('hello# '),
       null, { timeout: 120_000 });
   } catch (e) {
     const tail = await page.evaluate(() => JSON.stringify(window.__serial.slice(-200)));
@@ -62,9 +66,10 @@ async function main() {
   }
   console.log('shell prompt reached');
 
-  // Type through xterm (exercises the real input path).
+  // Type through xterm (exercises the real input path). The embed
+  // already auto-cd'd into /root/hello, so build and run in place.
   await page.click('.vm-terminal .vm-term');
-  await page.keyboard.type('cd hello && dune build && ./_build/default/hello.exe', { delay: 10 });
+  await page.keyboard.type('dune build && ./_build/default/hello.exe', { delay: 10 });
   await page.keyboard.press('Enter');
 
   // First build fetches toolchain chunks on demand; allow plenty.

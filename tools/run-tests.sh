@@ -16,7 +16,7 @@
 #                                    plus a 5.2.0+ox pass for M11)
 #   5. tools/build-site.sh         -- rebuild + smoke pages
 #   6. tools/playwright-check.mjs  -- end-to-end browser test
-#   7. playwright VM playground    -- dune-in-browser boot check
+#   7. playwright VM boot          -- M01-L01 embed: boot + run hello
 #   8. dashboard smoke             -- dashboard renders against the
 #                                    live worker (skipped offline)
 #   9. slide-overflow scan         -- every deck fits 1280x800
@@ -118,17 +118,18 @@ SMOKE_URL="http://localhost:$PORT/_site/test/smoke.html"
 
 node "$SCRIPT_DIR/playwright-check.mjs" "$SMOKE_URL"
 
-bold '[7/9] playwright VM playground'
-# Boot the in-browser dune VM and build hello end-to-end. Use the
-# local VM data when the build scratch dir is present (fast, no
-# network); otherwise fall back to the production
-# fplaunchpad/ocaml-browser-vm Pages site baked into the component.
+bold '[7/9] playwright VM boot (M01-L01 embed)'
+# Boot the dune VM embedded in M01-L01 (:::vm-terminal dir=/root/hello)
+# and build+run hello end-to-end. Use the local VM data when the build
+# scratch dir is present (fast, no network); otherwise fall back to the
+# production fplaunchpad/ocaml-browser-vm Pages site baked into the
+# component.
 if [ -f "$REPO_ROOT/_vm-prototype/images/ocaml-state.bin.zst" ]; then
   export VMBASE="http://localhost:$PORT/_vm-prototype/images"
   green "  using local VM data ($VMBASE)"
 fi
 node "$SCRIPT_DIR/playwright-vm-check.mjs" \
-  "http://localhost:$PORT/_site/playground.html"
+  "http://localhost:$PORT/_site/M01-L01-course-intro.html"
 
 bold '[8/9] dashboard smoke'
 # The dashboard JS needs the live worker; skip (don't fail) when it

@@ -739,10 +739,9 @@ welcoming and active in two places: the
 questions and announcements, and the OCaml Discord for live chat
 (the invite is linked from ocaml.org's community page). The
 high-performance extensions from Module 11 have their own home at
-[oxcaml.org](https://oxcaml.org/). And these course materials, with
-the in-browser playground, live at
-[fplaunchpad.org](https://fplaunchpad.org/), which is where to go
-for more functional-programming teaching.
+[oxcaml.org](https://oxcaml.org/). And these course materials live
+at [fplaunchpad.org](https://fplaunchpad.org/), which is where to
+go for more functional-programming teaching.
 
 Twelve modules ago the course started with `let`. It ends with an
 operating system whose every layer you can now read: the data
