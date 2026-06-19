@@ -136,7 +136,7 @@ HEAD
 
     cat <<FOOT
     <p style="margin-top: 3rem; font-size: 0.88rem; color: var(--muted);">
-      <a href="playground.html">Dune playground</a>
+      <a href="https://github.com/fplaunchpad/ocaml_nptel" target="_blank" rel="noopener">Source on GitHub</a>
       &nbsp;&middot;&nbsp;
       <a href="privacy.html">Privacy &amp; data collection</a>
       &nbsp;&middot;&nbsp;
