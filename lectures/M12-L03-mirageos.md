@@ -840,7 +840,8 @@ concrete; each was a real deployment.
 
 **The Bitcoin Pinata.** In 2015 the OCaml-TLS authors put their
 money where their stack was: an 8.2 MB MirageOS unikernel holding
-the private key to 10 bitcoins (peak value around 165,000 euros).
+the private key to 10 bitcoins (peak value around ₹1.3 crore then;
+over ₹6 crore at today's prices).
 Anyone who could break the TLS stack, the unikernel, or the
 hypervisor isolation could take the coins; the attack surface and
 the bounty were both public. It ran from 2015 to 2018: over half a
@@ -891,7 +892,7 @@ elsewhere.)
 :::cols
 :::col 55%
 - An **8.2 MB unikernel** holding the key to **10 bitcoins**
-  (peak value about 165k euros).
+  (peak value about ₹1.3 crore then; over ₹6 crore today).
 - Break the TLS stack, the unikernel, or the isolation: keep the
   coins.
 - Ran 2015 to 2018: 500k visits, **150k+ bounty attempts**.
@@ -967,21 +968,6 @@ covers the threat model and the hardware, and the FIDES paper
 AsiaCCS 2026) is the detailed treatment of the mixed-OCaml-and-C
 case. We do not cover this material in the course; these are the
 right starting points for the curious.
-
-:::slide
-
-## Advanced pointer: hardware-assisted unikernels
-
-- A unikernel still links C: the OCaml runtime and any C stubs.
-  - A bug there is unconstrained in the single address space.
-- Memory-safety hardware fences that C in: **CHERI**, **Shakti
-  FIDES**.
-- The hypervisor is also in the TCB.
-  - **Intel TDX, AMD SEV-SNP, ARM CCA** reduce trust in it.
-- Entry points: KC's CAIR / DRDO talk *Securing the foundations*;
-  the **FIDES** paper (AsiaCCS 2026).
-
-:::
 
 ## The course, end to end
 
