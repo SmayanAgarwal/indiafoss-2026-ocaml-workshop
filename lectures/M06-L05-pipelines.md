@@ -26,7 +26,7 @@ reading:
 
 :::
 
-We now have a small but powerful toolkit: [`map`](M06-L02-map.html),
+We now have a small toolkit: [`map`](M06-L02-map.html),
 [`filter`](M06-L03-filter.html), [`fold`](M06-L04-fold.html), and a
 habit of writing one-off functions with `fun x -> ...`. The natural
 next question is how to *chain* these together. A real program
@@ -42,7 +42,7 @@ which is one of the most quietly important operators in the
 standard library. The second is *function composition*, which
 packages two functions into one without naming an intermediate
 argument. Both are tiny, both are everyday OCaml, and both make
-higher-order code dramatically more readable.
+higher-order code more readable.
 
 :::slide
 

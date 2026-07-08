@@ -38,10 +38,10 @@ telling their own story, you reach for a record.
 
 A record in OCaml plays the same role that a `struct` plays in C
 or a class with only data members plays in Java. The syntax is
-similar in spirit. The semantics has two differences worth
-internalising up front: records are *immutable by default*, and
-they are *structurally compared*. Both of those make a record
-behave more like a value (an `int`, a `string`) than like an object.
+similar in spirit. The semantics differs in two ways: records
+are *immutable by default*, and they are *structurally
+compared*. Both of those make a record behave more like a value
+(an `int`, a `string`) than like an object.
 
 If you have not built a data-modelling habit before, this is the
 lecture where it starts. Most of the data structures you will
@@ -55,7 +55,7 @@ combinations of the two.
 - A *record* is a bundle, like a tuple, but with components named.
 - For 2 or 3 self-evident positions: tuple. Otherwise: record.
 - Same role as a C `struct` or a Java data class.
-- Two semantic twists worth internalising:
+- Two semantic differences:
   - *Immutable* by default.
   - *Structurally* compared, like an `int` or a `string`.
 - Where the data-modelling habit starts.
@@ -318,11 +318,11 @@ let _ = p2.y  (* = 10. *)
 
 :::
 
-Functional update is a quiet but important feature. In any program
-that needs to "modify" a record (a user's profile, a piece of
-state, a configuration), you write a new version with the changed
-field and pass that new version forward. The old version is still
-valid; nothing observable about it has changed.
+In any program that needs to "modify" a record (a user's
+profile, a piece of state, a configuration), you write a new
+version with the changed field and pass that new version
+forward. The old version is still valid; nothing observable
+about it has changed.
 
 This buys you the same property we discussed for shadowing in
 [the let-bindings lecture](M02-L02-let-bindings.html#shadowing):
@@ -335,8 +335,8 @@ For records with many fields, the `with` syntax is essential.
 Writing out a 19-field literal to change one value would be silly;
 `{ r with that_one_field = new_value }` is exactly what you want.
 
-The mechanism is *not* free: under the hood, OCaml allocates a new
-record and copies the unchanged fields. For most records this is
+The mechanism is *not* free: OCaml allocates a new record and
+copies the unchanged fields. For most records this is
 imperceptible; for performance-critical inner loops on large
 records, you may eventually want mutable fields, which we cover at
 the end of this lecture.

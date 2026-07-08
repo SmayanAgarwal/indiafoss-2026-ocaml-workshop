@@ -100,7 +100,7 @@ will want to be able to read C syntax casually.
 
 - Undergraduate and postgraduate students in CS and related disciplines.
 - Systems engineers, software developers, researchers.
-- Anyone who wants to build robust, reliable, type-safe software.
+- Anyone who wants to build reliable, type-safe software.
 
 **Prerequisites:** C programming, basic data structures and algorithms.
 Nothing more.
@@ -196,8 +196,8 @@ largely about getting you to the second state.
 for a habit of mind that functional programming makes possible. When
 a function is pure (returns a value, has no side effects), you
 can substitute equals for equals: replace any expression with its
-value, replace any call with its body. This sounds like a small thing
-and is in fact one of the more profound differences between FP and
+value, replace any call with its body. This sounds like a small
+thing and is in fact one of the larger differences between FP and
 imperative programming. We will spend [the next lecture](M01-L02-why-fp.html#equational-reasoning)
 setting up why this matters, and the rest of the course exercising
 it.
@@ -652,9 +652,8 @@ but were too shy to ask.
 
 ## What this course is not
 
-It is worth being explicit about scope. There are several large
-topics that this course *does not* cover, and a student who came in
-expecting them would be disappointed.
+There are several large topics that this course *does not* cover,
+and a student who came in expecting them would be disappointed.
 
 :::slide
 

@@ -361,8 +361,8 @@ matters when partial application enters the picture.
 
 ## Argument lists versus tuples: a common confusion
 
-This is worth pausing on, because it is the single largest source
-of confusion for students arriving in OCaml from C-family languages.
+This is the single largest source of confusion for students
+arriving in OCaml from C-family languages.
 Consider these three function definitions:
 
 ```ocaml

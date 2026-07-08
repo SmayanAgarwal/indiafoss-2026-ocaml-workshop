@@ -884,8 +884,8 @@ let _ = QCheck_runner.run_tests ~colors:false [test_buggy]  (* = 1 *)
 
 ## When does this scale?
 
-Model-based testing scales beautifully to any data structure
-with a clean interface. Some examples:
+Model-based testing scales to any data structure with a clean
+interface. Some examples:
 
 **Hash tables.** Reference: an association list
 `(key * value) list`. Test: open addressing, chaining,

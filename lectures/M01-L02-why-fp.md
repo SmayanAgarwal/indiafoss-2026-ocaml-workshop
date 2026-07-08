@@ -224,9 +224,9 @@ write any program; no, you do not want to. And a substantial
 `subleq` program (one that allocates an array, calls a function,
 or even just compares two values without leaving them in a
 wrecked state) is a great deal more painful than the six lines
-above. Writing one is a humbling experience and an excellent
-appetite-builder for the idea of *abstraction*, which is what
-the rest of this course is about.
+above. Writing one is a humbling experience and an appetite-builder
+for the idea of *abstraction*, which is what the rest of this
+course is about.
 
 :::slide
 
@@ -687,12 +687,11 @@ let you describe the *shape* of your domain so precisely that the
 compiler can check, statically, that no part of your code can
 construct a value that does not make sense. "Make illegal states
 unrepresentable" is a slogan you will hear repeated in the OCaml
-community; it captures a real and remarkable property.
+community; it captures a real property.
 
 ## Where functional programming does not shine (be honest)
 
-It is worth being clear-eyed about the costs. Functional programming
-is not a free lunch.
+Functional programming is not a free lunch.
 
 :::slide
 

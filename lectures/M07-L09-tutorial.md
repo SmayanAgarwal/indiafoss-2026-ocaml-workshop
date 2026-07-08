@@ -44,8 +44,8 @@ the back; `dequeue` pulls from the head of the front; when the
 front runs out, we reverse the back to become the new front.
 
 This is the same trick that backs many real-world queue
-implementations in functional languages. It is the kind of small,
-elegant data structure that is exactly the sort of thing a module
+implementations in functional languages. It is the kind of small
+data structure that is exactly the sort of thing a module
 system is designed for: a few operations on an abstract type,
 maintaining an invariant we do not want callers to see or break.
 

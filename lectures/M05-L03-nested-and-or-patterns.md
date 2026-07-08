@@ -756,7 +756,7 @@ references.
 ## Combining or-patterns and nesting
 
 Or-patterns can appear *anywhere* a pattern can appear, including
-inside other patterns. This lets you write quite elegant clauses:
+inside other patterns. This lets you write compact clauses:
 
 ```ocaml
 let summary = function
@@ -890,10 +890,10 @@ the whole list is `xs`."
 
 ## Or-patterns with `as`
 
-The most compelling use of `as` is with or-patterns. An
-or-pattern (`p1 | p2 | ...`) cannot bind a variable in each
-disjunct individually, because OCaml requires the variables of
-the alternatives to agree. So if you want a name for *whichever
+The main use of `as` is with or-patterns. An or-pattern
+(`p1 | p2 | ...`) cannot bind a variable in each disjunct
+individually, because OCaml requires the variables of the
+alternatives to agree. So if you want a name for *whichever
 alternative happened to match*, `as` is the only way to do it.
 
 ```ocaml

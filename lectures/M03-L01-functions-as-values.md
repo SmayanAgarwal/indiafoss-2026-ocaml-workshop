@@ -227,8 +227,8 @@ let add'' = fun x -> fun y -> x + y
 
 :::
 
-All three define the same function. The third form makes something
-striking explicit: a "two-argument function" in OCaml is really a
+All three define the same function. The third form makes this
+explicit: a "two-argument function" in OCaml is really a
 *one-argument function that returns another one-argument function*.
 The `fun x -> fun y -> x + y` reads "given `x`, return the function
 that, given `y`, returns `x + y`." This is called *currying* (after
@@ -279,9 +279,8 @@ or `let greeting = "hello"`: a name bound to a value. The only
 difference is that the *value* happens to be a function. The
 language does not distinguish.
 
-A small corner of this idea worth naming: a function whose
-parameter is the unit value `()` is called a *thunk*. Its type is
-`unit -> 'a` for some `'a`. The body runs not when the thunk is
+A related case: a *thunk* is a function whose parameter is the
+unit value `()`. Its type is `unit -> 'a` for some `'a`. The body runs not when the thunk is
 defined, but each time you call it with `()`:
 
 ```ocaml
@@ -349,8 +348,8 @@ and works.
 
 ## A function value remembers its environment
 
-Here is the subtle and important property. When `plus_five 3`
-runs, the body is `x + n`. The parameter `x` is bound to `3`. But
+Here is the subtle part. When `plus_five 3` runs, the body is
+`x + n`. The parameter `x` is bound to `3`. But
 where does `n` come from? It is not a parameter of `plus_five`. It
 was a parameter of `make_adder`, and `make_adder` has long since
 returned.
@@ -731,9 +730,9 @@ let () =
 :::solution
 
 Reference solution: `let compose g f = fun x -> g (f x)`, or
-equivalently `let compose g f x = g (f x)`. Function composition is
-one of the most useful tools in functional programming; we will
-return to it in [Module 6](M06-L05-pipelines.html#function-composition).
+equivalently `let compose g f x = g (f x)`. Function composition
+is used constantly in functional programming; we will return to
+it in [Module 6](M06-L05-pipelines.html#function-composition).
 
 :::
 

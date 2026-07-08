@@ -514,9 +514,8 @@ checklist:
 
 Most real OCaml code never needs GADTs. The small fraction that
 does (typed DSLs, query builders, the format-string code in the
-stdlib) uses them heavily and to great effect. We are in this
-course to know when they are right; that is the goal, not to make
-GADTs the default.
+stdlib) uses them heavily. We are in this course to know when
+they are right; that is the goal, not to make GADTs the default.
 
 ## A quick check
 

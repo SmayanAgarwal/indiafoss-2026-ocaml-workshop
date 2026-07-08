@@ -538,7 +538,7 @@ the relevant lecture and re-attempt the quizzes.
 [Module 3](M03-L01-functions-as-values.html) will assume Module 2
 is solid: we will start treating functions as values you can pass
 around, store, and return from other functions. That's where OCaml
-starts to feel like a genuinely different language from C or
+starts to feel like a different language from C or
 Python, and you'll want the expression-level mechanics from Module
 2 to be automatic.
 

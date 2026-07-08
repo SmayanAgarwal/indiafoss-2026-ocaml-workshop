@@ -68,11 +68,10 @@ and rose trees.
 A **higher-order function** is one that does either of two things:
 it takes a function as an argument, or it returns a function as its
 result. (Most of the interesting ones do both.) That is the entire
-definition. Once you have higher-order functions, a remarkable amount
-of mileage opens up: you can extract the *pattern* of a computation
-from the *details* it operates on, parameterise the pattern by the
-details, and reuse the same pattern across dozens of concrete
-computations.
+definition. Once you have higher-order functions, you can extract
+the *pattern* of a computation from the *details* it operates on,
+parameterise the pattern by the details, and reuse the same pattern
+across dozens of concrete computations.
 
 :::slide
 
@@ -547,8 +546,8 @@ let _ = curry3 dist3 3 4 12  (* = 13.0 *)
 will eventually bundle them into a triple and apply `dist3`.
 "Currying" is the term for this technique: turning an `n`-argument
 function into a chain of `n` one-argument functions. We saw it in
-[the currying lecture](M03-L03-currying.html) and will see it again as a recurring
-background hum throughout this module.
+[the currying lecture](M03-L03-currying.html) and will see it again
+throughout this module.
 
 The point of the example above is not currying itself; it is the
 demonstration that *functions are values you can shape and reshape

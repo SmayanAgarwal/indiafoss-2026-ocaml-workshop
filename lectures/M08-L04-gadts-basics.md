@@ -206,14 +206,13 @@ what type this is" because the compiler wants to know now.
 
 ## Pattern matching with type refinement
 
-A breath before the next bit. So far you have seen GADT syntax,
-the `_` placeholder, and what type-safe construction buys. The
-section below is the centerpiece of the lecture: how the
-compiler uses the constructor's result type to refine the type
-during pattern matching, and the `type a. ...` annotation that
-turns this on. Read the `eval` walkthrough that follows slowly;
-the four cases each illustrate a different facet of the
-refinement.
+So far you have seen GADT syntax, the `_` placeholder, and what
+type-safe construction buys. The section below is the centerpiece
+of the lecture: how the compiler uses the constructor's result
+type to refine the type during pattern matching, and the
+`type a. ...` annotation that turns this on. Read the `eval`
+walkthrough that follows slowly; the four cases each illustrate
+a different facet of the refinement.
 
 First, see why a plain annotation will not do. The obvious
 `eval : 'a expr -> 'a` does not type-check:
@@ -337,8 +336,8 @@ is ill-typed, before any evaluation runs.
 For a toy interpreter that is a parlour trick. For a real
 language (a [SQL query
 builder](https://hackage.haskell.org/package/beam), a financial
-calculation engine, an embedded scripting language), it is a
-massive win: bugs that would otherwise hide in branches your tests
+calculation engine, an embedded scripting language), the difference
+is large: bugs that would otherwise hide in branches your tests
 never exercise become impossible to write.
 
 The cost is real too. GADTs require more annotations, more

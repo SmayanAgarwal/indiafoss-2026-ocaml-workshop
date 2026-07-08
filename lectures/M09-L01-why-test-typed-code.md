@@ -134,8 +134,7 @@ checking that you chose right is the job of *testing*.
 
 It is worth being precise about which bugs OCaml's type system
 *does* catch, because the contrast is what makes this module
-necessary in the first place. Eight modules in, the list is
-genuinely impressive.
+necessary in the first place. Eight modules in, the list is long.
 
 :::slide
 
@@ -343,8 +342,8 @@ too varied to write a manual assertion: you let the test runner
 *capture* the output the first time, you look at it once, and
 from then on the test fails if the output differs from the
 captured version. They are excellent for exploratory work and for
-end-to-end scenarios. Real World OCaml's chapter shows them off
-beautifully; we cover them only briefly because the conceptual
+end-to-end scenarios. Real World OCaml's chapter demonstrates them
+in detail; we cover them only briefly because the conceptual
 content overlaps with unit tests once you have seen one.
 
 ## What about formal verification?
@@ -495,7 +494,7 @@ are about choosing inputs deliberately.
 
 A reasonable reader might wonder, at this point, whether the
 type system is actually pulling its weight if you still have to
-test the same code. The answer is yes, emphatically.
+test the same code. The answer is yes.
 
 A typed language *reduces the surface area you have to test*. In
 Python or JavaScript, every function you write has to be tested

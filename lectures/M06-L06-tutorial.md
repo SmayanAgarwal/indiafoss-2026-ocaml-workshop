@@ -27,14 +27,14 @@ reading:
 :::
 
 This lecture is the worked-exercise capstone of Module 6. Across the
-previous five lectures we built up a small but powerful toolkit:
+previous five lectures we built up a small toolkit:
 [higher-order functions](M06-L01-functions-revisited.html),
 [`map`](M06-L02-map.html), [`filter`](M06-L03-filter.html),
 [`fold_left` and `fold_right`](M06-L04-fold.html), the
 [pipeline operator `|>`, and function composition](M06-L05-pipelines.html).
 The thesis of this module has been that this small toolkit is enough
-to express a surprising amount of list processing without writing a
-single hand-coded recursion. In this tutorial we try to make good on
+to express much list processing without writing a single
+hand-coded recursion. In this tutorial we try to make good on
 that claim: pick a list function from the standard library, then
 build it from the toolkit.
 
@@ -59,8 +59,8 @@ trees).
 
 - The capstone of M06: put the toolkit to work.
 - Toolkit: higher-order functions, `map`, `filter`, `fold`, `|>`, composition.
-- Thesis: this small toolkit covers a surprising amount of list
-  work without hand-coded recursion, *and* the same pattern lifts
+- Thesis: this small toolkit covers much list work without
+  hand-coded recursion, *and* the same pattern lifts
   to other recursive types.
 - Seven problems: four `List`-fold rebuilds, then three lifts of
   `fold` to other data structures (binary tree pre/in/post/level

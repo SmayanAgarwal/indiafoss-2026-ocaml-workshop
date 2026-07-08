@@ -485,7 +485,7 @@ let _ = Lazy.force v   (* prints NOTHING;        = 30 *)
 
 :::
 
-The `lazy` keyword is syntactic sugar; under the hood,
+The `lazy` keyword is syntactic sugar; internally,
 [`'a Lazy.t`](https://v2.ocaml.org/api/Lazy.html) is a small
 mutable record (the cache lives in a [`ref`](M07-L01-references.html)
 slot inside). Forcing reads the slot; if empty, it runs the body

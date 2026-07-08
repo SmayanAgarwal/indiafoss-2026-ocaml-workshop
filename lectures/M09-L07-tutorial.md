@@ -647,7 +647,7 @@ the property is the thing to fix: `same_float` says what
 agreement *means* for floats: two NaNs agree. It is the
 observation-equality move from the model-based lecture, shrunk
 to a single comparison, and it turns the NaN corner from
-something skipped into something genuinely tested: the property
+something skipped into something tested: the property
 now asserts that `0 + e` is NaN *exactly when* `e` is.
 
 `same_float` patches NaN and inherits `=`'s one remaining blind
@@ -661,7 +661,7 @@ than the spec promises.
 ### Property 3: distributivity (carefully)
 
 `Mul (a, Add (b, c))` should equal `Add (Mul (a, b), Mul (a, c))`
-in mathematics. Here, finally, float algebra genuinely breaks:
+in mathematics. Here, finally, float algebra breaks:
 addition and multiplication are individually exact-commutative
 in IEEE-754, but *distributing* a multiplication recomputes the
 same value along two differently-rounded routes, and the two
@@ -691,8 +691,8 @@ property captures "the algebra is right" in a way that tolerates
 the floating-point reality.
 
 The first line of the body restricts the property's *domain*,
-and the restriction is not cosmetic: distributivity genuinely
-fails outside the finite range. Take `a = Num infinity`,
+and the restriction is not cosmetic: distributivity fails
+outside the finite range. Take `a = Num infinity`,
 `b = Num 2.`, `c = Num (-1.)`: the left route is
 `infinity *. 1. = infinity`, while the expansion is
 `infinity +. neg_infinity = nan`. No tolerance rescues that; the
@@ -773,9 +773,9 @@ let _ = QCheck_runner.run_tests ~colors:false [test_distributes_approx]  (* = 0 
 
 ## Part 4: a deliberately buggy implementation
 
-Now the dramatic part. Suppose someone "refactors" `eval` and
-introduces a bug. The classic version of this is: they confuse
-left and right operand in `Sub`:
+Suppose someone "refactors" `eval` and introduces a bug. The
+classic version of this is: they confuse left and right operand
+in `Sub`:
 
 ```ocaml
 let rec bad_eval = function

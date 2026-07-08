@@ -56,8 +56,8 @@ Every cell on this page is runnable. The first cell takes a few
 seconds to spin up the in-browser OCaml runtime; after that, each
 cell evaluates instantly. Click Run on every single cell as you read.
 Edit them. Try variations. The fastest way to learn a language is to
-play with it, and the in-browser cells exist precisely to make that
-play frictionless.
+play with it, and the in-browser cells exist precisely to make
+that easy.
 
 ## The toplevel
 
@@ -594,11 +594,11 @@ Without writing a single type annotation.
 Type inference is what makes OCaml feel as light to write as
 Python, even though the language is statically typed. You get the
 safety of a strong type system without the syntactic burden of
-writing types everywhere. This is a much bigger deal than it might
-sound. In Java, you write `int x = 5;` because the compiler insists.
-In OCaml, you write `let x = 5` and the compiler figures out `x :
-int` itself. Multiply this by ten thousand bindings in a real
-program and the verbosity savings are large.
+writing types everywhere. In Java, you write `int x = 5;` because
+the compiler insists. In OCaml, you write `let x = 5` and the
+compiler figures out `x : int` itself. Multiply this by ten
+thousand bindings in a real program and the verbosity savings
+are large.
 
 ```ocaml
 let add_f x y = x +. y
@@ -817,8 +817,7 @@ determines the type).
 
 :::
 
-This is the punchline of the lecture, and it is worth memorising:
-*the operator drives the inference*. OCaml's type system has no
+The operator drives the inference. OCaml's type system has no
 "this could be either an int or a float, you decide" notion. Every
 expression has exactly one type, determined by its operators. When
 the compiler complains about a type mismatch, the first thing to

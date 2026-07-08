@@ -185,10 +185,10 @@ let _ = pairs
 
 :::
 
-The striking thing: the same `let*` that meant "short-circuit on
-failure" for `option` now means "consider every combination" for
-lists. The notation did not change; the monad did. Search problems
-fall out of this directly, using the empty list as a filter:
+The same `let*` that meant "short-circuit on failure" for `option`
+now means "consider every combination" for lists. The notation
+did not change; the monad did. Search problems fall out of this
+directly, using the empty list as a filter:
 
 :::slide
 

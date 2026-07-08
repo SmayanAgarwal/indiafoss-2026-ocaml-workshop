@@ -70,7 +70,7 @@ a value's **past** (has it been aliased before now?), linearity
 tracks something about a value's **future**: how many more times
 may it be used?
 
-These sound similar but are genuinely different. A value can have
+These sound similar but are different. A value can have
 no aliases right now (unique) and still be used many times in the
 future. A value can be used only once in the future (linear) even
 if it has been aliased in the past. The two axes are independent;

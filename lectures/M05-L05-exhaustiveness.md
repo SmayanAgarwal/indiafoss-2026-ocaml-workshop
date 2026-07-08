@@ -594,9 +594,9 @@ The first version (with `_`) would silently treat `FlashingRed`
 as not-red; the second version makes that decision a deliberate
 edit.
 
-This is a strong rule worth internalising: *on variant types,
-enumerate the cases explicitly*. Save the wildcard for `int`,
-`string`, and other types where enumeration is impossible.
+The rule: *on variant types, enumerate the cases explicitly*.
+Save the wildcard for `int`, `string`, and other types where
+enumeration is impossible.
 
 ## Two checks
 

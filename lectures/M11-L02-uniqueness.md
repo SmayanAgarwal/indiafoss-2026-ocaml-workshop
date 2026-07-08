@@ -153,9 +153,9 @@ escape hatch, `Modes.Aliased.t`).
 
 ## What the proof licenses
 
-Before the worked example, it is worth being clear about what
-"no other references" actually buys. The proof licenses three
-privileges, each unsafe under aliasing:
+Before the worked example, be clear about what "no other
+references" actually buys. The proof licenses three privileges,
+each unsafe under aliasing:
 
 - **Free it.** If no other reference exists, deallocating the
   target cannot leave a dangling reference behind: there is

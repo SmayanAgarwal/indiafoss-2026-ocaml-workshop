@@ -162,7 +162,7 @@ that *creation*, *read*, and *write* each get their own syntax.
 In C you write `int counter = 0` to create and `counter = 1` to
 update; in Python `counter = 0` does both, with the second `=`
 deciding from context that it is an update. OCaml separates the
-three because, under the hood, they really are three different
+three because, internally, they really are three different
 operations: `ref` allocates a cell on the heap, `:=` mutates a cell
 that already exists, and `!` reads from a cell. C makes the same
 distinction implicitly with pointers (`malloc` allocates, `*p = 1`

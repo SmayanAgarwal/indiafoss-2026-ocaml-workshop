@@ -35,8 +35,8 @@ argument is a *predicate* (it returns a `bool`), and the result list
 has the same element type as the input. No transformation; just
 selection.
 
-The pair `map` + `filter` covers a remarkable amount of everyday
-list manipulation. The rest of this lecture works through the
+The pair `map` + `filter` covers much of everyday list
+manipulation. The rest of this lecture works through the
 definition, the common variations (`filter_map`, `partition`), and
 the points where you should pause and reach for `filter` rather than
 something else.
@@ -48,7 +48,7 @@ something else.
 - `filter p xs`: keep the elements for which `p` is `true`, drop the rest.
 - Type: `('a -> bool) -> 'a list -> 'a list`. No transformation; selection.
 - The predicate is a `bool`-returning function.
-- `map` + `filter` covers a remarkable amount of list manipulation.
+- `map` + `filter` covers much of list manipulation.
 - Also today: `filter_map`, `partition`, when to reach for `filter`.
 
 :::
@@ -240,10 +240,10 @@ let _ = List.filter (fun x -> x > 3) [5; 1; 7; 2; 9; 3; 4]  (* = [5; 7; 9; 4] *)
 :::
 
 Elements that passed (`> 3`) appear in the
-same order they did in the input. This matters more than you might
-initially think: if the input was a sorted list, the output is still
-sorted; if it was a chronologically-ordered log, the output is still
-in chronological order. You do not have to re-sort after filtering.
+same order they did in the input. If the input was a sorted list,
+the output is still sorted; if it was a chronologically-ordered log,
+the output is still in chronological order. You do not have to
+re-sort after filtering.
 
 ## `filter_map`: filter and transform in one pass
 
@@ -297,9 +297,8 @@ The result is `[42; 13; 0]`: the three strings that parsed, in
 order, as raw integers. The strings `"frog"` and `" "` returned
 `None` from `int_of_string_opt` and were dropped.
 
-`filter_map` is one of those "where was this all my life" functions
-once you discover it. Any pipeline of "parse, drop the failures,
-move on" benefits from it. Its type:
+`filter_map` is worth knowing well. Any pipeline of "parse, drop
+the failures, move on" benefits from it. Its type:
 
 ```
 val filter_map : ('a -> 'b option) -> 'a list -> 'b list
@@ -404,10 +403,8 @@ later with more than 100 pages.
 The same query in SQL would be `SELECT title FROM library WHERE year
 >= 2020 AND pages > 100`. The OCaml version is one filter plus one
 map. This filter-then-map pattern (sometimes called *select-where*
-in database lingo, or *project-select* in relational algebra) is so
-common that in some communities people call OCaml programming
-"functional querying" once they discover it. With `filter_map` the
-same thing collapses to one call:
+in database lingo, or *project-select* in relational algebra) is
+common. With `filter_map` the same thing collapses to one call:
 
 ```ocaml
 let _ =

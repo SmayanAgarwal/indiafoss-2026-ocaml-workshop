@@ -429,11 +429,10 @@ expression was expected of type int`. The fix is to write
 
 Why? Why not let `+` do the obvious thing depending on its
 operands, the way Python and Java and JavaScript do? The answer
-has two parts, one practical and one principled, and both worth
-holding onto.
+has two parts, one practical and one principled.
 
-The practical part is that *operator overloading is genuinely
-expensive*. In C++, when the compiler sees `a + b`, it has to
+The practical part is that *operator overloading is expensive*.
+In C++, when the compiler sees `a + b`, it has to
 search for an `operator+` that takes the types of `a` and `b`. If
 several such operators are in scope, it has to apply overload
 resolution rules to pick one. This makes both compilation slower
@@ -473,36 +472,49 @@ binary floating point; neither can `0.2`. So `0.1 +. 0.2` does
 not give `0.3`; it gives `0.300000000000000044`. This is not
 a bug in OCaml; it is a fundamental property of IEEE 754, and
 the same anomaly appears in Python, Java, JavaScript, and
-essentially every mainstream language: the domain
+essentially every mainstream language:
 [`0.30000000000000004.com`](https://0.30000000000000004.com/)
 tabulates `0.1 + 0.2` language by language.
 We saw the same example in
 [the Module 1 tutorial's float-precision aside](M01-L05-tutorial-recap.html#a-float-precision-aside).
-If you have not yet encountered the basics of floating-point
-representation, the classic short guide is
-[*What Every Computer Scientist Should Know About Floating-Point
-Arithmetic*](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html);
-we will not need it again in this course, but it is worth knowing
-it exists.
 
-That `0.1` has no exact binary representation sounds like
-trivia until it accumulates. On 25 February 1991, during the
-Gulf War, a Patriot air-defence battery in Dhahran failed to
-intercept an incoming Scud missile; 28 soldiers died in the
-strike. The Patriot counted time as an integer number of
-tenth-seconds, and predicting the Scud's next position meant
-converting that count to seconds by multiplying by `1/10`,
-which has no finite binary expansion. The 1970s-era computer
-held the result in a 24-bit fixed-point register, not a float,
-so the truncation was coarse, and the error grew in proportion
-to how long the system had run. After Alpha Battery's roughly
-100 hours of continuous operation the clock was off by 0.34
-seconds, which at Scud speed left the tracking gate about 687
-metres from the missile. The
-[GAO report](https://www.gao.gov/products/imtec-92-26) blamed
-this imprecise 24-bit conversion; a modern 64-bit float would
-have held the same drift below a microsecond, so the real
-lesson is too few bits, not floating point itself.
+That `0.1` has no exact binary representation sounds like trivia until it
+accumulates. On 25 February 1991, during the Gulf War, a Patriot air-defence
+battery in Dhahran failed to intercept an incoming Scud missile; 28 soldiers
+died in the strike. The Patriot counted time as an integer number of
+tenth-seconds, and predicting the Scud's next position meant converting that
+count to seconds by multiplying by `1/10`, which has no finite binary expansion.
+The 1970s-era computer held the result in a 24-bit fixed-point register, not a
+float, so the truncation was coarse, and the error grew in proportion to how
+long the system had run. After Alpha Battery's roughly 100 hours of continuous
+operation the clock was off by 0.34 seconds, which at Scud speed left the
+tracking gate about 687 metres from the missile. The [GAO report](https://www.gao.gov/products/imtec-92-26) blamed this imprecise
+24-bit conversion. A modern 64-bit float would have held the same drift below a
+microsecond, but the principle is the same: floating-point arithmetic is
+approximate, and you have to be aware of that when you use it.
+
+This approximateness has a concrete consequence that ties back to
+the `+` versus `+.` distinction. Because `int` arithmetic is exact,
+`+`, `-`, and `*` stay associative and distributive: you may reorder
+and regroup an expression with no `.` operators without changing its
+value, and even the silent wrap-around from earlier preserves these
+laws, since wrap-around is exact modular arithmetic. The float
+operators `+.` and `*.` give up both laws, because each result is
+rounded and the rounding depends on the grouping:
+
+```ocaml
+(* Integers: regrouping is safe. *)
+let _ = (1 + 2) + 3    (* = 6 *)
+let _ = 1 + (2 + 3)    (* = 6 *)
+
+(* Floats: each step rounds, so regrouping changes the answer. *)
+let _ = (0.1 +. 0.2) +. 0.3         (* = 0.600000000000000089 *)
+let _ = 0.1 +. (0.2 +. 0.3)         (* = 0.6 *)
+
+(* Distributivity breaks the same way. *)
+let _ = 100. *. (0.1 +. 0.2)        (* = 30.0000000000000036 *)
+let _ = 100. *. 0.1 +. 100. *. 0.2  (* = 30. *)
+```
 
 ## Booleans
 

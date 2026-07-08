@@ -430,7 +430,7 @@ constructor cases that can fail.
 This is the design pattern for a serious typed interpreter:
 GADTs at the type level to rule out type errors, monads at the
 value level to handle runtime errors cleanly. Both pay their own
-way; together they cover the full spectrum.
+way; together they cover both compile-time and runtime failures.
 
 ## The "polymorphic less-than" question
 
@@ -653,9 +653,9 @@ parse errors. But "tried to add a bool to an int" is no longer one
 of those runtime failures, because it is impossible to build a
 program that would even try.
 
-This is the lesson of Module 8 distilled: monads handle what the
-type system cannot see; GADTs let the type system see more. The
-two are complementary, and together they shrink the runtime
+The lesson of this module: monads handle what the type system
+cannot see; GADTs let the type system see more. The two are
+complementary, and together they shrink the runtime
 failure surface of a typed interpreter to the genuine impossibles
 (divisor zero, missing key) that no static check can prevent.
 

@@ -226,7 +226,7 @@ let xs_plus_10 = List.map (fun x -> add 10 x) xs
 ```
 
 which works but is noisier. The version `List.map (add 10) xs` reads
-as "map the add-10 function over `xs`." That is the pleasant form.
+as "map the add-10 function over `xs`." That form reads more directly.
 
 You will see this idiom constantly in real OCaml code. Anywhere a
 higher-order function expects a unary function, partial application

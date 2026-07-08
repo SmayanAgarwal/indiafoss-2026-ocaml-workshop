@@ -1004,10 +1004,10 @@ into the operating system itself. MirageOS is what the safety
 toolkit looks like when you apply it to the runtime your application
 sits on. Library OS removes the kernel boundary; virtualisation
 gives back the inter-application isolation; OCaml gives back the
-intra-application safety. The result is a coherent, minimal, fast,
-auditable platform.
+intra-application safety. The result is a small, fast, auditable
+platform.
 
-That is the journey, end to end. Twelve modules of lectures,
+That is the course, end to end. Twelve modules of lectures,
 runnable cells, and quizzes: all of it adds up to one idea, that
 safety is something you can *build into* your software at every
 level if you take the language seriously.

@@ -304,10 +304,10 @@ wrapped in parens: `Rectangle (4.0, 6.0)`. The parentheses around
 the tuple are required when the tuple has more than one component
 and the constructor takes a tuple payload.
 
-A subtle but important point: `Rectangle` does *not* take two
-arguments. It takes *one* argument, which happens to be a pair. The
-type `float * float` in `of float * float` is a single tuple type,
-not "two arguments." This matters for pattern matching: you write
+`Rectangle` does *not* take two arguments. It takes *one*
+argument, which happens to be a pair. The type `float * float`
+in `of float * float` is a single tuple type, not "two
+arguments." This matters for pattern matching: you write
 `Rectangle (w, h)` (one pair-pattern, parens required), not
 `Rectangle w h` (which would not parse).
 
@@ -392,9 +392,8 @@ The inline record syntax was added to OCaml in 4.03 (2016) and has
 become idiomatic for variant payloads of more than two pieces of
 data.
 
-Variants are not a corner feature you reach for occasionally.
-They are *pervasive* in OCaml: `bool`, `list`, `option`, and
-`result` are all variants under the hood. We will see the
+Variants are *pervasive* in OCaml: `bool`, `list`, `option`,
+and `result` are all variants. We will see the
 recursive ones (`list`, trees, expressions) in the
 [next lecture](M04-L04-recursive-types.html), where they are also
 the natural setting to introduce *parameterised variants* (lists
@@ -539,8 +538,8 @@ whole of [Module 5](M05-L01-basic-patterns.html) on it.
 
 Lecture 4: **recursive types**. Variants whose payloads include
 the type being defined. Lists, trees, expressions, JSON values fit
-this shape. The recursive case makes ADTs powerful, not just
-labelled.
+this shape. The recursive case lets ADTs describe unbounded
+data, not just fixed alternatives.
 
 :::
 

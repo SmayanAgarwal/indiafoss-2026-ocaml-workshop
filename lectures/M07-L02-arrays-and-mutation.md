@@ -157,7 +157,7 @@ updating that field:
 
 So `ref` is not a magic builtin: it is exactly a record with one
 mutable field, and the mutable-field machinery you just saw is
-what `ref` uses under the hood.
+what `ref` uses internally.
 
 For named mutable state, the record form is often more readable:
 `c.n <- c.n + 1` reads like an imperative assignment. The `ref`

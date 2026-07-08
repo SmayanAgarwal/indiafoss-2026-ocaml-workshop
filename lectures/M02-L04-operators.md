@@ -347,7 +347,7 @@ A few observations:
   `(1, 5)`, not `(1, 2) + 3`.
 
 When in doubt, just parenthesise. Explicit parentheses cost
-nothing at runtime and make the parse intent crystal clear to the
+nothing at runtime and make the parse intent clear to the
 reader. Code is read far more often than it is written; spend the
 ten extra keystrokes.
 

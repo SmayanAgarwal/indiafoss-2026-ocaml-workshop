@@ -57,7 +57,7 @@ Two kinds of entry:
 - A **directory** has a name, access permissions, and a list of
   entries inside it.
 
-That is genuinely it. Everything else (a path like `/home/alice`,
+That is it. Everything else (a path like `/home/alice`,
 the notion of a "root", whether two files have the same content)
 is *derived* from this structure by code that walks it. The
 declared type just captures the shape.
@@ -350,7 +350,7 @@ let anonymous =
 ```
 
 `Some "alice"` says "this file is owned by `alice`"; `None` says
-"no owner data attached." Note that this is genuinely "no value
+"no owner data attached." Note that this is "no value
 attached," not "an owner who is the empty string"; the type
 forces the two cases apart. That distinction (and the
 [recursive-types lecture's rule of thumb](M04-L04-recursive-types.html#when-to-use-option):

@@ -159,7 +159,7 @@ Hardware.](/assets/diagrams/M12-stack-libos.svg)
 :::
 
 The conceptual move is small but the practical consequences are
-large. Three of them are worth naming explicitly:
+large. Three of them stand out:
 
 1. **Single address space.** All code, including what used to be
    "kernel" code, runs in the same virtual-address space. A pointer
@@ -210,10 +210,9 @@ what you link, not the size of everything anyone might link.
 
 :::
 
-This is not a new idea, and it is worth knowing that it has a
-history, because the history explains the design of everything
-that follows. In the 1990s two academic projects built serious
-library OSes: **Nemesis** (Cambridge and Glasgow, built for
+This is not a new idea, and its history explains the design of
+everything that follows. In the 1990s two academic projects built
+serious library OSes: **Nemesis** (Cambridge and Glasgow, built for
 multimedia workloads that needed predictable latency) and
 **Exokernel** (MIT; the SOSP 1995 paper argues the OS should only
 multiplex hardware securely and let applications bring everything
@@ -619,9 +618,9 @@ Total **TCB-C ~ 40,000 lines**, vs Linux's **~30,000,000**.
 
 ## OCaml's GC inside a unikernel
 
-One language-level design point deserves its own moment, because
-it is what makes "OCaml as the OS" practical rather than merely
-safe. The OCaml garbage collector is compacting, incremental, and
+One language-level design point makes "OCaml as the OS"
+practical. The OCaml garbage
+collector is compacting, incremental, and
 generational: the minor heap is a small contiguous bump
 allocation region, the major heap is swept in bounded slices, and
 a single pause stays small. Push that into a unikernel and three
@@ -720,7 +719,7 @@ best describes how adding virtualisation changes those cons?
 language's type and memory safety. The driver problem is reduced to
 driving the host's abstract virtual devices, which is feasible
 once and for all. Library OS plus
-virtualisation is genuinely deployable; the language is what makes
+virtualisation is deployable; the language is what makes
 the inside of the image trustworthy too.
 :::
 

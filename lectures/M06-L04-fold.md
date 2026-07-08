@@ -699,9 +699,9 @@ more of it in [Module 8](M08-L01-option-monad.html).
 
 ## When `fold` is overkill
 
-Folds are powerful, but power has a cost: a non-trivial fold can be
-harder to read than the equivalent `map`/`filter` chain, because the
-reader has to decode the accumulator threading. The rule of thumb:
+A non-trivial fold can be harder to read than the equivalent
+`map`/`filter` chain, because the reader has to decode the
+accumulator threading. The rule of thumb:
 
 :::slide
 
@@ -915,8 +915,7 @@ Lecture 5: **function composition and pipelines**.
 - **Real World OCaml**, *Lists and patterns*:
   <https://dev.realworldocaml.org/lists-and-patterns.html>
 - Graham Hutton, *A tutorial on the universality and expressiveness
-  of fold*: a beautifully written paper showing how powerful `fold`
-  really is. Optional but enjoyable.
+  of fold*: shows how general `fold` is. Optional.
   <https://www.cs.nott.ac.uk/~pszgmh/fold.pdf>
 ## Sources
 

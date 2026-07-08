@@ -468,7 +468,7 @@ This tutorial is the whole module in one example:
 - the **resource cousin**: leak / double-close / use-after-close,
   whose defence is the combinator pattern, not the GC.
 
-The single most important sentence in the module:
+The module in one sentence:
 
 > *OCaml's safety is not magic; it is GC + types + exhaustive
 > matching + bounds-checked stdlib, applied consistently.*

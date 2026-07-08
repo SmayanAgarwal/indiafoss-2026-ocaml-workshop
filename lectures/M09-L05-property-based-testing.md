@@ -563,8 +563,8 @@ generated lists modest; `QCheck.(list int)` happily produces
 lists thousands of elements long.
 
 Three properties. Each one would be satisfied by some wrong
-function, but a function that satisfies *all three* is genuinely
-hard to write incorrectly.
+function, but a function that satisfies *all three* is hard
+to write incorrectly.
 
 - "produces a sorted list" by itself is satisfied by `fun _ -> []`.
 - "preserves the multiset" by itself is satisfied by `fun xs -> xs`
@@ -886,7 +886,8 @@ that needs one more idea, and it is the topic of the
 
 We introduced shrinking informally with the `bad_sort` example: a
 failing multi-element list got shrunk to a 1-element list, and the
-bug was obvious in the small witness. Now we go under the hood.
+bug was obvious in the small witness. Now we look at how the
+shrinker works.
 
 ### Why shrinking matters
 
@@ -1105,8 +1106,7 @@ was *the combination of random generation with automatic shrinking
 inside a strong type system*. The type system makes it possible to
 auto-generate inputs for any type, and shrinking makes the
 counterexamples small enough to debug. Together they make PBT
-genuinely productive for working programmers, not just a research
-curiosity.
+productive for working programmers, not just a research curiosity.
 
 A recurring surprise in Hughes's later experience reports is that
 property-based testing often finds bugs not in the implementation
@@ -1271,7 +1271,7 @@ with a specific shape (e.g. a deeply nested record) may evade
 ## What's next
 
 So far the things we have tested are *pure functions*: an input
-goes in, an output comes out, no state. PBT shines there. But
+goes in, an output comes out, no state. PBT works well there. But
 much of real software is stateful: a hash table you `add` to and
 `remove` from, a queue you `enqueue` and `dequeue`, a file you
 `read` and `write`. How do you write a property for a *stateful*

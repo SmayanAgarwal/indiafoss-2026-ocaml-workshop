@@ -388,8 +388,8 @@ let () = 42
 
 :::
 
-The `let () = 42` example above is genuinely useful as a teaching
-case. Press **Run** on the cell; the compiler refuses with an
+The `let () = 42` example above is useful as a teaching case.
+Press **Run** on the cell; the compiler refuses with an
 error message like *"The constant 42 has type int but an
 expression was expected of type unit."* This is
 the pattern-match-as-type-check property doing its job. You said

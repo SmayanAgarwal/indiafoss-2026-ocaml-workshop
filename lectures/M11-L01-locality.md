@@ -332,8 +332,8 @@ escaping handle and C's `return &x` become unrepresentable.
 That same "cannot escape" guarantee has a second, performance
 payoff. If the compiler knows a value never escapes its scope, the
 value is safe to put on the **stack**: when the frame is popped, no
-live reference to it can survive. So locality is also the key that
-unlocks safe stack allocation, which is where we turn next.
+live reference to it can survive. So locality is also what makes
+safe stack allocation possible, which is where we turn next.
 
 :::slide
 
@@ -692,11 +692,11 @@ let rec translate_polyline
       exclave_ (translate p dx dy :: translate_polyline rest dx dy)
 ```
 
-This is the most striking use of the feature. In vanilla OCaml,
-mapping `translate` across an `n`-point list allocates `n` new cons
-cells and `n` new points on the heap, for `2n` allocations. With
-local lists and `exclave_`, the *same shape* of code allocates the
-whole new list in the **caller's** region: no GC traffic.
+In vanilla OCaml, mapping `translate` across an `n`-point list
+allocates `n` new cons cells and `n` new points on the heap, for
+`2n` allocations. With local lists and `exclave_`, the *same
+shape* of code allocates the whole new list in the **caller's**
+region: no GC traffic.
 
 The recursive structure is what makes that work: each `exclave_`
 ends *this* frame's region and runs its body in the parent's region;

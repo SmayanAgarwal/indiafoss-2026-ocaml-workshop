@@ -83,7 +83,7 @@ follows from that size.
 
 ## What an operating system is for
 
-The job of an operating system is, at its core, very small to state:
+The job of an operating system is very small to state:
 support running applications. Everything else in the OS exists because
 that job, taken seriously, is much harder than it looks.
 
@@ -282,13 +282,12 @@ The stacked bands are the kernel's subsystems; the broad gray and
 pink mid-section is `drivers/`, swallowing the rest of the chart a
 little more with every release.
 
-Two readings of this curve are worth keeping in mind. The first
-is the optimistic one: more drivers means Linux supports more
-hardware, which is genuinely useful. The second is the security
-one: the *Trusted Computing Base* you run every day is also
-growing monotonically, with no upper bound in sight, and every
-new line is a candidate location for a CVE (a publicly catalogued
-security vulnerability).
+The curve has two readings. The first is the optimistic one:
+more drivers means Linux supports more hardware, which is
+useful. The second is the security one: the *Trusted Computing
+Base* you run every day is also growing monotonically, with no
+upper bound in sight, and every new line is a candidate location
+for a CVE (a publicly catalogued security vulnerability).
 
 :::slide
 
@@ -446,7 +445,7 @@ larger; 30 million lines.**
 
 ## The monolithic iceberg
 
-The mental picture worth carrying out of this lecture is the
+The mental picture from this lecture is the
 *monolithic OS iceberg*. Above the waterline, glinting in the sun, is
 the small piece you can see: the code you actually want to run. Below
 the waterline, sprawling and dark, is the much larger mass you cannot
@@ -628,8 +627,8 @@ appliance, maybe not.
 
 **Pitfall 2: "Microkernels solve this."** Microkernels (Mach, L4, Hurd,
 seL4) are an old idea that pushes most of the kernel functionality
-into user-space servers, leaving only a small "kernel" core. They have
-elegant designs and one (seL4) is formally verified. They have also
+into user-space servers, leaving only a small "kernel" core. Their
+designs are clean, and one (seL4) is formally verified. They have also
 not displaced monolithic kernels in the commercial market, for
 reasons that are partly technical (cross-server IPC overhead) and
 partly social (drivers and applications are written for monolithic

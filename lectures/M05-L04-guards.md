@@ -366,9 +366,10 @@ total (and you do not mind the warning).
 
 ## Don't reach for guards when a pattern would do
 
-Guards are powerful, but they are not free. Each guard suppresses
-some compiler help. So a useful discipline: do not reach for a
-guard when a pure pattern would express the same thing.
+Guards extend what you can express, but they are not free. Each
+guard suppresses some compiler help. So a useful discipline: do
+not reach for a guard when a pure pattern would express the same
+thing.
 
 ```ocaml
 let is_origin = function
@@ -412,7 +413,7 @@ let _ = is_origin (1.0, 2.0)  (* = false *)
 
 The pure-pattern version is shorter, more obviously correct, and
 keeps exhaustiveness checking intact. Reach for `when` only when
-the pattern language is genuinely not enough:
+the pattern language is not enough:
 
 - Numeric inequalities: `n > 0`, `n <= max_size`.
 - String predicates: `String.length s > 5`,

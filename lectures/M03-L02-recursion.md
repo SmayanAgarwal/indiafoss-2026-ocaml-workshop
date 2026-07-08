@@ -217,7 +217,7 @@ any non-empty list and binds `rest` to the tail.
 This shape (one base case for the empty list, one recursive case
 that strips one element and recurs on the rest) is so common it
 has a name: *structural recursion on lists*. Most list functions
-in OCaml's standard library are written this way under the hood:
+in OCaml's standard library are written this way:
 [`List.map`](M06-L02-map.html), `List.length`,
 [`List.filter`](M06-L03-filter.html),
 [`List.fold_left`](M06-L04-fold.html). We will revisit all of

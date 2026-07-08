@@ -542,7 +542,7 @@ the top-level position are not the issue. The compiler points at
 
 :::quiz mcq id=M11-L05-q2
 A team replaces a `ref` counter with a stdlib `Atomic.t`, and the
-runtime race is genuinely gone. Porting the code to OxCaml, they
+runtime race is gone. Porting the code to OxCaml, they
 swap it again, for `Portable.Atomic`. What does the second swap
 buy?
 

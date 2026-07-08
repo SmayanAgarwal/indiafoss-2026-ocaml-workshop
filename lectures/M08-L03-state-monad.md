@@ -213,9 +213,9 @@ Read the current counter, increment it, return a fresh name.
 :::
 
 State starts at 1, ends at 4 (three calls used 1, 2, 3; 4 is the
-next available). The key thing: *the user-facing code never mentions
-the counter*, and it could not, since `'a t` is abstract. No `ref`,
-no `incr`; the state is implicit in the `let*` plumbing, threaded by
+next available). *The user-facing code never mentions the counter*,
+and it could not, since `'a t` is abstract. No `ref`, no `incr`;
+the state is implicit in the `let*` plumbing, threaded by
 `bind`. And `gensym` is itself the domain helper that hides `get`
 and `set`: callers write `gensym "x"`, never `get` or `set`
 directly. Wrapping the raw state operations in a meaningfully named

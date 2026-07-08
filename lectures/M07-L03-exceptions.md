@@ -527,7 +527,7 @@ type system can't see that a case is impossible (a partial
 There are a handful more stdlib exceptions; the
 [OCaml stdlib documentation](https://v2.ocaml.org/api/Stdlib.html)
 lists them under "Predefined exceptions." In practice the six
-above account for the vast majority of try ... with clauses you
+above account for most of the try ... with clauses you
 will see in idiomatic code.
 
 :::slide
@@ -608,7 +608,7 @@ exactly as a variant pattern would.
 
 ### Extensible variants: a brief aside
 
-Under the hood, all exception constructors share a single type,
+Internally, all exception constructors share a single type,
 `exn`. Every `exception` declaration adds a new constructor to
 *that* type. This is unusual: most
 [OCaml variants](M04-L03-variants.html) are *closed* (the set of

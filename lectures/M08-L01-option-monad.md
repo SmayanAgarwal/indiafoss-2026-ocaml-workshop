@@ -37,11 +37,11 @@ come together in the closing tutorial.
 The word *monad* sounds scarier than it is. The mathematical
 machinery lives in [category
 theory](https://en.wikipedia.org/wiki/Category_theory), which is a
-beautiful subject but not what we are doing here. For programming,
-a monad is just a *type* plus two operations (`return` and `bind`)
-that let you chain computations of one shape cleanly. This lecture
-builds that pattern from a concrete pain point and lands on OCaml's
-`let*` syntax for it.
+deep field in its own right but not what we are doing here. For
+programming, a monad is just a *type* plus two operations (`return`
+and `bind`) that let you chain computations of one shape cleanly. This
+lecture builds that pattern from a concrete pain point and lands on
+OCaml's `let*` syntax for it.
 
 The pattern has an unusually clean paper trail. Eugenio Moggi, a
 semanticist, showed in 1989 that a single categorical structure
@@ -222,7 +222,7 @@ part of the monad *interface*: anything claiming to be a monad
 provides `return` and `bind`, and the rest of the code can pretend
 not to know which monad it is using.
 
-The line `let ( let* ) = bind` is where the magic happens. The
+The line `let ( let* ) = bind` is what turns on the sugar. The
 identifier `( let* )` is a *let-operator* (an OCaml feature since
 4.08). Any identifier `let X` whose `X` starts with a punctuation
 character can be bound to a function; once it is in scope, the
@@ -379,7 +379,7 @@ let _ = user_zip u3   (* = None: no address at all *)
 
 :::
 
-This is where `let*` genuinely beats a single `match`: because each
+This is where `let*` beats a single `match`: because each
 step depends on the previous one's value, you cannot lift the
 checks into one flat match. It is the safe-navigation idiom that
 `option` plus `let*` gives you for free, the antidote to the null

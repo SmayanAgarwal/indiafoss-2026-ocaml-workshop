@@ -497,7 +497,7 @@ let _ = eval [] example  (* = Some (VInt 15) *)
 
 ## More examples
 
-Now that `eval` is defined, let us run it on a few small
+With `eval` defined, we can run it on a few small
 expressions. For each one we show the `pretty` output (so you
 can read the program as surface syntax) and the `eval` result.
 

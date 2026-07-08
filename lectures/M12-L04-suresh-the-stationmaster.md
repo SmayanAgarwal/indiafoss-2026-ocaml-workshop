@@ -689,8 +689,8 @@ commands, one ELF, one VM. There is no operating system in the
 ordinary sense between the language and the silicon. The
 language *is* the operating system.
 
-It is worth holding both halves of that claim in mind. The first
-is the appeal: a single auditable binary, fast boot, small
+The claim has two halves. The first is the appeal: a single
+auditable binary, fast boot, small
 attack surface, and the safety story from all eleven previous
 modules pushed down into the OS layer. The second is the
 constraint: this approach works for narrow, single-purpose
@@ -700,7 +700,7 @@ cluster's storage nodes. The trade is a sharp one and it pays
 off in exactly the place we have been pointing at: long-running,
 single-purpose, security-sensitive network services.
 
-That is the journey of Module 12: from the iceberg of
+That is this module: from the iceberg of
 [the opening lecture](M12-L01-why-an-os.html) to a 7.6 MiB binary
 that boots in a fraction of a second.
 

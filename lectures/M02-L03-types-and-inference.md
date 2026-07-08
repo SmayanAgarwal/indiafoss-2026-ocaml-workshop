@@ -102,8 +102,7 @@ encounters an unexpected situation at execution time.
 The static-vs-dynamic lens is one we will return to throughout the
 course. Each time we introduce a new construct (functions, records,
 variants, modules), we will ask: what type does this expression
-have, and what happens at runtime? They are two questions, both
-worth answering.
+have, and what happens at runtime? They are two questions.
 
 ## A spectrum of languages
 

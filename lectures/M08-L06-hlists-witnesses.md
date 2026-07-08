@@ -186,8 +186,8 @@ let tys : (int * (string * (bool * unit))) tylist =
 ```
 
 - `tylist` mirrors `hlist`: the same `unit` / `'a * 'rest` index.
-- **The crux:** witness list and hlist share *one* index, so a
-  witness lines up with each element and any mismatch is rejected.
+- **Witness list and hlist share one index**, so a witness
+  lines up with each element and any mismatch is rejected.
 
 :::
 

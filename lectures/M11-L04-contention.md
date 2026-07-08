@@ -156,8 +156,8 @@ ingredient 2 with **portability** (next lecture).
 
 For data-race freedom, OxCaml adds two mode axes to the three
 resource axes you already know. They are designed as a pair, so
-it is worth meeting both names now, even though this lecture
-develops only the first:
+we meet both names now, even though this lecture develops only
+the first:
 
 - **Contention** tracks whether a value is being accessed by more
   than one domain. Its modes are `uncontended` (the default)
@@ -402,8 +402,7 @@ any reader is in.
 
 ## Mode crossing on the contention axis
 
-The contention axis is the place where mode crossing really
-earns its keep.
+The contention axis is where mode crossing matters most.
 
 - **Immutable types** mode-cross contention. An `int`, a
   `string`, an immutable record, an `Iarray.t`: every domain
