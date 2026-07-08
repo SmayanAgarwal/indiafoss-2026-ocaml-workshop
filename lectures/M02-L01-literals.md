@@ -486,13 +486,20 @@ That `0.1` has no exact binary representation sounds like
 trivia until it accumulates. On 25 February 1991, during the
 Gulf War, a Patriot air-defence battery in Dhahran failed to
 intercept an incoming Scud missile; 28 soldiers died in the
-strike. The system counted time in tenths of a second, and each
-stored `0.1` carried a tiny binary representation error; after
-100 hours of continuous operation the clock had drifted by 0.34
-seconds, which at Scud speeds moved the tracking gate more than
-half a kilometre off the target. The
-[GAO investigation](https://www.gao.gov/products/imtec-92-26)
-traced the failure to exactly the arithmetic on this page.
+strike. The Patriot counted time as an integer number of
+tenth-seconds, and predicting the Scud's next position meant
+converting that count to seconds by multiplying by `1/10`,
+which has no finite binary expansion. The 1970s-era computer
+held the result in a 24-bit fixed-point register, not a float,
+so the truncation was coarse, and the error grew in proportion
+to how long the system had run. After Alpha Battery's roughly
+100 hours of continuous operation the clock was off by 0.34
+seconds, which at Scud speed left the tracking gate about 687
+metres from the missile. The
+[GAO report](https://www.gao.gov/products/imtec-92-26) blamed
+this imprecise 24-bit conversion; a modern 64-bit float would
+have held the same drift below a microsecond, so the real
+lesson is too few bits, not floating point itself.
 
 ## Booleans
 
