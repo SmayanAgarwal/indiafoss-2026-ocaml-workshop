@@ -473,7 +473,10 @@ binary floating point; neither can `0.2`. So `0.1 +. 0.2` does
 not give `0.3`; it gives `0.300000000000000044`. This is not
 a bug in OCaml; it is a fundamental property of IEEE 754, and
 the same anomaly appears in Python, Java, JavaScript, and
-essentially every mainstream language. We saw the same example in
+essentially every mainstream language: the domain
+[`0.30000000000000004.com`](https://0.30000000000000004.com/)
+tabulates `0.1 + 0.2` language by language.
+We saw the same example in
 [the Module 1 tutorial's float-precision aside](M01-L05-tutorial-recap.html#a-float-precision-aside).
 If you have not yet encountered the basics of floating-point
 representation, the classic short guide is
