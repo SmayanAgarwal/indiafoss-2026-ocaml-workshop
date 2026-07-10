@@ -693,37 +693,34 @@ sub-expressions and combine."
 ## Two checks
 
 :::quiz mcq id=M05-L06-q1
-question: |
-  Why does `eval` return `value option` rather than `value`?
-options:
-  - text: "OCaml functions cannot return non-option values from a `match`."
-  - text: "Because some `expr` values are ill-typed at runtime (e.g., `Add (Bool true, Int 1)`), and we have not yet introduced exceptions to signal failure."
-    correct: true
-  - text: "Because every variable lookup might fail, and that is the only failure mode."
-  - text: "It is a style preference; `value` would work just as well."
-explanation: |
-  Two sources of failure: an off-shape arithmetic operand (e.g.,
-  `Add (Bool true, Int 1)`) and an unbound variable. With no
-  exceptions yet, `option` is the natural way to surface either
-  one to the caller. The slogan from Module 4 is at work:
-  `value option` *forces* the caller to handle failure.
+Why does `eval` return `value option` rather than `value`?
+
+- [ ] OCaml functions cannot return non-option values from a `match`.
+- [x] Because some `expr` values are ill-typed at runtime (e.g., `Add (Bool true, Int 1)`), and we have not yet introduced exceptions to signal failure.
+- [ ] Because every variable lookup might fail, and that is the only failure mode.
+- [ ] It is a style preference; `value` would work just as well.
+
+**Why:** two sources of failure: an off-shape arithmetic operand
+(e.g., `Add (Bool true, Int 1)`) and an unbound variable. With no
+exceptions yet, `option` is the natural way to surface either one to
+the caller. The slogan from Module 4 is at work: `value option`
+*forces* the caller to handle failure.
 :::
 
 :::quiz mcq id=M05-L06-q2
-question: |
-  In the `Add` case, why do we match on the *pair* `(eval env e1, eval env e2)` instead of nesting two separate `match`es?
-options:
-  - text: "It is the only way to compile this in OCaml."
-  - text: "Because pattern matching on a tuple lets us examine both sub-results in a single clause, including the `Some (VInt _), Some (VInt _)` joint shape."
-    correct: true
-  - text: "Because it is faster."
-  - text: "Because nested matches would silently ignore one sub-result."
-explanation: |
-  Matching on the pair lets one clause name both expected
-  shapes (`Some (VInt a), Some (VInt b)`) in a single nested
-  pattern. The catch-all `_` then handles every off-shape pair
-  in one go. Two nested matches would work too but would force
-  us to repeat the failure case.
+In the `Add` case, why do we match on the *pair* `(eval env e1, eval
+env e2)` instead of nesting two separate `match`es?
+
+- [ ] It is the only way to compile this in OCaml.
+- [x] Because pattern matching on a tuple lets us examine both sub-results in a single clause, including the `Some (VInt _), Some (VInt _)` joint shape.
+- [ ] Because it is faster.
+- [ ] Because nested matches would silently ignore one sub-result.
+
+**Why:** matching on the pair lets one clause name both expected
+shapes (`Some (VInt a), Some (VInt b)`) in a single nested pattern.
+The catch-all `_` then handles every off-shape pair in one go. Two
+nested matches would work too but would force us to repeat the
+failure case.
 :::
 
 :::quiz code id=M05-L06-q3

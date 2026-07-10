@@ -525,73 +525,63 @@ output:
 ## Two checks
 
 :::quiz mcq id=M05-L02-q1
-question: |
-  What does `length [10; 20; 30]` evaluate to using the
-  `length` we wrote?
+What does `length [10; 20; 30]` evaluate to using the `length` we
+wrote?
 
-  ```ocaml
-  let rec length l =
-    match l with
-    | []     -> 0
-    | _ :: t -> 1 + length t
-  ```
-options:
-  - text: "0"
-  - text: "3"
-    correct: true
-  - text: "60"
-  - text: "An exception is raised."
-explanation: |
-  The list has three cons cells before reaching `[]`. Each
-  cons adds `1`; the empty list contributes `0`. Total: `3`.
+```ocaml skip
+let rec length l =
+  match l with
+  | []     -> 0
+  | _ :: t -> 1 + length t
+```
+
+- [ ] `0`
+- [x] `3`
+- [ ] `60`
+- [ ] An exception is raised.
+
+**Why:** the list has three cons cells before reaching `[]`. Each
+cons adds `1`; the empty list contributes `0`. Total: `3`.
 :::
 
 :::quiz mcq id=M05-L02-q2
-question: |
-  In `Node (l, v, r) -> 1 + size l + size r`, what is the role
-  of `l`?
-options:
-  - text: "It is the value at the node."
-  - text: "It is the *left subtree*, which itself has type `'a tree`."
-    correct: true
-  - text: "It is the leftmost leaf of the tree."
-  - text: "It is a list of values from the left side of the tree."
-explanation: |
-  `Node` is declared `Node of 'a tree * 'a * 'a tree`; the
-  first field is the left subtree. The pattern `Node (l, v, r)`
-  binds `l` to that subtree.
+In `Node (l, v, r) -> 1 + size l + size r`, what is the role of `l`?
+
+- [ ] It is the value at the node.
+- [x] It is the *left subtree*, which itself has type `'a tree`.
+- [ ] It is the leftmost leaf of the tree.
+- [ ] It is a list of values from the left side of the tree.
+
+**Why:** `Node` is declared `Node of 'a tree * 'a * 'a tree`; the
+first field is the left subtree. The pattern `Node (l, v, r)` binds
+`l` to that subtree.
 :::
 
 :::quiz code id=M05-L02-q3
-question: |
-  Write `count_leaves : 'a tree -> int` that returns the number
-  of `Leaf` constructors in the tree. Pattern-match on the two
-  constructors.
-starter: |
-  type 'a tree =
-    | Leaf
-    | Node of 'a tree * 'a * 'a tree
+Write `count_leaves : 'a tree -> int` that returns the number of
+`Leaf` constructors in the tree. Pattern-match on the two
+constructors.
 
-  let rec count_leaves t = failwith "TODO"
-solution: |
-  type 'a tree =
-    | Leaf
-    | Node of 'a tree * 'a * 'a tree
+```ocaml
+type 'a tree =
+  | Leaf
+  | Node of 'a tree * 'a * 'a tree
 
-  let rec count_leaves t =
-    match t with
-    | Leaf           -> 1
-    | Node (l, _, r) -> count_leaves l + count_leaves r
-checks:
-  - call: count_leaves Leaf
-    expect: 1
-  - call: count_leaves (Node (Leaf, 1, Leaf))
-    expect: 2
-  - call: |
-      count_leaves
-        (Node (Node (Leaf, 1, Leaf), 2,
-               Node (Leaf, 3, Node (Leaf, 4, Leaf))))
-    expect: 5
+let rec count_leaves t =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (count_leaves Leaf = 1) "single leaf";
+  check (count_leaves (Node (Leaf, 1, Leaf)) = 2) "two leaves";
+  check (count_leaves
+           (Node (Node (Leaf, 1, Leaf), 2,
+                  Node (Leaf, 3, Node (Leaf, 4, Leaf)))) = 5)
+    "five leaves";
+  print_endline "all tests passed"
+```
 :::
 
 ## Activity
