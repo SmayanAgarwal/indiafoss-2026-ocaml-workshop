@@ -539,9 +539,9 @@ let _ = 1 + 2 * 3 = 7 && true
 
 **Why:** apply precedence. `*` binds tighter than `+`, so `2 * 3 =
 6`. Then `+`: `1 + 6 = 7`. Then `=`: `7 = 7` is `true`. Then `&&`:
-`true && true` is `true`. Reading the implicit parentheses: `(((1
-+ (2 * 3)) = 7) && true)`. The expression has type `bool` and
-value `true`.
+`true && true` is `true`. Reading the implicit parentheses:
+`(((1 + (2 * 3)) = 7) && true)`. The expression has type `bool`
+and value `true`.
 :::
 
 :::slide

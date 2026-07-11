@@ -450,13 +450,15 @@ let example_error    = ()
 (* Each example must type-check against http_response, and the
    three examples must use three different constructors.
    Decomposing them comes in M05. *)
-let _ : http_response = example_success
-let _ : http_response = example_redirect
-let _ : http_response = example_error
-let () = assert (example_success <> example_redirect)
-let () = assert (example_success <> example_error)
-let () = assert (example_redirect <> example_error)
-let () = print_endline "all tests passed"
+let check b m = if not b then failwith m
+let () =
+  ignore (example_success  : http_response);
+  ignore (example_redirect : http_response);
+  ignore (example_error    : http_response);
+  check (example_success <> example_redirect) "success vs redirect";
+  check (example_success <> example_error) "success vs error";
+  check (example_redirect <> example_error) "redirect vs error";
+  print_endline "all tests passed"
 ```
 :::
 

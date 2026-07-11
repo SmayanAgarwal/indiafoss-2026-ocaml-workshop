@@ -499,29 +499,31 @@ we will not use it.
 ## A small code challenge
 
 :::quiz code id=M01-L04-q2
-Define `greet : string -> unit` that prints `hello, NAME!` where
-`NAME` is the function's argument. Each greeting on its own line.
+Define `make_greeting : string -> string` that returns the string
+`hello, NAME!`, where `NAME` is the function's argument. The
+provided `greet` prints that string on its own line. The tests
+check the exact string, so mind the comma, the space, and the `!`.
 
 ```ocaml
-let greet name =
+let make_greeting name =
   failwith "not implemented"
+
+let greet name = print_endline (make_greeting name)
 ```
 
 ```ocaml skip
-let () = greet "world"
-(* If the implementation calls print_endline, the test below cannot
-   capture its output. Instead we verify the function type-checks
-   and returns unit when called. *)
 let check b m = if not b then failwith m
 let () =
-  check (greet "alice" = ()) "greet returns unit";
+  check (make_greeting "world" = "hello, world!") "greeting for world";
+  check (make_greeting "alice" = "hello, alice!") "greeting for alice";
+  greet "world";
   print_endline "all tests passed"
 ```
 :::
 
-Hint: the body of `greet` should use `print_endline` together with
-`^` (string concatenation) or `Printf.sprintf`. If you used
-`Printf.sprintf`, you may want `"hello, %s!"` as the format string.
+Hint: build the string with `^` (string concatenation) or
+`Printf.sprintf`. If you use `Printf.sprintf`, you may want
+`"hello, %s!"` as the format string.
 
 ## Activity
 

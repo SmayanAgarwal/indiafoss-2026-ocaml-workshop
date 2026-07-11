@@ -970,18 +970,6 @@ let () =
 
 :::solution
 
-Reference solution:
-
-```ocaml
-let make_running_total () =
-  let total = ref 0 in
-  fun x -> total := !total + x; !total
-```
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution

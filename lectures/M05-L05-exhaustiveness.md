@@ -644,14 +644,10 @@ aids.
 A code task:
 
 :::quiz code id=M05-L05-q1
-Write `is_weekend : day -> bool` exhaustively, where:
-
-```ocaml
-type day = Mon | Tue | Wed | Thu | Fri | Sat | Sun
-```
-
-Return `true` for `Sat` and `Sun`, `false` for the rest. Use an
-or-pattern to group, and **do not** use a wildcard.
+Write `is_weekend : day -> bool` exhaustively, over the
+seven-constructor `day` type the starter declares. Return `true`
+for `Sat` and `Sun`, `false` for the rest. Use an or-pattern to
+group, and **do not** use a wildcard.
 
 ```ocaml
 type day = Mon | Tue | Wed | Thu | Fri | Sat | Sun

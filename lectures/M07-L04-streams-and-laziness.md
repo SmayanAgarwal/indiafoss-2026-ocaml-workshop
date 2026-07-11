@@ -776,23 +776,6 @@ let () =
 
 :::solution
 
-Reference solution:
-
-```ocaml
-let rec take_while p s =
-  if p (hd s) then hd s :: take_while p (tl s)
-  else []
-```
-
-The recursion mirrors the structure of `take`: forces the head,
-forces the tail thunk only when the predicate keeps holding. The
-caller must guarantee `p` eventually returns `false` on an
-infinite stream, otherwise `take_while` runs forever.
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution

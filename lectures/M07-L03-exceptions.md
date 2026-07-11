@@ -914,22 +914,6 @@ let () =
 
 :::solution
 
-Reference solution:
-
-```ocaml
-let rec find_first p = function
-  | [] -> raise Not_found
-  | x :: rest -> if p x then x else find_first p rest
-
-let find_first_opt p xs =
-  try Some (find_first p xs)
-  with Not_found -> None
-```
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution

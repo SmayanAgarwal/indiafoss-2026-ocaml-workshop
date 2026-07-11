@@ -818,23 +818,6 @@ let () =
 
 :::solution
 
-Reference solution: the classic two-pointer swap.
-
-```ocaml
-let reverse_in_place a =
-  let n = Array.length a in
-  for i = 0 to (n / 2) - 1 do
-    let j = n - 1 - i in
-    let tmp = a.(i) in
-    a.(i) <- a.(j);
-    a.(j) <- tmp
-  done
-```
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution

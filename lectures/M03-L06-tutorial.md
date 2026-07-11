@@ -108,8 +108,9 @@ minutes). The naive `fib` is unusable for any `n` past 40 or so.
 
 ## Why is naive Fibonacci so slow?
 
-The cause is *overlapping subproblems*. When `fib 5` computes `fib 4
-+ fib 3`, the call to `fib 4` itself computes `fib 3 + fib 2`. So
+The cause is *overlapping subproblems*. When `fib 5` computes
+`fib 4 + fib 3`, the call to `fib 4` itself computes
+`fib 3 + fib 2`. So
 `fib 3` is computed *twice* (once directly, once inside `fib 4`).
 `fib 2` is computed three times, `fib 1` five times, `fib 0` three
 times. The deeper the recursion, the more redundant work.

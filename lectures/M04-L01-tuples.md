@@ -363,7 +363,7 @@ matters when partial application enters the picture.
 
 This is the single largest source of confusion for students
 arriving in OCaml from C-family languages.
-Consider these three function definitions:
+Consider these two function definitions:
 
 ```ocaml
 let add_curried x y    = x + y

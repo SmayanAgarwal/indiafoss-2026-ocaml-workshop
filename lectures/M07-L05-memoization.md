@@ -841,24 +841,6 @@ let () =
 
 :::solution
 
-Reference solution:
-
-```ocaml
-let binom_open self (n, k) =
-  if k = 0 || k = n then 1
-  else self (n - 1, k - 1) + self (n - 1, k)
-
-let binom_memo = memo_rec binom_open
-```
-
-The naive recurrence has overlapping subproblems: `C(n-1, k-1)`
-and `C(n-1, k)` both recurse into `C(n-2, k-1)`. `memo_rec`
-collapses the duplicates to one call per `(n, k)` pair.
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution

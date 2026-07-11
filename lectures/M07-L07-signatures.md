@@ -750,21 +750,6 @@ let () =
 
 :::solution
 
-Reference solution:
-
-```text
-module Logbook : LOGBOOK = struct
-  let entries = ref []
-  let log msg = entries := msg :: !entries
-  let count () = List.length !entries
-  let last () = match !entries with [] -> None | x :: _ -> Some x
-end
-```
-
-:::
-
-:::solution
-
 :::slide
 
 ## Activity solution
