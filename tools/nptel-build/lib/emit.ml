@@ -244,6 +244,43 @@ let runtime_script ~asset_root =
       return location.hash === '#slides';
     }
 
+    // Chapter-only scratch cell under each write-code Activity, so
+    // readers have somewhere to attempt the task (issue #12). Skip
+    // activities that already carry an interactive quiz (its student
+    // cell IS the workspace). The wrapper lives in the chapter flow,
+    // never inside a section[data-slide], so decks are unchanged; it
+    // must be injected BEFORE slideAnchors captures nextSibling
+    // anchors below, or leaving slide mode would reorder it.
+    (function injectActivityScratchCells() {
+      for (const section of document.querySelectorAll('section[data-slide]')) {
+        const h2 = section.querySelector('h2');
+        if (!h2 || h2.textContent.trim() !== 'Activity') continue;
+        // Scan the activity's chapter region (up to the next slide
+        // section or heading) for an existing quiz workspace.
+        let hasQuiz = false;
+        for (let n = section.nextElementSibling; n; n = n.nextElementSibling) {
+          if (n.matches('section[data-slide], h2')) break;
+          if (n.matches('.quiz') || n.querySelector?.('.quiz')) {
+            hasQuiz = true;
+            break;
+          }
+        }
+        if (hasQuiz) continue;
+        const wrap = document.createElement('div');
+        wrap.className = 'activity-scratch';
+        const label = document.createElement('p');
+        label.className = 'activity-scratch-label';
+        label.textContent = 'Scratchpad for the activity:';
+        const cell = document.createElement('x-ocaml');
+        // Same attribute shape as build-emitted cells: data-source
+        // backs the per-cell reset button and edit persistence.
+        cell.setAttribute('data-source', '(* try your solution here *)');
+        cell.textContent = '(* try your solution here *)';
+        wrap.append(label, cell);
+        section.insertAdjacentElement('afterend', wrap);
+      }
+    })();
+
     // Record each slide section's original chapter-view position so we
     // can move it back when leaving slide mode.
     const slideAnchors = Array.from(document.querySelectorAll('section[data-slide]'))
@@ -610,6 +647,25 @@ let runtime_script ~asset_root =
       setTimeout(() => obs.disconnect(), 10000);
     }
 
+    // Reserve a right-hand strip inside each cell's editor so code
+    // never slides under the floating Run / reset buttons. Injected
+    // host-side into the cell's open shadow root because the x-oxcaml
+    // bundle predates the loader's [src-style] attribute; this path
+    // covers both bundles uniformly. The width comes from a custom
+    // property set per mode in chapter.css (custom properties inherit
+    // into shadow trees): 5.6rem in chapter mode, 0 in slide mode so
+    // recorded decks keep their exact geometry.
+    function injectCellStyle(cell) {
+      const sr = cell.shadowRoot;
+      if (!sr || sr.querySelector('style[data-nptel-cell-style]')) return;
+      const st = document.createElement('style');
+      st.setAttribute('data-nptel-cell-style', '');
+      st.textContent =
+        '.cm-editor { padding-right: var(--x-ocaml-editor-pad, 0); ' +
+        'box-sizing: border-box; }';
+      sr.appendChild(st);
+    }
+
     async function whenCellsReady() {
       while (true) {
         const ready = allCells().every(c => c.shadowRoot?.querySelector('.cm-content'));
@@ -618,6 +674,7 @@ let runtime_script ~asset_root =
       }
       restorePersistedCells();
       for (const c of allCells()) {
+        injectCellStyle(c);
         watchCellForEdits(c);
         watchRunButton(c);
       }
@@ -642,6 +699,44 @@ let runtime_script ~asset_root =
     });
     document.querySelector('.clear-all')?.addEventListener('click', clearAll);
     document.querySelector('.reset-all')?.addEventListener('click', resetAll);
+
+    // ---------- Keep the running cell steady in the viewport ----------
+    // Running a cell re-runs its not-yet-run predecessors, whose
+    // output panes grow ABOVE the cell the reader is looking at, so
+    // the content under the cursor slides down (the page "scrolls
+    // up"). Chrome's scroll anchoring compensates only partially and
+    // Safari not at all. Pin the clicked cell's viewport offset for a
+    // settling window; abort as soon as the reader scrolls or types.
+    function pinDuringRun(cell) {
+      const top0 = cell.getBoundingClientRect().top;
+      const ac = new AbortController();
+      for (const t of ['wheel', 'touchstart', 'keydown']) {
+        addEventListener(t, () => ac.abort(),
+          { passive: true, signal: ac.signal });
+      }
+      const t0 = performance.now();
+      (function tick() {
+        if (ac.signal.aborted || performance.now() - t0 > 6000) {
+          ac.abort();
+          return;
+        }
+        const d = cell.getBoundingClientRect().top - top0;
+        if (d) scrollBy(0, d);
+        requestAnimationFrame(tick);
+      })();
+    }
+    document.addEventListener('click', (ev) => {
+      // Composed path pierces x-ocaml's open shadow root, so this
+      // sees clicks on the in-cell Run button (and the programmatic
+      // .click() the quiz Check button sends).
+      const path = ev.composedPath();
+      const onRunBtn = path.some(n =>
+        n.nodeType === 1 && n.tagName === 'BUTTON' &&
+        n.parentElement?.classList?.contains('run_btn'));
+      if (!onRunBtn) return;
+      const cell = path.find(n => n.nodeType === 1 && n.tagName === 'X-OCAML');
+      if (cell) pinDuringRun(cell);
+    }, true);
 
     // ---------- Quiz analytics (anonymous, opt-in) ----------
     // Default: NO data is sent until the reader explicitly opts in
@@ -840,7 +935,10 @@ let runtime_script ~asset_root =
       const id = quiz.dataset.quizId;
       const cells = Array.from(quiz.querySelectorAll('x-ocaml'));
       const testCell = cells.find(c => c.hasAttribute('data-quiz-test'));
-      const studentCell = cells.find(c => c !== testCell);
+      // The student cell is the LAST visible cell: a question may
+      // legitimately contain an earlier display fence.
+      const nonTest = cells.filter(c => !c.hasAttribute('data-quiz-test'));
+      const studentCell = nonTest[nonTest.length - 1];
       if (!studentCell || !testCell) return;
       if (quiz.querySelector('.quiz-controls')) return;  // already set up
 
@@ -877,9 +975,36 @@ let runtime_script ~asset_root =
           sr.querySelectorAll('.caml_stdout, .caml_stderr, .caml_meta')
         ).map(e => e.textContent || '').join('\n');
         if (!out) return 'pending';
+        // Failure patterns FIRST. The toplevel evaluates each phrase
+        // independently and continues past exceptions, so a stray
+        // success print in a later phrase must not outvote an earlier
+        // failure. This relies on two test-cell conventions: (1) the
+        // whole suite is ONE [let () = ...] phrase whose last action
+        // is the success print (a failure aborts the phrase before
+        // the print), and (2) test cells never echo values ([let _ =]
+        // bindings), whose rendering could false-match the failure
+        // patterns (e.g. a constructor named [Error]).
         if (/Error|Exception|Failure|Assertion/i.test(out)) return 'fail';
         if (/all tests pass/i.test(out)) return 'pass';
         return 'pending';
+      }
+      // On failure, name the failing check in the status line: the
+      // check helper raises [Failure "<label>"], and a non-compiling
+      // student cell surfaces a compiler "Error: ..." line. A bare
+      // "Some assertions failed" told the student nothing (#14).
+      function firstFailureLine() {
+        const sr = testCell.shadowRoot;
+        if (!sr) return null;
+        const out = Array.from(
+          sr.querySelectorAll('.caml_stdout, .caml_stderr, .caml_meta')
+        ).map(e => e.textContent || '').join('\n');
+        const line = out.split('\n')
+          .find(l => /Error|Exception|Failure|Assertion/i.test(l));
+        if (!line) return null;
+        const f = line.match(/Failure\s+"([^"]*)"/);
+        if (f) return 'failed: ' + f[1];
+        const s = line.trim();
+        return s.length > 110 ? s.slice(0, 107) + '…' : s;
       }
       function setShowTests(show) {
         quiz.classList.toggle('show-tests', show);
@@ -891,6 +1016,14 @@ let runtime_script ~asset_root =
       checkBtn.addEventListener('click', () => {
         status.textContent = 'Running…';
         status.className = 'quiz-status running';
+        // Blank stale output from a previous run, else readState
+        // reads the OLD verdict before the new run lands (a second
+        // Check after a pass reported pass regardless of edits).
+        // Blank rather than remove: x-ocaml re-renders into fresh
+        // panes on the re-run this Check triggers.
+        testCell.shadowRoot
+          ?.querySelectorAll('.caml_stdout, .caml_stderr, .caml_meta')
+          .forEach(e => { e.textContent = ''; });
         clickRun(testCell);
         let tries = 0;
         const tick = setInterval(() => {
@@ -915,7 +1048,9 @@ let runtime_script ~asset_root =
                 });
               }
             } else if (s === 'fail') {
-              status.textContent = '✗ Some assertions failed';
+              const why = firstFailureLine();
+              status.textContent =
+                why ? '✗ ' + why : '✗ Some assertions failed';
               status.className = 'quiz-status fail';
               quiz.classList.remove('quiz-correct');
               quiz.classList.add('answered');

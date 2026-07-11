@@ -258,6 +258,14 @@ let is_ocaml_fence_open line =
       | "ocaml" :: _ -> true
       | _ -> false)
 
+(* An ocaml fence whose info string carries the [skip] label. Inside a
+   [:::quiz code] div these are the hidden test cells; call only after
+   [is_ocaml_fence_open] has matched. *)
+let fence_has_skip line =
+  let s = String.trim line in
+  let rest = String.sub s 3 (String.length s - 3) |> String.trim in
+  String.split_on_char ' ' rest |> List.exists (fun w -> w = "skip")
+
 let inject_quiz_test_marker line =
   (* Find the [```ocaml] prefix and append [ quiz-test] after the
      info string. Preserve leading whitespace and any existing labels
@@ -284,10 +292,6 @@ let preprocess ?(line_offset = 0) src =
   let stack = ref [] in
   let quiz_counter = ref 0 in
   let vm_terminal_count = ref 0 in
-  (* Track, per active Quiz_code on the stack, how many ocaml fences
-     have appeared inside it so we know which is the student cell vs
-     the test cell(s). Map: a counter for the topmost Quiz_code. *)
-  let quiz_code_fence_count = ref 0 in
   let in_quiz_code () =
     List.exists (function Quiz_code _ -> true | _ -> false) !stack
   in
@@ -315,7 +319,6 @@ let preprocess ?(line_offset = 0) src =
       | Some k ->
           stack := k :: !stack;
           (match k with
-           | Quiz_code _ -> quiz_code_fence_count := 0
            | Vm_terminal _ ->
                incr vm_terminal_count;
                if !vm_terminal_count > 1 then
@@ -335,20 +338,17 @@ let preprocess ?(line_offset = 0) src =
               Buffer.add_char buf '\n'
           | k :: rest ->
               stack := rest;
-              (match k with
-               | Quiz_code _ -> quiz_code_fence_count := 0
-               | _ -> ());
               Buffer.add_string buf "\n";
               Buffer.add_string buf (close_tag k);
               Buffer.add_string buf "\n\n")
       | None when is_fence_line && in_quiz_code () && not !in_code_block
                   && is_ocaml_fence_open line ->
-          (* Opening an ocaml code block inside a quiz-code div.
-             Count it; the 2nd+ are test cells. *)
-          incr quiz_code_fence_count;
-          let n_inside = !quiz_code_fence_count in
+          (* Opening an ocaml code block inside a quiz-code div. The
+             [skip]-labelled fences are the hidden test cells; any
+             other fence (the student cell, or a display fence that is
+             part of the question) stays visible. *)
           in_code_block := true;
-          if n_inside >= 2 then begin
+          if fence_has_skip line then begin
             Buffer.add_string buf (inject_quiz_test_marker line);
             Buffer.add_char buf '\n'
           end else begin

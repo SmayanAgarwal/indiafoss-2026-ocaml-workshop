@@ -31,6 +31,26 @@ body.mode-chapter {
   overflow-x: clip;
 }
 
+/* Right-hand strip reserved inside every x-ocaml editor so code never
+   slides under the floating Run / reset buttons. Read by the
+   shadow-injected assets/css/x-ocaml-cell.css (custom properties
+   inherit into shadow roots). Chapter mode only: slide mode keeps the
+   pre-existing geometry so recorded decks do not drift. */
+body.mode-chapter { --x-ocaml-editor-pad: 5.6rem; }
+body.mode-slides  { --x-ocaml-editor-pad: 0px; }
+
+/* Chapter-only scratchpad injected under write-code Activity slides
+   (see injectActivityScratchCells in the page script). The wrapper
+   never sits inside a section[data-slide], so it cannot reach the
+   deck; the display rule is a belt on top of that. */
+body.mode-slides .activity-scratch { display: none; }
+.activity-scratch { margin: 1rem 0; }
+.activity-scratch-label {
+  margin: 0 0 0.4rem;
+  font-style: italic;
+  color: #555;
+}
+
 :root {
   --sidebar-width: 260px;
 }
