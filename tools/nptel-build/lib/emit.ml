@@ -738,6 +738,20 @@ let runtime_script ~asset_root =
       if (cell) pinDuringRun(cell);
     }, true);
 
+    // Cmd-Enter (mac) / Ctrl-Enter runs the cell being edited, the
+    // shortcut every notebook UI trains. Composed path finds the
+    // cell around the focused editor inside the shadow root.
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Enter' || !(ev.metaKey || ev.ctrlKey)) return;
+      const cell = ev.composedPath().find(n =>
+        n.nodeType === 1 && n.tagName === 'X-OCAML');
+      if (!cell) return;
+      ev.preventDefault();
+      userInteracted = true;
+      pinDuringRun(cell);
+      clickRun(cell);
+    }, true);
+
     // ---------- Quiz analytics (anonymous, opt-in) ----------
     // Default: NO data is sent until the reader explicitly opts in
     // via the consent banner on first visit. Following Crichton et

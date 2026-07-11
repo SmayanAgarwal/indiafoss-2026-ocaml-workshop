@@ -65,6 +65,104 @@ if [ "$COPY_ASSETS" = "1" ]; then
   cp -r "$REPO_ROOT/assets" "$REPO_ROOT/_site/assets"
 fi
 
+# Emit _site/search-index.json for the landing page's search box:
+# per lecture the title, concepts, keywords, activity question, and
+# every h2-h4 heading with its anchor. The anchor slugs replicate
+# emit.ml's client-side slugify() (lowercase-dashed, collision
+# suffixes in document order) so search hits deep-link to sections.
+emit_search_index() {
+  python3 - "$REPO_ROOT" <<'PYEOF'
+import json, os, re, sys
+
+root = sys.argv[1]
+lec_dir = os.path.join(root, 'lectures')
+
+def slugify(s):
+    s = s.lower()
+    s = re.sub(r'[^a-z0-9\s-]', '', s)
+    s = re.sub(r'\s+', '-', s)
+    s = re.sub(r'-+', '-', s)
+    s = s.strip('-')
+    return s[:80]
+
+def clean_heading(t):
+    # approximate the rendered textContent: drop inline-code
+    # backticks and emphasis markers, keep the words
+    t = t.replace('`', '')
+    t = re.sub(r'\*+', '', t)
+    return t.strip()
+
+index = []
+for name in sorted(os.listdir(lec_dir)):
+    m = re.match(r'(M\d\d)-(L\d\d)-.*\.md$', name)
+    if not m:
+        continue
+    path = os.path.join(lec_dir, name)
+    text = open(path, encoding='utf-8').read()
+    fm = {}
+    body = text
+    if text.startswith('---'):
+        end = text.find('\n---', 3)
+        if end != -1:
+            head = text[3:end]
+            body = text[end + 4:]
+            for key in ('title', 'activity_question'):
+                fm_m = re.search(r'^%s:\s*"?(.*?)"?\s*$' % key, head, re.M)
+                if fm_m:
+                    fm[key] = fm_m.group(1)
+            for key in ('concepts', 'keywords'):
+                fm_m = re.search(r'^%s:\s*\[(.*)\]' % key, head, re.M)
+                if fm_m:
+                    fm[key] = [w.strip() for w in fm_m.group(1).split(',')]
+    headings, seen, in_fence = [], {}, False
+    for line in body.split('\n'):
+        if line.strip().startswith('```'):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        h = re.match(r'(#{2,4})\s+(.*)', line)
+        if not h:
+            continue
+        t = clean_heading(h.group(2))
+        a = slugify(t)
+        if not a:
+            continue
+        if a in seen:
+            i = 2
+            while (a + '-' + str(i)) in seen:
+                i += 1
+            a = a + '-' + str(i)
+        seen[a] = True
+        headings.append({'t': t, 'a': a})
+    # drop duplicate heading texts (chapter + slide twin): keep the
+    # first occurrence, whose anchor is the chapter copy
+    seen_t, uniq = set(), []
+    for h in headings:
+        if h['t'] in seen_t:
+            continue
+        seen_t.add(h['t'])
+        uniq.append(h)
+    headings = uniq
+    index.append({
+        'file': name[:-3],
+        'module': m.group(1),
+        'lecture': m.group(2),
+        'title': clean_heading(fm.get('title', name[:-3])),
+        'concepts': fm.get('concepts', []),
+        'keywords': fm.get('keywords', []),
+        'activity': fm.get('activity_question', ''),
+        'headings': headings,
+    })
+
+out = os.path.join(root, '_site', 'search-index.json')
+with open(out, 'w', encoding='utf-8') as f:
+    json.dump(index, f, ensure_ascii=False)
+print('built _site/search-index.json (%d lectures)' % len(index))
+PYEOF
+}
+emit_search_index
+
 # Emit a landing page at _site/index.html so the root URL of the
 # deployed site (e.g. https://<user>.github.io/<repo>/) shows a real
 # page rather than a 404. Groups lectures by module, reads titles
@@ -91,6 +189,19 @@ emit_index() {
     .landing li a { color: var(--accent); text-decoration: none; }
     .landing li a:hover { text-decoration: underline; }
     .landing .lec-no { display: inline-block; min-width: 2.4em; color: var(--muted); font-size: 0.9em; font-family: ui-monospace, monospace; }
+    .landing .search-box { margin: 1.4rem 0 0; }
+    .landing .search-box input {
+      width: 100%; box-sizing: border-box; padding: 0.55rem 0.8rem;
+      font-size: 1rem; border: 1px solid var(--rule); border-radius: 6px;
+      background: inherit; color: inherit;
+    }
+    .landing .search-results { list-style: none; padding: 0; margin: 0.5rem 0 0; border: 1px solid var(--rule); border-radius: 6px; max-height: 24rem; overflow-y: auto; }
+    .landing .search-results li { margin: 0; padding: 0.4rem 0.8rem; border-top: 1px solid var(--rule); }
+    .landing .search-results li:first-child { border-top: none; }
+    .landing .search-results a { color: var(--accent); text-decoration: none; }
+    .landing .search-results a:hover { text-decoration: underline; }
+    .landing .search-results .hit-lec { color: var(--muted); font-size: 0.85em; font-family: ui-monospace, monospace; margin-right: 0.5em; }
+    .landing .search-results .no-hits { color: var(--muted); }
   </style>
 </head>
 <body class="mode-chapter">
@@ -102,6 +213,76 @@ emit_index() {
     certificate), <a
     href="https://onlinecourses.nptel.ac.in/noc26_cs90/preview">sign
     up on the NPTEL portal</a>.</p>
+    <div class="search-box">
+      <input id="lecture-search" type="search"
+        placeholder="Search lectures, sections, concepts&hellip;"
+        aria-label="Search course content">
+      <ul id="search-results" class="search-results" hidden></ul>
+    </div>
+    <script>
+    (function () {
+      var box = document.getElementById('lecture-search');
+      var out = document.getElementById('search-results');
+      var idx = null, loading = null;
+      function load() {
+        if (!loading) {
+          loading = fetch('search-index.json')
+            .then(function (r) { return r.json(); })
+            .then(function (j) { idx = j; });
+        }
+        return loading;
+      }
+      function esc(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+      function render(hits) {
+        if (!hits.length) {
+          out.innerHTML = '<li class="no-hits">No matches.</li>';
+        } else {
+          out.innerHTML = hits.slice(0, 40).map(function (h) {
+            return '<li><span class="hit-lec">' + h.lec + '</span>' +
+              '<a href="' + esc(h.href) + '">' + esc(h.label) + '</a></li>';
+          }).join('');
+        }
+        out.hidden = false;
+      }
+      box.addEventListener('input', function () {
+        var q = box.value.trim().toLowerCase();
+        if (q.length < 2) { out.hidden = true; out.innerHTML = ''; return; }
+        load().then(function () {
+          var terms = q.split(/\s+/);
+          var hits = [];
+          idx.forEach(function (lec) {
+            if (hits.length > 40) return;
+            var base = [lec.title].concat(lec.concepts, lec.keywords,
+              [lec.activity]).join(' ').toLowerCase();
+            var lecId = lec.module + ' ' + lec.lecture;
+            if (terms.every(function (t) { return base.indexOf(t) !== -1; })) {
+              hits.push({ lec: lecId, href: lec.file + '.html',
+                          label: lec.title });
+            }
+            lec.headings.forEach(function (h) {
+              var ht = h.t.toLowerCase();
+              // every term must hit heading or lecture metadata, and
+              // at least one must hit the heading itself
+              var all = terms.every(function (t) {
+                return ht.indexOf(t) !== -1 || base.indexOf(t) !== -1;
+              });
+              var own = terms.some(function (t) {
+                return ht.indexOf(t) !== -1;
+              });
+              if (all && own) {
+                hits.push({ lec: lecId, href: lec.file + '.html#' + h.a,
+                            label: lec.title + ' › ' + h.t });
+              }
+            });
+          });
+          render(hits);
+        });
+      });
+    })();
+    </script>
 HEAD
 
     # Walk modules in order, then lectures in order. modules.txt
