@@ -330,26 +330,6 @@ let rec map f = function
 
 :::
 
-:::slide
-
-## A tail-recursive `map`
-
-```ocaml
-let map f xs =
-  let rec go acc = function
-    | [] -> List.rev acc
-    | x :: rest -> go (f x :: acc) rest
-  in
-  go [] xs
-
-let _ = map (fun x -> x * x) [1; 2; 3; 4]   (* = [1; 4; 9; 16] *)
-```
-
-- Accumulate in reverse, then reverse at the end.
-- Two passes through the list, constant stack.
-
-:::
-
 For lists of a few thousand elements this is fine: OCaml's default
 stack size is generous. For lists of millions of elements, the naive
 version eventually overflows.
@@ -385,6 +365,26 @@ let map f xs =
 Two passes through the list (the fold-style traversal, then the
 reverse), but each pass is linear and tail-recursive. Total: still
 `O(n)` time, `O(1)` stack.
+
+:::slide
+
+## A tail-recursive `map`
+
+```ocaml
+let map f xs =
+  let rec go acc = function
+    | [] -> List.rev acc
+    | x :: rest -> go (f x :: acc) rest
+  in
+  go [] xs
+
+let _ = map (fun x -> x * x) [1; 2; 3; 4]   (* = [1; 4; 9; 16] *)
+```
+
+- Accumulate in reverse, then reverse at the end.
+- Two passes through the list, constant stack.
+
+:::
 
 Where does `List.rev` come from? It is itself a small
 tail-recursive function with the same accumulator-and-cons shape
@@ -609,17 +609,21 @@ let () =
 
 Reference solution:
 
+```ocaml
+let apply_all fs x = List.map (fun f -> f x) fs
 ```
+
+No new recursion needed: the list holds functions, and the
+per-element transformation is "apply it to `x`". Functions are
+values, so a list of functions is as ordinary a `map` input as a
+list of ints. Writing the walk by hand gives the same function:
+
+```ocaml
 let rec apply_all fs x =
   match fs with
   | [] -> []
   | f :: rest -> f x :: apply_all rest x
 ```
-
-The skeleton is exactly the `map` walk; what changed is which side
-is the data. The list now holds the functions, and the single value
-`x` plays the role the function `f` played in `map`. Functions are
-values, so a list of functions is as ordinary as a list of ints.
 
 :::
 

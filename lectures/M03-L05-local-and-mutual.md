@@ -221,6 +221,54 @@ a local helper to top-level if a second caller materialises. Going
 the other way (making a top-level function local) is harder, because
 you do not know who is already using it.
 
+## A code check: hide the helper
+
+:::quiz code id=M03-L05-q1
+Write `bit_count : int -> int` that returns the number of `1`s
+in the binary representation of a non-negative integer. Use a
+**local** tail-recursive helper inside `bit_count`; the helper
+must not be visible at the top level.
+
+```ocaml
+let bit_count n =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (bit_count 0   = 0) "zero";
+  check (bit_count 1   = 1) "one";
+  check (bit_count 2   = 1) "two (binary 10)";
+  check (bit_count 3   = 2) "three (binary 11)";
+  check (bit_count 7   = 3) "seven (binary 111)";
+  check (bit_count 10  = 2) "ten (binary 1010)";
+  check (bit_count 255 = 8) "255 (binary 11111111)";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+`n mod 2` is the lowest bit; `n / 2` drops it. A local
+tail-recursive helper threads the running count:
+
+```text
+let bit_count n =
+  let rec go acc n =
+    if n = 0 then acc
+    else go (acc + (n mod 2)) (n / 2)
+  in
+  go 0 n
+```
+
+`go` is the standard local-helper-with-accumulator shape we saw
+in [Tail recursion](M03-L04-tail-recursion.html). Hiding it
+inside `bit_count` keeps the accumulator out of the top-level
+namespace.
+
+:::
+
 ## Mutual recursion: two functions calling each other
 
 Sometimes the natural shape of a problem is not "one function calls
@@ -444,53 +492,6 @@ combined `let rec ... and ...` so both names are introduced
 together and in scope inside both bodies.
 :::
 
-A code task:
-
-:::quiz code id=M03-L05-q1
-Write `bit_count : int -> int` that returns the number of `1`s
-in the binary representation of a non-negative integer. Use a
-**local** tail-recursive helper inside `bit_count`; the helper
-must not be visible at the top level.
-
-```ocaml
-let bit_count n =
-  failwith "not implemented"
-```
-
-```ocaml skip
-let check b m = if not b then failwith m
-let () =
-  check (bit_count 0   = 0) "zero";
-  check (bit_count 1   = 1) "one";
-  check (bit_count 2   = 1) "two (binary 10)";
-  check (bit_count 3   = 2) "three (binary 11)";
-  check (bit_count 7   = 3) "seven (binary 111)";
-  check (bit_count 10  = 2) "ten (binary 1010)";
-  check (bit_count 255 = 8) "255 (binary 11111111)";
-  print_endline "all tests passed"
-```
-:::
-
-:::solution
-
-`n mod 2` is the lowest bit; `n / 2` drops it. A local
-tail-recursive helper threads the running count:
-
-```text
-let bit_count n =
-  let rec go acc n =
-    if n = 0 then acc
-    else go (acc + (n mod 2)) (n / 2)
-  in
-  go 0 n
-```
-
-`go` is the standard local-helper-with-accumulator shape we saw
-in [Tail recursion](M03-L04-tail-recursion.html). Hiding it
-inside `bit_count` keeps the accumulator out of the top-level
-namespace.
-
-:::
 
 ## Activity: mod-3 by three-way mutual recursion
 
@@ -548,6 +549,29 @@ let _ = mod3_eq_2 11  (* = true: 11 mod 3 = 2 *)
 :::
 
 :::
+
+To watch the hand-off happen, shadow the three definitions with
+instrumented copies (a print at the top of each body) and run one
+on a small argument:
+
+```ocaml
+let rec mod3_eq_0 n =
+  print_endline ("mod3_eq_0 " ^ string_of_int n);
+  if n = 0 then true else mod3_eq_2 (n - 1)
+and mod3_eq_1 n =
+  print_endline ("mod3_eq_1 " ^ string_of_int n);
+  if n = 0 then false else mod3_eq_0 (n - 1)
+and mod3_eq_2 n =
+  print_endline ("mod3_eq_2 " ^ string_of_int n);
+  if n = 0 then false else mod3_eq_1 (n - 1)
+
+let _ = mod3_eq_0 4  (* = false: 4 mod 3 = 1 *)
+```
+
+The printed lines are the call sequence: `mod3_eq_0 4`,
+`mod3_eq_2 3`, `mod3_eq_1 2`, `mod3_eq_0 1`, `mod3_eq_2 0`. Each
+line is one hand-off around the 0 to 2 to 1 cycle, one subtraction
+per step, until a base case answers.
 
 One important property of this example: every recursive call is
 in tail position. OCaml's tail-call optimisation handles tail

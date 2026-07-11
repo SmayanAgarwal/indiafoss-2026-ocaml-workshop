@@ -556,6 +556,20 @@ let () = Array.iter (fun x -> print_endline (string_of_int x)) a
 This prints `10`, `20`, `30` on separate lines. `Array.iter`
 returns `unit`; it is for *effect*, not for value.
 
+You could get the same printing out of `Array.map`, since the
+elements go through the callback either way:
+
+```ocaml
+let a = [|10; 20; 30|]
+let b = Array.map (fun x -> print_endline (string_of_int x)) a
+let _ = b   (* = [|(); (); ()|] *)
+```
+
+It type-checks and prints, but the result is an array of three
+`()`s, allocated only to be thrown away. When the callback runs
+for its effect, `iter` says so in its type; reserve `map` for
+callbacks whose results you keep.
+
 For a pure transformation that does not mutate the input, use
 `Array.map`:
 
@@ -567,9 +581,20 @@ let _ = a   (* = [|10; 20; 30|]: untouched *)
 ```
 
 `Array.map` allocates a new array and leaves the input
-unchanged. If you want to update the
-input in place, use `Array.iteri` and write back explicitly, or
-use the loop syntax we are about to see.
+unchanged. To update the input in place, use `Array.iteri`, which
+passes the index alongside the element, and write back through
+`a.(i) <-`:
+
+```ocaml
+let a = [|10; 20; 30|]
+let () = Array.iteri (fun i x -> a.(i) <- x * 2) a
+let _ = a   (* = [|20; 40; 60|]: updated in place *)
+```
+
+The callback receives each index `i` with its element `x`; the
+body stores the doubled value back into the same slot. No new
+array is allocated. The loop syntax we are about to see does the
+same job with an explicit index.
 
 :::slide
 

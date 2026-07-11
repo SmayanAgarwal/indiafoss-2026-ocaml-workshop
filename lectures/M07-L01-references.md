@@ -306,9 +306,13 @@ when the alternative is awkward, not as a default.
 
 ## A small example: a one-shot
 
-Here is a pattern where mutation is genuinely the cleanest
-expression: a closure that does something the first time it is
-called and nothing thereafter.
+Real programs often contain an action that must happen at most
+once: print a deprecation warning the first time an old function
+is called, initialise a cache on first use, release a resource on
+the first cleanup and ignore repeats. The shape behind all of
+these is a *one-shot*: a closure that does its work on the first
+call and refuses thereafter. Mutation is the cleanest way to
+write one.
 
 ```ocaml
 let make_once () =
@@ -325,6 +329,17 @@ let _ = f ()  (* = Some "first call" *)
 let _ = f ()  (* = None *)
 let _ = f ()  (* = None *)
 ```
+
+Trace it. `make_once ()` allocates a fresh `used = ref false` and
+returns the inner `fun () -> ...`, which captures `used` (this is
+the closure capture from
+[the functions-as-values lecture](M03-L01-functions-as-values.html#what-is-a-closure),
+now capturing a *mutable* cell). On the first `f ()`, `!used` is
+`false`, so the `else` branch runs: it flips `used` to `true` and
+returns `Some "first call"`. On every later `f ()`, `!used` is
+`true`, and the answer is `None`. The `begin ... end` is
+parentheses around the two-step sequence, as in
+[the counting-down example](M03-L02-recursion.html#recursion-on-numbers-counting-down).
 
 The mutable state `used` is hidden inside the
 closure: there is no way to reach it from the outside. Each call

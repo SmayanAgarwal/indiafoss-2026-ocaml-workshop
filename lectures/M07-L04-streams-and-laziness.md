@@ -144,6 +144,18 @@ The toplevel reports
 `val zero_ones : int stream = Cons (0, <fun>)`. The tail is a
 function value, displayed as `<fun>`; it has not been called yet.
 
+Two small accessor functions. `hd` returns the head; `tl` *forces*
+the thunk and returns the next node.
+
+```ocaml
+let hd (Cons (x, _)) = x
+let tl (Cons (_, xs)) = xs ()
+```
+
+`hd zero_ones` gives `0` without forcing anything beyond the
+outer cons. `tl zero_ones` calls the tail thunk, which builds
+the second node `Cons (1, ...)` and returns it.
+
 :::slide
 
 ## Streams: type definition + accessors
@@ -167,18 +179,6 @@ let _ = hd (tl zero_ones)   (* = 1 *)
 - No `Nil`: streams are infinite.
 
 :::
-
-Two small accessor functions. `hd` returns the head; `tl` *forces*
-the thunk and returns the next node.
-
-```ocaml
-let hd (Cons (x, _)) = x
-let tl (Cons (_, xs)) = xs ()
-```
-
-`hd zero_ones` gives `0` without forcing anything beyond the
-outer cons. `tl zero_ones` calls the tail thunk, which builds
-the second node `Cons (1, ...)` and returns it.
 
 ## Consuming a stream
 

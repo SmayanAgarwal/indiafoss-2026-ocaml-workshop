@@ -628,6 +628,8 @@ Predict:
 
 :::
 
+Before reading on, predict the three answers.
+
 :::slide
 
 ## Activity discussion
@@ -645,8 +647,6 @@ let add x y = x + y
 
 :::
 
-Before reading on, predict the three answers.
-
 `add 5` has type `int -> int`. It is a closure: a function value
 that has captured `x = 5` and is waiting for `y`. The toplevel
 reports `int -> int = <fun>`, where `<fun>` is the toplevel's
@@ -661,6 +661,50 @@ then apply it to `3`. Inside the closure, `x` is `5` and `y` is now
 application is left-associative: `add 5 3` parses as `(add 5) 3`,
 exactly the explicit form. The parentheses make partial application
 visible but they do not change what is computed.
+
+## A harder check: n-fold application
+
+We wrote `apply_twice f x = f (f x)` in
+[the functions-as-values lecture](M03-L01-functions-as-values.html).
+This check generalizes it, and needs recursion as well as
+currying.
+
+:::quiz code id=M03-L03-q4
+Write `apply_n : int -> ('a -> 'a) -> 'a -> 'a` so that
+`apply_n n f x` computes `f (f (... (f x)))` with `n` applications
+of `f`. For `n <= 0`, return `x` unchanged. Note the payoff of the
+argument order: `apply_n 5 ((+) 1)` is itself a function, "add 5
+the slow way."
+
+```ocaml
+let rec apply_n n f x =
+  failwith "not implemented"
+```
+
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (apply_n 3 (fun x -> x * 2) 1 = 8) "double thrice";
+  check (apply_n 5 ((+) 1) 10 = 15) "increment five times";
+  check (apply_n 0 (fun x -> x * 9) 7 = 7) "zero applications";
+  check (apply_n 5 ((+) 1) 100 = 105) "partial application";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+```ocaml
+let rec apply_n n f x =
+  if n <= 0 then x
+  else apply_n (n - 1) f (f x)
+```
+
+Each step peels one application off: apply `f` once, recurse with
+`n - 1`. The accumulator is `x` itself, so the definition is
+tail-recursive. `apply_n 2 f x` computes exactly `apply_twice f x`.
+
+:::
 
 ## What's next
 

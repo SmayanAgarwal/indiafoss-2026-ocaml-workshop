@@ -395,6 +395,12 @@ itself; this recording step is called *capture*, and the table
 of captured values is called the *environment of the closure*. A
 *closure*, then, is a function value paired with its environment.
 
+At application time the rule for the body is: a parameter gets its
+value from the call's argument, and a free variable gets its value
+from the environment. In `plus_five 100`, the body `x + n` runs
+with `x = 100` (the argument) and `n = 5` (read from the
+environment); no other source of values exists.
+
 The point of the environment is that the captured values can be
 read *long after* the surrounding scope that originally bound
 them has gone away. The function value is self-contained: body

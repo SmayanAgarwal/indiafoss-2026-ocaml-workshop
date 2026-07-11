@@ -185,6 +185,19 @@ operator: an OCaml `==` test compiles fine and then returns
 test in your code is mysteriously failing, check the operator
 first.
 
+The disagreement needs an *allocated* value to show up. An `int`
+is stored directly in the machine word, not behind a pointer, so
+two equal ints are the same bits and `==` cannot tell them apart:
+
+```ocaml
+let _ = 1 == 1      (* = true : no allocation, no separate identity *)
+let _ = 'a' == 'a'  (* = true : chars and booleans work the same way *)
+```
+
+This is what makes the trap quiet: tested on ints, `==` appears to
+behave as everyday equality, and it stops the moment the data is a
+pair, a list, or a string. Always write `=`.
+
 One caveat to file away: structural equality works on *data*, but
 it raises a runtime exception (`Invalid_argument "compare:
 functional value"`) if the values being compared contain

@@ -723,6 +723,18 @@ nested matches would work too but would force us to repeat the
 failure case.
 :::
 
+The code task extends the interpreter. It leans on the supporting
+definitions from
+[the `eval` walkthrough](#eval-values-environment-and-lookup),
+which are still in scope; for reference:
+
+```text
+type value = VInt of int | VBool of bool
+type env   = (string * value) list
+
+val lookup : string -> env -> value option   (* None if unbound *)
+```
+
 :::quiz code id=M05-L06-q3
 Extend `expr` with a new constructor `Sub of expr * expr` and
 complete `eval`'s `Sub` clause. The starter redefines `expr` with

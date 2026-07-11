@@ -666,19 +666,16 @@ see this in [Module 5](M05-L01-basic-patterns.html#versus-a-variable-name).
 
 ## Sequencing with `;`
 
-When you want to evaluate two expressions in order and keep only
-the result of the second, OCaml offers a short form:
+The sequencing operator `;` appeared when we wrote
+[the first programs](M01-L04-hello-world.html#sequencing-with):
+`e1; e2` evaluates `e1`, discards its value, then evaluates `e2`,
+and the whole expression takes the value of `e2`:
 
 ```ocaml
 let _ = print_endline "hi"; 6  (* = 6 *)
 ```
 
-The semicolon is the *sequencing operator*. `e1; e2` is an
-expression: evaluate `e1`, discard its value, then evaluate `e2`,
-and the whole expression takes the value of `e2`. Above, the line
-prints `hi`, then evaluates to `6`.
-
-Mechanically, `e1; e2` is just *syntactic sugar* for
+The connection to `let`: `e1; e2` is *syntactic sugar* for
 `let _ = e1 in e2`. Same evaluation, same result. The semicolon
 is shorter, which is why you will see it in most real code.
 

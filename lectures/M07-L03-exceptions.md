@@ -728,6 +728,16 @@ let _ = find_x_opt "z"      (* = None *)
 let _ = find_x_result "z"   (* = Error "no such key: z" *)
 ```
 
+The fourth combination is the interesting one. `find_x "z"` has no
+`int` to return, so it raises. Internally `List.assoc` walks the
+list exactly as `List.assoc_opt` does; the two differ only in how
+they report a miss: `assoc` raises `Not_found` where `assoc_opt`
+returns `None`.
+
+```ocaml skip
+let _ = find_x "z"   (* raises Not_found *)
+```
+
 **Raise.** Cheapest at the call site: the caller writes
 `let x = find_x "key"` and uses `x` directly. The cost is that
 the *type* says nothing about failure. A reader of the type
@@ -792,23 +802,6 @@ it everywhere.
 A short list of cases where reaching for an exception is the
 wrong call.
 
-:::slide
-
-## When *not* to use exceptions
-
-**Avoid for:**
-
-- Predictable "missing value" cases: use `option`.
-- "This won't happen" assertions: use `assert false`, or redesign.
-- Deep nesting where the escape path is hard to follow.
-
-**Good fit:**
-
-- *Unexpected, rare* failures (parse failed, file not found)
-  where error-handling code would otherwise pollute every step.
-
-:::
-
 **For predictable missing values.** "The key might be missing from
 the map" is not an exceptional case, it is the expected behaviour
 of a lookup. Use [`option`](M04-L04-recursive-types.html#the-option-type);
@@ -832,6 +825,23 @@ failures in a parser used inside a larger pipeline, file-system
 errors that propagate to the top of a CLI, that kind of thing.
 The convention here matches the convention in Python and Java:
 exceptions for things that "should not normally happen."
+
+:::slide
+
+## When *not* to use exceptions
+
+**Avoid for:**
+
+- Predictable "missing value" cases: use `option`.
+- "This won't happen" assertions: use `assert false`, or redesign.
+- Deep nesting where the escape path is hard to follow.
+
+**Good fit:**
+
+- *Unexpected, rare* failures (parse failed, file not found)
+  where error-handling code would otherwise pollute every step.
+
+:::
 
 ## A quick check
 

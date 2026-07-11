@@ -307,8 +307,16 @@ let () = print_endline (Printf.sprintf "area = %.4f" area)
 Four bindings. The first three are pure value bindings: `pi`,
 `radius`, and `area` get their values. The fourth is the printing
 side effect. `Printf.sprintf` is like `printf` from C, but it
-returns the formatted string instead of writing to stdout; we then
-pipe that string into `print_endline`. The format specifier `%.4f`
+returns the formatted string instead of writing to stdout. On its
+own:
+
+```ocaml
+let msg = Printf.sprintf "area = %.4f" 3.14159  (* = "area = 3.1416" *)
+```
+
+The format string comes first, then one argument per `%` specifier;
+the result is an ordinary `string` you can bind, concatenate, or, as
+in the program above, hand to `print_endline`. The specifier `%.4f`
 means "a `float`, four digits after the decimal point," same as in
 C's printf.
 
