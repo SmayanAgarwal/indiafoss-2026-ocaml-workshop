@@ -164,6 +164,30 @@ rather than teaching. (Added after KC flagged "a signal to the reader".)
   to the reader that the list is empty" → "The empty list matches here."
 - Grep: `grep -niE "you might be wondering|as promised|signal to the reader|the (astute|careful) reader|as you can imagine|now that we (understand|know)" lectures/*.md`
 
+### 10. Aphoristic balanced closers
+
+Paragraphs that end on a balanced antithesis or epigram: two short
+clauses see-sawing around a semicolon or a period, with abstract nouns
+on both sides. One is fine; when most paragraphs end this way the text
+reads as machine-generated even though no single sentence greps.
+(Added after KC flagged it in the Pramaana proposal, 2026-08-06.)
+
+- Tells: "X is doing the proof. We propose to do the explanation.",
+  "X is the demonstration; the payoff is Y", doubled nouns for rhythm
+  ("a separate theorem with a separate proof"), terse aphorisms ("The
+  answers are security facts."), and negation cliffhangers whose
+  content arrives in the next paragraph ("The obstacle is not the
+  absence of proofs.").
+- Fix: keep the one or two contrasts that carry the argument; recast
+  the rest as plain statements attached to concrete objects, or delete
+  them when a neighbouring sentence already carries the content.
+- Not this: a factual contrast in plain register ("the win is speed
+  and scale, not solution quality"; "coverage is measured over the
+  mutant space, not the input space"). The tell is density and
+  abstraction, not the presence of contrast.
+- No reliable grep. Read the last sentence of every paragraph in
+  sequence: one epigram is voice, one per paragraph is the machine.
+
 ## Why these read as machine-generated
 
 LLM prose defaults to a register that flatters the reader and signals
@@ -206,3 +230,5 @@ here, worth checking first in any new draft:
    announcement that a point was made?
 4. Search your own draft for "worth", "powerful", "simply", "not just".
    Read each hit in context; cut the filler.
+5. Read the last sentence of every paragraph in sequence: one balanced
+   epigram is voice, one per paragraph is the machine.
