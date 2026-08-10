@@ -1,15 +1,19 @@
-# OCaml NPTEL course
+# IndiaFOSS Workshop 2026
 
-Source repository for **Functional Programming with OCaml**, a 12-week
-NPTEL MOOC taught by KC Sivaramakrishnan at IIT Madras. The first
-eight modules cover functional programming in OCaml; the final four
-turn to secure systems software (testing, memory safety, OxCaml's
-type-level safety extensions, and unikernels with MirageOS). All
-twelve modules are now authored.
+Source repository for **Fun and Profit with OCaml**, a workshop being offered at
+[IndiaFOSS 2026](https://fossunited.org/indiafoss/2026). The content has been
+adapted from **Functional Programming with OCaml**, a 12-week NPTEL MOOC taught
+by KC Sivaramakrishnan at IIT Madras. Over 12 modules with 80 lessons among
+them, the course teaches both functional programming in OCaml as well as the use
+of tools and language extensions for building secure systems software.
 
-Course launches on SWAYAM/NPTEL in **July 2026**.
+This workshop is tailored towards those who are familiar with programming but
+have not written any code using OCaml before. We will go over the basics of
+programming in OCaml through the use of expressions, functions, data types and
+a few other powerful features common to most functional programming languages
+such as pattern matching and higher-order programming.
 
-Live preview: <https://fplaunchpad.github.io/ocaml_nptel/>.
+Original NPTEL course: <https://fplaunchpad.github.io/ocaml_nptel/>.
 
 ## What's in here
 
