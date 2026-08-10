@@ -35,7 +35,11 @@ export NPTEL_COMMIT_SHA
 if [ $# -eq 0 ]; then
   # Lecture files follow the M<nn>-L<nn>-slug.md convention. Other .md
   # files under lectures/ (e.g. drafts, READMEs) are skipped.
-  mapfile -d '' files < <(find "$REPO_ROOT/lectures" -name 'M*-L*-*.md' -print0 2>/dev/null)
+  files=()
+    while IFS= read -r -d '' file; do
+      files+=("$file")
+    done < <(find "$REPO_ROOT/lectures" -name 'M*-L*-*.md' -print0 2>/dev/null)
+  # mapfile -d '' files < <(find "$REPO_ROOT/lectures" -name 'M*-L*-*.md' -print0 2>/dev/null)
 else
   files=("$@")
 fi
