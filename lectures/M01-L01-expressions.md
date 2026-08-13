@@ -1,5 +1,5 @@
 ---
-title: "Expressions: Values, Bindings, Operators and Types"
+title: "Values, Bindings, Operators and Types"
 lecture_no: 1
 week: 1
 duration_target_min: 145
@@ -16,7 +16,7 @@ reading:
     url: https://cs3110.github.io/textbook/chapters/basics/index.html
 ---
 
-# Expressions, Operators and Types
+# Expressions
 
 Almost every meaningful piece of an OCaml program is an
 *expression*: a piece of syntax that the language evaluates to
