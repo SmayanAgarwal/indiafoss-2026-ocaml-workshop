@@ -567,6 +567,7 @@ let _ = string_of_bool true   (* = "true" *)
 let _ = int_of_float "test"
 ```
 ```mdx-error
+Line 7, characters 24-30:
 Error: This constant has type string but an expression was expected of type
          float
 ```
@@ -1689,9 +1690,10 @@ let _ = succ (max 3 7)
 let _ = succ max 3 7 
 ```
 ```mdx-error
+Line 1, characters 9-19:
 Error: The function succ has type int -> int
        It is applied to too many arguments
-  
+Line 1, characters 18-19:
   This extra argument is not expected.
 ```
 
