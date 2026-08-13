@@ -90,9 +90,9 @@ few extensions:
   the in-browser OCaml runtime does not provide `Assert_failure`,
   so OCaml's built-in `assert` does not work.
 
-See [`lectures/M02-L01-literals.md`](lectures/M02-L01-literals.md)
-for the canonical example: ~700 lines, prose-first chapter view,
-slides as terse video summaries, with both an MCQ and a code quiz.
+See [`lectures/M01-L01-expressions.md`](lectures/M01-L01-expressions.md)
+for the canonical example: prose-first chapter view, slides as
+terse video summaries, with both an MCQ and a code quiz.
 
 Lecture numbers **restart within each module**: the header bar and
 title slide of each lecture show `Module <m> · Lecture <n>`, where
