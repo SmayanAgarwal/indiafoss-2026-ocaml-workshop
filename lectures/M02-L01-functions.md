@@ -1,7 +1,7 @@
 ---
 title: "Functions as values, and anonymous functions"
 lecture_no: 1
-week: 3
+week: 2
 duration_target_min: 24
 concepts: [first-class functions, anonymous functions, fun, lambda, higher-order, function values]
 keywords: [OCaml, functions, first-class, anonymous functions, fun, lambda, higher-order]
@@ -3551,7 +3551,7 @@ before, and to discuss when each approach is the right choice.
 
 - **Cornell CS3110**, *Helper functions* and *Mutual recursion*:
   <https://cs3110.github.io/textbook/chapters/basics/functions.html>
-  
+
 ## Sources
 
 This lecture's prose, worked examples, and quizzes are original to
