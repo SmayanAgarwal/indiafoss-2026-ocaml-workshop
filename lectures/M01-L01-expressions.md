@@ -1,5 +1,5 @@
 ---
-title: "Expressions"
+title: "Expressions: Values, Bindings, Operators and Types"
 lecture_no: 1
 week: 1
 duration_target_min: 145
