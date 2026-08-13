@@ -180,7 +180,7 @@ emit_index() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Functional Programming with OCaml — NPTEL</title>
+  <title>IndiaFOSS OCaml Workshop 2026 - Introduction</title>
   <link rel="stylesheet" href="${ASSET_ROOT}/assets/css/chapter.css">
   <style>
     .landing { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
@@ -211,18 +211,6 @@ emit_index() {
 <body class="mode-chapter">
   <article class="landing">
     <h1>Functional Programming with OCaml</h1>
-    <p>A 12-week NPTEL course. Pick a lecture below, or start at
-    <a href="M01-L01-course-intro.html">Module 1, Lecture 1</a>.
-    To take the course for credit (assignments, proctored exam,
-    certificate), <a
-    href="https://onlinecourses.nptel.ac.in/noc26_cs90/preview">sign
-    up on the NPTEL portal</a>.</p>
-    <div class="search-box">
-      <input id="lecture-search" type="search"
-        placeholder="Search lectures, sections, concepts&hellip;"
-        aria-label="Search course content">
-      <ul id="search-results" class="search-results" hidden></ul>
-    </div>
     <script>
     (function () {
       var box = document.getElementById('lecture-search');
