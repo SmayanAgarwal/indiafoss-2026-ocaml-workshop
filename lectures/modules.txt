@@ -1,3 +1,3 @@
 # One line per module: <Mnn>: <title>. Matches PLAN.md.
-M01: Values, Bindings and Expressions
+M01: Expressions
 M02: Functions
