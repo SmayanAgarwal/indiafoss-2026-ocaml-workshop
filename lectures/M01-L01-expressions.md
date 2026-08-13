@@ -566,6 +566,10 @@ let _ = string_of_bool true   (* = "true" *)
 
 let _ = int_of_float "test"
 ```
+```mdx-error
+Error: This constant has type string but an expression was expected of type
+         float
+```
 
 ## Putting it together
 
