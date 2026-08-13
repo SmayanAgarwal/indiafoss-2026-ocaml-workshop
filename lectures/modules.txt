@@ -1,6 +1,5 @@
 # One line per module: <Mnn>: <title>. Matches PLAN.md.
-M01: Intro to functional programming
-M02: Expressions
+M01: Values, Bindings and Expressions
 M03: Functions
 M04: Data types
 M05: Pattern matching
