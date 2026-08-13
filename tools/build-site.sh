@@ -210,7 +210,7 @@ emit_index() {
 </head>
 <body class="mode-chapter">
   <article class="landing">
-    <h1>Functional Programming with OCaml</h1>
+    <h1>IndiaFOSS 2026 - Fun and Profit with OCaml</h1>
     <script>
     (function () {
       var box = document.getElementById('lecture-search');
@@ -309,11 +309,8 @@ HEAD
 
     cat <<FOOT
     <p style="margin-top: 3rem; font-size: 0.88rem; color: var(--muted);">
-      <a href="https://github.com/fplaunchpad/ocaml_nptel" target="_blank" rel="noopener">Source on GitHub</a>
-      &nbsp;&middot;&nbsp;
-      <a href="privacy.html">Privacy &amp; data collection</a>
-      &nbsp;&middot;&nbsp;
-      <a href="dashboard.html">Quiz analytics dashboard</a>
+     Modified from <a href="https://github.com/fplaunchpad/ocaml_nptel" target="_blank">
+     FP Launchpad OCaml NPTEL course</a>
     </p>
   </article>
 </body>
