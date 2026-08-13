@@ -1684,6 +1684,12 @@ let _ = succ (max 3 7)
 ```ocaml
 let _ = succ max 3 7 
 ```
+```mdx-error
+Error: The function succ has type int -> int
+       It is applied to too many arguments
+  
+  This extra argument is not expected.
+```
 
 :::
 
