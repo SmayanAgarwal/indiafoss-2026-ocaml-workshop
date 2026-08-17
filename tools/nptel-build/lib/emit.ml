@@ -192,6 +192,12 @@ let header_bar ~(fm : Frontmatter.t) ~has_slides =
     <a class="home-link" href="index.html" title="Course landing page" aria-label="Course landing page">&#x2302;</a>
     <div class="lecture-meta">%s</div>
     <h1 class="lecture-title">%s</h1>
+    <div class="cell-controls">
+      <button class="run-up-to-here" type="button" title="Run all cells up to (and including) the current slide / cursor">Run &uarr; here</button>
+      <button class="run-all" type="button" title="Run every cell on the page in order">Run all</button>
+      <button class="clear-all" type="button" title="Clear outputs of every cell">Clear outputs</button>
+      <button class="reset-all" type="button" title="Restore every cell to its source from the markdown file">Reset all cells</button>
+    </div>
 %s  </header>|}
     lecture_id title mode_toggle
 
