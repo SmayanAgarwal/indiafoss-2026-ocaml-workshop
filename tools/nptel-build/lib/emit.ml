@@ -9,7 +9,11 @@
    [_site/test/smoke.html] the depth is 2 as well. We just pass
    [relative_root] as a string like ["../.."]. *)
 
-let quiz_api_url = "https://nptel-quiz.kc-7c7.workers.dev"
+(* Empty: this workshop build has no quiz backend deployed. An empty
+   [quiz-api] meta tag makes [analyticsConsent()] return 'no-api'
+   client-side, so the consent banner never shows and reportQuiz()
+   is always a no-op. *)
+let quiz_api_url = ""
 
 (* Short content hash of a file relative to the build cwd. Used as a
    [?v=...] cache-buster on the x-ocaml worker URL so a rebuilt bundle
@@ -220,8 +224,6 @@ let footer_meta ~(fm : Frontmatter.t) =
       fm.reading;
     Buffer.add_string buf "    </ul></div>\n"
   end;
-  Buffer.add_string buf
-    "    <div class=\"meta-line\"><a href=\"privacy.html\">Privacy &amp; data collection</a></div>\n";
   Buffer.add_string buf "  </footer>\n";
   Buffer.contents buf
 
