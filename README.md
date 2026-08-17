@@ -2,10 +2,7 @@
 
 Source repository for **Fun and Profit with OCaml**, a workshop being offered at
 [IndiaFOSS 2026](https://fossunited.org/indiafoss/2026). The content has been
-adapted from **Functional Programming with OCaml**, a 12-week NPTEL MOOC taught
-by KC Sivaramakrishnan at IIT Madras. Over 12 modules with 80 lessons among
-them, the course teaches both functional programming in OCaml as well as the use
-of tools and language extensions for building secure systems software.
+adapted from [OCaml tutorial - Abstraction 2019](https://github.com/kayceesrk/ocaml-tutorial/tree/master) and the infrastucture from [Functional Programming with OCaml](https://github.com/fplaunchpad/ocaml_nptel) has been used for deployment.
 
 This workshop is tailored towards those who are familiar with programming but
 have not written any code using OCaml before. We will go over the basics of
@@ -13,19 +10,9 @@ programming in OCaml through the use of expressions, functions, data types and
 a few other powerful features common to most functional programming languages
 such as pattern matching and higher-order programming.
 
-Original NPTEL course: <https://fplaunchpad.github.io/ocaml_nptel/>.
-
 ## What's in here
 
 ```
-lectures/
-  M01-L01-course-intro.md          One .md per lecture: M<module>-L<lecture>-<slug>.md.
-  M01-L02-why-fp.md                M01-M12, with L counts 5, 6, 6, 6, 6, 7, 10, 8, 7, 5, 6, 4.
-  ...                              (76 files: 73 recorded lectures + 3 slide-free practice
-  M12-L04-suresh-the-stationmaster.md  chapters, M06-L07, M07-L10 and M08-L08).
-  modules.txt                      Module titles used in sidebar + landing page.
-  dune                             ocaml-mdx stanza listing every lecture.
-
 tools/
   nptel-build/                     OCaml binary: .md -> HTML (cmarkit + frontmatter
                                    parser + line-oriented fenced-div preprocessor
@@ -64,41 +51,6 @@ _references/                       Source material consulted by authors.
 PLAN.md                            Module-by-module mapping from CS3100 to NPTEL.
 ```
 
-## Authoring a lecture
-
-Each lecture is one markdown file `lectures/M<nn>-L<nn>-<slug>.md`
-with a YAML frontmatter block. Inside the body, CommonMark plus a
-few extensions:
-
-- ` ```ocaml ` fenced blocks render as `<x-ocaml>` runnable cells
-  (with optional attributes: `init`, `autorun`, `hidden`, `skip`).
-- `:::slide ... :::` blocks become slides in reveal.js mode.
-- `:::notes ... :::` blocks are speaker notes.
-- `:::fragment ... :::` blocks are progressive reveals inside a slide.
-- `:::quiz mcq ... :::` blocks are inline multiple-choice quizzes.
-  The author writes the answers as a GFM task list; the `[x]` marker
-  identifies the correct option. JS renders the list as a radio
-  group, reveals the explanation on selection, and persists the
-  reader's last answer in localStorage.
-- `:::quiz code ... :::` blocks are code-fill-in quizzes. The first
-  ` ```ocaml ` block is the student stub (usually with
-  `failwith "not implemented"`); the second ` ```ocaml skip ` block
-  is a hidden assertion block exercising the implementation. The
-  reader clicks **Check** to run the test. The `skip` label keeps
-  ocaml-mdx happy; the build's preprocessor positionally tags the
-  second cell as the assertion block. Use `failwith`-based checks;
-  the in-browser OCaml runtime does not provide `Assert_failure`,
-  so OCaml's built-in `assert` does not work.
-
-See [`lectures/M01-L01-expressions.md`](lectures/M01-L01-expressions.md)
-for the canonical example: prose-first chapter view, slides as
-terse video summaries, with both an MCQ and a code quiz.
-
-Lecture numbers **restart within each module**: the header bar and
-title slide of each lecture show `Module <m> · Lecture <n>`, where
-`<n>` is the lecture's position inside its own module (so the first
-lecture of Module 5 reads `Module 5 · Lecture 1`).
-
 ## Build & preview locally
 
 ```sh
@@ -114,18 +66,6 @@ python3 -m http.server 8765
 # or http://localhost:8765/_site/ for the landing page
 ```
 
-## Tests
-
-```sh
-tools/run-tests.sh
-```
-
-Runs the OCaml unit + integration tests (`dune runtest`, which also
-invokes `ocaml-mdx` over every lecture's code blocks) and a
-Playwright end-to-end check that loads the smoke fixture in a real
-browser, exercises slide navigation, run-all / clear-all / reset,
-quiz interactivity, and verifies no console errors.
-
 ## Hosting
 
 `.github/workflows/pages.yml` deploys `_site/` to GitHub Pages on
@@ -139,28 +79,15 @@ every push to `main`. After the first push:
 The workflow does not build `vendor/x-ocaml`; it uses the prebuilt
 bundles already committed under `assets/x-ocaml/`.
 
-## Quiz analytics
-
-The site records anonymous quiz responses via a small Cloudflare
-Worker (`tools/quiz-backend/`). Per response we store: an anonymous
-reader UUID minted in localStorage on first visit, the quiz id, the
-page slug, the MCQ option selected (or pass/fail for code quizzes),
-correctness, a server-side timestamp, and the lecture commit SHA.
-**No PII**: no name, email, IP, demographic data, or code text. The
-backend is a single Worker file plus a D1 (SQLite) schema; deploy
-runs from `.github/workflows/quiz-backend.yml` on push to main. The
-disclosure surfaces in three places: a first-visit banner on every
-lecture, the [`/privacy.html`](https://fplaunchpad.github.io/ocaml_nptel/privacy.html)
-page (with an opt-out toggle and a "delete my data" button that
-exercises `POST /quiz/forget` for DPDPA right-to-erasure), and the
-opening paragraph of M01-L01. Analytics is opt-out by default; see
-the privacy page for the rationale.
 
 ## Learn more about OCaml
 
 - The OCaml language home page: <https://ocaml.org/>. Install
   instructions, the language manual, and the ecosystem of libraries
   and tools.
+- [Functional Programming with OCaml](https://github.com/fplaunchpad/ocaml_nptel), a 12-week NPTEL course
+- [Academic research using the OCaml language](https://ocaml.org/academic-users)
+
 
 ## Acknowledgements
 
