@@ -17,24 +17,24 @@ reading:
 
 # Basics
 
-In this notebook, we will cover the basics of the OCaml
-programming language.
+Let's begin with a tour through the basics of the OCaml programming language.
 
 ## Why OCaml
 
 - OCaml is an industrial-strength, functional programming
   language.
   - In the same family as Haskell and Standard ML.
-  - Initially developed at INRIA, and is now a healthy
-    open-source project developed on
+  - Initially developed at [INRIA](https://inria.fr/en), the National Institute
+  for Research in Digital Science and Technology in France and is now a
+  well-maintained open-source project developed on
     [Github](https://github.com/ocaml/ocaml)
-- Good mix of functional, imperative and object-oriented
-  features.
+- It supports multiple paradigms of programming: functional, imperative
+    and object-oriented
 - A fast compiler that produces efficient native code for x86,
-  ARM, RISC-V, etc., as well as JavaScript.
-- Users include
-  - JaneStreet (almost everything from Hardware that ingests
-    market data to trading algorithms to infrastructure)
+  ARM, RISC-V, etc., as well as JavaScript (via WASM).
+- A number of organisations use the language including:
+  - Jane Street ([OCaml use at Jane
+    Street](https://www.janestreet.com/tech-talks/ocaml-all-the-way-down/))
   - Microsoft (Everest project, F* programming language)
   - Facebook (Hack, Infer, Flow, ReasonML). [More than 50%
     messenger.com is
@@ -46,12 +46,12 @@ programming language.
 
 Ultimately, functional programming offers an alternative way to
 think about *programming*, which is useful even if you don't
-intend to use a functional programming language. That said,
-functional programming concepts such as immutability, lambdas,
+intend to regularly use a functional programming language. That said,
+many ideas and constructs widely used in functional programming
+such as immutability of data structures, lambdas,
 coroutines, promises, monads, lenses, applicatives, functors,
-Hindley-Damas-Milner type inference are being adopted in
-mainstream imperative languages in C++, Java, Python, Rust etc.,
-but also new languages that run on your favourite platform:
+type inference are being adopted in not only mainstream imperative languages in C++,
+Java, Python, Rust etc., but also new languages that run on your favourite platform:
 Clojure and Kotlin on the JVM, Elixir on Erlang OTP, etc.
 
 ## Variables
@@ -71,7 +71,7 @@ let pi = 3
 ```
 
 - `pi` is now bound to the value `3`.
-- Its type has also been inferred, as `int`.
+- Its type has also been inferred as `int`.
 
 :::
 
@@ -85,7 +85,7 @@ bindings (like the one above) is everything that follows it.
 
 ### Primitive data types
 
-OCaml offers the following primitive data types int, float,
+OCaml offers the following primitive data types: int, float,
 bool, char, string and unit.
 
 ```ocaml
@@ -117,10 +117,28 @@ Error: This expression has type float but an expression was
        expected of type int
 ```
 
+:::quiz mcq id=M01-L01-q1
+Given `let one = 1` and `let pi = 3.1415`, what happens when OCaml
+evaluates `one = pi`?
+
+- [ ] It evaluates to `false`, since `1` and `3.1415` are different.
+- [x] It fails to compile: `int` and `float` are different types,
+      and `=` requires both sides to have the same type.
+- [ ] It evaluates to `true`, because OCaml converts `1` to `1.0`
+      automatically.
+- [ ] It raises a runtime exception `Invalid_argument`.
+
+**Why:** OCaml never inserts implicit conversions between `int`
+and `float`. Since `one : int` and `pi : float`, the compiler
+rejects `one = pi` before the program ever runs with "This
+expression has type float but an expression was expected of type
+int."
+:::
+
 ### Local let bindings
 
 We can also use let to create a variable binding whose scope is
-limited to a particular expression using the in keyword:
+limited to a particular expression using the *in* keyword:
 
 :::slide
 
@@ -146,9 +164,26 @@ at the top-level. The j variable is no longer in scope:
 j+4
 ```
 
+:::quiz mcq id=M01-L01-q2
+After evaluating `let i = let j = 5 in j + 2`, what happens if you
+then try to evaluate `j + 4` at the top level?
+
+- [x] Compile error: `j` is unbound outside the `let ... in`
+      expression.
+- [ ] It evaluates to `9`, since `j` was `5`.
+- [ ] It evaluates to `4`, treating the missing `j` as `0`.
+- [ ] It silently shadows `i`.
+
+**Why:** `j` is local to the body of the `let ... in` expression.
+Once that expression finishes evaluating, `j` goes out of scope;
+only `i` (bound to `7`) remains visible at the top level.
+Referring to `j` afterwards is a compile-time "Unbound value j"
+error.
+:::
+
 ## Conditionals
 
-Unsurprisingly, OCaml provides conditional expressions using the
+OCaml provides conditional expressions using the
 if keyword:
 
 ```ocaml
@@ -205,19 +240,35 @@ let b = succ 8
 let c = add a b
 ```
 
-(* ### Exercise
-
-Implement a function to compute the sum of successors of the
-given two numbers using `add` and `succ`.
+:::quiz code id=M01-L01-q3
+Implement `sum_of_succ : int -> int -> int`, which computes the
+sum of the successors of its two arguments, using only `add` and
+`succ` (no `+`).
 
 ```ocaml
-let sum_of_succ x y = failwith "for you to implement"
+let sum_of_succ x y = failwith "not implemented"
 ```
 
 ```ocaml skip
-assert (sum_of_succ 5 6 = 13)
+let check b m = if not b then failwith m
+let () =
+  check (sum_of_succ 5 6 = 13) "sum_of_succ 5 6";
+  check (sum_of_succ 0 0 = 2) "sum_of_succ 0 0";
+  check (sum_of_succ (-1) 4 = 5) "sum_of_succ -1 4";
+  print_endline "all tests passed"
 ```
-*)
+:::
+
+:::solution
+
+Apply `succ` to each argument first, then combine the results with
+`add`.
+
+```ocaml
+let sum_of_succ x y = add (succ x) (succ y)
+```
+
+:::
 
 ### Recursive functions
 
@@ -226,7 +277,7 @@ to a let binding. For example, the sum of first `n` integers can
 be implemented as follows:
 
 ```ocaml
-let rec sum_of_first_n n = 
+let rec sum_of_first_n n =
   if n <= 0 then 0
   else sum_of_first_n (n-1) + n
 ```
@@ -235,27 +286,34 @@ let rec sum_of_first_n n =
 assert (sum_of_first_n 5 = 15)
 ```
 
-(* ### Exercise
-
-Implement a recursive function that computes the nth fibonacci
-number.
-
-\begin{align}
-fib(n) =
-  \begin{cases}
-    1 & \quad \text{if } n < 2 \\
-    fib(n-1) + fib(n-2)       & \quad \text{otherwise}
-  \end{cases}
-\end{align}
+:::quiz code id=M01-L01-q4
+Implement a recursive function `fib : int -> int` that computes
+the nth Fibonacci number, using the convention `fib 0 = 1`,
+`fib 1 = 1`, and `fib n = fib (n - 1) + fib (n - 2)` for `n >= 2`.
 
 ```ocaml
-let rec fib n = failwith "for you to implement"
+let rec fib n = failwith "not implemented"
 ```
 
 ```ocaml skip
-assert (fib 10 = 89)
+let check b m = if not b then failwith m
+let () =
+  check (fib 0 = 1) "fib 0";
+  check (fib 1 = 1) "fib 1";
+  check (fib 10 = 89) "fib 10";
+  print_endline "all tests passed"
 ```
-*)
+:::
+
+:::solution
+
+```ocaml
+let rec fib n =
+  if n < 2 then 1
+  else fib (n - 1) + fib (n - 2)
+```
+
+:::
 
 ### Labelled arguments
 
@@ -297,7 +355,7 @@ divide ~dividend:9 ~divisor:3
 Labelled arguments can be passed in in any order (!)
 
 ```ocaml
-divide ~divisor:3 ~dividend:9 
+divide ~divisor:3 ~dividend:9
 ```
 
 We can also pass variables into the labelled argument:
@@ -317,23 +375,36 @@ let divisor  = 3 in
 divide ~dividend ~divisor
 ```
 
-(* ### Exercise
-
-Implement `modulo ~dividend ~divisor` using our version of divide
-with labelled arguments.
+:::quiz code id=M01-L01-q5
+Implement `modulo ~dividend ~divisor`, which returns the remainder
+of `dividend` divided by `divisor`, built using our labelled
+`divide` function (do not use OCaml's built-in `mod` operator).
 
 ```ocaml
-let modulo ~dividend ~divisor = failwith "for you to implement"
+let modulo ~dividend ~divisor = failwith "not implemented"
 ```
 
 ```ocaml skip
-assert (2 = modulo ~dividend:17 ~divisor:5)
+let check b m = if not b then failwith m
+let () =
+  check (modulo ~dividend:17 ~divisor:5 = 2) "modulo 17 5";
+  check (modulo ~dividend:99 ~divisor:9 = 0) "modulo 99 9";
+  check (modulo ~dividend:7 ~divisor:2 = 1) "modulo 7 2";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+`divide` already gives the truncated quotient, so the remainder is
+`dividend - divisor * quotient`.
+
+```ocaml
+let modulo ~dividend ~divisor =
+  dividend - divisor * (divide ~dividend ~divisor)
 ```
 
-```ocaml skip
-assert (0 = modulo ~dividend:99 ~divisor:9)
-```
-*)
+:::
 
 ### Higher-order functions
 
@@ -364,15 +435,17 @@ let l = List.map succ [1;2;3]
 
 :::
 
-This jupyter notebook comes equipped with `merlin`, an OCaml IDE
-service plugin that provides auto-completion, documentation
-search, etc. Using merlin, you can look up the available
-functions in `List` by typing `List.<tab>`.
+The full set of functions available on `List` (and every other
+standard library module) is documented in the
+[OCaml manual's standard library reference](https://ocaml.org/manual/5.5/api/List.html).
+It is worth keeping this open while you work through the course.
 
-You can also get documentation for a particular function by
-typing the function and pressing `shift+tab`. For example, try
-typing `List.map<shift+tab>`. A pop up should appear displaying
-the documentation.
+You can also check the type of a function without applying it by
+typing it into `utop` followed by `;;`. For example, typing
+`List.map;;` prints its inferred type, `('a -> 'b) -> 'a list ->
+'b list`, directly. `utop` itself has its own set of features (tab
+completion, a command history, `#show`) documented at the
+[utop repository](https://github.com/ocaml-community/utop).
 
 ```ocaml
 List.map
@@ -409,6 +482,24 @@ let succ = add 1
   function from `int` to `int`.
 - We can redefine `succ` by partially applying `add` to `1`.
 
+:::
+
+:::quiz mcq id=M01-L01-q6
+Given `let add x y = x + y` has type `int -> int -> int`, what is
+the type of `add 1`?
+
+- [ ] `int` — applying `add` to one argument is a type error.
+- [x] `int -> int`: a function still waiting for the second
+      argument.
+- [ ] `int -> int -> int`, unchanged, since `add` needs both
+      arguments at once.
+- [ ] `unit`, since the application is incomplete.
+
+**Why:** `add`'s type `int -> int -> int` is really
+`int -> (int -> int)`: a function that takes an `int` and returns
+another function `int -> int`. Applying `add` to just `1` supplies
+the first argument and returns that inner function — exactly how
+`let succ = add 1` works.
 :::
 
 ### Anonymous functions

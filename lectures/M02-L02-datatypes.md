@@ -159,6 +159,27 @@ let p_z = p.z
 
 :::
 
+:::quiz mcq id=M02-L02-q1
+`origin` is an *immutable* `point`, and `morigin` is a *mutable*
+`mpoint`. What is the key difference between
+`let p = { origin with z = 10 }` and `let () = p.z <- 20` (for `p`
+a `mpoint`)?
+
+- [ ] There is no difference; both mutate the field in place.
+- [x] `{ origin with z = 10 }` allocates a brand-new record,
+      leaving `origin` untouched; `p.z <- 20` mutates the existing
+      `p` in place and returns `unit`.
+- [ ] `{ ... with ... }` only works on mutable records.
+- [ ] `<-` only works on immutable records.
+
+**Why:** functional update (`{ r with field = v }`) is available
+on any record and always produces a fresh value, since ordinary
+fields cannot be changed after construction. The `<-` assignment
+operator only type-checks against fields explicitly declared
+`mutable`, and it changes the record that already exists rather
+than making a new one.
+:::
+
 ### References
 
 It is sometimes useful to create single mutable value. OCaml
@@ -178,26 +199,42 @@ let () = x := !x + 1
 let v = !x
 ```
 
-(* ### Exercise
-
-Implement a function that takes two mutable variable and swaps
-their values:
+:::quiz code id=M02-L02-q2
+Implement `swap : int ref -> int ref -> unit` that swaps the
+values held by two reference cells.
 
 ```ocaml
-let swap x y = failwith "for you to implement"
+let swap x y = failwith "not implemented"
 ```
 
 ```ocaml skip
-let x = ref 10
-let y = ref 20
+let check b m = if not b then failwith m
+let () =
+  let x = ref 10 in
+  let y = ref 20 in
+  swap x y;
+  check ((20, 10) = (!x, !y)) "swap 10 20";
+  let a = ref 1 in
+  let b = ref 1 in
+  swap a b;
+  check ((1, 1) = (!a, !b)) "swap equal values";
+  print_endline "all tests passed"
+```
+:::
 
-let () = swap x y
+:::solution
+
+Save `!x` in a temporary before overwriting `x`, otherwise the
+second assignment reads the already-updated value.
+
+```ocaml
+let swap x y =
+  let tmp = !x in
+  x := !y;
+  y := tmp
 ```
 
-```ocaml skip
-assert ((20,10) = (!x,!y))
-```
-*)
+:::
 
 ## Variants
 
@@ -268,17 +305,15 @@ let s = TwoColours(Red, Green)
 ## Pattern matching
 
 Before we go on, let us define a handy print function to print
-stuff to the notebook.
+stuff to the terminal.
 
-```ocaml skip
-#require "jupyter.notebook";;
-
-let show s = ignore (Jupyter_notebook.display "text/html" ("<h3 style='color:red'>"^s^"</h3>"))
+```ocaml
+let show s = print_endline s
 ```
 
 Now we can print things to screen
 
-```ocaml skip
+```ocaml
 show "Hello, world!"
 ```
 
@@ -289,12 +324,12 @@ get the data back out of them? The answer is *pattern matching*.
 Using a `match` statement we can deconstruct a variant type and
 retrieve its constructor's arguments:
 
-```ocaml skip
+```ocaml
 let print_t t =
   match t with
-  | Point p -> show (Printf.sprintf "Point: %d %d %d\n" p.x p.y p.z)
-  | Colour c -> show (Printf.sprintf "Colour\n")
-  
+  | Point p -> show (Printf.sprintf "Point: %d %d %d" p.x p.y p.z)
+  | Colour c -> show (Printf.sprintf "Colour")
+
 let () = print_t (Point { x = 5; y = 9; z = 0 })
 
 let () = print_t (Colour Blue)
@@ -312,14 +347,14 @@ We can nest patterns within other patterns to do pattern matching
 on the constructor arguments. For example, we can print the names
 of the different colours in our `print_t` function:
 
-```ocaml skip
+```ocaml
 let print_t t =
   match t with
-  | Point p -> show (Printf.sprintf "Point: %d %d %d\n" p.x p.y p.z)
-  | Colour Red -> show (Printf.sprintf "Red\n")
-  | Colour Green -> show (Printf.sprintf "Green\n")
-  | Colour Blue -> show (Printf.sprintf "Blue\n")
-  
+  | Point p -> show (Printf.sprintf "Point: %d %d %d" p.x p.y p.z)
+  | Colour Red -> show (Printf.sprintf "Red")
+  | Colour Green -> show (Printf.sprintf "Green")
+  | Colour Blue -> show (Printf.sprintf "Blue")
+
 let () = print_t (Colour Red)
 
 let () = print_t (Colour Blue)
@@ -331,13 +366,13 @@ We can also match on record data using the same syntax as to
 create records, including field punning. So our `print_t` can be
 further refined to:
 
-```ocaml skip
+```ocaml
 let print_t t =
   match t with
-  | Point { x; y; z } -> show (Printf.sprintf "Point: %d %d %d\n" x y z)
-  | Colour Red -> show (Printf.sprintf "Red\n")
-  | Colour Green -> show (Printf.sprintf "Green\n")
-  | Colour Blue -> show (Printf.sprintf "Blue\n")
+  | Point { x; y; z } -> show (Printf.sprintf "Point: %d %d %d" x y z)
+  | Colour Red -> show (Printf.sprintf "Red")
+  | Colour Green -> show (Printf.sprintf "Green")
+  | Colour Blue -> show (Printf.sprintf "Blue")
 ```
 
 ### Exhaustiveness
@@ -347,12 +382,17 @@ errors especially when refactoring, is that the compiler will warn
 you if you forget to handle a particular case. For example, if we
 had forgotten the `Colour Green` case in the above definition:
 
-```ocaml skip
+```ocaml
 let print_t_ t =
   match t with
-  | Point { x; y; z } -> show (Printf.sprintf "Point: %d %d %d\n" x y z)
-  | Colour Red -> show (Printf.sprintf "Red\n")
-  | Colour Blue -> show (Printf.sprintf "Blue\n")
+  | Point { x; y; z } -> show (Printf.sprintf "Point: %d %d %d" x y z)
+  | Colour Red -> show (Printf.sprintf "Red")
+  | Colour Blue -> show (Printf.sprintf "Blue")
+```
+```mdx-error
+Lines 2-5, characters 5-50:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched: Colour Green
 ```
 
 ### The `_` pattern
@@ -395,6 +435,26 @@ Line 4, characters 7-17:
 Warning 11 [redundant-case]: this match case is unused.
 ```
 
+:::quiz mcq id=M02-L02-q3
+Suppose `print_t_` (defined earlier) omits the `Colour Green` case
+of the `t` variant. What does OCaml do?
+
+- [ ] Nothing: OCaml has no way to know a case is missing.
+- [ ] It raises a runtime exception the first time `Colour Green`
+      is matched.
+- [x] The compiler emits a "this pattern-matching is not
+      exhaustive" warning at compile time, naming `Colour Green`
+      as an example of an unmatched value.
+- [ ] It silently falls through to the `Point` case.
+
+**Why:** the compiler knows every constructor of `t` and `colour`
+from their type definitions, so it can check a `match` against
+the full set of shapes a value could take. A missing case is
+flagged statically, before the program ever runs, which is one of
+pattern matching's main safety benefits over an `if`/`else` chain
+on manually-extracted fields.
+:::
+
 ## Parameterised types
 
 Types in OCaml can be parameterised by other types. For example,
@@ -418,14 +478,14 @@ let co = Some Green
 
 We can define a printer for `t option` type as follows:
 
-```ocaml skip
-let print_t_opt t = 
+```ocaml
+let print_t_opt t =
   match t with
-  | None -> show ("None")
+  | None -> show "None"
   | Some t -> print_t t
 ```
 
-```ocaml skip
+```ocaml
 let () = print_t_opt (Some (Colour Red))
 
 let () = print_t_opt None
@@ -562,61 +622,116 @@ let rec sum il =
 let s = sum l
 ```
 
-(* ### Exercise
-
-Write a function `min_list` to compute the minimum element in an
-integer list. If the list is empty then it should return `None`.
-If the minimum element is `e`, then the function returns `Some e`.
+:::quiz code id=M02-L02-q4
+Write `min_list : int list -> int option` to compute the minimum
+element of an integer list. Return `None` for the empty list, and
+`Some e` when the minimum element is `e`.
 
 ```ocaml
 let rec min_list_helper cur_min l =
   match l with
   | [] -> cur_min
-  | x::xs ->
-      match cur_min with
-      | None -> failwith "for you to implement"
-      | Some m -> failwith "for you to implement"
-  
+  | x :: xs ->
+      (match cur_min with
+       | None -> failwith "not implemented"
+       | Some m -> failwith "not implemented")
+
 let min_list l = min_list_helper None l
 ```
 
+```ocaml skip
+let check b m = if not b then failwith m
+let () =
+  check (min_list [] = None) "min_list []";
+  check (min_list [3; 1; 2] = Some 1) "min_list [3;1;2]";
+  check (min_list [5] = Some 5) "min_list [5]";
+  print_endline "all tests passed"
+```
+:::
+
+:::solution
+
+The helper's `None` branch should start the running minimum at
+`x`; the `Some m` branch should keep whichever of `m` and `x` is
+smaller.
+
 ```ocaml
-assert (min_list [] = None)
+let rec min_list_helper cur_min l =
+  match l with
+  | [] -> cur_min
+  | x :: xs ->
+      (match cur_min with
+       | None -> min_list_helper (Some x) xs
+       | Some m -> min_list_helper (Some (min m x)) xs)
+
+let min_list l = min_list_helper None l
+```
+
+:::
+
+:::quiz code id=M02-L02-q5
+Write `postfix : 'a binary_tree -> 'a list` that returns the
+elements of a binary tree in postfix order (left subtree, then
+right subtree, then the node itself). Use the list append operator
+`@`.
+
+```ocaml
+let rec postfix t = failwith "not implemented"
 ```
 
 ```ocaml skip
-assert (min_list [3;1;2] = Some 1)
+let check b m = if not b then failwith m
+let () =
+  check (postfix Leaf = []) "postfix Leaf";
+  check
+    (postfix
+       (Tree
+          ( Tree (Leaf, 0, Leaf),
+            1,
+            Tree (Tree (Leaf, 5, Leaf), 4, Leaf) ))
+    = [0; 5; 4; 1])
+    "postfix example tree";
+  print_endline "all tests passed"
 ```
-*)
+:::
 
-(* ### Exercise
-
-Write a function to return the list of elements of a binary in
-postfix order. Use the list append function `@`:
+:::solution
 
 ```ocaml
-[1;2;3] @ [4;5;6]
+let rec postfix t =
+  match t with
+  | Leaf -> []
+  | Tree (left, v, right) -> postfix left @ postfix right @ [v]
 ```
 
+:::
+
+:::quiz code id=M02-L02-q6
+Write `rev_list : 'a list -> 'a list` that reverses a list. Use the
+list append operator `@` (an `O(n)` accumulator-based version is a
+nice follow-up once you've seen this one work).
+
 ```ocaml
-let rec postfix t = failwith "for you to implement"
+let rec rev_list l = failwith "not implemented"
 ```
 
 ```ocaml skip
-assert ([0; 5; 4; 1] = postfix (Tree (Tree (Leaf, 0, Leaf), 1, Tree (Tree (Leaf, 5, Leaf), 4, Leaf))))
+let check b m = if not b then failwith m
+let () =
+  check (rev_list [] = []) "rev_list []";
+  check (rev_list [1; 2; 3] = [3; 2; 1]) "rev_list [1;2;3]";
+  check (rev_list [1] = [1]) "rev_list [1]";
+  print_endline "all tests passed"
 ```
-*)
+:::
 
-(* ### Exercise
-
-Write a function to reverse a list. Use the list append function
-is `@`:
+:::solution
 
 ```ocaml
-let rec rev_list l = failwith "for you to implement"
+let rec rev_list l =
+  match l with
+  | [] -> []
+  | x :: xs -> rev_list xs @ [x]
 ```
 
-```ocaml skip
-assert (rev_list ([1;2;3]) = [3;2;1])
-```
-*)
+:::
