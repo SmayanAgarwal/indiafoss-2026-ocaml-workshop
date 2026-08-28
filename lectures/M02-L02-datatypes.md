@@ -8,8 +8,10 @@ keywords: []
 reading:
   - title: "The OCaml manual, Data types section"
     url: https://ocaml.org/manual/5.5/coreexamples.html#s%3Adatatypes
-  - title: "Cornell CS3110, Basics chapter (index)"
-    url: https://cs3110.github.io/textbook/chapters/data/intro.html
+  - title: "Cornell CS3110, Algebraic Data Types"
+    url: https://cs3110.github.io/textbook/chapters/data/algebraic_data_types.html
+  - title:  "Cornell CS3110, Advanced Pattern Matching"
+    url: https://cs3110.github.io/textbook/chapters/data/pattern_matching_advanced.html
 ---
 
 # Data types and pattern matching
@@ -272,7 +274,7 @@ a `point` or a `colour`:
 type t =
   | Point of point
   | Colour of colour
-  
+
 let p_or_c cond pnt col = if cond then Point pnt else Colour col
 
 let p = p_or_c (1 > 0) origin red
@@ -503,7 +505,7 @@ let opt_to_list o =
   match o with
   | Some x -> [x]
   | None -> []
-  
+
 let l = opt_to_list (Some 9)
 
 let m = opt_to_list (Some Red)
@@ -561,7 +563,7 @@ let rec depth tr =
   | Tree(left, _, right) ->
       1 + (max (depth left) (depth right))
 
-let tree : colour binary_tree = 
+let tree : colour binary_tree =
   Tree(Tree(Leaf,
             Blue,
             Tree(Leaf,
@@ -618,7 +620,7 @@ let rec sum il =
   match il with
   | [] -> 0
   | i :: rest -> i + (sum rest)
-  
+
 let s = sum l
 ```
 
