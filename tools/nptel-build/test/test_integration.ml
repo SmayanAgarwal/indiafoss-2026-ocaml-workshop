@@ -104,12 +104,19 @@ let vm_terminal_script () =
 
 (* ---- Mode toggle / runtime wiring ---- *)
 
-(* The slide-mode toggle button was removed from the header (it
-   stayed reachable only via the #slides URL hash); this locks in
-   that it does not regress back in. *)
-let mode_toggle_button_absent () =
-  check_bool "mode-toggle button not emitted" false
+(* The slide-mode toggle is back in the header: reaching the deck
+   only through the #slides URL hash is not discoverable for
+   someone about to present. Pages with no [:::slide] block still
+   omit it, which [mode_toggle_absent_without_slides] covers. *)
+let mode_toggle_button_present () =
+  check_bool "mode-toggle button emitted" true
     (contains (Lazy.force html) "class=\"mode-toggle\"")
+
+let mode_toggle_absent_without_slides () =
+  let fm, _ = Frontmatter.parse "" in
+  let html = Emit.render ~asset_root:"" ~fm ~html_body:"<p>no deck here</p>" () in
+  check_bool "no toggle on a slide-free page" false
+    (contains html "class=\"mode-toggle\"")
 
 let cell_controls () =
   let s = Lazy.force html in
@@ -187,8 +194,10 @@ let () =
         ] );
       ( "runtime wiring",
         [
-          Alcotest.test_case "mode toggle button absent" `Quick
-            mode_toggle_button_absent;
+          Alcotest.test_case "mode toggle button present" `Quick
+            mode_toggle_button_present;
+          Alcotest.test_case "no toggle without slides" `Quick
+            mode_toggle_absent_without_slides;
           Alcotest.test_case "cell controls" `Quick cell_controls;
           Alcotest.test_case "root-relative asset paths" `Quick asset_paths_root_relative;
           Alcotest.test_case "reveal wrapper" `Quick reveal_wrapper;
