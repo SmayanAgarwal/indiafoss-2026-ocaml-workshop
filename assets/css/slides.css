@@ -10,10 +10,14 @@ body.mode-slides {
    mode just like other chapter-only content. */
 body.mode-slides .chapter-only { display: none !important; }
 
-/* Quizzes are reading-mode only: the recorded video does not pause
-   for them. They stay in the DOM (so localStorage state persists
-   across mode toggles) but are not displayed in slide mode. */
+/* A quiz authored inside a [:::slide] becomes a slide of its own and
+   is meant to be shown: the workshop pauses on it and the room
+   answers. A quiz left in the chapter body is reading-mode only, and
+   stays hidden here (the article itself is hidden in slide mode; this
+   rule keeps that explicit). Either way the quiz stays in the DOM, so
+   localStorage state persists across mode toggles. */
 body.mode-slides .quiz { display: none !important; }
+body.mode-slides section[data-slide] .quiz { display: block !important; }
 
 /* Heading permalinks (the ¶ anchors injected by the runtime) are
    useful in the chapter view for deep-linking, but on a slide

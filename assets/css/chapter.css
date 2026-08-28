@@ -521,6 +521,17 @@ body.mode-slides .privacy-banner { display: none; }
   border-left-color: #8aa9ad;
   margin-left: 1.2rem;
 }
+/* A quiz or reference solution authored inside a [:::slide] (so it
+   becomes a slide of its own when presenting) already draws its own
+   callout box. Drop the section's callout around it, or the chapter
+   view shows a box inside a box. */
+.chapter section.slide:has(> .quiz),
+.chapter section.slide:has(> details.solution) {
+  border-left: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
 .chapter span.fragment {
   /* In chapter mode fragments are visible inline. */
   display: inline;
@@ -668,26 +679,26 @@ x-ocaml {
 /* Reference-solution disclosure: collapsed by default. Authored with
    :::solution. Used right after a :::quiz code so self-readers do not
    see the answer immediately below the question. */
-.chapter details.solution {
+details.solution {
   margin: 0.8rem 0;
   padding: 0.4rem 0.8rem;
   background: #fafafa;
   border-left: 3px solid var(--accent, #6e8acc);
   border-radius: 2px;
 }
-.chapter details.solution > summary {
+details.solution > summary {
   cursor: pointer;
   font-weight: 600;
   color: var(--accent, #4a6da1);
   user-select: none;
   padding: 0.2rem 0;
 }
-.chapter details.solution > summary::marker { color: var(--muted, #888); }
-.chapter details.solution[open] > summary {
+details.solution > summary::marker { color: var(--muted, #888); }
+details.solution[open] > summary {
   margin-bottom: 0.4rem;
 }
-.chapter details.solution > *:not(summary):first-child { margin-top: 0; }
-.chapter details.solution > *:last-child { margin-bottom: 0; }
+details.solution > *:not(summary):first-child { margin-top: 0; }
+details.solution > *:last-child { margin-bottom: 0; }
 
 /* Code quiz */
 .quiz-code .quiz-controls {

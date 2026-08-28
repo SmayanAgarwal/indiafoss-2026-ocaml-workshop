@@ -160,6 +160,8 @@ Error: This expression has type float but an expression was
        expected of type int
 ```
 
+:::slide
+
 :::quiz mcq id=M01-L01-q1
 The bindings above include `let a = 'a'`. Suppose we now add
 `let b = 'a'`. What happens when OCaml evaluates `a = b`?
@@ -180,6 +182,10 @@ so the answer is `true`. Note that `=` compares values, not
 bindings: it does not matter that `a` and `b` are separate names,
 or how each one was written.
 :::
+
+:::
+
+:::slide
 
 :::quiz mcq id=M01-L01-q7
 Given `let one = 1` and `let one' = 1.` (note the trailing dot on
@@ -202,6 +208,8 @@ separates it from the `int` literal `1`. So this is the same
 situation as `one = pi`: `=` needs both sides to have the same
 type, and the compiler rejects it with "This expression has type
 float but an expression was expected of type int."
+:::
+
 :::
 
 ### Local let bindings
@@ -233,6 +241,8 @@ at the top-level. The j variable is no longer in scope:
 j+4
 ```
 
+:::slide
+
 :::quiz mcq id=M01-L01-q2
 After evaluating `let i = let j = 5 in j + 2`, what happens if you
 then try to evaluate `j + 4` at the top level?
@@ -248,6 +258,8 @@ Once that expression finishes evaluating, `j` goes out of scope;
 only `i` (bound to `7`) remains visible at the top level.
 Referring to `j` afterwards is a compile-time "Unbound value j"
 error.
+:::
+
 :::
 
 ## Conditionals
@@ -353,6 +365,9 @@ let b = succ 8
 let c = add a b
 ```
 
+:::slide
+
+
 :::quiz code id=M01-L01-q3
 Implement `sum_of_succ : int -> int -> int`, which computes the
 sum of the successors of its two arguments, using only `add` and
@@ -372,6 +387,10 @@ let () =
 ```
 :::
 
+:::
+
+:::slide
+
 :::solution
 
 Apply `succ` to each argument first, then combine the results with
@@ -380,6 +399,8 @@ Apply `succ` to each argument first, then combine the results with
 ```ocaml
 let sum_of_succ x y = add (succ x) (succ y)
 ```
+
+:::
 
 :::
 
@@ -415,6 +436,9 @@ let rec sum_of_first_n n =
 assert (sum_of_first_n 5 = 15)
 ```
 
+:::slide
+
+
 :::quiz code id=M01-L01-q4
 Implement a recursive function `fib : int -> int` that computes
 the nth Fibonacci number, using the convention `fib 0 = 1`,
@@ -434,6 +458,10 @@ let () =
 ```
 :::
 
+:::
+
+:::slide
+
 :::solution
 
 ```ocaml
@@ -441,6 +469,8 @@ let rec fib n =
   if n < 2 then 1
   else fib (n - 1) + fib (n - 2)
 ```
+
+:::
 
 :::
 
@@ -504,6 +534,9 @@ let divisor  = 3 in
 divide ~dividend ~divisor
 ```
 
+:::slide
+
+
 :::quiz code id=M01-L01-q5
 Implement `modulo ~dividend ~divisor`, which returns the remainder
 of `dividend` divided by `divisor`, built using our labelled
@@ -523,6 +556,10 @@ let () =
 ```
 :::
 
+:::
+
+:::slide
+
 :::solution
 
 `divide` already gives the truncated quotient, so the remainder is
@@ -532,6 +569,8 @@ let () =
 let modulo ~dividend ~divisor =
   dividend - divisor * (divide ~dividend ~divisor)
 ```
+
+:::
 
 :::
 
@@ -613,6 +652,8 @@ let succ = add 1
 
 :::
 
+:::slide
+
 :::quiz mcq id=M01-L01-q6
 Given `let add x y = x + y` has type `int -> int -> int`, what is
 the type of `add 1`?
@@ -629,6 +670,8 @@ the type of `add 1`?
 another function `int -> int`. Applying `add` to just `1` supplies
 the first argument and returns that inner function — exactly how
 `let succ = add 1` works.
+:::
+
 :::
 
 ### Anonymous functions

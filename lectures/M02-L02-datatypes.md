@@ -16,6 +16,16 @@ reading:
 
 # Data types and pattern matching
 
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Fun and Profit with OCaml</p>
+<h2 class="title-slide-lecture">Data Types and Pattern Matching</h2>
+<p class="title-slide-label">Module 2 &middot; Lecture 2</p>
+</div>
+
+:::
+
 OCaml has a concise and expressive system for creating new
 datatypes. It also supports pattern matching to naturally express
 deconstruction of these data types.
@@ -24,6 +34,23 @@ deconstruction of these data types.
 
 OCaml allows you to define aliases for existing types using the
 `type` keyword:
+
+:::slide
+
+## Type aliases
+
+```ocaml
+type int_pair = int * int
+
+let id (x : int_pair) = x
+```
+
+- `type NAME = ...` gives an existing type a second name.
+- An alias is the same type, not a new one, so `int_pair` and
+  `int * int` are interchangeable.
+- `:` constrains an expression or a binding to a type.
+
+:::
 
 ```ocaml
 type int_pair = int * int
@@ -54,6 +81,25 @@ let id (x : int_pair) = x
 Records in OCaml represent a collection of named elements. A
 simple example is a `point` record containing `x`, `y` and `z`
 fields:
+
+:::slide
+
+## Record types
+
+```ocaml
+type point = {
+  x : int;
+  y : int;
+  z : int;
+}
+```
+
+- A record groups a fixed set of named fields.
+- Each field is declared with its own type.
+- The field names are part of the type, so `point` is distinct
+  from any other record with three `int` fields.
+
+:::
 
 ```ocaml
 type point = {
@@ -111,6 +157,20 @@ let p = { origin with z = 10 }
 Another useful trick with records is *field punning*, which allows
 you to replace:
 
+:::slide
+
+## Field punning
+
+```ocaml
+let mk_point x y z = { x; y; z }
+```
+
+- When a variable has the same name as the field, write the name
+  once instead of `{ x = x; y = y; z = z }`.
+- The same shorthand works in patterns when matching a record.
+
+:::
+
 ```ocaml
 let mk_point x y z = { x = x; y = y; z = z }
 ```
@@ -161,6 +221,8 @@ let p_z = p.z
 
 :::
 
+:::slide
+
 :::quiz mcq id=M02-L02-q1
 `origin` is an *immutable* `point`, and `morigin` is a *mutable*
 `mpoint`. What is the key difference between
@@ -182,10 +244,30 @@ operator only type-checks against fields explicitly declared
 than making a new one.
 :::
 
+:::
+
 ### References
 
 It is sometimes useful to create single mutable value. OCaml
 provides reference cells for this purpose
+
+:::slide
+
+## References
+
+```ocaml
+let counter = ref 0
+
+let () = counter := !counter + 1
+
+let seen = !counter
+```
+
+- `ref v` creates a single mutable cell holding `v`.
+- Read it with `!` and update it with `:=`.
+- A `ref` is really a record with one mutable field.
+
+:::
 
 ```ocaml
 let x = ref 0
@@ -200,6 +282,9 @@ let () = x := !x + 1
 
 let v = !x
 ```
+
+:::slide
+
 
 :::quiz code id=M02-L02-q2
 Implement `swap : int ref -> int ref -> unit` that swaps the
@@ -224,6 +309,10 @@ let () =
 ```
 :::
 
+:::
+
+:::slide
+
 :::solution
 
 Save `!x` in a temporary before overwriting `x`, otherwise the
@@ -238,6 +327,8 @@ let swap x y =
 
 :::
 
+:::
+
 ## Variants
 
 ### Variant types
@@ -245,6 +336,27 @@ let swap x y =
 Variants in OCaml represent data which can be in one of a number
 of forms. A very simple example is a type representing one of
 three colours:
+
+:::slide
+
+## Variant types
+
+```ocaml
+type colour =
+  | Red
+  | Green
+  | Blue
+
+let red = Red
+```
+
+- A variant value is in exactly one of a fixed set of forms.
+- Each form is named by a constructor, written with a capital
+  letter.
+- The type lists every constructor, which is what lets the
+  compiler check a `match` for completeness.
+
+:::
 
 ```ocaml
 type colour =
@@ -291,6 +403,24 @@ let p = p_or_c (1 > 0) origin red
 Variants constructors can contain multiple arguments seperated by
 the `*` symbol:
 
+:::slide
+
+## Multiple constructor arguments
+
+```ocaml
+type s =
+| ThreePoints of point * point * point
+| TwoColours of colour * colour
+
+let s = TwoColours(Red, Green)
+```
+
+- Separate several arguments with `*` in the declaration.
+- Building such a constructor needs parentheses around the
+  arguments.
+
+:::
+
 ```ocaml
 type s =
 | ThreePoints of point * point * point
@@ -326,6 +456,25 @@ get the data back out of them? The answer is *pattern matching*.
 Using a `match` statement we can deconstruct a variant type and
 retrieve its constructor's arguments:
 
+:::slide
+
+## Inspecting variants
+
+```ocaml
+let print_t t =
+  match t with
+  | Point p -> show (Printf.sprintf "Point: %d %d %d" p.x p.y p.z)
+  | Colour c -> show (Printf.sprintf "Colour")
+```
+
+- `match` takes a value apart by asking which constructor built
+  it.
+- `Point p` is a pattern, not an expression: it binds a fresh `p`
+  to the constructor's argument.
+- That `p` shadows any existing `p` for the length of the branch.
+
+:::
+
 ```ocaml
 let print_t t =
   match t with
@@ -349,6 +498,26 @@ We can nest patterns within other patterns to do pattern matching
 on the constructor arguments. For example, we can print the names
 of the different colours in our `print_t` function:
 
+:::slide
+
+## Nested patterns
+
+```ocaml
+let print_t t =
+  match t with
+  | Point p -> show (Printf.sprintf "Point: %d %d %d" p.x p.y p.z)
+  | Colour Red -> show (Printf.sprintf "Red")
+  | Colour Green -> show (Printf.sprintf "Green")
+  | Colour Blue -> show (Printf.sprintf "Blue")
+```
+
+- A pattern can contain further patterns, matching a constructor
+  and its argument in one step.
+- `Colour Red` matches only the `Colour` case whose payload is
+  `Red`.
+
+:::
+
 ```ocaml
 let print_t t =
   match t with
@@ -368,6 +537,26 @@ We can also match on record data using the same syntax as to
 create records, including field punning. So our `print_t` can be
 further refined to:
 
+:::slide
+
+## Matching records
+
+```ocaml
+let print_t t =
+  match t with
+  | Point { x; y; z } -> show (Printf.sprintf "Point: %d %d %d" x y z)
+  | Colour Red -> show (Printf.sprintf "Red")
+  | Colour Green -> show (Printf.sprintf "Green")
+  | Colour Blue -> show (Printf.sprintf "Blue")
+```
+
+- Records are matched with the same `{ ... }` syntax used to
+  build them.
+- Field punning works here too: `{ x; y; z }` binds three
+  variables named after the fields.
+
+:::
+
 ```ocaml
 let print_t t =
   match t with
@@ -384,6 +573,10 @@ errors especially when refactoring, is that the compiler will warn
 you if you forget to handle a particular case. For example, if we
 had forgotten the `Colour Green` case in the above definition:
 
+:::slide
+
+## Exhaustiveness
+
 ```ocaml
 let print_t_ t =
   match t with
@@ -394,7 +587,30 @@ let print_t_ t =
 ```mdx-error
 Lines 2-5, characters 5-50:
 Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-  Here is an example of a case that is not matched: Colour Green
+Here is an example of a case that is not matched:
+Colour Green
+```
+
+- The compiler knows every constructor, so it can tell when a
+  `match` misses one.
+- It names an unmatched example, here `Colour Green`.
+- This is what makes adding a constructor safe: every incomplete
+  `match` is reported.
+
+:::
+
+```ocaml
+let print_t_ t =
+  match t with
+  | Point { x; y; z } -> show (Printf.sprintf "Point: %d %d %d" x y z)
+  | Colour Red -> show (Printf.sprintf "Red")
+  | Colour Blue -> show (Printf.sprintf "Blue")
+```
+```mdx-error
+Lines 2-5, characters 5-50:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+Colour Green
 ```
 
 ### The `_` pattern
@@ -426,6 +642,10 @@ matches multiple patterns then the first of those patterns will be
 selected. For example, in the following code the second case will
 never be matched:
 
+:::slide
+
+## Match ordering
+
 ```ocaml
 let is_colour_red t =
   match t with
@@ -436,6 +656,25 @@ let is_colour_red t =
 Line 4, characters 7-17:
 Warning 11 [redundant-case]: this match case is unused.
 ```
+
+- Patterns are tried top to bottom, and the first match wins.
+- A catch-all `_` placed first makes every later case dead, and
+  the compiler says so.
+
+:::
+
+```ocaml
+let is_colour_red t =
+  match t with
+  | _ -> false
+  | Colour Red -> true
+```
+```mdx-error
+Line 4, characters 7-17:
+Warning 11 [redundant-case]: this match case is unused.
+```
+
+:::slide
 
 :::quiz mcq id=M02-L02-q3
 Suppose `print_t_` (defined earlier) omits the `Colour Green` case
@@ -457,10 +696,33 @@ pattern matching's main safety benefits over an `if`/`else` chain
 on manually-extracted fields.
 :::
 
+:::
+
 ## Parameterised types
 
 Types in OCaml can be parameterised by other types. For example,
 the `option` type which may or may not contain a value:
+
+:::slide
+
+## Parameterised types
+
+```ocaml
+type 'a option =
+| None
+| Some of 'a
+
+let io = Some 6
+
+let co = Some Green
+```
+
+- `'a` is a type variable, standing for any type.
+- Supplying it gives a concrete type: `int option`,
+  `colour option`, and so on.
+- One definition serves every element type.
+
+:::
 
 ```ocaml
 type 'a option =
@@ -500,6 +762,24 @@ values. For example, the following function has type
 `'a option -> 'a list` which means it can be applied to any
 `option` type:
 
+:::slide
+
+## Polymorphic values
+
+```ocaml
+let opt_to_list o =
+  match o with
+  | Some x -> [x]
+  | None -> []
+```
+
+- `opt_to_list` has type `'a option -> 'a list`.
+- It never inspects the element, so it works for every `'a`.
+- One definition applies to `int option`, `colour option` and
+  the rest.
+
+:::
+
 ```ocaml
 let opt_to_list o =
   match o with
@@ -516,6 +796,25 @@ let m = opt_to_list (Some Red)
 Constructors of parameterised types which do not include the type
 parameter, such as `None` in the optional type, are also examples
 of polymorphic values:
+
+:::slide
+
+## Polymorphic constructors
+
+```ocaml
+let n = None
+
+let a = [ Some 3; n ]
+
+let b = [ n; Some Blue ]
+```
+
+- `None` mentions no `'a`, so it has type `'a option` and fits
+  any element type.
+- The same `n` is usable in an `int option list` and in a
+  `colour option list`.
+
+:::
 
 ```ocaml
 let n = None
@@ -555,6 +854,24 @@ other `binary_tree`s as its arguments.
 We can write recursive functions to handle these recursive data
 types. For example, the following function returns the maximum
 depth of a binary tree:
+
+:::slide
+
+## Inspecting recursive data types
+
+```ocaml
+let rec depth tr =
+  match tr with
+  | Leaf -> 1
+  | Tree(left, _, right) ->
+      1 + (max (depth left) (depth right))
+```
+
+- A recursive type is consumed by a recursive function.
+- The pattern has one branch per constructor: `Leaf` stops the
+  recursion, `Tree` recurses into both subtrees.
+
+:::
 
 ```ocaml
 let rec depth tr =
@@ -615,6 +932,24 @@ Like all constructors, the list constructors can be used as
 patterns in pattern matching. The following function sums all the
 elements of an `int list`:
 
+:::slide
+
+## Matching lists
+
+```ocaml
+let rec sum il =
+  match il with
+  | [] -> 0
+  | i :: rest -> i + (sum rest)
+```
+
+- `[]` and `::` are ordinary constructors, so they work as
+  patterns.
+- `i :: rest` splits a list into its head and its tail.
+- The empty-list case is what ends the recursion.
+
+:::
+
 ```ocaml
 let rec sum il =
   match il with
@@ -623,6 +958,9 @@ let rec sum il =
 
 let s = sum l
 ```
+
+:::slide
+
 
 :::quiz code id=M02-L02-q4
 Write `min_list : int list -> int option` to compute the minimum
@@ -651,6 +989,10 @@ let () =
 ```
 :::
 
+:::
+
+:::slide
+
 :::solution
 
 The helper's `None` branch should start the running minimum at
@@ -670,6 +1012,11 @@ let min_list l = min_list_helper None l
 ```
 
 :::
+
+:::
+
+:::slide
+
 
 :::quiz code id=M02-L02-q5
 Write `postfix : 'a binary_tree -> 'a list` that returns the
@@ -697,6 +1044,10 @@ let () =
 ```
 :::
 
+:::
+
+:::slide
+
 :::solution
 
 ```ocaml
@@ -707,6 +1058,11 @@ let rec postfix t =
 ```
 
 :::
+
+:::
+
+:::slide
+
 
 :::quiz code id=M02-L02-q6
 Write `rev_list : 'a list -> 'a list` that reverses a list. Use the
@@ -727,6 +1083,10 @@ let () =
 ```
 :::
 
+:::
+
+:::slide
+
 :::solution
 
 ```ocaml
@@ -735,5 +1095,7 @@ let rec rev_list l =
   | [] -> []
   | x :: xs -> rev_list xs @ [x]
 ```
+
+:::
 
 :::
