@@ -155,18 +155,10 @@ let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
       });
     }
   </script>
-  <!-- x-ocaml runs ocamlformat over every cell before handing it to
-       the editor. That rewrites the lecture source: notably it puns
-       labelled arguments, so an [~dividend:dividend] written to
-       contrast with the punned form renders as [~dividend] and the
-       teaching point disappears. [disable=true] keeps each cell
-       exactly as authored in the markdown. [margin=60] is kept so
-       the intended width is recorded if formatting is re-enabled. -->
   <script async
     src="%s/assets/%s/x-ocaml.js?v=%s"
     src-worker="%s/assets/%s/x-ocaml.worker.js?v=%s"
-    x-ocamlformat="margin=60
-disable=true"%s></script>%s
+    x-ocamlformat="margin=60"%s></script>%s
 </head>|}
     (Parse.html_escape commit_sha)
     (Parse.html_escape quiz_api_url)
