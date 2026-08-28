@@ -387,18 +387,30 @@ divide ~divisor:3 ~dividend:9
 We can also pass variables into the labelled argument:
 
 ```ocaml
-let dividend = 9 in
-let divisor  = 3 in
-divide ~dividend:dividend ~divisor:divisor
+let to_divide = 9 in
+let divide_by  = 3 in
+divide ~dividend:to_divide ~divisor:divide_by
 ```
 
-If the variable name happens to be the same as the labelled
-argument, we don't even have to write it twice:
+The variable name can be of the same as the labelled
+argument, so the following is completely valid:
+
 
 ```ocaml
-let dividend = 9 in
-let divisor  = 3 in
-divide ~dividend ~divisor
+[@@@ocamlformat "disable"]
+
+let divide' ~dividend:dividend ~divisor:divisor =
+    dividend / divisor
+```
+
+If we require that argument names used within functions be different
+from the labelled names, then the following snippet is the way:
+
+
+```ocaml
+let divide' ~dividend:to_div ~divisor:div_by =
+    to_div / div_by
+in divide' ~dividend:9 ~divisor:3
 ```
 
 :::quiz code id=M01-L01-q5
