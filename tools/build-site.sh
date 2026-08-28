@@ -211,6 +211,21 @@ emit_index() {
 <body class="mode-chapter">
   <article class="landing">
     <h1>IndiaFOSS 2026 - Fun and Profit with OCaml</h1>
+    <p> We are very happy to offer <strong><em>Fun and Profit with OCaml</em></strong>
+    at IndiaFOSS 2026.  The content has been adapted from
+        <a href="https://github.com/kayceesrk/ocaml-tutorial/tree/master" target="_blank" > OCaml tutorial - Abstraction 2019 </a> and the infrastucture from
+        <a href="https://github.com/fplaunchpad/ocaml_nptel" target="_blank">Functional Programming with OCaml</a> has been used for deploying this website.
+    </p>
+
+    <p>
+    This workshop is tailored towards those who are familiar with programming but
+    have not written any code using OCaml until now. We will first go over the
+    basics of programming in OCaml through the use of expressions, functions,
+    data types, after which a tour through a few powerful features common
+    to most functional programming languages such as pattern matching,
+    higher-order programming and modules will round off the lessons from this
+    workshop.
+    </p>
     <script>
     (function () {
       var box = document.getElementById('lecture-search');
