@@ -65,6 +65,16 @@ if [ "$COPY_ASSETS" = "1" ]; then
   cp -r "$REPO_ROOT/assets" "$REPO_ROOT/_site/assets"
 fi
 
+# Same idea, for games/: plain self-contained static pages (all CSS/JS
+# inlined, OCaml source living directly in <x-ocaml> cells) that don't
+# go through the markdown/nptel-build pipeline at all -- just vendor
+# them into _site/ verbatim for deploy. Local preview already serves
+# /games/ straight from the repo root, same as /assets/ above.
+if [ "$COPY_ASSETS" = "1" ] && [ -d "$REPO_ROOT/games" ]; then
+  rm -rf "$REPO_ROOT/_site/games"
+  cp -r "$REPO_ROOT/games" "$REPO_ROOT/_site/games"
+fi
+
 # Emit _site/search-index.json for the landing page's search box:
 # per lecture the title, concepts, keywords, activity question, and
 # every h2-h4 heading with its anchor. The anchor slugs replicate
