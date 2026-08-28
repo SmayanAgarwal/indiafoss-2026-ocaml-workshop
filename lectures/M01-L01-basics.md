@@ -27,15 +27,15 @@ Let's begin with a tour through the basics of the OCaml programming language.
   - Initially developed at [INRIA](https://inria.fr/en), the National Institute
   for Research in Digital Science and Technology in France and is now a
   well-maintained open-source project developed on
-    [Github](https://github.com/ocaml/ocaml)
+    [Github](https://github.com/ocaml/ocaml).
 - It supports multiple paradigms of programming: functional, imperative
-    and object-oriented
+    and object-oriented.
 - A fast compiler that produces efficient native code for x86,
   ARM, RISC-V, etc., as well as JavaScript (via WASM).
 - A number of organisations use the language including:
   - Jane Street ([OCaml use at Jane
-    Street](https://www.janestreet.com/tech-talks/ocaml-all-the-way-down/))
-  - Microsoft (Everest project, F* programming language)
+    Street](https://www.janestreet.com/tech-talks/ocaml-all-the-way-down/)).
+  - Microsoft ([Everest project](https://project-everest.github.io/), [F*](https://fstar-lang.org/) programming language).
   - Facebook (Hack, Infer, Flow, ReasonML). [More than 50%
     messenger.com is
     ReasonML](https://reasonml.github.io/blog/2017/09/08/messenger-50-reason.html).
@@ -118,21 +118,47 @@ Error: This expression has type float but an expression was
 ```
 
 :::quiz mcq id=M01-L01-q1
-Given `let one = 1` and `let pi = 3.1415`, what happens when OCaml
-evaluates `one = pi`?
+The bindings above include `let a = 'a'`. Suppose we now add
+`let b = 'a'`. What happens when OCaml evaluates `a = b`?
 
-- [ ] It evaluates to `false`, since `1` and `3.1415` are different.
-- [x] It fails to compile: `int` and `float` are different types,
-      and `=` requires both sides to have the same type.
-- [ ] It evaluates to `true`, because OCaml converts `1` to `1.0`
-      automatically.
-- [ ] It raises a runtime exception `Invalid_argument`.
+- [x] It evaluates to `true`: both are `char` values, and `=`
+      compares the values they hold.
+- [ ] It fails to compile, the same way `one = pi` does.
+- [ ] It evaluates to `false`, because `a` and `b` are two
+      different bindings.
+- [ ] It evaluates to `true` only because `b` was defined using
+      the letter `a`.
 
-**Why:** OCaml never inserts implicit conversions between `int`
-and `float`. Since `one : int` and `pi : float`, the compiler
-rejects `one = pi` before the program ever runs with "This
-expression has type float but an expression was expected of type
-int."
+**Why:** `one = pi` is rejected because `int` and `float` are
+different types, so `=` has nothing to compare. Here both `a` and
+`b` have type `char`, so `=` is well typed and simply asks whether
+the two values are the same — they are both the character `'a'`,
+so the answer is `true`. Note that `=` compares values, not
+bindings: it does not matter that `a` and `b` are separate names,
+or how each one was written.
+:::
+
+:::quiz mcq id=M01-L01-q7
+Given `let one = 1` and `let one' = 1.` (note the trailing dot on
+the second `one'`) What happens when OCaml evaluates `one = one'`?
+
+- [x] It fails to compile: `1.` is a `float` literal, so `one'` is
+      a `float` while `one` is an `int`.
+- [ ] It evaluates to `true`: both bindings are the number one.
+- [ ] It is a syntax error: `'` may only be used to write a
+      character literal such as `'a'`.
+- [ ] It evaluates to `false`, because `one` and `one'` are
+      different names.
+
+**Why:** Two things are easy to misread here. First, `'` is a
+perfectly legal character inside an identifier as long as it is
+not the first one, so `one'` — read aloud as "one prime" — is an
+ordinary variable name. Second, the trailing dot in `1.` makes it
+a `float` literal, exactly like `1.0`; only that one character
+separates it from the `int` literal `1`. So this is the same
+situation as `one = pi`: `=` needs both sides to have the same
+type, and the compiler rejects it with "This expression has type
+float but an expression was expected of type int."
 :::
 
 ### Local let bindings
