@@ -104,8 +104,11 @@ let vm_terminal_script () =
 
 (* ---- Mode toggle / runtime wiring ---- *)
 
-let mode_toggle_button () =
-  check_bool "mode-toggle button emitted" true
+(* The slide-mode toggle button was removed from the header (it
+   stayed reachable only via the #slides URL hash); this locks in
+   that it does not regress back in. *)
+let mode_toggle_button_absent () =
+  check_bool "mode-toggle button not emitted" false
     (contains (Lazy.force html) "class=\"mode-toggle\"")
 
 let cell_controls () =
@@ -184,7 +187,8 @@ let () =
         ] );
       ( "runtime wiring",
         [
-          Alcotest.test_case "mode toggle button" `Quick mode_toggle_button;
+          Alcotest.test_case "mode toggle button absent" `Quick
+            mode_toggle_button_absent;
           Alcotest.test_case "cell controls" `Quick cell_controls;
           Alcotest.test_case "root-relative asset paths" `Quick asset_paths_root_relative;
           Alcotest.test_case "reveal wrapper" `Quick reveal_wrapper;
