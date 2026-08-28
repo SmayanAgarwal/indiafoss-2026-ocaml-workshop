@@ -17,9 +17,33 @@ reading:
 
 # Basics
 
+:::slide
+
+<div class="title-slide-inner">
+<p class="title-slide-course">Fun and Profit with OCaml</p>
+<h2 class="title-slide-lecture">OCaml - Basics</h2>
+<p class="title-slide-label">Module 1 &middot; Lecture 1</p>
+</div>
+
+:::
+
 Let's begin with a tour through the basics of the OCaml programming language.
 
 ## Why OCaml
+
+:::slide
+
+## Why OCaml
+
+- An industrial-strength functional language, in the same family
+  as Haskell and Standard ML.
+- Multi-paradigm: functional, imperative and object-oriented.
+- Compiles to fast native code (x86, ARM, RISC-V) and to
+  JavaScript.
+- Used in production at Jane Street, Microsoft, Facebook and
+  Docker, and by Coq, CompCert and MirageOS.
+
+:::
 
 - OCaml is an industrial-strength, functional programming
   language.
@@ -88,6 +112,25 @@ bindings (like the one above) is everything that follows it.
 OCaml offers the following primitive data types: int, float,
 bool, char, string and unit.
 
+:::slide
+
+## Primitive data types
+
+```ocaml
+let one = 1
+let pi = 3.1415
+let a = 'a'
+let hello = "Hello"
+```
+
+- Six primitives: `int`, `float`, `bool`, `char`, `string` and
+  `unit`.
+- Every type here was inferred; none of them was written down.
+- No implicit conversion between them, so `one = pi` is a
+  compile error rather than `false`.
+
+:::
+
 ```ocaml
 let one = 1
 
@@ -132,7 +175,7 @@ The bindings above include `let a = 'a'`. Suppose we now add
 **Why:** `one = pi` is rejected because `int` and `float` are
 different types, so `=` has nothing to compare. Here both `a` and
 `b` have type `char`, so `=` is well typed and simply asks whether
-the two values are the same — they are both the character `'a'`,
+the two values are the same: they are both the character `'a'`,
 so the answer is `true`. Note that `=` compares values, not
 bindings: it does not matter that `a` and `b` are separate names,
 or how each one was written.
@@ -152,7 +195,7 @@ the second `one'`) What happens when OCaml evaluates `one = one'`?
 
 **Why:** Two things are easy to misread here. First, `'` is a
 perfectly legal character inside an identifier as long as it is
-not the first one, so `one'` — read aloud as "one prime" — is an
+not the first one, so `one'` (read aloud as "one prime") is an
 ordinary variable name. Second, the trailing dot in `1.` makes it
 a `float` literal, exactly like `1.0`; only that one character
 separates it from the `int` literal `1`. So this is the same
@@ -212,6 +255,22 @@ error.
 OCaml provides conditional expressions using the
 if keyword:
 
+:::slide
+
+## Conditionals
+
+```ocaml
+let a = if i < 10 then i else 10
+```
+
+- `if` is an expression: it evaluates to a value, so it can go
+  anywhere a value can, including on the right of a `let`.
+- Both branches must have the same type.
+- There is no statement form of `if`; it always produces a
+  value.
+
+:::
+
 ```ocaml
 let a = if i < 10 then i else 10
 ```
@@ -251,6 +310,19 @@ The latter definition of `succ` shadows the former.
 
 Functions with multiple arguments are defined the same way:
 
+:::slide
+
+## Multiple arguments
+
+```ocaml
+let add x y = x + y
+```
+
+- Parameters are separated by spaces, not commas or brackets.
+- `add` has type `int -> int -> int`, inferred from `+`.
+
+:::
+
 ```ocaml
 let add x y = x + y
 ```
@@ -259,6 +331,21 @@ let add x y = x + y
 
 Unlike most imperative languages, functions are applied without
 any brackets:
+
+:::slide
+
+## Function application
+
+```ocaml
+let b = succ 8
+let c = add a b
+```
+
+- Write `succ 8`, not `succ(8)`.
+- Application binds tighter than any operator, so
+  `succ 8 + 1` means `(succ 8) + 1`.
+
+:::
 
 ```ocaml
 let b = succ 8
@@ -301,6 +388,22 @@ let sum_of_succ x y = add (succ x) (succ y)
 We can also create recursive functions by adding the rec keyword
 to a let binding. For example, the sum of first `n` integers can
 be implemented as follows:
+
+:::slide
+
+## Recursive functions
+
+```ocaml
+let rec sum_of_first_n n =
+  if n <= 0 then 0
+  else sum_of_first_n (n-1) + n
+```
+
+- `rec` makes the function's own name visible inside its body.
+- Without `rec` the name would refer to an earlier binding, or
+  fail to resolve at all.
+
+:::
 
 ```ocaml
 let rec sum_of_first_n n =
@@ -536,6 +639,20 @@ anonymous functions, which allows you to define unnamed
 functions. To write an anonymous function, the `fun` keyword is
 used in the following form `(fun ARG1 ARG2 ... -> BODY)`. We can
 define an anonymous function for `succ` and use it as follows:
+
+:::slide
+
+## Anonymous functions
+
+```ocaml
+List.map (fun x -> x + 1) [1;2;3]
+```
+
+- `(fun ARG1 ARG2 ... -> BODY)` builds a function with no name.
+- Useful when a function is needed once, as an argument to
+  something like `List.map`.
+
+:::
 
 ```ocaml
 List.map (fun x -> x + 1) [1;2;3]
