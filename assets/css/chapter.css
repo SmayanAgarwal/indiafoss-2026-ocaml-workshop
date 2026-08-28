@@ -127,7 +127,6 @@ body.mode-chapter section:has(.title-slide-inner) { display: none; }
   line-height: 1.4;
   padding-bottom: 0.1rem;
 }
-.mode-toggle,
 .cell-controls button {
   border: 1px solid var(--rule);
   background: transparent;
@@ -138,7 +137,6 @@ body.mode-chapter section:has(.title-slide-inner) { display: none; }
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 0.85rem;
 }
-.mode-toggle:hover,
 .cell-controls button:hover { background: var(--code-bg); }
 .cell-controls {
   display: flex;
@@ -147,8 +145,6 @@ body.mode-chapter section:has(.title-slide-inner) { display: none; }
      of overflowing the header (and the page) horizontally. */
   flex-wrap: wrap;
 }
-body.mode-chapter .when-slides  { display: none; }
-body.mode-slides  .when-chapter { display: none; }
 
 .chapter {
   max-width: var(--width);
@@ -357,7 +353,6 @@ body.mode-slides .home-link { opacity: 0.6; }
    get the bigger targets if a mouse user is squinting. */
 
 @media (pointer: coarse), (max-width: 600px) {
-  .mode-toggle,
   .cell-controls button,
   .sidebar-collapse,
   .home-link {
@@ -374,16 +369,13 @@ body.mode-slides .home-link { opacity: 0.6; }
 }
 
 @media (max-width: 600px) {
-  /* Hide page-level cell controls and the slide-mode toggle on
-     phones. Each button is forced to 44px (touch-target rule above)
-     and they wrap onto 3 extra rows, eating ~1/3 of the viewport.
-     The per-cell Run button in x-ocaml's shadow DOM still works, so
-     mobile readers do not lose execution; they only lose the
-     page-level shortcuts (Run all / Clear / Reset), which are
-     clumsy to invoke on a phone anyway. Slide mode is not usable on
-     mobile, so the toggle would lead to a broken view. */
-  .cell-controls,
-  .mode-toggle { display: none; }
+  /* Hide page-level cell controls on phones. Each button is forced
+     to 44px (touch-target rule above) and they wrap onto 3 extra
+     rows, eating ~1/3 of the viewport. The per-cell Run button in
+     x-ocaml's shadow DOM still works, so mobile readers do not lose
+     execution; they only lose the page-level shortcuts (Run all /
+     Clear / Reset), which are clumsy to invoke on a phone anyway. */
+  .cell-controls { display: none; }
 
   /* Stack: lecture title gets its own row below the button cluster.
      The page-header flex-wrap (set in the earlier mobile pass) lets

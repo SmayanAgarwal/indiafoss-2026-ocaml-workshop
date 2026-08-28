@@ -168,24 +168,13 @@ let head ~asset_root ~(fm : Frontmatter.t) ~vm_terminal =
     asset_root bundle_dir main_v asset_root bundle_dir worker_v
     src_load_attr vm_script
 
-let header_bar ~(fm : Frontmatter.t) ~has_slides =
+let header_bar ~(fm : Frontmatter.t) =
   let lecture_id =
     match fm.week, fm.lecture_no with
     | Some w, Some l -> Printf.sprintf "Module %d &middot; Lecture %d" w l
     | _ -> ""
   in
   let title = if fm.title = "" then "(untitled)" else Parse.html_escape fm.title in
-  (* Practice chapters and any other slide-free page omit the
-     slide-mode toggle: there is no deck to switch into. *)
-  let mode_toggle =
-    if has_slides then
-      {|    <button class="mode-toggle" type="button" aria-label="Toggle slide mode">
-      <span class="when-chapter">Slides &rarr;</span>
-      <span class="when-slides">&larr; Chapter</span>
-    </button>
-|}
-    else ""
-  in
   Printf.sprintf
     {|  <header class="page-header">
     <button class="sidebar-collapse chapter-only" type="button" title="Show or hide the course outline" aria-label="Toggle course outline">&#9776;</button>
@@ -198,8 +187,8 @@ let header_bar ~(fm : Frontmatter.t) ~has_slides =
       <button class="clear-all" type="button" title="Clear outputs of every cell">Clear outputs</button>
       <button class="reset-all" type="button" title="Restore every cell to its source from the markdown file">Reset all cells</button>
     </div>
-%s  </header>|}
-    lecture_id title mode_toggle
+  </header>|}
+    lecture_id title
 
 let footer_meta ~(fm : Frontmatter.t) =
   let buf = Buffer.create 256 in
@@ -239,7 +228,6 @@ let runtime_script ~asset_root =
     import Reveal from '%s/assets/reveal/dist/reveal.esm.js';
 
     const body = document.body;
-    const modeBtn = document.querySelector('.mode-toggle');
     let reveal = null;
 
     function isSlideMode() {
@@ -579,6 +567,7 @@ let runtime_script ~asset_root =
     }
     function resetAll() {
       for (const c of allCells()) resetCell(c);
+      resetAllQuizzes();
     }
 
     // Wrap each cell in a [.cell-wrap] div and add the reset (↺)
@@ -855,6 +844,43 @@ let runtime_script ~asset_root =
     // here turns the rendered body into an interactive widget. State
     // persists in localStorage under [nptel-quiz:<path>#<id>].
     const QUIZ_PREFIX = 'nptel-quiz:' + location.pathname + '#';
+
+    // Undo a quiz's answered/passed state: MCQ selection, code-quiz
+    // status line, the "answered" / "correct" styling, and the
+    // persisted localStorage attempt. Called per-quiz by "Reset all
+    // cells" so quiz progress resets in step with cell source, not
+    // independently of it (#reset-quiz-state).
+    function resetQuiz(quiz) {
+      const id = quiz.dataset.quizId;
+      if (id) {
+        try { localStorage.removeItem(QUIZ_PREFIX + id); } catch (_) {}
+      }
+      quiz.classList.remove('answered', 'quiz-correct', 'show-tests');
+      const fieldset = quiz.querySelector('.quiz-choices');
+      if (fieldset) {
+        fieldset.querySelectorAll('input[type="radio"]')
+          .forEach(r => { r.checked = false; });
+        fieldset.querySelectorAll('.quiz-choice').forEach(label => {
+          label.classList.remove('selected', 'correct', 'wrong');
+        });
+      }
+      const status = quiz.querySelector('.quiz-status');
+      if (status) {
+        status.textContent = '';
+        status.className = 'quiz-status';
+      }
+      const showBtn = quiz.querySelector('.quiz-show-tests');
+      if (showBtn) showBtn.textContent = '▸ Show tests';
+      // Blank any stale pass/fail output left in the hidden test
+      // cell's shadow DOM; resetCell() only restores its source.
+      const testCell = quiz.querySelector('x-ocaml[data-quiz-test]');
+      testCell?.shadowRoot
+        ?.querySelectorAll('.caml_stdout, .caml_stderr, .caml_meta')
+        .forEach(e => { e.textContent = ''; });
+    }
+    function resetAllQuizzes() {
+      document.querySelectorAll('.quiz').forEach(resetQuiz);
+    }
 
     // MCQ: GFM task lists give us [<li><input type="checkbox" [checked] disabled> ...]
     // We strip the checkboxes, build radio inputs in their place, and
@@ -1369,15 +1395,6 @@ let runtime_script ~asset_root =
       }
     }
 
-    modeBtn?.addEventListener('click', () => {
-      if (isSlideMode()) {
-        // Drop the trailing '#' cleanly; setting location.hash = '' keeps it.
-        history.replaceState(null, '', location.pathname + location.search);
-        syncMode();
-      } else {
-        location.hash = 'slides';
-      }
-    });
     window.addEventListener('hashchange', syncMode);
     syncMode();
   </script>|}
@@ -1462,19 +1479,6 @@ let render_prev_next ~(manifest : Manifest.t option) =
       Buffer.add_string buf "</nav>\n";
       Buffer.contents buf
 
-(* A page has a slide deck iff at least one slide section was
-   emitted. Practice chapters carry no [:::slide] blocks. *)
-let body_has_slides html_body =
-  let needle = "data-slide" in
-  let nlen = String.length needle in
-  let blen = String.length html_body in
-  let rec scan i =
-    if i + nlen > blen then false
-    else if String.sub html_body i nlen = needle then true
-    else scan (i + 1)
-  in
-  scan 0
-
 (* A page carries the in-browser VM terminal iff the body has a
    [:::vm-terminal] div (class emitted by Divs.preprocess). *)
 let body_has_vm_terminal html_body =
@@ -1489,10 +1493,9 @@ let body_has_vm_terminal html_body =
   scan 0
 
 let render_body ~html_body ~(fm : Frontmatter.t) ~manifest =
-  let has_slides = body_has_slides html_body in
   let buf = Buffer.create (String.length html_body + 2048) in
   Buffer.add_string buf "<body class=\"mode-chapter\">\n";
-  Buffer.add_string buf (header_bar ~fm ~has_slides);
+  Buffer.add_string buf (header_bar ~fm);
   Buffer.add_string buf "\n";
   Buffer.add_string buf (render_sidebar ~manifest);
   (* In chapter mode the article holds everything inline. In slide mode
