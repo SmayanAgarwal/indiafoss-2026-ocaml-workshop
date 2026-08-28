@@ -35,7 +35,7 @@ Let's begin with a tour through the basics of the OCaml programming language.
 - A number of organisations use the language including:
   - Jane Street ([OCaml use at Jane
     Street](https://www.janestreet.com/tech-talks/ocaml-all-the-way-down/)).
-  - Microsoft ([Everest project](https://project-everest.github.io/), [F*](https://fstar-lang.org/) programming language).
+  - Microsoft ([Everest project](https://project-everest.github.io/), [F* programming language](https://fstar-lang.org/))
   - Facebook (Hack, Infer, Flow, ReasonML). [More than 50%
     messenger.com is
     ReasonML](https://reasonml.github.io/blog/2017/09/08/messenger-50-reason.html).
@@ -63,8 +63,6 @@ bound to a particular value. In OCaml these bindings are
 introduced using the let keyword.
 
 :::slide
-
-## Let binding
 
 ```ocaml
 let pi = 3
@@ -168,8 +166,6 @@ limited to a particular expression using the *in* keyword:
 
 :::slide
 
-## Local `let ... in` binding
-
 ```ocaml
 let i =
   let j = 5 in
@@ -223,8 +219,6 @@ let a = if i < 10 then i else 10
 The let keyword can also be used to define functions:
 
 :::slide
-
-## Function definition
 
 ```ocaml
 let succ x = x + 1
@@ -358,8 +352,6 @@ function, we put a tilde (`~`) before the name of the argument:
 
 :::slide
 
-## Labelled arguments
-
 ```ocaml
 let divide ~dividend ~divisor = dividend / divisor
 ```
@@ -460,8 +452,6 @@ numbers in the list `[1; 2; 3]`:
 
 :::slide
 
-## Higher-order functions
-
 ```ocaml
 let l = List.map succ [1;2;3]
 ```
@@ -508,8 +498,6 @@ and returns a function from int to int. For example, we could
 redefine our succ function by partially applying add to 1:
 
 :::slide
-
-## Currying
 
 ```ocaml
 let succ = add 1
