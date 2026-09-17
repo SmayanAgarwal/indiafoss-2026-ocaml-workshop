@@ -26,7 +26,7 @@ let count_sub s sub =
 let render path =
   let raw = read path in
   let fm, body = Frontmatter.parse raw in
-  let preprocessed = Divs.preprocess body in
+  let preprocessed = Divs.preprocess ~game:fm.game body in
   (* [~strict:false] enables cmarkit extensions (tables, task lists,
      etc.). Quiz MCQs rely on the task-list extension. Must match
      [bin/main.ml]. *)

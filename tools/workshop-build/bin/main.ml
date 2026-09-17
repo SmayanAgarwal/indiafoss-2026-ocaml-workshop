@@ -99,7 +99,9 @@ let render_one ~src ~dst ~asset_root =
     in
     count_nl raw - count_nl body
   in
-  let preprocessed = Workshop_build.Divs.preprocess ~line_offset body in
+  let preprocessed =
+    Workshop_build.Divs.preprocess ~line_offset ~game:fm.game body
+  in
   (* [strict:false] enables cmarkit's extensions: tables, strikethrough,
      LaTeX math, footnotes, task list items. We need tables for the
      primitive-types summary in Part 2 and other workshop sections. *)

@@ -265,11 +265,11 @@ let runtime_script ~asset_root =
     }
 
     function allCells() {
-      // The hidden runtime sentinel is an implementation detail, not an
-      // editable workshop cell. Keep it out of persistence, toolbar actions,
-      // reset buttons, and quiz bookkeeping.
+      // The hidden runtime/boot sentinels are implementation details, not
+      // editable workshop cells. Keep them out of persistence, toolbar
+      // actions, reset buttons, and quiz bookkeeping.
       return Array.from(document.querySelectorAll(
-        'x-ocaml:not([data-runtime-sentinel])'));
+        'x-ocaml:not([data-runtime-sentinel]):not([data-boot-sentinel])'));
     }
 
     // Hide slide area until x-ocaml has finished reflowing each
@@ -613,6 +613,39 @@ let runtime_script ~asset_root =
         .map(e => e.textContent || '').join('\n');
       return out.includes('__indiafoss_runtime_ready__');
     }
+    // The boot sentinel is the FIRST x-ocaml cell in the document (see
+    // render_body in emit.ml) and has no run-on attribute, so x-ocaml
+    // auto-runs it the moment it connects -- no click needed here, and
+    // since it has no predecessor that auto-run cascades into nothing
+    // else. Used instead of the end-of-document [runtimeSentinel] when
+    // there is nothing to restore: that one's forced click cascades
+    // backward through every cell, silently running every unsolved
+    // problem stub and reassigning its `*_ref` to a still-failing
+    // implementation (see the comment on waitForRuntimeQuiescence
+    // below) -- exactly the "board throws on the very first click"
+    // behavior this is here to avoid for a first-time visitor.
+    function bootSentinel() {
+      return document.querySelector('x-ocaml[data-boot-sentinel]');
+    }
+    function bootSentinelHasCompleted() {
+      const sentinel = bootSentinel();
+      const out = Array.from(sentinel?.shadowRoot?.querySelectorAll(
+        '.caml_meta, .caml_stdout, .caml_stderr, .caml_html') || [])
+        .map(e => e.textContent || '').join('\n');
+      return out.includes('__indiafoss_boot_ready__');
+    }
+    async function waitForBootSentinel() {
+      if (!body.classList.contains('game-chapter')) return;
+      const sentinel = bootSentinel();
+      if (!sentinel) throw new Error('game page is missing its boot sentinel');
+      const deadline = performance.now() + 90000;
+      while (!bootSentinelHasCompleted() && performance.now() < deadline) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+      if (!bootSentinelHasCompleted()) {
+        throw new Error('game runtime did not become ready within 90 seconds');
+      }
+    }
     async function waitForRuntimeQuiescence() {
       if (!body.classList.contains('game-chapter')) return;
       const sentinel = runtimeSentinel();
@@ -649,6 +682,94 @@ let runtime_script ~asset_root =
           ?.querySelectorAll('.caml_meta, .caml_stdout, .caml_stderr, .caml_html')
           .forEach(e => { e.textContent = ''; });
       }
+      document.getElementById('game-panel')
+        ?.querySelectorAll('.xo-game-error')
+        .forEach(e => e.remove());
+    }
+
+    // waitForRuntimeQuiescence's forced run-the-whole-chain click is a real,
+    // checkpoint-integrated run of every predecessor cell (see x-ocaml's
+    // cell.ml: a cell's Run cascades backward to any not-yet-Run_ok
+    // predecessor, regardless of that predecessor's own run-on mode). On a
+    // game page that includes every not-yet-attempted problem cell, each of
+    // which still holds its `failwith "not implemented"` template and ends
+    // with `<name>_ref := <name>` -- so the cascade both re-establishes any
+    // previously *solved* answers (the point of restoring across a reload)
+    // and, as a side effect, genuinely executes every unsolved stub, each
+    // one throwing and each one clobbering the provided demo's placeholder
+    // ref with its own broken implementation. clearRenderedOutputs() erases
+    // the resulting "not implemented" spam only once quiescence resolves;
+    // observed live, that arrives late enough on a slow device/connection
+    // (see "Close game runtime startup races") for the exception stack to
+    // render and linger. A MutationObserver per cell erases that output the
+    // instant it appears -- during the mutation's own microtask, before the
+    // next paint -- instead of racing a fixed cleanup afterward.
+    //
+    // A game-panel cell's runtime exceptions land somewhere else entirely:
+    // x-ocaml's cell.ml (append_panel_error) appends a `.xo-game-error` box
+    // straight onto the shared #game-panel div in the main document, by
+    // design accumulating until the next successful board render replaces
+    // the panel's innerHTML wholesale. During the forced startup cascade
+    // nothing after the last erroring stub necessarily re-renders the
+    // board, so those boxes are never naturally cleared -- they are the
+    // stack of "not implemented" errors visible under the board itself.
+    // #game-panel lives outside every cell's shadow root, so it needs its
+    // own observer.
+    //
+    // That observer also has to outlive the per-cell ones. A game-panel
+    // cell is [run_on=load] by default, so besides the forced sentinel
+    // cascade x-ocaml auto-runs it a second time on its own, from
+    // x_ocaml.ml's connectedCallback-time [Cell.auto_run_at_connect]
+    // (independent of whenCellsReady's own wait). Under heavy throttling
+    // these two runs land far enough apart that the second one -- still
+    // just the unsolved stub throwing -- can arrive after quiescence is
+    // declared and the per-cell observers are already gone. Give the
+    // panel its own stop function, called only once it has gone quiet for
+    // a bit, so a late straggler run still gets wiped.
+    let startupOutputObservers = [];
+    let panelObserver = null;
+    function suppressStartupOutput() {
+      const blank = cell => {
+        cell.shadowRoot
+          ?.querySelectorAll('.caml_meta, .caml_stdout, .caml_stderr, .caml_html')
+          .forEach(e => { if (e.textContent) e.textContent = ''; });
+      };
+      for (const cell of allCells()) {
+        blank(cell);
+        const sr = cell.shadowRoot;
+        if (!sr) continue;
+        const obs = new MutationObserver(() => blank(cell));
+        obs.observe(sr, { childList: true, subtree: true, characterData: true });
+        startupOutputObservers.push(obs);
+      }
+      const panel = document.getElementById('game-panel');
+      if (panel) {
+        const wipe = () => panel.querySelectorAll('.xo-game-error').forEach(e => e.remove());
+        wipe();
+        panelObserver = new MutationObserver(wipe);
+        panelObserver.observe(panel, { childList: true, subtree: true });
+      }
+    }
+    function stopSuppressingStartupOutput() {
+      for (const obs of startupOutputObservers) obs.disconnect();
+      startupOutputObservers = [];
+    }
+    // Keep wiping #game-panel until it has been error-free for a full
+    // quiet window, capped so a page with a genuinely broken panel
+    // doesn't hang forever.
+    async function stopSuppressingPanelErrors() {
+      const panel = document.getElementById('game-panel');
+      if (!panelObserver || !panel) return;
+      const quietMs = 500;
+      const capMs = 4000;
+      const deadline = Date.now() + capMs;
+      while (Date.now() < deadline) {
+        panel.querySelectorAll('.xo-game-error').forEach(e => e.remove());
+        await new Promise(r => setTimeout(r, quietMs));
+        if (panel.querySelectorAll('.xo-game-error').length === 0) break;
+      }
+      panelObserver.disconnect();
+      panelObserver = null;
     }
 
     // Reserve a right-hand strip inside each cell's editor so code
@@ -674,8 +795,19 @@ let runtime_script ~asset_root =
         if (ready) break;
         await new Promise(r => setTimeout(r, 100));
       }
+      suppressStartupOutput();
       const restoredCount = restorePersistedCells();
-      await waitForRuntimeQuiescence();
+      // Nothing saved to restore -- the common case, and every first-time
+      // visit -- needs only proof the worker is alive, not a forced run of
+      // the whole cell chain (see waitForBootSentinel's comment for why
+      // that forced run is unsafe on an untouched game page). Only a
+      // restore actually needs waitForRuntimeQuiescence's full cascade, to
+      // re-execute the learner's previously solved cells.
+      if (restoredCount > 0) {
+        await waitForRuntimeQuiescence();
+      } else {
+        await waitForBootSentinel();
+      }
       if (restoredCount > 0) {
         let stable = false;
         // The stale pristine format response was observed roughly 700ms after
@@ -699,7 +831,15 @@ let runtime_script ~asset_root =
         watchCellForEdits(c);
       }
       // Hide automatic startup output without invalidating cell state.
+      // The observers already erased it as it appeared; this is a final,
+      // redundant sweep for anything that landed in the gap before the
+      // first observer was attached.
+      stopSuppressingStartupOutput();
       clearRenderedOutputs();
+      // Runs in the background: a straggler run_on=load game-panel run can
+      // still land after this point (see stopSuppressingPanelErrors above),
+      // and nothing else here depends on the panel being settled first.
+      stopSuppressingPanelErrors();
       body.classList.add('runtime-ready');
       // Code quizzes can now find the test cell's shadow Run button.
       setupCodeQuizzes();
@@ -996,10 +1136,21 @@ let runtime_script ~asset_root =
           .forEach(e => { e.textContent = ''; });
         clickRun(testCell);
         let tries = 0;
+        // 90s budget, matching waitForBootSentinel/waitForRuntimeQuiescence
+        // above: the worker is single-threaded and FIFO, so Check can be
+        // sitting behind the page's own automatic load-chain backlog (worse
+        // on a big page like Game of Life, and worst right after
+        // runtime-ready, which only proves the worker is alive on a fresh
+        // load, not that the backlog has drained -- see whenCellsReady's
+        // boot-sentinel comment). The old 16s cap (80 tries * 200ms)
+        // reported a false "Timed out" on an answer that was already
+        // correct and landed ~23s in. Confirmed this is not an engine
+        // issue: identical failure reproduced with a freshly verified,
+        // byte-for-byte-matching x-ocaml.worker.js build.
         const tick = setInterval(() => {
           tries++;
           const s = readState();
-          if (s !== 'pending' || tries > 80) {
+          if (s !== 'pending' || tries > 450) {
             clearInterval(tick);
             if (s === 'pass') {
               status.textContent = '✓ All tests pass';
@@ -1446,6 +1597,21 @@ let render_body ~html_body ~(fm : Frontmatter.t) ~manifest =
      reparents the section[data-slide] elements into it on activation. *)
   if fm.game then Buffer.add_string buf "<main class=\"game-chapter-layout\">\n";
   Buffer.add_string buf "<article class=\"chapter\">\n";
+  if fm.game then
+    (* First x-ocaml cell in the WHOLE document, with no run-on
+       attribute (defaults to load) -- x-ocaml auto-runs a load cell at
+       connect time, and since nothing precedes this one the cascade
+       that triggers (see cell.ml's [run]) never reaches anything else.
+       Its sole purpose is a worker-alive probe cheap enough to use on
+       every visit, including the common case where restorePersistedCells
+       finds nothing to restore: unlike the end-of-document
+       [data-runtime-sentinel] (whose forced click cascades backward
+       through EVERY cell to re-run restored answers), this one proves
+       the worker responds without running a single authored cell, so a
+       first-time visitor's untouched problem stubs stay genuinely
+       Not_run -- see [waitForBootSentinel]. *)
+    Buffer.add_string buf
+      "<x-ocaml data-boot-sentinel=\"true\" hidden>let () = print_endline \"__indiafoss_boot_ready__\"</x-ocaml>\n";
   Buffer.add_string buf html_body;
   Buffer.add_string buf "\n</article>\n";
   if fm.game then begin
